@@ -1,0 +1,30 @@
+name: merc-actor
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch:
+    inputs:
+      live:
+        type: boolean
+        default: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Write creds
+        env:
+          MERC_CREDS: ${{ secrets.MERC_CREDS }}
+        run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
+      - name: Run actor
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.live }}" = "true" ]; then
+            python merc_actor.py --live --quiet
+          else
+            python merc_actor.py
+          fi
