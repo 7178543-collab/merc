@@ -65,6 +65,20 @@ def _current_price(d, field):
     return None
 
 
+# Taylor's standing limits. Sells never go below the floor, buys never above
+# the ceiling. Items with no limit here are never repriced (don't guess).
+SELL_FLOORS = {
+    "timber": 8.50,
+    "flax fibres": 6.05,
+    "flax plants": 1.27,
+    "beer": 3.60,
+    "cloth": 7.80,
+    "thread": 4.50,
+    "garments": 22.00,
+}
+BUY_CEILINGS = {}
+
+
 def propose_fix(building, building_id, item, kind, d):
     """Return the write call this flag implies, without sending it.
 
@@ -87,6 +101,14 @@ def propose_fix(building, building_id, item, kind, d):
         return None
     old_price = _current_price(d, field)
     new_price = round(new_price, 2)
+    if field == "sell_price":
+        lim = SELL_FLOORS.get(item)
+        if lim is None or new_price < lim:
+            return None
+    else:
+        lim = BUY_CEILINGS.get(item)
+        if lim is None or new_price > lim:
+            return None
 
     managers_patch = []
     found = False
