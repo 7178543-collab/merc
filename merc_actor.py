@@ -71,7 +71,7 @@ SELL_FLOORS = {
     "timber": 8.50,
     "flax fibres": 6.05,
     "flax plants": 1.27,
-    "beer": 3.60,
+    "beer": 4.60,
     "cloth": 7.80,
     "thread": 4.50,
     "garments": 22.00,
