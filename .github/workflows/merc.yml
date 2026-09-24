@@ -7,6 +7,9 @@ on:
       live:
         type: boolean
         default: false
+permissions:
+  contents: read
+  issues: write
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -27,4 +30,13 @@ jobs:
             python merc_actor.py --live --quiet
           else
             python merc_actor.py
+          fi
+      - name: Alerts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.live }}" = "true" ]; then
+            python alerts.py --live
+          else
+            python alerts.py
           fi
