@@ -69,7 +69,7 @@ def _current_price(d, field):
 # the ceiling. Items with no limit here are never repriced (don't guess).
 SELL_FLOORS = {
     "timber": 8.50,
-    "flax fibres": 6.05,
+    "flax fibres": 5.40,
     "flax plants": 1.27,
     "beer": 3.90,
     "cloth": 7.80,
