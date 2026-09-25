@@ -147,6 +147,30 @@ def status_text(wanted, hh, prev_cash, ships):
         head, cash, delta, m.num(hh.get("prestige")), ship_text(ships))
 
 
+def money_extra():
+    """Turn, trading profit and spendable prestige for the history line. Never fails the run."""
+    out = {}
+    try:
+        f = ((m.get("/buildings/152202386005001").get("storage") or {}).get("inventory") or {}).get("previous_flows") or {}
+        sale = sum(m.num(x.get("sale_value")) for x in f.values())
+        buy = sum(m.num(x.get("purchase_cost")) for x in f.values())
+        out.update(profit=round(sale - buy, 2), sales=round(sale, 2), buys=round(buy, 2))
+    except (SystemExit, Exception):
+        pass
+    try:
+        h = m.get("/households/21623")
+        b = h.get("prestige_board") or {}
+        out["prestige_free"] = round(m.num(h.get("prestige")) - m.num(b.get("allocated")), 2)
+        out["prestige_rate"] = round(sum(m.num(x.get("impact")) for x in (h.get("prestige_impacts") or [])), 2)
+    except (SystemExit, Exception):
+        pass
+    try:
+        out["turn"] = int(m.num(m.get("/clock").get("turn")))
+    except (SystemExit, Exception):
+        pass
+    return out
+
+
 def data_line(wanted, hh, ships, snap, prices, held):
     items = {}
     for item in sorted(set(snap) | set(held)):
@@ -154,11 +178,13 @@ def data_line(wanted, hh, ships, snap, prices, held):
         row = [round(held.get(item, 0), 1)] + [f.get(k, 0) for k in FLOW_KEYS] + [prices.get(item, 0)]
         if any(row):
             items[item] = row
+    extra = money_extra()
     d = {
         "v": 1,
         "t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "cash": round(m.num(hh.get("cash")), 2),
         "prestige": round(m.num(hh.get("prestige")), 2),
+        **extra,
         "alerts": [t.replace("[merc] ", "") for t in wanted],
         "ships": ships,
         "cols": ["held"] + FLOW_KEYS + ["price"],
