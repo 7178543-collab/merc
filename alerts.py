@@ -27,6 +27,7 @@
 """
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -166,7 +167,20 @@ def data_line(wanted, hh, ships, snap, prices, held):
     return "merc-data: " + json.dumps(d, separators=(",", ":"), default=str)
 
 
+def save_history(dline):
+    """Append this run's merc-data line to history/merc-YYYY-MM.jsonl; the
+    workflow commits it. Never fails the run."""
+    try:
+        os.makedirs("history", exist_ok=True)
+        path = os.path.join("history", "merc-%s.jsonl" % datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m"))
+        with open(path, "a") as f:
+            f.write(dline.split("merc-data: ", 1)[-1] + "\n")
+    except Exception as e:
+        print("history write failed:", e)
+
+
 def post_status(wanted, hh, ships, dline):
+    save_history(dline)
     gh("label", "create", STATUS_LABEL, "--color", "0e8a16", "--force")
     r = gh("issue", "list", "--label", STATUS_LABEL, "--state", "open",
            "--limit", "5", "--json", "number,body")
