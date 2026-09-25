@@ -79,6 +79,22 @@ SELL_FLOORS = {
 BUY_CEILINGS = {"grain": 3.10, "labour": 1.80, "firewood": 2.25, "bread": 2.60, "tools": 5.75, "charcoal": 2.20, "furniture": 15.00, "fish": 2.50, "meat": 2.40, "timber": 7.00, "limestone": 18.00}
 
 
+def snap_price(p, up):
+    """Snap a price to the game's price grid: 3 significant digits, and when
+    the first digit is 3-9 the last digit must be even (3.85 is rejected,
+    3.84 is fine). up=True rounds up (a sell never drops below its target),
+    False rounds down (a buy never goes above it)."""
+    import math
+    if not p or p <= 0:
+        return p
+    e = math.floor(math.log10(p)) - 2
+    lead = int(p / 10 ** (e + 2) + 1e-9)
+    step = 10 ** e * (2 if lead > 2 else 1)
+    n = p / step
+    n = math.ceil(n - 1e-9) if up else math.floor(n + 1e-9)
+    return round(n * step, 6)
+
+
 def propose_fix(building, building_id, item, kind, d):
     """Return the write call this flag implies, without sending it.
 
@@ -100,7 +116,7 @@ def propose_fix(building, building_id, item, kind, d):
     if not new_price:
         return None
     old_price = _current_price(d, field)
-    new_price = round(new_price, 2)
+    new_price = snap_price(new_price, up=(field == "sell_price"))
     if field == "sell_price":
         lim = SELL_FLOORS.get(item)
         if lim is None or new_price < lim:
