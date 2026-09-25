@@ -14,10 +14,15 @@
    figure is kept in that issue's body so the change can be computed.
    Cash change includes construction and stock purchases -- it is cash flow,
    not accounting profit.
+3. Dashboard feed: the status comment ends with one line
+   "merc-data: {json}" -- a compact snapshot (cash, prestige, ship, and per
+   item: held, produced, consumed, sold, bought, expired, market price).
+   The Merc dashboard page reads it from the GitHub notification emails.
 
     python alerts.py          # dry run: print what would be posted
     python alerts.py --live   # actually open/close/comment (needs gh + GH_TOKEN)
 """
+import datetime
 import json
 import re
 import subprocess
@@ -33,6 +38,7 @@ ALERT_KINDS = {"low_stock", "no_order", "zero_volume"}
 EXPIRE_MIN = 5.0   # labour units wasted per turn before it is worth an alert
 TOWNS = {"152202387": "Strasclives", "133002223": "Blanans",
          "151802239": "Grandgues", "140502554": "Calange"}
+FLOW_KEYS = ["production", "consumption", "sale", "purchase", "expiration"]
 
 
 def gh(*args):
@@ -43,7 +49,8 @@ def town_name(tid):
     return TOWNS.get(str(tid), "town %s" % tid)
 
 
-def flow_alerts(building_ids, wanted):
+def flow_alerts(building_ids, wanted, snap):
+    """Alert on shortfalls / wasted labour, and collect flows into snap."""
     for bid in building_ids:
         try:
             b = m.get("/buildings/%s" % bid)
@@ -51,6 +58,11 @@ def flow_alerts(building_ids, wanted):
             continue
         flows = (b.get("storage", {}).get("inventory", {}).get("previous_flows")) or {}
         for item, fl in flows.items():
+            row = snap.setdefault(item, {})
+            for k in FLOW_KEYS:
+                v = m.num(fl.get(k))
+                if v:
+                    row[k] = round(row.get(k, 0) + v, 2)
             short = m.num(fl.get("shortfall"))
             if short > 0:
                 wanted["[merc] %s: shortage" % item] = (
@@ -60,7 +72,8 @@ def flow_alerts(building_ids, wanted):
                     "%.1f bought labour expired unused last turn -- trim the labour buy" % m.num(fl.get("expiration")))
 
 
-def ship_status():
+def ship_info():
+    """List of dicts, one per ship: name, state, place, recipe."""
     try:
         player = m.get("/player")
         biz = m.get("/businesses/%s" % player["household"]["business_ids"][0])
@@ -69,26 +82,59 @@ def ship_status():
             t = m.get("/transports/%s" % tid)
             j = t.get("journey") or {}
             end = j.get("end_town_id")
-            if end and str(end) != str(t.get("town_id")):
-                where = "sailing to %s" % town_name(end)
+            prod = t.get("producer") or {}
+            recipe = prod.get("recipe")
+            loc = t.get("location") or {}
+            town = t.get("town_id")
+            if recipe and "fish" in recipe:
+                state, place = "fishing", "at sea %s:%s" % (loc.get("x"), loc.get("y"))
+            elif end and str(end) != str(town):
+                state, place = "sailing", "to %s" % town_name(end)
+            elif town:
+                state, place = "docked", "at %s" % town_name(town)
             else:
-                where = "docked at %s" % town_name(t.get("town_id"))
-            out.append("%s %s" % (t.get("name"), where))
-        return "; ".join(out) or "no ships"
+                state, place = "anchored", "at sea %s:%s" % (loc.get("x"), loc.get("y"))
+            out.append({"name": t.get("name"), "state": state, "place": place,
+                        "recipe": recipe, "level": m.num(prod.get("target"))})
+        return out
     except (SystemExit, Exception) as e:
-        return "unavailable (%s)" % type(e).__name__
+        return [{"name": "ship", "state": "unknown", "place": type(e).__name__}]
 
 
-def status_text(wanted, hh, prev_cash):
+def ship_text(ships):
+    return "; ".join("%s %s %s" % (s["name"], s["state"], s["place"]) for s in ships) or "no ships"
+
+
+def status_text(wanted, hh, prev_cash, ships):
     cash = m.num(hh.get("cash"))
     head = "OK - all clear" if not wanted else "ATTENTION - %d alert(s): %s" % (
         len(wanted), "; ".join(t.replace("[merc] ", "") for t in wanted))
     delta = "" if prev_cash is None else " (%+.0f since last check)" % (cash - prev_cash)
     return "%s\ncash %.0f%s | prestige %.1f\nship: %s" % (
-        head, cash, delta, m.num(hh.get("prestige")), ship_status())
+        head, cash, delta, m.num(hh.get("prestige")), ship_text(ships))
 
 
-def post_status(wanted, hh):
+def data_line(wanted, hh, ships, snap, prices, held):
+    items = {}
+    for item in sorted(set(snap) | set(held)):
+        f = snap.get(item, {})
+        row = [round(held.get(item, 0), 1)] + [f.get(k, 0) for k in FLOW_KEYS] + [prices.get(item, 0)]
+        if any(row):
+            items[item] = row
+    d = {
+        "v": 1,
+        "t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "cash": round(m.num(hh.get("cash")), 2),
+        "prestige": round(m.num(hh.get("prestige")), 2),
+        "alerts": [t.replace("[merc] ", "") for t in wanted],
+        "ships": ships,
+        "cols": ["held"] + FLOW_KEYS + ["price"],
+        "items": items,
+    }
+    return "merc-data: " + json.dumps(d, separators=(",", ":"), default=str)
+
+
+def post_status(wanted, hh, ships, dline):
     gh("label", "create", STATUS_LABEL, "--color", "0e8a16", "--force")
     r = gh("issue", "list", "--label", STATUS_LABEL, "--state", "open",
            "--limit", "5", "--json", "number,body")
@@ -103,7 +149,7 @@ def post_status(wanted, hh):
         res = gh("issue", "create", "--title", STATUS_TITLE, "--label", STATUS_LABEL,
                  "--body", "Hourly status from alerts.py. Keep this issue open.")
         num = res.stdout.strip().rsplit("/", 1)[-1]
-    body = status_text(wanted, hh, prev_cash)
+    body = status_text(wanted, hh, prev_cash, ships) + "\n\n" + dline
     gh("issue", "comment", num, "--body", body)
     gh("issue", "edit", num, "--body",
        "Hourly status from alerts.py. Keep this issue open.\n\nlast_cash: %.2f" % m.num(hh.get("cash")))
@@ -123,10 +169,21 @@ def main():
         if f.get("kind") in ALERT_KINDS:
             title = "[merc] %s: %s" % (f.get("item"), f.get("kind"))
             wanted[title] = "%s -- %s (%s)" % (f.get("item"), f.get("text", ""), f.get("building"))
-    flow_alerts([r.get("building_id") for r in data.get("buildings", [])], wanted)
+
+    prices, held = {}, {}
+    for r in data.get("buildings", []):
+        for item, d in (r.get("items") or {}).items():
+            held[item] = held.get(item, 0) + m.num(d.get("held"))
+            if m.num(d.get("last_price")):
+                prices[item] = m.num(d.get("last_price"))
+    snap = {}
+    flow_alerts([r.get("building_id") for r in data.get("buildings", [])], wanted, snap)
 
     hh = data.get("household", {})
-    print(status_text(wanted, hh, None))
+    ships = ship_info()
+    dline = data_line(wanted, hh, ships, snap, prices, held)
+    print(status_text(wanted, hh, None, ships))
+    print(dline[:300] + ("..." if len(dline) > 300 else ""), "(%d chars)" % len(dline))
     for title, body in wanted.items():
         print("  ", title, "|", body)
 
@@ -149,7 +206,7 @@ def main():
             gh("issue", "close", str(number), "--comment", "Cleared on the latest hourly check.")
             print("closed:", title)
 
-    post_status(wanted, hh)
+    post_status(wanted, hh, ships, dline)
 
 
 if __name__ == "__main__":
