@@ -8,6 +8,9 @@
      is normal for topped-up buys, so it is not alerted)
    - storehouse previous_flows: any shortfall, and labour expiration above
      EXPIRE_MIN (bought labour going to waste)
+   - order watch: a sell rule moving under half its volume with stock piling
+     up ("not selling"), or a buy rule filling under half while stock is
+     down to ~2 turns of use ("buy not filling")
 2. Good news: every run posts a comment on one standing issue
    "[merc] hourly status" (label merc-status): OK / alerts, cash and the cash
    change since the last check, prestige, and where the ship is. The last cash
@@ -70,6 +73,35 @@ def flow_alerts(building_ids, wanted, snap):
             if item == "labour" and m.num(fl.get("expiration")) > EXPIRE_MIN:
                 wanted["[merc] labour: expiring"] = (
                     "%.1f bought labour expired unused last turn -- trim the labour buy" % m.num(fl.get("expiration")))
+
+
+def watch_alerts(buildings, snap, wanted):
+    """Orders that aren't working, from last turn's flows vs the standing rules:
+    - a sell rule that moved under half its volume while real stock sits
+      above the keep level  -> "<item>: not selling" (price floor too high,
+      or the market is full)
+    - a buy rule that filled under half its volume while stock is down to
+      about two turns of use -> "<item>: buy not filling" (max price too low,
+      or nobody is selling)"""
+    for r in buildings:
+        for item, d in (r.get("items") or {}).items():
+            held = m.num(d.get("held"))
+            fl = snap.get(item, {})
+            sold, bought = fl.get("sale", 0), fl.get("purchase", 0)
+            used = fl.get("consumption", 0)
+            for mg in d.get("managers") or []:
+                sv, sp = m.num(mg.get("sell_volume")), m.num(mg.get("sell_price"))
+                keep = m.num(mg.get("min_holding"))
+                if sv > 0 and sold < 0.5 * sv and held > keep + 2 * sv:
+                    wanted["[merc] %s: not selling" % item] = (
+                        "%s sold %.0f of %.0f/turn at >= %.2f; %.0f in stock. Lower the floor "
+                        "or cut production." % (item, sold, sv, sp, held))
+                bv, bp = m.num(mg.get("buy_volume")), m.num(mg.get("buy_price"))
+                if bv > 0 and bought < 0.5 * bv and used > 0 and held < 2 * used:
+                    wanted["[merc] %s: buy not filling" % item] = (
+                        "%s bought %.0f of %.0f/turn at <= %.2f; %.0f left, uses %.0f/turn. "
+                        "Raise the max price or slow the buildings that use it."
+                        % (item, bought, bv, bp, held, used))
 
 
 def ship_info():
@@ -178,6 +210,7 @@ def main():
                 prices[item] = m.num(d.get("last_price"))
     snap = {}
     flow_alerts([r.get("building_id") for r in data.get("buildings", [])], wanted, snap)
+    watch_alerts(data.get("buildings", []), snap, wanted)
 
     hh = data.get("household", {})
     ships = ship_info()
