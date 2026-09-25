@@ -66,15 +66,16 @@ def send(method, path, body):
         return False, str(e.reason)
 
 
-def plan(sizes, other_thread):
+def plan(sizes, other_thread, thread_stock=0.0):
     """Most garments the plots allow, then the targets that feed exactly that."""
     s = sizes
     ret_cap = min(s["ret"], s["flax"] * CHAIN["flax"]["out"] / CHAIN["ret"]["in"])
     spin_cap = min(s["spin"], ret_cap * CHAIN["ret"]["out"] / CHAIN["spin"]["in"])
-    cloth_cap = min(s["weave"] * CHAIN["weave"]["out"], spin_cap * CHAIN["spin"]["out"] - other_thread)
+    buffer = thread_stock / 40.0   # let thread stock cover a small deficit (~40 turns)
+    cloth_cap = min(s["weave"] * CHAIN["weave"]["out"], spin_cap * CHAIN["spin"]["out"] + buffer - other_thread)
     sew = min(s["sew"], max(0, cloth_cap) / CHAIN["sew"]["in"])
     weave = sew * CHAIN["sew"]["in"] / CHAIN["weave"]["out"]
-    spin = (weave * CHAIN["weave"]["in"] + other_thread) / CHAIN["spin"]["out"]
+    spin = min(s["spin"], (weave * CHAIN["weave"]["in"] + other_thread) / CHAIN["spin"]["out"])
     ret = spin * CHAIN["spin"]["in"] / CHAIN["ret"]["out"]
     flax = ret * CHAIN["ret"]["in"] / CHAIN["flax"]["out"]
     t = {"sew": sew, "weave": weave, "spin": min(spin, s["spin"]), "ret": min(ret, s["ret"]), "flax": min(flax, s["flax"])}
@@ -100,7 +101,8 @@ def main():
     except (OSError, ValueError):
         last = None
 
-    new = plan(sizes, other_thread)
+    thread_stock = m.num(((inv.get("account") or {}).get("assets") or {}).get("thread", {}).get("balance"))
+    new = plan(sizes, other_thread, thread_stock)
     changed = last is not None and last != sizes
     print("sizes:", sizes, "(last seen: %s)" % last)
     print("current targets:", cur)
