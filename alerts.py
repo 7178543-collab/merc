@@ -236,6 +236,36 @@ def post_status(wanted, hh, ships, dline):
     print("status posted to #%s" % num)
 
 
+def contract_alerts(wanted, prices, held):
+    """New church/NPC offers in our town that pay bonus prestige (Taylor, Sep 26:
+    'keep a closer look for those contracts'). One issue per offer while it is
+    open and unsigned; it closes itself once signed or gone. Shows what we hold,
+    the rough cost at home prices and coin per prestige."""
+    try:
+        c = m.get("/contracts/towns/152202387")
+    except SystemExit:
+        print("contracts: town board not readable with this token")
+        return
+    for x in (c.get("contracts") if isinstance(c, dict) else c) or []:
+        bonus = m.num(x.get("bonus"))
+        if not bonus or x.get("signed"):
+            continue
+        for t in x.get("transactions") or []:
+            if t.get("direction") != "bid":      # they want goods delivered
+                continue
+            item, vol = t.get("asset"), m.num(t.get("volume"))
+            have = held.get(item, 0)
+            price = prices.get(item, 0)
+            cost = vol * price
+            per = ("%.0f coin/prestige" % (cost / bonus)) if cost else "no home price"
+            verdict = "WE HOLD ENOUGH: sign and deliver now" if have >= vol else "need %.0f more" % (vol - have)
+            length = (t.get("timeframe") or {}).get("length")
+            wanted["[merc] church contract: %s" % item] = (
+                "Deliver %.0f %s for +%.0f prestige (penalty %s, %s turns). We hold %.0f. "
+                "Cost about %.0f at home prices = %s. %s." % (
+                    vol, item, bonus, t.get("penalty", "?"), length, have, cost, per, verdict))
+
+
 def main():
     out = subprocess.run([sys.executable, "merc_advisor.py", "--json", "--full"],
                          capture_output=True, text=True)
@@ -259,6 +289,7 @@ def main():
     snap = {}
     flow_alerts([r.get("building_id") for r in data.get("buildings", [])], wanted, snap)
     watch_alerts(data.get("buildings", []), snap, wanted)
+    contract_alerts(wanted, prices, held)
 
     hh = data.get("household", {})
     ships = ship_info()
