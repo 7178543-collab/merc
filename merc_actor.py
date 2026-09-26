@@ -159,7 +159,32 @@ def propose_fix(building, building_id, item, kind, d):
     return p
 
 
-def labour_proposal(building_id, building_name):
+def chain_state(biz):
+    """What our production buildings came up short on last turn, and whether
+    any of them ran well under target for a reason other than labour. While
+    the chain is stalled or restarting, last turn's usage is not normal usage:
+    trimming labour or dropping a buy then breaks things (Sep 26: porterage
+    outage stopped flax + retting, the 'unused' porterage buy was nearly
+    dropped and the labour buy nearly trimmed just as they restarted)."""
+    short_items, stalled = set(), []
+    for bb in biz.get("buildings", []):
+        if bb.get("type") in ("storehouse", "warehouse"):
+            continue
+        b = adv.safe_get("/buildings/%s" % bb["id"]) or {}
+        p = b.get("producer") or {}
+        flows = (p.get("inventory") or {}).get("previous_flows") or {}
+        for item, f in flows.items():
+            if m.num((f or {}).get("shortfall")) > 0:
+                short_items.add(item)
+        po = p.get("previous_operation") or {}
+        tgt, prod = m.num(po.get("target")), m.num(po.get("production"))
+        lim = po.get("limitation")
+        if tgt > 0 and prod < tgt * 0.9 and lim and lim != "labour":
+            stalled.append("%s (%s)" % (bb.get("name") or bb["id"], lim))
+    return short_items, stalled
+
+
+def labour_proposal(building_id, building_name, stalled=()):
     """Labour auto-balance (Taylor, Sep 2026). Builds add labour to the buy and
     nothing takes it back when they finish, so bought labour expires. Each run:
     if last turn's bought labour expired, trim the buy by that (minus a small
@@ -184,6 +209,9 @@ def labour_proposal(building_id, building_name):
     need = m.num(f.get("consumption")) + short - m.num(f.get("production")) + LABOUR_BUFFER
     new = need
     why = ("%.1f labour short last turn" % short) if short > 0 else ("%.1f bought labour expired last turn" % exp)
+    if new < cur and stalled:
+        print("labour trim skipped, chain stalled/restarting: %s" % ", ".join(stalled))
+        return None
     new = max(cur * 0.75, min(cur * 1.25, new))
     new = int(round(max(0, new)))
     if abs(new - cur) < 5:
@@ -201,7 +229,7 @@ LABOUR_BUFFER = 10
 CHAIN_INTERMEDIATES = {"flax plants", "flax fibres", "thread", "cloth"}
 
 
-def cleanup_proposals(building_id, building_name):
+def cleanup_proposals(building_id, building_name, short_items=()):
     """Safe order cleanups (Taylor, Sep 2026):
     - a chain intermediate (flax plants/fibres, thread, cloth) came up short
       last turn while a sell order was on: drop the sell order, the chain needs it
@@ -229,7 +257,9 @@ def cleanup_proposals(building_id, building_name):
                 for k in ("sell_volume", "sell_price", "min_holding"):
                     mg.pop(k, None)
             why.append("%.1f short last turn while being sold; the chain needs it" % short)
-        if bought > 0 and cons == 0 and exp > 0 and any(m.num(mg.get("buy_volume")) for mg in patch):
+        if item in short_items:
+            print("keep %s buy: a building came up short on it last turn" % item)
+        elif bought > 0 and cons == 0 and exp > 0 and any(m.num(mg.get("buy_volume")) for mg in patch):
             for mg in patch:
                 for k in ("buy_volume", "buy_price", "max_holding"):
                     mg.pop(k, None)
@@ -320,11 +350,12 @@ def run():
                             p["flag_text"] = text
                             proposals.append(p)
         # labour auto-balance: trim what expired / top up a shortfall (see labour_proposal)
+        short_items, stalled = chain_state(biz)
         for s in stores:
-            lp = labour_proposal(s["id"], s.get("name") or "storehouse")
+            lp = labour_proposal(s["id"], s.get("name") or "storehouse", stalled)
             if lp:
                 proposals.append(lp)
-            proposals.extend(cleanup_proposals(s["id"], s.get("name") or "storehouse"))
+            proposals.extend(cleanup_proposals(s["id"], s.get("name") or "storehouse", short_items))
     except Exception as e:
         log_error("run failed mid-pass: %r" % e)
         if not QUIET:
