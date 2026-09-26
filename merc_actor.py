@@ -198,6 +198,51 @@ def labour_proposal(building_id, building_name):
 LABOUR_BUFFER = 10
 
 
+CHAIN_INTERMEDIATES = {"flax plants", "flax fibres", "thread", "cloth"}
+
+
+def cleanup_proposals(building_id, building_name):
+    """Safe order cleanups (Taylor, Sep 2026):
+    - a chain intermediate (flax plants/fibres, thread, cloth) came up short
+      last turn while a sell order was on: drop the sell order, the chain needs it
+    - an item was bought, nothing used it last turn and some expired: drop the
+      buy order (e.g. porterage after the logging camp stopped)"""
+    b = adv.safe_get("/buildings/%s" % building_id)
+    if not b:
+        return []
+    inv = (b.get("storage") or {}).get("inventory") or {}
+    flows = inv.get("previous_flows") or {}
+    out = []
+    for item, h in (inv.get("holdings") or {}).items():
+        if item in ("labour", "money"):
+            continue
+        mgrs = (h or {}).get("managers") or []
+        if not mgrs:
+            continue
+        f = flows.get(item) or {}
+        short, cons = m.num(f.get("shortfall")), m.num(f.get("consumption"))
+        exp, bought = m.num(f.get("expiration")), m.num(f.get("purchase"))
+        patch = [{k: v for k, v in mg.items() if k != "result"} for mg in mgrs]
+        why = []
+        if item in CHAIN_INTERMEDIATES and short > 0 and any(m.num(mg.get("sell_volume")) for mg in patch):
+            for mg in patch:
+                for k in ("sell_volume", "sell_price", "min_holding"):
+                    mg.pop(k, None)
+            why.append("%.1f short last turn while being sold; the chain needs it" % short)
+        if bought > 0 and cons == 0 and exp > 0 and any(m.num(mg.get("buy_volume")) for mg in patch):
+            for mg in patch:
+                for k in ("buy_volume", "buy_price", "max_holding"):
+                    mg.pop(k, None)
+            why.append("bought %.1f, nothing used it, %.1f went off" % (bought, exp))
+        if not why:
+            continue
+        patch = [mg for mg in patch if m.num(mg.get("buy_volume")) or m.num(mg.get("sell_volume"))]
+        out.append(dict(action="patch_manager", building=building_name, building_id=building_id, item=item,
+                        change="drop order", field="orders", old_value=0, new_value=0,
+                        managers_patch=patch, reason="; ".join(why), flag_text="; ".join(why)))
+    return out
+
+
 def send_live(proposal):
     """PATCH the real manager endpoint for one proposal. Returns a result dict
     for logging; never raises -- a failed send is a logged fact, not a crash."""
@@ -279,6 +324,7 @@ def run():
             lp = labour_proposal(s["id"], s.get("name") or "storehouse")
             if lp:
                 proposals.append(lp)
+            proposals.extend(cleanup_proposals(s["id"], s.get("name") or "storehouse"))
     except Exception as e:
         log_error("run failed mid-pass: %r" % e)
         if not QUIET:
