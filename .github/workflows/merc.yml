@@ -1,7 +1,10 @@
 name: merc-actor
 on:
   schedule:
-    - cron: '5 * * * *'
+    # two checks per turn (turns tick at about :59): early one catches the new turn,
+    # late one catches changes made during the turn (GitHub often starts cron runs 5-15 min late)
+    - cron: '1 * * * *'
+    - cron: '40 * * * *'
   workflow_dispatch:
     inputs:
       live:
