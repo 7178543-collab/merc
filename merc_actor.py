@@ -176,12 +176,14 @@ def labour_proposal(building_id, building_name):
     if idx is None:
         return None
     cur = m.num(mgrs[idx].get("buy_volume"))
-    if exp > LABOUR_BUFFER:
-        new, why = cur - (exp - LABOUR_BUFFER), "%.1f bought labour expired last turn" % exp
-    elif short > 0:
-        new, why = cur + short + LABOUR_BUFFER, "%.1f labour short last turn" % short
-    else:
+    if exp <= LABOUR_BUFFER and short <= 0:
         return None
+    # size the buy from what was actually used, not as a delta off the current
+    # order: the current order may already have been changed by hand since that
+    # turn, and a delta would then over-correct
+    need = m.num(f.get("consumption")) + short - m.num(f.get("production")) + LABOUR_BUFFER
+    new = need
+    why = ("%.1f labour short last turn" % short) if short > 0 else ("%.1f bought labour expired last turn" % exp)
     new = max(cur * 0.75, min(cur * 1.25, new))
     new = int(round(max(0, new)))
     if abs(new - cur) < 5:
