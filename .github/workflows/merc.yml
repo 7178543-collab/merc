@@ -65,6 +65,15 @@ jobs:
           else
             python alerts.py
           fi
+      - name: Scorecard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.live }}" = "true" ]; then
+            python scorecard.py --live
+          else
+            python scorecard.py
+          fi
       - name: Save history
         if: github.event_name == 'schedule' || inputs.live
         run: |
