@@ -80,16 +80,19 @@ BUY_CEILINGS = {"grain": 3.10, "labour": 1.80, "firewood": 2.25, "bread": 2.60, 
 
 
 def snap_price(p, up):
-    """Snap a price to the game's price grid: 3 significant digits, and when
-    the first digit is 3-9 the last digit must be even (3.85 is rejected,
-    3.84 is fine). up=True rounds up (a sell never drops below its target),
-    False rounds down (a buy never goes above it)."""
+    """Snap a price to the game's price grid (tested against the server,
+    May 1069): at most 2 decimals and 3 significant digits; when the first
+    digit is 1 any last digit is fine, 2-4 needs an even last digit
+    (3.85 rejected, 3.84 ok), 5-9 needs a last digit of 0 or 5
+    (5.46 rejected, 5.45 ok). up=True rounds up (a sell never drops below
+    its target), False rounds down (a buy never goes above it)."""
     import math
     if not p or p <= 0:
         return p
-    e = math.floor(math.log10(p)) - 2
+    e = math.floor(math.log10(p) + 1e-12) - 2
     lead = int(p / 10 ** (e + 2) + 1e-9)
-    step = 10 ** e * (2 if lead > 2 else 1)
+    step = 10 ** e * (5 if lead >= 5 else 2 if lead >= 2 else 1)
+    step = max(step, 0.01)
     n = p / step
     n = math.ceil(n - 1e-9) if up else math.floor(n + 1e-9)
     return round(n * step, 6)
