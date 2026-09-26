@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Merc Ops panel
 // @namespace    strasclives
-// @version      1.8.1
+// @version      1.8.2
 // @updateURL    https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @downloadURL  https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @description  30-second ops panel for Mercatorio: needs-you list, issues with one-tap fixes, production, orders, builds, boats, contracts, markets, money, charts with projections, plan, and an emergency self-sufficient mode.
@@ -20,7 +20,7 @@
   window.__mercOps = true;
 
   // ---------------------------------------------------------------- config
-  const VERSION = '1.8.1';
+  const VERSION = '1.8.2';
   const BUSINESS = '39992';
   const HOUSEHOLD = '21623';
   const STORE = '152202386005001';
@@ -238,7 +238,7 @@
         api('/clock').catch(() => ({})),
       ]);
       const ids = (biz.building_ids || []).filter(id => id !== STORE);
-      const [blds, boats, myC, townC, towns, notes, rec] = await Promise.all([
+      const [blds, boats, myC, townC, towns, notes, rec, chainSaved] = await Promise.all([
         Promise.all(ids.map(id => api('/buildings/' + id).catch(() => null))),
         Promise.all((biz.transport_ids || []).map(id => api('/transports/' + id).catch(() => null))),
         api('/businesses/' + BUSINESS + '/contracts').catch(() => ({})),
@@ -246,11 +246,13 @@
         townNames(),
         api('/notifications').catch(() => []),
         gameData().catch(() => ({ r: [], sizes: {} })),
+        fetch('https://raw.githubusercontent.com/7178543-collab/merc/main/state/chain_sizes.json?t=' + Date.now()).then(r => r.json()).catch(() => null),
       ]);
       const inv = (sh.storage || {}).inventory || {};
       const prevS = S;
       S = {
         hh, rec,
+        chainMode: chainSaved && chainSaved.mode,
         rival: prevS && prevS.rival,
         justActed: !!(prevS && prevS.justActed),
         boats: boats.filter(Boolean),
@@ -599,6 +601,20 @@
     weave: { id: '152202388001005', labour: 75,  tools: 0,   in: 50, out: 50 },
     sew:   { id: '152202388000004', labour: 155, tools: 0,   in: 80, out: 41 },
   };
+  // stockpiles between chain steps (keep in step with chain_balancer.py BUFFERS)
+  const CHAIN_BUFFERS = {
+    'flax fibres': { target: 200, fill: 0 },
+    thread: { target: 450, fill: 15 },
+    cloth: { target: 400, fill: 10 },
+  };
+  const CHAIN_OTHER_THREAD_MIN = 24;   // household net duty thread; reads 0 when weaving stalled
+  // the bot's mode from state/chain_sizes.json; if unreadable, work it out the same way
+  function chainMode() {
+    const items = Object.entries(CHAIN_BUFFERS);
+    if (items.some(([i, b]) => held(i) < b.target * 0.5)) return 'FILLING';
+    if (items.every(([i, b]) => held(i) >= b.target)) return 'FULL';
+    return S.chainMode || 'FILLING';
+  }
   function chainState(sizeOverride) {
     const b = {}, size = {}, cur = {};
     for (const [k, c] of Object.entries(CHAIN)) {
@@ -607,22 +623,30 @@
       size[k] = num(b[k].size); cur[k] = num(b[k].producer.target);
     }
     Object.assign(size, sizeOverride || {});
-    const other = Math.max(0, num(flowsOf('thread').consumption) - cur.weave * CHAIN.weave.in);
-    const retCap = Math.min(size.ret, size.flax * CHAIN.flax.out / CHAIN.ret.in);
-    const spinCap = Math.min(size.spin, retCap * CHAIN.ret.out / CHAIN.spin.in);
-    const buffer = held('thread') / 40;   // let thread stock cover a small deficit (~40 turns)
-    const clothCap = Math.min(size.weave * CHAIN.weave.out, spinCap * CHAIN.spin.out + buffer - other);
-    const sew = Math.min(size.sew, Math.max(0, clothCap) / CHAIN.sew.in);
-    const weave = sew * CHAIN.sew.in / CHAIN.weave.out;
-    const spin = Math.min(size.spin, (weave * CHAIN.weave.in + other) / CHAIN.spin.out);
-    const ret = Math.min(size.ret, spin * CHAIN.spin.in / CHAIN.ret.out);
-    const flax = Math.min(size.flax, ret * CHAIN.ret.in / CHAIN.flax.out);
+    // v1.8.2: same plan as chain_balancer.py (stockpile mode). Upstream runs flat out while
+    // the stockpiles fill; weaving/sewing hold back a little thread/cloth each turn.
+    const other = Math.max(CHAIN_OTHER_THREAD_MIN, num(flowsOf('thread').consumption) - cur.weave * CHAIN.weave.in);
+    const mode = chainMode();
+    const filling = mode === 'FILLING';
+    const hold = item => (filling && held(item) < CHAIN_BUFFERS[item].target) ? CHAIN_BUFFERS[item].fill : 0;
+    let flax = size.flax;
+    let ret = Math.min(size.ret, flax * CHAIN.flax.out / CHAIN.ret.in);
+    let spin = Math.min(size.spin, ret * CHAIN.ret.out / CHAIN.spin.in);
+    let weave = Math.min(size.weave, Math.max(0, spin * CHAIN.spin.out - other - hold('thread')) / CHAIN.weave.in);
+    let sew = Math.min(size.sew, Math.max(0, weave * CHAIN.weave.out - hold('cloth')) / CHAIN.sew.in);
+    if (!filling) {
+      weave = sew * CHAIN.sew.in / CHAIN.weave.out;
+      spin = Math.min(size.spin, (weave * CHAIN.weave.in + other) / CHAIN.spin.out);
+      const fibNeed = spin * CHAIN.spin.in + (held('flax fibres') >= CHAIN_BUFFERS['flax fibres'].target ? 0 : 5);
+      ret = Math.min(size.ret, fibNeed / CHAIN.ret.out);
+      flax = Math.min(size.flax, ret * CHAIN.ret.in / CHAIN.flax.out);
+    }
     const plan = { flax, ret, spin, weave, sew };
     for (const k in plan) plan[k] = +plan[k].toFixed(2);
     const moves = Object.keys(CHAIN).filter(k => Math.abs(plan[k] - cur[k]) >= 0.02).map(k => ({ k, from: cur[k], to: plan[k], b: b[k] }));
     const dLab = moves.reduce((a, x) => a + (x.to - x.from) * CHAIN[x.k].labour, 0);
     const dTools = moves.reduce((a, x) => a + (x.to - x.from) * CHAIN[x.k].tools, 0);
-    return { size, cur, plan, moves, dLab, dTools, other, gNow: cur.sew * 41, gNew: plan.sew * 41 };
+    return { size, cur, plan, moves, dLab, dTools, other, mode, gNow: cur.sew * 41, gNew: plan.sew * 41 };
   }
   // what the balancer will do as each chain expansion lands, in ETA order
   function chainNext() {
@@ -971,6 +995,7 @@
       const c = chainState();
       if (c) chainHtml = `<div class="card ${c.moves.length ? 'warn' : 'ok'}"><b>Textile chain</b> <span class="muted">flax → retting → spinning → weaving → sewing</span>
         <div class="muted">${Object.keys(CHAIN).map(k => `${k} ${f2(c.cur[k])}x/${c.size[k]}`).join(' · ')}</div>
+        <div class="muted">Stockpiles ${c.mode === 'FILLING' ? 'FILLING' : 'full'}: ${Object.entries(CHAIN_BUFFERS).map(([i, b]) => `${i} ${Math.round(held(i))}/${b.target}`).join(' · ')}</div>
         ${c.moves.length ? `<div style="margin-top:6px">Balanced: ${c.moves.map(x => `${x.k} → ${f2(x.to)}x`).join(', ')}<br><span class="muted">garments ${f1(c.gNow)} → ${f1(c.gNew)}/turn · labour ${c.dLab >= 0 ? '+' : ''}${Math.round(c.dLab)} · tools ${c.dTools >= 0 ? '+' : ''}${f1(c.dTools)}</span></div>
           <div class="row" style="margin-top:6px"><button class="a" data-balance="1">Balance chain</button></div>` : '<div class="muted" style="margin-top:4px">Balanced: every step feeds the next.</div>'}</div>`;
     } catch (e) { chainHtml = ''; }
