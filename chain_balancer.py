@@ -56,6 +56,9 @@ BUFFERS = {
     "cloth":       {"target": 400, "fill": 10},
 }
 LOW_FRACTION = 0.5
+# Thread the household net duty uses (~24/turn). Measured use reads 0 when weaving
+# stalled last turn, so never plan with less than this.
+OTHER_THREAD_MIN = 24
 MIN_CHANGE = 0.02        # ignore target changes smaller than this (x)
 
 
@@ -130,7 +133,7 @@ def main():
     flows = inv.get("previous_flows") or {}
     holds = inv.get("holdings") or {}
     # thread used by anything other than the weavery (household net duty)
-    other_thread = max(0.0, m.num((flows.get("thread") or {}).get("consumption")) - cur["weave"] * CHAIN["weave"]["in"])
+    other_thread = max(OTHER_THREAD_MIN, m.num((flows.get("thread") or {}).get("consumption")) - cur["weave"] * CHAIN["weave"]["in"])
 
     try:
         with open(STATE) as f:
