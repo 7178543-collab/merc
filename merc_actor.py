@@ -159,6 +159,43 @@ def propose_fix(building, building_id, item, kind, d):
     return p
 
 
+def labour_proposal(building_id, building_name):
+    """Labour auto-balance (Taylor, Sep 2026). Builds add labour to the buy and
+    nothing takes it back when they finish, so bought labour expires. Each run:
+    if last turn's bought labour expired, trim the buy by that (minus a small
+    buffer); if we came up short, raise it by the shortfall plus the buffer.
+    Moves under 5 are ignored and one move is capped at 25% of the buy."""
+    b = adv.safe_get("/buildings/%s" % building_id)
+    if not b:
+        return None
+    inv = (b.get("storage") or {}).get("inventory") or {}
+    f = (inv.get("previous_flows") or {}).get("labour") or {}
+    exp, short = m.num(f.get("expiration")), m.num(f.get("shortfall"))
+    mgrs = ((inv.get("holdings") or {}).get("labour") or {}).get("managers") or []
+    idx = next((i for i, mg in enumerate(mgrs) if m.num(mg.get("buy_volume"))), None)
+    if idx is None:
+        return None
+    cur = m.num(mgrs[idx].get("buy_volume"))
+    if exp > LABOUR_BUFFER:
+        new, why = cur - (exp - LABOUR_BUFFER), "%.1f bought labour expired last turn" % exp
+    elif short > 0:
+        new, why = cur + short + LABOUR_BUFFER, "%.1f labour short last turn" % short
+    else:
+        return None
+    new = max(cur * 0.75, min(cur * 1.25, new))
+    new = int(round(max(0, new)))
+    if abs(new - cur) < 5:
+        return None
+    patch = [{k: v for k, v in mg.items() if k != "result"} for mg in mgrs]
+    patch[idx]["buy_volume"] = new
+    return dict(action="patch_manager", building=building_name, building_id=building_id, item="labour",
+                change="rebalance labour buy", field="buy_volume", old_value=cur, new_value=new,
+                managers_patch=patch, reason=why, flag_text=why)
+
+
+LABOUR_BUFFER = 10
+
+
 def send_live(proposal):
     """PATCH the real manager endpoint for one proposal. Returns a result dict
     for logging; never raises -- a failed send is a logged fact, not a crash."""
@@ -235,6 +272,11 @@ def run():
                         if p:
                             p["flag_text"] = text
                             proposals.append(p)
+        # labour auto-balance: trim what expired / top up a shortfall (see labour_proposal)
+        for s in stores:
+            lp = labour_proposal(s["id"], s.get("name") or "storehouse")
+            if lp:
+                proposals.append(lp)
     except Exception as e:
         log_error("run failed mid-pass: %r" % e)
         if not QUIET:
