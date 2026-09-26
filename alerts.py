@@ -139,12 +139,14 @@ def ship_text(ships):
 
 
 def status_text(wanted, hh, prev_cash, ships):
+    # Taylor wants the email readable at a glance: just "All good" or "Check Ops".
     cash = m.num(hh.get("cash"))
-    head = "OK - all clear" if not wanted else "ATTENTION - %d alert(s): %s" % (
-        len(wanted), "; ".join(t.replace("[merc] ", "") for t in wanted))
-    delta = "" if prev_cash is None else " (%+.0f since last check)" % (cash - prev_cash)
-    return "%s\ncash %.0f%s | prestige %.1f\nship: %s" % (
-        head, cash, delta, m.num(hh.get("prestige")), ship_text(ships))
+    if not wanted:
+        head = "\u2705 All good"
+    else:
+        head = "\u26a0\ufe0f Check Ops (%d issue%s)" % (len(wanted), "" if len(wanted) == 1 else "s")
+    delta = "" if prev_cash is None else " (%+.0f)" % (cash - prev_cash)
+    return "%s\ncash %s%s" % (head, "{:,.0f}".format(cash), delta)
 
 
 def money_extra():
@@ -221,7 +223,8 @@ def post_status(wanted, hh, ships, dline):
         res = gh("issue", "create", "--title", STATUS_TITLE, "--label", STATUS_LABEL,
                  "--body", "Hourly status from alerts.py. Keep this issue open.")
         num = res.stdout.strip().rsplit("/", 1)[-1]
-    body = status_text(wanted, hh, prev_cash, ships) + "\n\n" + dline
+    # the data line stays in the comment for the Strasclives Ledger, hidden from the rendered email
+    body = status_text(wanted, hh, prev_cash, ships) + "\n\n<!--\n" + dline + "\n-->"
     gh("issue", "comment", num, "--body", body)
     gh("issue", "edit", num, "--body",
        "Hourly status from alerts.py. Keep this issue open.\n\nlast_cash: %.2f" % m.num(hh.get("cash")))
