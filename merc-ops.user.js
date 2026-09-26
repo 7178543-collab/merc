@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Merc Ops panel
 // @namespace    strasclives
-// @version      1.8
+// @version      1.8.1
 // @updateURL    https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @downloadURL  https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @description  30-second ops panel for Mercatorio: needs-you list, issues with one-tap fixes, production, orders, builds, boats, contracts, markets, money, charts with projections, plan, and an emergency self-sufficient mode.
@@ -20,7 +20,7 @@
   window.__mercOps = true;
 
   // ---------------------------------------------------------------- config
-  const VERSION = '1.8';
+  const VERSION = '1.8.1';
   const BUSINESS = '39992';
   const HOUSEHOLD = '21623';
   const STORE = '152202386005001';
@@ -676,8 +676,9 @@
     const L = S.flows.labour || {};
     const exp = num(L.expiration), short = num(L.shortfall);
     const lm = (S.holdings.labour || {}).managers || [];
-    if (exp > 5 && lm.length) out.push({ lvl: 'warn', item: 'labour', text: `Labour: ${f1(exp)} bought labour expired unused`,
-      fixes: [{ safe: true, h: 'Lowers the labour buy by what expired, so we stop paying for labour nobody used', label: `Trim buy −${Math.round(exp)}`, run: () => setTier('labour', 0, { buy_volume: Math.max(0, num(lm[0].buy_volume) - Math.round(exp)) }) }] });
+    const stl = chainStalled();
+    if (exp > 5 && lm.length) out.push({ lvl: 'warn', item: 'labour', text: `Labour: ${f1(exp)} bought labour expired unused` + (stl.length ? ` (but ${stl.join(', ')} stalled, so don't trim yet)` : ''),
+      fixes: [{ safe: !stl.length, h: 'Lowers the labour buy by what expired, so we stop paying for labour nobody used', label: `Trim buy −${Math.round(exp)}`, run: () => setTier('labour', 0, { buy_volume: Math.max(0, num(lm[0].buy_volume) - Math.round(exp)) }) }] });
 
     for (const item of Object.keys(S.flows)) {
       const f = S.flows[item], sf = num(f.shortfall);
@@ -1709,11 +1710,26 @@
     for (const b of S.buildings || []) {
       const r = b.producer && b.producer.recipe && recipeByName(b.producer.recipe);
       if (r) Object.keys(r.in).forEach(p => s.add(p));
+      // delivery inputs (porterage) are not in the recipe: count anything the building holds or drew/was short of
+      const pi = (b.producer && b.producer.inventory) || {};
+      Object.keys(pi.holdings || {}).forEach(p => s.add(p));
+      for (const [p, f] of Object.entries(pi.previous_flows || {})) if (num((f || {}).shortfall) > 0 || num((f || {}).consumption) > 0) s.add(p);
       const c = b.construction; if (c && c.inventory) Object.keys(((c.inventory.account || {}).assets) || {}).forEach(p => s.add(p));
     }
     for (const t of S.boats || []) { const r = t.producer && t.producer.recipe && recipeByName(t.producer.recipe); if (r) Object.keys(r.in).forEach(p => s.add(p)); }
     try { household().forEach(x => s.add(x.i)); } catch (e) { }
     return s;
+  }
+  // buildings that ran well under target last turn for a reason other than labour:
+  // while any are stalled or restarting, last turn's usage is not normal usage
+  function chainStalled() {
+    const out = [];
+    for (const b of S.buildings || []) {
+      const po = (b.producer && b.producer.previous_operation) || {};
+      const t = num(po.target), p = num(po.production);
+      if (t > 0 && p < t * 0.9 && po.limitation && po.limitation !== 'labour') out.push((b.name || b.type || 'building') + ' (' + po.limitation + ')');
+    }
+    return out;
   }
   async function dropSide(item, side) {
     const keys = side === 'buy' ? ['buy_volume', 'buy_price', 'max_holding'] : ['sell_volume', 'sell_price', 'min_holding'];
