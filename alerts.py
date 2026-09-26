@@ -209,6 +209,11 @@ def save_history(dline):
 
 def post_status(wanted, hh, ships, dline):
     save_history(dline)
+    # the late-in-turn run only emails when something needs a look (no second "All good" per hour)
+    import datetime as _dt
+    if _dt.datetime.utcnow().minute >= 30 and not wanted:
+        print("late run, all good: no status comment")
+        return
     gh("label", "create", STATUS_LABEL, "--color", "0e8a16", "--force")
     r = gh("issue", "list", "--label", STATUS_LABEL, "--state", "open",
            "--limit", "5", "--json", "number,body")
