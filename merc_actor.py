@@ -179,7 +179,9 @@ def chain_state(biz):
         po = p.get("previous_operation") or {}
         tgt, prod = m.num(po.get("target")), m.num(po.get("production"))
         lim = po.get("limitation")
-        if tgt > 0 and prod < tgt * 0.9 and lim and lim != "labour":
+        # a full output bin ("... space") is a deliberate throttle, not a stall;
+        # counting it blocked every labour trim while the timber bin sat full
+        if tgt > 0 and prod < tgt * 0.9 and lim and lim != "labour" and "space" not in str(lim):
             stalled.append("%s (%s)" % (bb.get("name") or bb["id"], lim))
     return short_items, stalled
 
