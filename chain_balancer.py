@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 """Keep the flax -> retting -> spinning -> weaving -> sewing chain in balance.
 
-Runs hourly from the merc-actor workflow. It only ACTS when (a) a chain
-building's size (plot count) has changed since the last run, i.e. an expansion
-just finished, or (b) the buffer mode flips (FILLING <-> FULL, see BUFFERS).
-Otherwise it never fights manual tweaks made in between. When it acts it:
+v2 (Sep 27): PULL model. Sewing is sized to what actually SELLS (average
+garments sold over the last 24 turns, from history/), not to the plot count,
+and each step upstream makes exactly what the next step uses, plus a small
+top-up while its stockpile is below target. Stockpile targets are in TURNS of
+use (STOCK_TURNS), so they grow with the chain. Filling only happens when cash
+is above FILL_CASH_MIN; below that the mode is HOLD (make what's used, no
+top-up), so a finished expansion can never again drain cash to fill stock.
 
-  1. works out the most garments the current plots can support, holding back
-     a little thread/cloth each turn while the stockpiles are below target
-     (FILLING) and running flax/retting/spinning flat out to refill them,
-  2. sets every chain building's production target to feed exactly that,
-  3. adjusts the storehouse labour buy by the labour difference, the tools
-     buy by the tools difference, and the garments sell volume to the new
-     output, and
-  4. posts what it did as a comment on the hourly status issue.
+Runs from the merc-actor workflow. It only ACTS when (a) a chain building's
+plot count changed (an expansion finished) or (b) the mode flips
+(FILLING / FULL / HOLD). Otherwise it never fights manual tweaks.
 
     python chain_balancer.py            # dry run: print the plan
-    python chain_balancer.py --live     # apply it (only if sizes changed)
-    python chain_balancer.py --live --force   # apply even if sizes didn't change
+    python chain_balancer.py --live     # apply it (only if sizes or mode changed)
+    python chain_balancer.py --live --force   # apply even if nothing changed
 
-State (last seen sizes) lives in state/chain_sizes.json, committed by the workflow.
+State (last seen sizes + mode) lives in state/chain_sizes.json.
 """
+import glob
 import json
 import os
 import subprocess
@@ -46,16 +45,18 @@ CHAIN = {
 }
 HOUSEHOLD_GARMENTS = 1.8
 
-# Stockpiles between chain steps, so one bad turn upstream doesn't empty the chain.
-# target = stock we want held; fill = units per turn held back while below target.
-# FILLING starts when any stock drops under LOW_FRACTION of its target and ends when
-# every stock is back at target (hysteresis, so it doesn't flip every run).
+# Stockpiles between chain steps, in TURNS of what the next step uses.
+# fill = extra units per turn made while below target (and cash allows).
+STOCK_TURNS = 4
 BUFFERS = {
-    "flax fibres": {"target": 200, "fill": 0},    # filled by flax/retting headroom, not held back
-    "thread":      {"target": 450, "fill": 15},
-    "cloth":       {"target": 400, "fill": 10},
+    "flax fibres": {"fill": 5},
+    "thread":      {"fill": 15},
+    "cloth":       {"fill": 10},
 }
-LOW_FRACTION = 0.5
+LOW_FRACTION = 0.5       # FILLING starts when a stock is under half its target
+FILL_CASH_MIN = 8000     # below this cash: HOLD (no top-ups, make only what's used)
+SALES_WINDOW = 24        # turns of garment sales to average
+SALES_MARGIN = 1.05      # sew 5% over average sales (garment stock covers the rest)
 # Thread the household net duty uses (~24/turn). Measured use reads 0 when weaving
 # stalled last turn, so never plan with less than this.
 OTHER_THREAD_MIN = 24
@@ -83,43 +84,68 @@ def send(method, path, body):
         return False, str(e.reason)
 
 
-def plan(sizes, other_thread, stocks=None, filling=False):
-    """Most garments the plots allow, with stockpile top-up while FILLING.
+def garment_sales():
+    """Average garments sold per turn over the last SALES_WINDOW turns (None if no history)."""
+    per_turn = {}
+    for path in sorted(glob.glob("history/merc-*.jsonl")):
+        with open(path) as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                    per_turn[r["turn"]] = m.num(r["items"]["garments"][3])
+                except (ValueError, KeyError, IndexError, TypeError):
+                    continue
+    last = [per_turn[t] for t in sorted(per_turn)[-SALES_WINDOW:]]
+    return sum(last) / len(last) if len(last) >= 6 else None
 
-    Upstream (flax -> retting -> spinning) runs as hard as the plots allow so
-    fibres/thread build up; weaving and sewing are set to what is left after
-    holding back each buffer's 'fill' amount (only while FILLING)."""
+
+def targets(t, other_thread):
+    """Stockpile targets = STOCK_TURNS x what the next step uses per turn."""
+    C = CHAIN
+    return {
+        "cloth": STOCK_TURNS * t["sew"] * C["sew"]["in"],
+        "thread": STOCK_TURNS * (t["weave"] * C["weave"]["in"] + other_thread),
+        "flax fibres": STOCK_TURNS * t["spin"] * C["spin"]["in"],
+    }
+
+
+def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
+    """Pull model: sew what sells, each step upstream feeds the next, plus a
+    top-up per step while its stockpile is below target and mode is FILLING."""
     s, C = sizes, CHAIN
     stocks = stocks or {}
-    hold = lambda item: BUFFERS[item]["fill"] if filling and stocks.get(item, 0) < BUFFERS[item]["target"] else 0
-    # upstream flat out, limited by plots
-    flax = s["flax"]
-    ret = min(s["ret"], flax * C["flax"]["out"] / C["ret"]["in"])
-    spin = min(s["spin"], ret * C["ret"]["out"] / C["spin"]["in"])
-    # downstream: use what's made, minus nets thread and the top-ups
-    thread_for_weave = spin * C["spin"]["out"] - other_thread - hold("thread")
-    weave = min(s["weave"], max(0, thread_for_weave) / C["weave"]["in"])
-    cloth_for_sew = weave * C["weave"]["out"] - hold("cloth")
-    sew = min(s["sew"], max(0, cloth_for_sew) / C["sew"]["in"])
-    if not filling:
-        # stockpiles full: don't overproduce upstream, just feed what's used
-        weave = sew * C["sew"]["in"] / C["weave"]["out"]
-        spin = min(s["spin"], (weave * C["weave"]["in"] + other_thread) / C["spin"]["out"])
-        fib_need = spin * C["spin"]["in"] + (0 if stocks.get("flax fibres", 0) >= BUFFERS["flax fibres"]["target"] else 5)
-        ret = min(s["ret"], fib_need / C["ret"]["out"])
-        flax = min(s["flax"], ret * C["ret"]["in"] / C["flax"]["out"])
+    want = sales + HOUSEHOLD_GARMENTS if sales else s["sew"] * C["sew"]["out"]
+    sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
+    base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
+    base["spin"] = (base["weave"] * C["weave"]["in"] + other_thread) / C["spin"]["out"]
+    base["ret"] = base["spin"] * C["spin"]["in"] / C["ret"]["out"]
+    tg = targets(base, other_thread)
+
+    def top(item):
+        if mode == "FILLING" and stocks.get(item, 0) < tg[item]:
+            return BUFFERS[item]["fill"]
+        return 0
+    weave = min(s["weave"], (sew * C["sew"]["in"] + top("cloth")) / C["weave"]["out"])
+    spin = min(s["spin"], (weave * C["weave"]["in"] + other_thread + top("thread")) / C["spin"]["out"])
+    ret = min(s["ret"], (spin * C["spin"]["in"] + top("flax fibres")) / C["ret"]["out"])
+    flax = min(s["flax"], ret * C["ret"]["in"] / C["flax"]["out"])
+    # if plots cap a step upstream, the buffers cover the gap; the alert tells us
     t = {"sew": sew, "weave": weave, "spin": spin, "ret": ret, "flax": flax}
-    return {k: round(v, 2) for k, v in t.items()}
+    return {k: round(v, 2) for k, v in t.items()}, tg
 
 
-def buffer_mode(stocks, last_mode):
-    low = any(stocks.get(i, 0) < b["target"] * LOW_FRACTION for i, b in BUFFERS.items())
-    full = all(stocks.get(i, 0) >= b["target"] for i, b in BUFFERS.items())
+def buffer_mode(stocks, last_mode, tg, cash):
+    if cash < FILL_CASH_MIN:
+        return "HOLD"
+    low = any(stocks.get(i, 0) < tg[i] * LOW_FRACTION for i in BUFFERS)
+    full = all(stocks.get(i, 0) >= tg[i] for i in BUFFERS)
     if low:
         return "FILLING"
     if full:
         return "FULL"
-    return last_mode or "FILLING"
+    if last_mode in (None, "HOLD"):
+        return "FILLING"      # cash is back and stock is below target: top up
+    return last_mode
 
 
 def main():
@@ -148,13 +174,19 @@ def main():
 
     assets = (inv.get("account") or {}).get("assets") or {}
     stocks = {i: m.num((assets.get(i) or {}).get("balance")) for i in BUFFERS}
-    mode = buffer_mode(stocks, last_mode)
-    new = plan(sizes, other_thread, stocks, filling=(mode == "FILLING"))
+    cash = m.num(m.get("/households/21623").get("cash"))
+    sales = garment_sales()
+    _, tg = plan(sizes, other_thread, sales, stocks, "HOLD")
+    mode = buffer_mode(stocks, last_mode, tg, cash)
+    new, tg = plan(sizes, other_thread, sales, stocks, mode)
     changed = last is not None and last != sizes
     mode_changed = mode != last_mode
     print("sizes:", sizes, "(last seen: %s)" % last)
-    print("stocks:", {k: round(v) for k, v in stocks.items()}, "targets:", {k: b["target"] for k, b in BUFFERS.items()})
-    print("buffer mode: %s (last: %s)" % (mode, last_mode))
+    print("cash: %.0f (fill only above %d) | garments sold/turn (avg %d turns): %s" % (
+        cash, FILL_CASH_MIN, SALES_WINDOW, "%.1f" % sales if sales else "no history"))
+    print("stocks:", {k: round(v) for k, v in stocks.items()}, "targets (%d turns):" % STOCK_TURNS,
+          {k: round(v) for k, v in tg.items()})
+    print("mode: %s (last: %s)" % (mode, last_mode))
     print("current targets:", cur)
     print("planned targets:", new, "| other thread use %.1f" % other_thread)
     print("garments/turn: %.1f -> %.1f" % (cur["sew"] * 41, new["sew"] * 41))
@@ -183,8 +215,8 @@ def main():
         why.append("expansion finished: " + ", ".join(
             "%s %s->%s plots" % (k, last.get(k), sizes[k]) for k in CHAIN if last.get(k) != sizes[k]))
     if mode_changed:
-        why.append("stockpiles %s -> %s (%s)" % (last_mode, mode, ", ".join(
-            "%s %.0f/%d" % (i, stocks[i], BUFFERS[i]["target"]) for i in BUFFERS)))
+        why.append("mode %s -> %s (cash %.0f; %s)" % (last_mode, mode, cash, ", ".join(
+            "%s %.0f/%.0f" % (i, stocks[i], tg[i]) for i in BUFFERS)))
     lines = ["**Chain rebalanced** (%s)" % ("; ".join(why) or "forced")]
     lines += ["- %s %.2fx -> %.2fx" % (k, c, n) for k, c, n in moves] or ["- targets already right"]
     lines.append("- garments %.1f -> %.1f/turn, labour %+.0f/turn, tools %+.1f/turn" % (
