@@ -139,19 +139,31 @@ def ship_text(ships):
 
 
 def status_text(wanted, hh, prev_cash, ships):
-    # Taylor wants the email readable at a glance: just "All good" or "Check Ops".
+    # Taylor wants the email readable at a glance: "All good" or "Check Ops",
+    # then one line of money: cash (change since last email), trading profit last turn, prestige.
     cash = m.num(hh.get("cash"))
     if not wanted:
         head = "\u2705 All good"
     else:
         head = "\u26a0\ufe0f Check Ops (%d issue%s)" % (len(wanted), "" if len(wanted) == 1 else "s")
     delta = "" if prev_cash is None else " (%+.0f)" % (cash - prev_cash)
-    return "%s\ncash %s%s" % (head, "{:,.0f}".format(cash), delta)
+    x = money_extra()
+    money = "cash %s%s" % ("{:,.0f}".format(cash), delta)
+    if "profit" in x:
+        money += " \u00b7 profit %+.0f last turn" % x["profit"]
+    if "prestige_free" in x:
+        money += " \u00b7 prestige %.0f free (%+.1f/turn)" % (x["prestige_free"], x.get("prestige_rate", 0))
+    return "%s\n%s" % (head, money)
+
+
+_MONEY = {}
 
 
 def money_extra():
     """Turn, trading profit and spendable prestige for the history line. Never fails the run."""
-    out = {}
+    if _MONEY:
+        return dict(_MONEY)
+    out = _MONEY
     try:
         f = ((m.get("/buildings/152202386005001").get("storage") or {}).get("inventory") or {}).get("previous_flows") or {}
         sale = sum(m.num(x.get("sale_value")) for x in f.values())
