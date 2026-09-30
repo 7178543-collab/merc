@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Merc Ops panel
 // @namespace    strasclives
-// @version      1.9.1
+// @version      1.9.2
 // @updateURL    https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @downloadURL  https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @description  30-second ops panel for Mercatorio: needs-you list, issues with one-tap fixes, production, orders, builds, boats, contracts, markets, money, charts with projections, plan, and an emergency self-sufficient mode.
@@ -20,7 +20,7 @@
   window.__mercOps = true;
 
   // ---------------------------------------------------------------- config
-  const VERSION = '1.9.1';
+  const VERSION = '1.9.2';
   const BUSINESS = '39992';
   const HOUSEHOLD = '21623';
   const STORE = '152202386005001';
@@ -729,9 +729,11 @@
     }
     Object.assign(size, sizeOverride || {});
     const other = Math.max(CHAIN_OTHER_THREAD_MIN, num(flowsOf('thread').consumption) - cur.weave * CHAIN.weave.in);
-    const sales = garmentSalesAvg(MODE.SALES_WINDOW);
+    // until this device has 3+ turns of sales history, use last turn's sales, then what we sew now
+    // (never plot capacity: that's the old flat-out plan)
+    const sales = garmentSalesAvg(MODE.SALES_WINDOW) ?? (num(flowsOf('garments').sale) || null);
     const C = CHAIN;
-    const want = sales != null ? sales + MODE.HOUSEHOLD_GARMENTS : size.sew * C.sew.out;
+    const want = sales != null ? sales + MODE.HOUSEHOLD_GARMENTS : cur.sew * C.sew.out;
     let sew = Math.min(size.sew, want * MODE.SALES_MARGIN / C.sew.out);
     let base = { sew, weave: sew * C.sew.in / C.weave.out };
     base.spin = (base.weave * C.weave.in + other) / C.spin.out;
