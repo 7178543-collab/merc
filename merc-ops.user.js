@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Merc Ops panel
 // @namespace    strasclives
-// @version      1.8.2
+// @version      1.9.1
 // @updateURL    https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @downloadURL  https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @description  30-second ops panel for Mercatorio: needs-you list, issues with one-tap fixes, production, orders, builds, boats, contracts, markets, money, charts with projections, plan, and an emergency self-sufficient mode.
@@ -20,7 +20,7 @@
   window.__mercOps = true;
 
   // ---------------------------------------------------------------- config
-  const VERSION = '1.8.2';
+  const VERSION = '1.9.1';
   const BUSINESS = '39992';
   const HOUSEHOLD = '21623';
   const STORE = '152202386005001';
@@ -36,6 +36,30 @@
   const GATE = { labour: 1.75, garments: 22, cash: 4000 };   // Phase 2 gate
   const KILL = { labour: 1.85, garments: 21.5 };             // stop adding if crossed
   const LABOUR_WARN = 1.70;              // labour guard kicks in at this price
+
+  // ---------------------------------------------------------------- OPERATING MODE THRESHOLDS
+  // Shared with chain_balancer.py and merc_actor.py (same numbers, no shared state file).
+  // Hysteresis: leave SOS only when cash > SOS_EXIT_CASH and profit positive SOS_EXIT_PROFIT_TURNS;
+  // leave GROWTH when cash < GROWTH_EXIT_CASH.
+  const MODE = {
+    SOS_CASH: 2000,              // enter SOS when cash below this
+    SOS_SOFT_CASH: 4000,         // or cash below this with negative profit for SOS_NEG_TURNS
+    SOS_NEG_TURNS: 3,
+    SOS_EXIT_CASH: 4000,         // leave SOS only above this
+    SOS_EXIT_PROFIT_TURNS: 3,    // and profit positive this many turns running
+    STEADY_MAX: 15000,           // STEADY is cash from SOS_EXIT up to this (when not GROWTH)
+    GROWTH_CASH: 15000,          // enter GROWTH when cash above this
+    GROWTH_PROFIT_TURNS: 24,     // and profitable over this many turns
+    GROWTH_EXIT_CASH: 10000,     // leave GROWTH when cash drops below this
+    FILL_CASH_MIN: 8000,         // STEADY: stockpile top-ups only above this cash
+    OWN_LABOUR: 300,             // SOS: run only what our own labour covers
+    CONSTRUCTION_PACE_STEADY: 25,// STEADY construction pace (percent)
+    STOCK_TURNS_CHAIN: 4,        // chain intermediate stockpile = N turns of use
+    SALES_WINDOW: 12,            // garment sales average window (turns)
+    SALES_MARGIN: 1.05,          // sew 5% over average sales
+    HOUSEHOLD_GARMENTS: 1.8,
+    MARKET_DEPTH_MULT: 3,        // if market traded > 3x remaining need over SALES_WINDOW -> one-time buy
+  };
 
   // The plan (Claude updates this text each version; live numbers are filled in by the panel)
   const PLAN = [
@@ -215,9 +239,70 @@
     for (const v of Object.values(flows || {})) { sale += num(v.sale_value); buy += num(v.purchase_cost); }
     const hist = store.get('cash', {});
     if (turn && hist[turn] == null) { hist[turn] = cash; const ks = Object.keys(hist).map(Number).sort((a, b) => a - b); while (ks.length > 48) delete hist[ks.shift()]; store.set('cash', hist); }
+    // garment unit sales per turn (for chain pull model)
+    const gHist = store.get('garmentSales', {});
+    if (turn && gHist[turn] == null) {
+      gHist[turn] = num((flows || {}).garments && flows.garments.sale);
+      const gks = Object.keys(gHist).map(Number).sort((a, b) => a - b);
+      while (gks.length > 48) delete gHist[gks.shift()];
+      store.set('garmentSales', gHist);
+    }
+    // trading profit sign history (for mode hysteresis)
+    const pHist = store.get('profitSign', {});
+    if (turn && pHist[turn] == null) {
+      pHist[turn] = (sale - buy) >= 0 ? 1 : -1;
+      const pks = Object.keys(pHist).map(Number).sort((a, b) => a - b);
+      while (pks.length > 48) delete pHist[pks.shift()];
+      store.set('profitSign', pHist);
+    }
     const ks = Object.keys(hist).map(Number).filter(k => k < turn).sort((a, b) => b - a);
     const prev = ks.length ? ks[0] : null;
     return { profit: sale - buy, sales: sale, buys: buy, delta: prev != null ? cash - hist[prev] : null, deltaTurns: prev != null ? turn - prev : 0 };
+  }
+  function garmentSalesAvg(window) {
+    const gHist = store.get('garmentSales', {});
+    const ks = Object.keys(gHist).map(Number).sort((a, b) => a - b).slice(-(window || MODE.SALES_WINDOW));
+    if (ks.length < 3) return null;
+    return ks.reduce((a, t) => a + num(gHist[t]), 0) / ks.length;
+  }
+  function profitPositiveStreak(n) {
+    const pHist = store.get('profitSign', {});
+    const ks = Object.keys(pHist).map(Number).sort((a, b) => b - a).slice(0, n);
+    return ks.length >= n && ks.every(t => pHist[t] > 0);
+  }
+  function profitNegativeStreak(n) {
+    const pHist = store.get('profitSign', {});
+    const ks = Object.keys(pHist).map(Number).sort((a, b) => b - a).slice(0, n);
+    return ks.length >= n && ks.every(t => pHist[t] < 0);
+  }
+  // Auto mode from cash + profit (same thresholds as the Python bot). Manual override
+  // is stored separately and only affects Ops actions.
+  function computeAutoMode(cash) {
+    const last = store.get('opMode', 'STEADY');
+    if (last === 'SOS') {
+      if (!(cash > MODE.SOS_EXIT_CASH && profitPositiveStreak(MODE.SOS_EXIT_PROFIT_TURNS))) return 'SOS';
+    } else if (last === 'GROWTH') {
+      if (cash < MODE.GROWTH_EXIT_CASH) {
+        if (cash < MODE.SOS_CASH || (cash < MODE.SOS_SOFT_CASH && profitNegativeStreak(MODE.SOS_NEG_TURNS))) return 'SOS';
+        return 'STEADY';
+      }
+      return 'GROWTH';
+    }
+    if (cash < MODE.SOS_CASH || (cash < MODE.SOS_SOFT_CASH && profitNegativeStreak(MODE.SOS_NEG_TURNS))) return 'SOS';
+    if (cash > MODE.GROWTH_CASH && profitPositiveStreak(MODE.GROWTH_PROFIT_TURNS)) return 'GROWTH';
+    return 'STEADY';
+  }
+  function operatingMode() {
+    const override = store.get('modeOverride', 'Auto');
+    if (!S || S.cash == null) return (override && override !== 'Auto') ? override : store.get('opMode', 'STEADY');
+    const auto = computeAutoMode(S.cash);
+    store.set('opMode', auto);
+    if (override && override !== 'Auto') return override;
+    return auto;
+  }
+  function modeChip(m) {
+    const colors = { SOS: 'r', STEADY: 'y', GROWTH: 'g' };
+    return `<span class="chip ${colors[m] || ''}">${m}</span>`;
   }
   function prestigeInfo(hh) {
     const board = hh.prestige_board || {};
@@ -410,10 +495,16 @@
   }
   function household() {
     const pf = (((S.hh || {}).sustenance || {}).inventory || {}).previous_flows || {};
-    return Object.entries(pf).filter(([i, f]) => i !== 'donations' && num(f.consumption) > 0).map(([i, f]) => {
+    const rows = Object.entries(pf).filter(([i, f]) => i !== 'donations' && num(f.consumption) > 0).map(([i, f]) => {
       const hu = num(f.consumption), have = held(i), r = runway(i);
       return { i, hu, have, turns: r ? r.turns : Infinity, short: num(f.shortfall) + num(flowsOf(i).shortfall) };
-    }).sort((a, b) => a.turns - b.turns);
+    });
+    // candles: luxury slot 1.5/turn — always show alongside bread, beer, etc.
+    if (!rows.some(x => x.i === 'candles')) {
+      const hu = 1.5, have = held('candles'), r = runway('candles');
+      rows.push({ i: 'candles', hu, have, turns: r ? r.turns : (have > 0 ? have / hu : 0), short: num(flowsOf('candles').shortfall) });
+    }
+    return rows.sort((a, b) => a.turns - b.turns);
   }
 
   // ---------------------------------------------------------------- make / buy / import / sell less
@@ -601,20 +692,34 @@
     weave: { id: '152202388001005', labour: 75,  tools: 0,   in: 50, out: 50 },
     sew:   { id: '152202388000004', labour: 155, tools: 0,   in: 80, out: 41 },
   };
-  // stockpiles between chain steps (keep in step with chain_balancer.py BUFFERS)
+  // stockpile FILL rates between chain steps (targets are STOCK_TURNS of next-step use)
   const CHAIN_BUFFERS = {
-    'flax fibres': { target: 200, fill: 0 },
-    thread: { target: 450, fill: 15 },
-    cloth: { target: 400, fill: 10 },
+    'flax fibres': { fill: 5 },
+    thread: { fill: 15 },
+    cloth: { fill: 10 },
   };
   const CHAIN_OTHER_THREAD_MIN = 24;   // household net duty thread; reads 0 when weaving stalled
-  // the bot's mode from state/chain_sizes.json; if unreadable, work it out the same way
-  function chainMode() {
-    const items = Object.entries(CHAIN_BUFFERS);
-    if (items.some(([i, b]) => held(i) < b.target * 0.5)) return 'FILLING';
-    if (items.every(([i, b]) => held(i) >= b.target)) return 'FULL';
-    return S.chainMode || 'FILLING';
+  // Buffer fill mode for the chain (FILLING / FULL / HOLD). Driven by operating mode + cash.
+  function chainBufferMode(tg) {
+    const op = operatingMode();
+    const cash = S.cash;
+    if (op === 'SOS') return 'HOLD';
+    if (op === 'STEADY' && cash < MODE.FILL_CASH_MIN) return 'HOLD';
+    const items = Object.keys(CHAIN_BUFFERS);
+    const low = items.some(i => held(i) < (tg[i] || 0) * 0.5);
+    const full = items.every(i => held(i) >= (tg[i] || 0));
+    if (low) return 'FILLING';
+    if (full) return 'FULL';
+    return 'FILLING';
   }
+  function chainTargets(t, other) {
+    return {
+      cloth: MODE.STOCK_TURNS_CHAIN * t.sew * CHAIN.sew.in,
+      thread: MODE.STOCK_TURNS_CHAIN * (t.weave * CHAIN.weave.in + other),
+      'flax fibres': MODE.STOCK_TURNS_CHAIN * t.spin * CHAIN.spin.in,
+    };
+  }
+  // v1.9 pull model (matches chain_balancer.py v2): sew to sales, size upstream to feed next.
   function chainState(sizeOverride) {
     const b = {}, size = {}, cur = {};
     for (const [k, c] of Object.entries(CHAIN)) {
@@ -623,32 +728,37 @@
       size[k] = num(b[k].size); cur[k] = num(b[k].producer.target);
     }
     Object.assign(size, sizeOverride || {});
-    // v1.8.2: same plan as chain_balancer.py (stockpile mode). Upstream runs flat out while
-    // the stockpiles fill; weaving/sewing hold back a little thread/cloth each turn.
     const other = Math.max(CHAIN_OTHER_THREAD_MIN, num(flowsOf('thread').consumption) - cur.weave * CHAIN.weave.in);
-    const mode = chainMode();
-    const filling = mode === 'FILLING';
-    const hold = item => (filling && held(item) < CHAIN_BUFFERS[item].target) ? CHAIN_BUFFERS[item].fill : 0;
-    let flax = size.flax;
-    let ret = Math.min(size.ret, flax * CHAIN.flax.out / CHAIN.ret.in);
-    let spin = Math.min(size.spin, ret * CHAIN.ret.out / CHAIN.spin.in);
-    let weave = Math.min(size.weave, Math.max(0, spin * CHAIN.spin.out - other - hold('thread')) / CHAIN.weave.in);
-    let sew = Math.min(size.sew, Math.max(0, weave * CHAIN.weave.out - hold('cloth')) / CHAIN.sew.in);
-    if (!filling) {
-      weave = sew * CHAIN.sew.in / CHAIN.weave.out;
-      spin = Math.min(size.spin, (weave * CHAIN.weave.in + other) / CHAIN.spin.out);
-      const fibNeed = spin * CHAIN.spin.in + (held('flax fibres') >= CHAIN_BUFFERS['flax fibres'].target ? 0 : 5);
-      ret = Math.min(size.ret, fibNeed / CHAIN.ret.out);
-      flax = Math.min(size.flax, ret * CHAIN.ret.in / CHAIN.flax.out);
+    const sales = garmentSalesAvg(MODE.SALES_WINDOW);
+    const C = CHAIN;
+    const want = sales != null ? sales + MODE.HOUSEHOLD_GARMENTS : size.sew * C.sew.out;
+    let sew = Math.min(size.sew, want * MODE.SALES_MARGIN / C.sew.out);
+    let base = { sew, weave: sew * C.sew.in / C.weave.out };
+    base.spin = (base.weave * C.weave.in + other) / C.spin.out;
+    base.ret = base.spin * C.spin.in / C.ret.out;
+    const tg = chainTargets(base, other);
+    const mode = chainBufferMode(tg);
+    const top = item => (mode === 'FILLING' && held(item) < tg[item]) ? CHAIN_BUFFERS[item].fill : 0;
+    let weave = Math.min(size.weave, (sew * C.sew.in + top('cloth')) / C.weave.out);
+    let spin = Math.min(size.spin, (weave * C.weave.in + other + top('thread')) / C.spin.out);
+    let ret = Math.min(size.ret, (spin * C.spin.in + top('flax fibres')) / C.ret.out);
+    let flax = Math.min(size.flax, ret * C.ret.in / C.flax.out);
+    if (operatingMode() === 'SOS') {
+      let left = MODE.OWN_LABOUR;
+      sew = Math.min(sew, size.sew, left / C.sew.labour); left -= sew * C.sew.labour;
+      weave = Math.min(weave, size.weave, Math.max(0, left) / C.weave.labour); left -= weave * C.weave.labour;
+      spin = Math.min(spin, size.spin, Math.max(0, left) / C.spin.labour); left -= spin * C.spin.labour;
+      ret = Math.min(ret, size.ret, Math.max(0, left) / C.ret.labour); left -= ret * C.ret.labour;
+      flax = Math.min(flax, size.flax, Math.max(0, left) / C.flax.labour);
     }
     const plan = { flax, ret, spin, weave, sew };
     for (const k in plan) plan[k] = +plan[k].toFixed(2);
     const moves = Object.keys(CHAIN).filter(k => Math.abs(plan[k] - cur[k]) >= 0.02).map(k => ({ k, from: cur[k], to: plan[k], b: b[k] }));
     const dLab = moves.reduce((a, x) => a + (x.to - x.from) * CHAIN[x.k].labour, 0);
     const dTools = moves.reduce((a, x) => a + (x.to - x.from) * CHAIN[x.k].tools, 0);
-    return { size, cur, plan, moves, dLab, dTools, other, mode, gNow: cur.sew * 41, gNew: plan.sew * 41 };
+    return { size, cur, plan, moves, dLab, dTools, other, mode, tg, sales, gNow: cur.sew * 41, gNew: plan.sew * 41 };
   }
-  // what the balancer will do as each chain expansion lands, in ETA order
+    // what the balancer will do as each chain expansion lands, in ETA order
   function chainNext() {
     const pend = [];
     for (const [k, c] of Object.entries(CHAIN)) {
@@ -678,6 +788,12 @@
     return { turns: worst, limit };
   }
   async function balanceChain(c) {
+    const lines = c.moves.map(x => `${x.k}: ${f2(x.from)}x → ${f2(x.to)}x`);
+    if (Math.abs(c.dLab) >= 1) lines.push(`labour buy ${c.dLab >= 0 ? '+' : ''}${Math.round(c.dLab)}`);
+    if (Math.abs(c.dTools) >= 1) lines.push(`tools buy ${c.dTools >= 0 ? '+' : ''}${f1(c.dTools)}`);
+    lines.push(`garments sell → ${Math.max(0, Math.round(c.gNew - MODE.HOUSEHOLD_GARMENTS))}/turn`);
+    lines.push(`mode ${c.mode}` + (c.sales != null ? `, sales avg ${f1(c.sales)}/turn` : ', no sales history yet'));
+    if (!confirm('Balance chain?\n\n' + lines.join('\n'))) return;
     for (const x of c.moves) await setTarget(x.b, x.to);
     const bumpFirst = async (item, field, delta, pick) => {
       const ms = (S.holdings[item] || {}).managers || [];
@@ -685,13 +801,118 @@
       if (i < 0 || !ms[i]) return;
       await setTier(item, i, { [field]: Math.max(0, Math.round(num(ms[i][field]) + delta)) });
     };
-    if (Math.abs(c.dLab) >= 1) await bumpFirst('labour', 'buy_volume', c.dLab);
+    if (operatingMode() !== 'SOS' && Math.abs(c.dLab) >= 1) await bumpFirst('labour', 'buy_volume', c.dLab);
     if (Math.abs(c.dTools) >= 1) await bumpFirst('tools', 'buy_volume', c.dTools, m => num(m.buy_volume));
     const gm = (S.holdings.garments || {}).managers || [];
     const gi = gm.findIndex(m => num(m.sell_volume));
-    if (gi >= 0) await setTier('garments', gi, { sell_volume: Math.max(0, Math.round(c.gNew - 1.8)) });
-    // v1.8: the chain uses all its fibres and plants: no sell orders on them
+    if (gi >= 0) await setTier('garments', gi, { sell_volume: Math.max(0, Math.round(c.gNew - MODE.HOUSEHOLD_GARMENTS)) });
     for (const item of ['flax fibres', 'flax plants']) if (((S.holdings[item] || {}).managers || []).some(m => num(m.sell_volume))) await dropSide(item, 'sell');
+  }
+
+
+  // ---------------------------------------------------------------- construction material buys (Ops-tracked)
+  // Track which standing buy orders Ops created so we only remove our own.
+  // store key opsBuildOrders: { [buildingId]: { [item]: true } }
+  function opsBuildOrders() { return store.get('opsBuildOrders', {}) || {}; }
+  function setOpsBuildOrder(bid, item, on) {
+    const o = opsBuildOrders();
+    if (!o[bid]) o[bid] = {};
+    if (on) o[bid][item] = true; else delete o[bid][item];
+    if (!Object.keys(o[bid]).length) delete o[bid];
+    store.set('opsBuildOrders', o);
+  }
+  // Storage cap for an item at the storehouse (game rejects max_holding above this).
+  function storageCap(item) {
+    const a = S.assets[item] || {};
+    // capacity on the asset if present; otherwise a conservative fallback from sizeOf
+    const cap = num(a.capacity);
+    if (cap > 0) return cap;
+    // storehouse total capacity is shared; without a per-item cap use a large number
+    // and let max_holding = remaining need (game will clamp)
+    return 1e9;
+  }
+  // Sum market volume over the last N turns for an item (from market history if loaded).
+  async function marketVolWindow(item, turns) {
+    try {
+      if (!HIST || HIST.turn !== S.turn) await loadHist();
+      const pts = await marketHist(item);
+      const last = (pts || []).slice(-(turns || MODE.SALES_WINDOW));
+      return last.reduce((a, p) => a + num(p.v), 0);
+    } catch (e) { return 0; }
+  }
+  // For each active construction, ensure material buys exist per mode rules.
+  // Called from Issues "Apply construction buys" and optionally after load.
+  async function syncConstructionBuys() {
+    const op = operatingMode();
+    if (op === 'SOS') return { skipped: 'SOS: construction material buys halted' };
+    const tracked = opsBuildOrders();
+    const activeIds = new Set();
+    const actions = [];
+    for (const b of S.buildings) {
+      const c = b.construction;
+      if (!c || !c.inventory) continue;
+      activeIds.add(String(b.id));
+      const assets = ((c.inventory.account || {}).assets) || {};
+      for (const [item, v] of Object.entries(assets)) {
+        if (item === 'money' || SKIP_ITEMS.has(item)) continue;
+        // still to deliver, minus what the storehouse already holds for it
+        const need = Math.max(0, num(v.capacity) - num(v.balance) - held(item));
+        if (need < 0.5) continue;
+        const vol = await marketVolWindow(item, MODE.SALES_WINDOW);
+        const deep = vol > MODE.MARKET_DEPTH_MULT * need;
+        const ms = ((S.holdings[item] || {}).managers || []).map(m => {
+          const o = { ...m }; delete o.result; return o;
+        });
+        const bi = ms.findIndex(m => num(m.buy_volume) || m.max_holding != null);
+        const ask = num(mkt(item).lowest_ask) || num(mkt(item).last_price);
+        if (!ask) { actions.push(`${b.name}: ${item} need ${f1(need)} — no market price`); continue; }
+        const price = String(snap(ask * 1.05, 1));
+        if (deep) {
+          // one-time buy: buy_volume repeats every turn, so the stop-at (max_holding)
+          // is what makes it one-time -- it stops once held + need is reached
+          const tier = { buy_volume: Math.ceil(need), buy_price: price, max_holding: Math.ceil(held(item) + need) };
+          if (bi >= 0) Object.assign(ms[bi], tier);
+          else ms.push(tier);
+          await patchItem(item, ms.filter(m => Object.keys(m).length));
+          setOpsBuildOrder(String(b.id), item, true); // tracked so it's removed when the build ends
+          actions.push(`${b.name}: one-time buy ${Math.ceil(need)} ${item} @ ≤ ${price} (market deep)`);
+        } else {
+          // standing buy, max_holding = min(remaining, storage cap)
+          const mx = Math.min(held(item) + need, storageCap(item));
+          const tier = { buy_volume: Math.ceil(need / 4) || 1, buy_price: price, max_holding: Math.ceil(mx) };
+          if (bi >= 0) Object.assign(ms[bi], tier);
+          else ms.push(tier);
+          await patchItem(item, ms.filter(m => Object.keys(m).length));
+          setOpsBuildOrder(String(b.id), item, true);
+          actions.push(`${b.name}: standing buy ${item} stop-at ${Math.ceil(mx)}`);
+        }
+      }
+    }
+    // remove standing orders for builds that finished or were aborted
+    for (const [bid, items] of Object.entries(tracked)) {
+      if (activeIds.has(bid)) continue;
+      for (const item of Object.keys(items)) {
+        try {
+          const ms = ((S.holdings[item] || {}).managers || []).map(m => {
+            const o = { ...m }; delete o.result; return o;
+          });
+          // only clear max_holding / buy if this looks like our standing order
+          let changed = false;
+          for (const m of ms) {
+            if (m.max_holding != null && num(m.buy_volume)) {
+              delete m.buy_volume; delete m.buy_price; delete m.max_holding;
+              changed = true;
+            }
+          }
+          if (changed) {
+            await patchItem(item, ms.filter(m => Object.keys(m).length && (num(m.buy_volume) || num(m.sell_volume))));
+            actions.push(`cleared Ops standing buy for ${item} (build ${bid} gone)`);
+          }
+        } catch (e) { actions.push(`clear ${item} failed: ${e.message}`); }
+        setOpsBuildOrder(bid, item, false);
+      }
+    }
+    return { actions };
   }
 
   // ---------------------------------------------------------------- issues
@@ -734,7 +955,7 @@
         const bi = ms.findIndex(m => num(m.buy_volume));
         const ask = num(mkt(item).lowest_ask);
         const cur = num(ms[bi].buy_price);
-        const to = snap(ask && ask <= cur * 1.12 ? ask : cur * 1.05, 1);
+        const to = snap(ask && ask > cur && ask <= cur * 1.12 ? ask : cur * 1.05, 1);
         out.push({ lvl: 'bad', item, opt: true, text: `${item}: buy filled ${f1(bought)}/${f1(buyVol)}, ${f1(have)} left, dropping ${f1(net)}/turn, runs out ${tt(have / net)}. Max ${f2(cur)}${ask ? ', lowest ask ' + f2(ask) : ''}`,
           fixes: [{ h: 'Raises the buy max so the order can fill', label: `Max → ${f2(to)}`, run: () => setTier(item, bi, { buy_price: String(to) }) }] });
       }
@@ -779,8 +1000,34 @@
       const c = chainState();
       if (c && c.moves.length && (Math.abs(c.dLab) >= 10 || Math.abs(c.gNew - c.gNow) >= 2))
         out.push({ lvl: 'warn', item: 'thread', text: `Textile chain out of balance: ${c.moves.map(x => `${x.k} ${f2(x.from)}→${f2(x.to)}x`).join(', ')} (garments ${f1(c.gNow)}→${f1(c.gNew)}/turn, labour ${c.dLab >= 0 ? '+' : ''}${Math.round(c.dLab)})`,
-          fixes: [{ h: 'Sets all five chain steps to feed the most garments the plots allow, and adjusts labour/tools buys and the garments sell', label: 'Balance chain', lab: c.dLab, run: () => balanceChain(c) }] });
+          fixes: [{ h: 'Pull-model rebalance: sew to recent sales, size upstream to feed the next step, adjust labour/tools and garments sell', label: 'Balance chain', lab: c.dLab, run: () => balanceChain(c) }] });
     } catch (e) { /* chain not readable */ }
+    // contracts ready to deliver (player must deliver via Contracts > actions)
+    try {
+      for (const c of (S.myContracts || [])) {
+        const item = c.asset || c.item || (c.terms && c.terms.asset);
+        const vol = num(c.volume || (c.terms && c.terms.volume));
+        const dir = c.direction || c.side || (c.terms && c.terms.direction);
+        // we deliver when we are the seller (bid from town / we sell)
+        if (!item || !vol) continue;
+        const weSell = dir === 'bid' || dir === 'sell' || c.role === 'seller';
+        // only flag when we hold enough and it looks like an active delivery obligation
+        const stage = (c.stage || c.state || '').toString().toLowerCase();
+        if (stage && /complete|done|cancel|reject|expired|draft/.test(stage)) continue;
+        if (held(item) + 0.01 >= vol && weSell) {
+          const aid = c.action_id || c.id || c.contract_id;
+          out.push({
+            lvl: 'warn', item,
+            text: `Ready to deliver: ${f1(vol)} ${item} (contract${c.counterparty ? ' with ' + c.counterparty : ''})`,
+            fixes: [{
+              h: 'Opens the game Contracts actions page so you can pick a storehouse and confirm delivery',
+              label: 'Open deliver…',
+              run: () => { location.href = aid ? `/contracts/actions#actionid=${aid}` : '/contracts/actions'; }
+            }]
+          });
+        }
+      }
+    } catch (e) { /* contract shape varies */ }
     try { out.push(...extraIssues(S)); } catch (e) { }
     const order = { bad: 0, warn: 1 };
     return out.sort((a, b) => order[a.lvl] - order[b.lvl]);
@@ -859,8 +1106,10 @@
     const explain = store.get('explain', false);
     const toGo = 200 - S.pr.free;
     const g = gate();
+    const opMode = operatingMode();
+    const modeOv = store.get('modeOverride', 'Auto');
     panel.innerHTML = `
-      <header><b>Merc Ops <span style="font-weight:400;opacity:.75;font-size:12px">v${VERSION}</span></b><button data-x="sos" style="background:#c0392b;border-color:#fff8">SOS</button><button data-x="help" style="${explain ? 'background:#fff;color:#1f5130' : ''}">?</button><button data-x="refresh">Refresh</button><button data-x="close">Close</button></header>
+      <header><b>Merc Ops <span style="font-weight:400;opacity:.75;font-size:12px">v${VERSION}</span></b>${modeChip(opMode)}<select data-modeov="1" title="Mode override (Ops actions only)" style="max-width:90px;padding:4px 6px;font-size:12px;background:#fff2;color:#fff;border:1px solid #fff5;border-radius:6px">${['Auto','SOS','STEADY','GROWTH'].map(o => `<option value="${o}" ${modeOv===o?'selected':''}>${o==='STEADY'?'Steady':o==='GROWTH'?'Growth':o}</option>`).join('')}</select><button data-x="sos" style="background:#c0392b;border-color:#fff8">SOS</button><button data-x="help" style="${explain ? 'background:#fff;color:#1f5130' : ''}">?</button><button data-x="refresh">Refresh</button><button data-x="close">Close</button></header>
       <nav>${tabs.map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}<button data-more="1" class="${moreOn ? 'on' : ''}">More ${moreOn ? '▴' : '▾'}</button></nav>
       ${moreOn ? `<nav class="more">${more.map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</nav>` : ''}
       <section>
@@ -895,7 +1144,7 @@
     if (d.needlater) return 'Hides this item for 12 turns';
     if (d.needgo) return 'Takes you where you can do it';
     const map = { stock: "Opens this item's orders", opt: 'Shows make / buy / import / sell-less choices with costs', stop: 'Halts production and remembers the recipe; Start in this panel relinks the storehouse',
-      start: 'Starts production (asks recipe and target) and links it to the storehouse', open: "Opens the game's own page for this building", balance: 'Sets all five chain steps to feed the most garments the plots allow, and adjusts the labour/tools buys and garments sell',
+      start: 'Starts production (asks recipe and target) and links it to the storehouse', open: "Opens the game's own page for this building", balance: 'Pull-model rebalance: sew to recent sales, size upstream to feed the next step',
       edit: 'Shows the buy/sell tiers for this item so you can change them', save: 'Saves these tiers to the storehouse (asks first)', addtier: 'Adds an empty tier', scan: 'Reads the markets of the 14 nearest towns (a few seconds)',
       seen: 'Clears this card until the next turn', sosgo: 'Saves every order, target and build pace, then turns off all buys and fits production to our own labour and stock (asks first)', sosundo: 'Restores everything saved when emergency mode started', sosreserve: 'Raises sell keeps / buy stop-ats so household goods cover 24 turns', more: 'Shows the other pages', dismiss: 'Clears this card for 12 turns (it comes back sooner if it gets worse)', clearall: 'Clears every card in this list for 12 turns', unclear: 'Shows cleared cards again', fixsafe: 'Applies every low-risk fix (marked ✓) after showing you the list', pqauto: 'Turns automatic prestige buying on or off (this device)', clearnotes: 'Marks all game notices as read', copyrec: 'Copies the recorded game requests so Claude can build one-tap actions from them', clearrec: 'Empties the recorded requests', rivalseen: 'Remembers the rival buildings as they are now, so only new changes get flagged', trip: 'Picks the destination for the trip plan', clearlog: 'Empties the change log on this device' };
     for (const k in map) if (d[k] != null) return map[k];
@@ -995,7 +1244,7 @@
       const c = chainState();
       if (c) chainHtml = `<div class="card ${c.moves.length ? 'warn' : 'ok'}"><b>Textile chain</b> <span class="muted">flax → retting → spinning → weaving → sewing</span>
         <div class="muted">${Object.keys(CHAIN).map(k => `${k} ${f2(c.cur[k])}x/${c.size[k]}`).join(' · ')}</div>
-        <div class="muted">Stockpiles ${c.mode === 'FILLING' ? 'FILLING' : 'full'}: ${Object.entries(CHAIN_BUFFERS).map(([i, b]) => `${i} ${Math.round(held(i))}/${b.target}`).join(' · ')}</div>
+        <div class="muted">Stockpiles ${c.mode}: ${Object.keys(CHAIN_BUFFERS).map(i => `${i} ${Math.round(held(i))}/${c.tg ? Math.round(c.tg[i]) : '?'}`).join(' · ')}${c.sales != null ? ` · sales avg ${f1(c.sales)}/turn` : ''}</div>
         ${c.moves.length ? `<div style="margin-top:6px">Balanced: ${c.moves.map(x => `${x.k} → ${f2(x.to)}x`).join(', ')}<br><span class="muted">garments ${f1(c.gNow)} → ${f1(c.gNew)}/turn · labour ${c.dLab >= 0 ? '+' : ''}${Math.round(c.dLab)} · tools ${c.dTools >= 0 ? '+' : ''}${f1(c.dTools)}</span></div>
           <div class="row" style="margin-top:6px"><button class="a" data-balance="1">Balance chain</button></div>` : '<div class="muted" style="margin-top:4px">Balanced: every step feeds the next.</div>'}</div>`;
     } catch (e) { chainHtml = ''; }
@@ -1059,7 +1308,7 @@
   function renderBuild(el) {
     const bl = S.buildings.filter(b => b.type !== 'warehouse');
     const cons = bl.filter(b => b.construction);
-    el.innerHTML = (cons.length ? '<h4 style="margin:6px 0">Under construction</h4>' : '<p class="muted">Nothing under construction.</p>') +
+    el.innerHTML = (cons.length ? '<h4 style="margin:6px 0">Under construction</h4><div class="row" style="margin-bottom:6px"><button class="a" data-consbuys="1">Sync material buys</button><span class="muted">One-time if market is deep, else standing (max = remaining). Halted in SOS.</span></div>' : '<p class="muted">Nothing under construction.</p>') +
       cons.map(b => {
         const c = b.construction, a = (c.inventory && c.inventory.account && c.inventory.account.assets) || {};
         const need = Object.entries(a).filter(([k]) => k !== 'money').map(([k, v]) => `${k} ${f1(v.balance)}/${f1(v.capacity)}`).join(' · ');
@@ -1882,6 +2131,7 @@
       const t = ev.target;
       if (t.matches && t.matches('select[data-trip]')) { store.set('tripTown', t.value); render(); }
       if (t.matches && t.matches('select[data-chartitem]')) { store.set('chartItem', t.value); render(); }
+      if (t.matches && t.matches('select[data-modeov]')) { store.set('modeOverride', t.value); render(); }
     };
     panel.onclick = async ev => {
       if (ev.target.closest('a')) return;
@@ -1934,6 +2184,14 @@
         return act(o.run, o.title);
       }
       if (d.seen) { markSeen(); return render(); }
+      if (d.consbuys) {
+        return act(async () => {
+          const r = await syncConstructionBuys();
+          if (r.skipped) throw new Error(r.skipped);
+          if (!(r.actions || []).length) throw new Error('nothing to do');
+          toast((r.actions || []).slice(0, 6).join(' · '), 6000);
+        }, 'construction material buys synced');
+      }
       if (d.rivalseen) { if (S.rival) store.set('rivalSeen', S.rival); return render(); }
       if (d.clearlog) { if (!confirm('Clear the change log on this device?')) return; store.set('autolog', []); return render(); }
       if (d.tab) { tab = d.tab; store.set('tab', tab); return render(); }

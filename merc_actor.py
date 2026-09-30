@@ -47,6 +47,28 @@ AS_JSON = "--json" in sys.argv
 # an absurd price change instead of just trusting the math blindly
 MAX_PRICE_JUMP = 0.5  # 50%
 
+# ---------------------------------------------------------------- OPERATING MODE THRESHOLDS
+# Shared with merc-ops.user.js and chain_balancer.py (same numbers, no shared state file).
+MODE = {
+    "SOS_CASH": 2000,
+    "SOS_SOFT_CASH": 4000,
+    "SOS_NEG_TURNS": 3,
+    "SOS_EXIT_CASH": 4000,
+    "SOS_EXIT_PROFIT_TURNS": 3,
+    "STEADY_MAX": 15000,
+    "GROWTH_CASH": 15000,
+    "GROWTH_PROFIT_TURNS": 24,
+    "GROWTH_EXIT_CASH": 10000,
+    "FILL_CASH_MIN": 8000,
+    "OWN_LABOUR": 300,
+    "CONSTRUCTION_PACE_STEADY": 25,
+    "STOCK_TURNS_CHAIN": 4,
+    "SALES_WINDOW": 12,
+    "SALES_MARGIN": 1.05,
+    "HOUSEHOLD_GARMENTS": 1.8,
+    "MARKET_DEPTH_MULT": 3,
+}
+
 LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "merc_actions.log")
 
 # only these flag kinds get an auto-proposed fix; everything else stays
@@ -214,6 +236,10 @@ def labour_proposal(building_id, building_name, stalled=()):
     if new < cur and stalled:
         print("labour trim skipped, chain stalled/restarting: %s" % ", ".join(stalled))
         return None
+    # SOS: never raise the labour buy (trims still allowed)
+    if new > cur and getattr(labour_proposal, "_op_mode", "STEADY") == "SOS":
+        print("labour raise skipped (SOS)")
+        return None
     new = max(cur * 0.75, min(cur * 1.25, new))
     new = int(round(max(0, new)))
     if abs(new - cur) < 5:
@@ -226,6 +252,25 @@ def labour_proposal(building_id, building_name, stalled=()):
 
 
 LABOUR_BUFFER = 10
+
+
+def operating_mode(cash, last_op=None):
+    """SOS / STEADY / GROWTH from cash (profit history is not loaded here; cash thresholds only).
+    Full hysteresis with profit streaks lives in chain_balancer / Ops; actor uses cash gates
+    so SOS never raises a labour buy."""
+    last_op = last_op or "STEADY"
+    if last_op == "SOS":
+        if cash <= MODE["SOS_EXIT_CASH"]:
+            return "SOS"
+    elif last_op == "GROWTH":
+        if cash < MODE["GROWTH_EXIT_CASH"]:
+            return "SOS" if cash < MODE["SOS_CASH"] else "STEADY"
+        return "GROWTH"
+    if cash < MODE["SOS_CASH"]:
+        return "SOS"
+    if cash > MODE["GROWTH_CASH"]:
+        return "GROWTH"
+    return "STEADY"
 
 
 CHAIN_INTERMEDIATES = {"flax plants", "flax fibres", "thread", "cloth"}
@@ -327,6 +372,7 @@ def run():
         sys.exit(1)
     hh = player.get("household", {})
 
+    op_mode = "STEADY"
     try:
         biz_id = hh["business_ids"][0]
         biz = adv.safe_get("/businesses/%s" % biz_id)
@@ -351,6 +397,16 @@ def run():
                         if p:
                             p["flag_text"] = text
                             proposals.append(p)
+        # operating mode from household cash (same thresholds as Ops / chain_balancer)
+        try:
+            cash = m.num((adv.safe_get("/households/%s" % hh.get("id", "21623")) or {}).get("cash"))
+        except Exception:
+            cash = 0
+        op_mode = operating_mode(cash)
+        labour_proposal._op_mode = op_mode
+        if not QUIET:
+            print("op_mode=%s cash=%.0f" % (op_mode, cash))
+
         # labour auto-balance: trim what expired / top up a shortfall (see labour_proposal)
         short_items, stalled = chain_state(biz)
         for s in stores:
@@ -367,6 +423,7 @@ def run():
     record = dict(
         ts=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         mode="dry_run" if not LIVE_MODE else "live",
+        op_mode=locals().get("op_mode"),
         household=hh.get("name"),
         flags_total=len(all_flags),
         proposals=proposals,

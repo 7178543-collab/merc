@@ -35,6 +35,30 @@ FORCE = "--force" in sys.argv
 STORE = "152202386005001"
 STATE = os.path.join("state", "chain_sizes.json")
 
+# ---------------------------------------------------------------- OPERATING MODE THRESHOLDS
+# Shared with merc-ops.user.js and merc_actor.py (same numbers, no shared state file).
+# Hysteresis: leave SOS only when cash > SOS_EXIT_CASH and profit positive SOS_EXIT_PROFIT_TURNS;
+# leave GROWTH when cash < GROWTH_EXIT_CASH.
+MODE = {
+    "SOS_CASH": 2000,
+    "SOS_SOFT_CASH": 4000,
+    "SOS_NEG_TURNS": 3,
+    "SOS_EXIT_CASH": 4000,
+    "SOS_EXIT_PROFIT_TURNS": 3,
+    "STEADY_MAX": 15000,
+    "GROWTH_CASH": 15000,
+    "GROWTH_PROFIT_TURNS": 24,
+    "GROWTH_EXIT_CASH": 10000,
+    "FILL_CASH_MIN": 8000,          # STEADY: stockpile top-ups only above this cash
+    "OWN_LABOUR": 300,              # SOS: run only what our own labour covers
+    "CONSTRUCTION_PACE_STEADY": 25,
+    "STOCK_TURNS_CHAIN": 4,
+    "SALES_WINDOW": 12,             # was 24; Ops uses 12 — keep in step
+    "SALES_MARGIN": 1.05,
+    "HOUSEHOLD_GARMENTS": 1.8,
+    "MARKET_DEPTH_MULT": 3,
+}
+
 # building id, recipe inputs/outputs per 1x (read from the game's production pages)
 CHAIN = {
     "flax":  {"id": "151602400",       "labour": 11,  "tools": 0.6, "out": 18},   # plants
@@ -43,20 +67,19 @@ CHAIN = {
     "weave": {"id": "152202388001005", "labour": 75,  "tools": 0,   "in": 50, "out": 50},   # thread -> cloth
     "sew":   {"id": "152202388000004", "labour": 155, "tools": 0,   "in": 80, "out": 41},   # cloth -> garments
 }
-HOUSEHOLD_GARMENTS = 1.8
 
 # Stockpiles between chain steps, in TURNS of what the next step uses.
 # fill = extra units per turn made while below target (and cash allows).
-STOCK_TURNS = 4
+STOCK_TURNS = MODE['STOCK_TURNS_CHAIN']
 BUFFERS = {
     "flax fibres": {"fill": 5},
     "thread":      {"fill": 15},
     "cloth":       {"fill": 10},
 }
 LOW_FRACTION = 0.5       # FILLING starts when a stock is under half its target
-FILL_CASH_MIN = 8000     # below this cash: HOLD (no top-ups, make only what's used)
-SALES_WINDOW = 24        # turns of garment sales to average
-SALES_MARGIN = 1.05      # sew 5% over average sales (garment stock covers the rest)
+FILL_CASH_MIN = MODE['FILL_CASH_MIN']  # below this cash: HOLD (no top-ups, make only what's used)
+SALES_WINDOW = MODE['SALES_WINDOW']   # turns of garment sales to average
+SALES_MARGIN = MODE['SALES_MARGIN']   # sew 5% over average sales (garment stock covers the rest)
 # Thread the household net duty uses (~24/turn). Measured use reads 0 when weaving
 # stalled last turn, so never plan with less than this.
 OTHER_THREAD_MIN = 24
@@ -114,7 +137,7 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     top-up per step while its stockpile is below target and mode is FILLING."""
     s, C = sizes, CHAIN
     stocks = stocks or {}
-    want = sales + HOUSEHOLD_GARMENTS if sales else s["sew"] * C["sew"]["out"]
+    want = sales + MODE['HOUSEHOLD_GARMENTS'] if sales else s["sew"] * C["sew"]["out"]
     sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
     base["spin"] = (base["weave"] * C["weave"]["in"] + other_thread) / C["spin"]["out"]
@@ -134,9 +157,52 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     return {k: round(v, 2) for k, v in t.items()}, tg
 
 
-def buffer_mode(stocks, last_mode, tg, cash):
-    if cash < FILL_CASH_MIN:
+def profit_streak(sign, n):
+    """True if the last n history turns all have trading profit with the given sign (+1/-1)."""
+    per_turn = {}
+    for path in sorted(glob.glob("history/merc-*.jsonl")):
+        with open(path) as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                    # items[*][3] is sale qty; we need value. Prefer explicit profit if present.
+                    profit = r.get("profit")
+                    if profit is None:
+                        # approximate: sum sale_value - purchase_cost if present in flows-like fields
+                        continue
+                    per_turn[r["turn"]] = 1 if float(profit) >= 0 else -1
+                except (ValueError, KeyError, TypeError):
+                    continue
+    last = [per_turn[t] for t in sorted(per_turn)[-n:]]
+    return len(last) >= n and all(x == sign for x in last)
+
+
+def operating_mode(cash, last_op=None):
+    """SOS / STEADY / GROWTH from cash + profit (same thresholds as Ops). No shared state file."""
+    last_op = last_op or "STEADY"
+    if last_op == "SOS":
+        if not (cash > MODE["SOS_EXIT_CASH"] and profit_streak(1, MODE["SOS_EXIT_PROFIT_TURNS"])):
+            return "SOS"
+    elif last_op == "GROWTH":
+        if cash < MODE["GROWTH_EXIT_CASH"]:
+            if cash < MODE["SOS_CASH"] or (cash < MODE["SOS_SOFT_CASH"] and profit_streak(-1, MODE["SOS_NEG_TURNS"])):
+                return "SOS"
+            return "STEADY"
+        return "GROWTH"
+    if cash < MODE["SOS_CASH"] or (cash < MODE["SOS_SOFT_CASH"] and profit_streak(-1, MODE["SOS_NEG_TURNS"])):
+        return "SOS"
+    if cash > MODE["GROWTH_CASH"] and profit_streak(1, MODE["GROWTH_PROFIT_TURNS"]):
+        return "GROWTH"
+    return "STEADY"
+
+
+def buffer_mode(stocks, last_mode, tg, cash, op_mode="STEADY"):
+    # Operating mode gates fill behaviour
+    if op_mode == "SOS":
         return "HOLD"
+    if op_mode == "STEADY" and cash < FILL_CASH_MIN:
+        return "HOLD"
+    # GROWTH (and STEADY above FILL_CASH_MIN) may fill
     low = any(stocks.get(i, 0) < tg[i] * LOW_FRACTION for i in BUFFERS)
     full = all(stocks.get(i, 0) >= tg[i] for i in BUFFERS)
     if low:
@@ -176,9 +242,22 @@ def main():
     stocks = {i: m.num((assets.get(i) or {}).get("balance")) for i in BUFFERS}
     cash = m.num(m.get("/households/21623").get("cash"))
     sales = garment_sales()
+    # operating mode (SOS/STEADY/GROWTH) from cash + profit; last op from state file if present
+    last_op = None
+    if saved and isinstance(saved, dict):
+        last_op = saved.get("op_mode")
+    op_mode = operating_mode(cash, last_op)
     _, tg = plan(sizes, other_thread, sales, stocks, "HOLD")
-    mode = buffer_mode(stocks, last_mode, tg, cash)
+    mode = buffer_mode(stocks, last_mode, tg, cash, op_mode)
     new, tg = plan(sizes, other_thread, sales, stocks, mode)
+    # SOS: cap chain to OWN_LABOUR, sewing first
+    if op_mode == "SOS":
+        left = MODE["OWN_LABOUR"]
+        order = ["sew", "weave", "spin", "ret", "flax"]
+        for k in order:
+            max_x = left / CHAIN[k]["labour"] if CHAIN[k]["labour"] else new[k]
+            new[k] = round(min(new[k], sizes[k], max(0, max_x)), 2)
+            left -= new[k] * CHAIN[k]["labour"]
     changed = last is not None and last != sizes
     mode_changed = mode != last_mode
     print("sizes:", sizes, "(last seen: %s)" % last)
@@ -186,14 +265,14 @@ def main():
         cash, FILL_CASH_MIN, SALES_WINDOW, "%.1f" % sales if sales else "no history"))
     print("stocks:", {k: round(v) for k, v in stocks.items()}, "targets (%d turns):" % STOCK_TURNS,
           {k: round(v) for k, v in tg.items()})
-    print("mode: %s (last: %s)" % (mode, last_mode))
+    print("op_mode: %s | buffer mode: %s (last: %s)" % (op_mode, mode, last_mode))
     print("current targets:", cur)
     print("planned targets:", new, "| other thread use %.1f" % other_thread)
     print("garments/turn: %.1f -> %.1f" % (cur["sew"] * 41, new["sew"] * 41))
 
     def save():
         with open(STATE, "w") as f:
-            json.dump({"sizes": sizes, "mode": mode}, f)
+            json.dump({"sizes": sizes, "mode": mode, "op_mode": op_mode}, f)
 
     os.makedirs("state", exist_ok=True)
     if last is None:
@@ -241,14 +320,16 @@ def main():
             else:
                 lines.append("- %s %s -> %s" % (item, field, ms[idx][field]))
 
-        if abs(d_lab) >= 1:
+        if abs(d_lab) >= 1 and op_mode != "SOS":
             bump("labour", "buy_volume", d_lab)
+        elif abs(d_lab) >= 1 and op_mode == "SOS":
+            lines.append("- labour buy skipped (SOS)")
         if abs(d_tools) >= 1:
             bump("tools", "buy_volume", d_tools)
         g_ms = (holds.get("garments") or {}).get("managers") or []
         si = next((i for i, x in enumerate(g_ms) if m.num(x.get("sell_volume"))), None)
         if si is not None:
-            want = round(new["sew"] * 41 - HOUSEHOLD_GARMENTS)
+            want = round(new["sew"] * 41 - MODE['HOUSEHOLD_GARMENTS'])
             bump("garments", "sell_volume", want - m.num(g_ms[si].get("sell_volume")), si)
         if errors:
             lines.append("- **errors:** " + "; ".join(errors))
