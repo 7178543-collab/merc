@@ -106,7 +106,7 @@ def watch_alerts(buildings, snap, wanted):
 
 
 def ship_info():
-    """List of dicts, one per ship: name, state, place, recipe."""
+    """List of dicts, one per ship: name, state, place, recipe + route/op/imp/exp/cargo."""
     try:
         player = m.get("/player")
         biz = m.get("/businesses/%s" % player["household"]["business_ids"][0])
@@ -114,12 +114,14 @@ def ship_info():
         for tid in biz.get("transport_ids", []):
             t = m.get("/transports/%s" % tid)
             j = t.get("journey") or {}
-            end = j.get("end_town_id")
+            end = j.get("end_town_id") or j.get("destination_town_id")
             prod = t.get("producer") or {}
             recipe = prod.get("recipe")
+            if isinstance(recipe, dict):
+                recipe = recipe.get("name") or recipe.get("reference") or str(recipe)
             loc = t.get("location") or {}
             town = t.get("town_id")
-            if recipe and "fish" in recipe:
+            if recipe and "fish" in str(recipe):
                 state, place = "fishing", "at sea %s:%s" % (loc.get("x"), loc.get("y"))
             elif end and str(end) != str(town):
                 state, place = "sailing", "to %s" % town_name(end)
@@ -127,8 +129,38 @@ def ship_info():
                 state, place = "docked", "at %s" % town_name(town)
             else:
                 state, place = "anchored", "at sea %s:%s" % (loc.get("x"), loc.get("y"))
-            out.append({"name": t.get("name"), "state": state, "place": place,
-                        "recipe": recipe, "level": m.num(prod.get("target"))})
+            entry = {"name": t.get("name"), "state": state, "place": place,
+                     "recipe": recipe, "level": m.num(prod.get("target"))}
+            # --- extended fields (never break the existing keys) ---
+            try:
+                route = t.get("route") or {}
+                dest = route.get("remote_town") or end or route.get("local_town")
+                entry["route"] = town_name(dest) if dest else None
+                prev = prod.get("previous_operation") or {}
+                tgt = m.num(prod.get("target") or prev.get("target"))
+                entry["op"] = round(100.0 * tgt, 1) if tgt and tgt <= 1 else tgt
+                imp, exp = {}, {}
+                for item, mg in (route.get("managers") or {}).items():
+                    if not isinstance(mg, dict):
+                        continue
+                    bv, sv = m.num(mg.get("buy_volume")), m.num(mg.get("sell_volume"))
+                    if bv:
+                        imp[item] = round(bv, 1)
+                    if sv:
+                        exp[item] = round(sv, 1)
+                entry["imp"] = imp or None
+                entry["exp"] = exp or None
+                cargo = {}
+                inv = (t.get("cargo") or {}).get("inventory") or t.get("inventory") or {}
+                assets = (inv.get("account") or {}).get("assets") or inv.get("assets") or {}
+                for item, a in assets.items():
+                    q = m.num(a.get("balance") if isinstance(a, dict) else a)
+                    if q:
+                        cargo[item] = round(q, 1)
+                entry["cargo"] = cargo or None
+            except (SystemExit, Exception) as e:
+                print("ship extras skipped:", type(e).__name__)
+            out.append(entry)
         return out
     except (SystemExit, Exception) as e:
         return [{"name": "ship", "state": "unknown", "place": type(e).__name__}]
@@ -194,7 +226,7 @@ def data_line(wanted, hh, ships, snap, prices, held):
             items[item] = row
     extra = money_extra()
     d = {
-        "v": 1,
+        "v": 2,
         "t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "cash": round(m.num(hh.get("cash")), 2),
         "prestige": round(m.num(hh.get("prestige")), 2),
@@ -204,6 +236,73 @@ def data_line(wanted, hh, ships, snap, prices, held):
         "cols": ["held"] + FLOW_KEYS + ["price"],
         "items": items,
     }
+
+    # 1. buildings
+    try:
+        player = m.get("/player")
+        biz = m.get("/businesses/%s" % player["household"]["business_ids"][0])
+        bld = []
+        for bb in biz.get("buildings") or []:
+            bid = bb.get("id") if isinstance(bb, dict) else bb
+            if not bid:
+                continue
+            try:
+                b = m.get("/buildings/%s" % bid)
+            except SystemExit:
+                continue
+            name = b.get("name") or (bb.get("name") if isinstance(bb, dict) else None) or str(bid)
+            prod = b.get("producer") or {}
+            recipe = prod.get("recipe")
+            if isinstance(recipe, dict):
+                recipe = recipe.get("name") or recipe.get("reference") or str(recipe)
+            prev = prod.get("previous_operation") or {}
+            cur_rate = round(m.num(prev.get("production") or prev.get("volume")), 1)
+            tgt_rate = round(m.num(prod.get("target") or prev.get("target")), 1)
+            flags = []
+            if not recipe:
+                flags.append("idle")
+            cons = b.get("construction")
+            if cons:
+                flags.append("%d%%" % int(m.num(cons.get("progress"))))
+            if prod.get("limited"):
+                flags.append("limited")
+            mgr = prod.get("manager") if isinstance(prod.get("manager"), dict) else {}
+            for src in (prod, b, mgr):
+                if isinstance(src, dict) and (src.get("clearcut") or src.get("clear_cutting") or
+                                              (isinstance(src.get("flags"), list) and "clearcut" in src["flags"])):
+                    flags.append("clearcut")
+                    break
+            bld.append([name, recipe, cur_rate, tgt_rate, flags or None])
+        d["bld"] = bld
+    except (SystemExit, Exception) as e:
+        print("bld skipped:", type(e).__name__)
+
+    # 2. storehouse automated orders
+    try:
+        sh = m.get("/buildings/%s" % "152202386005001")
+        inv = (sh.get("storage") or {}).get("inventory") or {}
+        holdings = inv.get("holdings") or {}
+        ord_ = {}
+        for item, h in holdings.items():
+            managers = h.get("managers", []) if isinstance(h, dict) else []
+            buy_vol = buy_max = buy_high = sell_vol = sell_min = sell_low = None
+            for mg in managers or []:
+                if not isinstance(mg, dict):
+                    continue
+                if mg.get("buy_volume") is not None:
+                    buy_vol = round(m.num(mg.get("buy_volume")), 1)
+                    buy_max = round(m.num(mg.get("buy_price")), 2) if mg.get("buy_price") is not None else None
+                    buy_high = round(m.num(mg.get("max_holding")), 1) if mg.get("max_holding") is not None else None
+                if mg.get("sell_volume") is not None:
+                    sell_vol = round(m.num(mg.get("sell_volume")), 1)
+                    sell_min = round(m.num(mg.get("sell_price")), 2) if mg.get("sell_price") is not None else None
+                    sell_low = round(m.num(mg.get("min_holding")), 1) if mg.get("min_holding") is not None else None
+            if any(x is not None for x in (buy_vol, buy_max, buy_high, sell_vol, sell_min, sell_low)):
+                ord_[item] = [buy_vol or 0, buy_max, buy_high, sell_vol or 0, sell_min, sell_low]
+        d["ord"] = ord_
+    except (SystemExit, Exception) as e:
+        print("ord skipped:", type(e).__name__)
+
     return "merc-data: " + json.dumps(d, separators=(",", ":"), default=str)
 
 
