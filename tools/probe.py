@@ -3,6 +3,25 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--status"]:
+    pl = m.get("/player") or {}
+    hh = pl.get("household") or {}
+    biz = m.get("/businesses/%s" % hh["business_ids"][0]) or {}
+    for b in biz.get("buildings", []):
+        if b.get("type") in ("park", "farmstead") or "construction" in json.dumps(b)[:4000]:
+            full = m.get("/buildings/%s" % b["id"]) or {}
+            keep = {k: full.get(k) for k in full if k not in ("storage", "_embedded", "inventory")}
+            print("BLD", b.get("type"), json.dumps(keep, default=str)[:2500])
+    try:
+        md = json.loads(urllib.request.urlopen("https://api.mercatorio-tools.tech/data/marketdata", timeout=60).read())
+        txt = json.dumps(md)
+        print("MD type", type(md).__name__, "len", len(txt))
+        for good in sys.argv[2:]:
+            for mt in list(re.finditer(r'.{0,200}"%s".{0,300}' % re.escape(good), txt))[:4]:
+                print("MD", good, mt.group(0))
+    except Exception as e:
+        print("MDFAIL", e)
+    sys.exit(0)
 if sys.argv[1:2] == ["--route-test"]:
     tid, item, body = sys.argv[2], sys.argv[3], sys.argv[4]
     for shape in (json.loads(body), {"managers": json.loads(body)}):
