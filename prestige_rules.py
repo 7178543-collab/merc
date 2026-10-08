@@ -68,7 +68,8 @@ def main():
     say("mansion producer: recipe=%s target=%s provider=%s limited=%s last_op=%s" % (
         full.get("recipe"), full.get("target"), full.get("provider_id"), full.get("limited"),
         json.dumps(full.get("previous_operation"))[:200]))
-    running = prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
+    running = (prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
+               and str(prod.get("provider_id")) == q.STORE)
 
     if cash < OFF_CASH:
         want_on, why = False, "cash %.0f under %d" % (cash, OFF_CASH)
@@ -87,7 +88,7 @@ def main():
         if not fish_on:
             todo.append({"item": FISH, "tier": 0, "set": FISH_ORDER, "note": "banquet rule: " + why})
         if not running:
-            todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 1}, "note": "banquet rule: " + why})
+            todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 1, "provider_id": q.STORE}, "note": "banquet rule: " + why})
     else:
         if running:
             todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 0}, "note": "banquet rule: " + why})

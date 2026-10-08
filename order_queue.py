@@ -126,14 +126,16 @@ def _apply_producer(e):
             "autoset_buying": False, "autoset_selling": False, "allow_overprod": False}
     if want.get("recipe"):
         body["recipe"] = want["recipe"]
-    if want.get("provider_id"):
-        body["provider_id"] = str(want["provider_id"])
     tries = []
     for method in ("PUT", "POST"):
         ok, status, resp = _req(method, "/buildings/%s/producer" % bid, body)
         tries.append([method, status, resp[:200]])
         if ok:
             break
+    if want.get("provider_id") and str(read_producer(bid).get("provider_id")) != str(want["provider_id"]):
+        # the storehouse link is a field on the building itself, not the producer
+        ok, status, resp = _req("PATCH", "/buildings/%s" % bid, {"provider_id": str(want["provider_id"])})
+        tries.append(["PATCH building provider", status, resp[:120]])
     now = read_producer(bid)
     good = (_same(now.get("target"), want.get("target", 0)) and (not want.get("recipe") or now.get("recipe") == want["recipe"])
             and (not want.get("provider_id") or str(now.get("provider_id")) == str(want["provider_id"])))
