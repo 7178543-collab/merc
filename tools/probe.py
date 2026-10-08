@@ -34,6 +34,11 @@ if sys.argv[1:2] == ["--dump"]:
         with open("state/dump/js/" + re.sub(r"[^\w.-]", "_", s0)[-80:], "w") as f: f.write(js)
         for more in re.findall(r'["\']([\w./-]+\.js)["\']', js):
             if more not in done: srcs.add(more)
+    try:
+        md = json.loads(urllib.request.urlopen("https://api.mercatorio-tools.tech/data/marketdata", timeout=90).read())
+        save("marketdata", md)
+    except Exception as e:
+        print("MDFAIL", e)
     print("dumped", len(os.listdir("state/dump")), "files,", len(done), "js")
     sys.exit(0)
 if sys.argv[1:2] == ["--site"]:
