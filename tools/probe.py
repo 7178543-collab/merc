@@ -3,6 +3,22 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--prestige"]:
+    pl = m.get("/player") or {}
+    hh = pl.get("household") or {}
+    h = m.get("/households/%s" % hh.get("id")) or {}
+    def walk(o, path=""):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                walk(v, path + "/" + str(k))
+        elif isinstance(o, list):
+            for i, v in enumerate(o[:40]):
+                walk(v, path + "[%d]" % i)
+        else:
+            if re.search(r"prestige|legacy|sustenance|influence|reput|caps|donat|maint|bonus|upkeep|decay", path, re.I):
+                print("H", path, o)
+    walk(h); walk(pl, "/player")
+    sys.exit(0)
 if sys.argv[1:2] == ["--status"]:
     pl = m.get("/player") or {}
     hh = pl.get("household") or {}
