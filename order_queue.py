@@ -63,7 +63,12 @@ def _apply_transport(e, sets):
     # verify it stuck (an ignored payload still returns 200)
     t2 = m.get("/transports/%s" % tid) or {}
     now = (((t2.get("route") or {}).get("holdings") or {}).get(item) or {}).get("managers") or []
-    ok = any(all(str(mg.get(k)) == str(v) or (k not in PRICE_FIELDS and str(mg.get(k)).split(".")[0] == str(v)) for k, v in clean.items()) for mg in now if mg)
+    def same(a, b):
+        try:
+            return abs(float(a) - float(b)) < 1e-6
+        except (TypeError, ValueError):
+            return str(a) == str(b)
+    ok = any(all(same(mg.get(k), v) for k, v in clean.items()) for mg in now if mg)
     return dict(ok=ok, status=200, before=before, after=now, error=None if ok else "200 but not applied")
 
 
