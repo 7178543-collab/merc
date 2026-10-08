@@ -1,5 +1,7 @@
 before None
-TRY PATCH /buildings/152002388/producer {"provider_id": "152202386005001"} -> 400 [400] bad request: target missing  | provider now: None
-TRY PATCH /producers/152002388 {"provider_id": "152202386005001"} -> 404 not found  | provider now: None
-TRY POST /buildings/152202386005001/operations {"reference": "producer/152002388"} -> 404 not found  | provider now: None
-TRY PATCH /buildings/152202386005001/operations {"add": ["producer/152002388"]} -> 404 not found  | provider now: None
+TRY PATCH /buildings/152002388/producer {"target": "1", "provider_id": "152202386005001"} -> 200 {"_embedded":{"/buildings/152002388":{"name":"mansion 1","id":"152002388","type":"mansion","size":1,"capacity":"1","town_id":"152202387","owner_id":"3 | provider now: None
+TRY PATCH /buildings/152002388/producer {"target": "1", "provider": "152202386005001"} -> 200 {"_embedded":{"/buildings/152002388":{"name":"mansion 1","id":"152002388","type":"mansion","size":1,"capacity":"1","town_id":"152202387","owner_id":"3 | provider now: None
+TRY PUT /buildings/152002388/producer {"target": "1", "recipe": "hold banquet 1 (fish)", "provider_id": "152202386005001", "manager": "static"} -> 200 {"_embedded":{"/buildings/152002388":{"name":"mansion 1","id":"152002388","type":"mansion","size":1,"capacity":"1","town_id":"152202387","owner_id":"3 | provider now: None
+TRY PATCH /buildings/152002388/producer {"target": "1", "provider_id": 152202386005001} -> 200 {"_embedded":{"/buildings/152002388":{"name":"mansion 1","id":"152002388","type":"mansion","size":1,"capacity":"1","town_id":"152202387","owner_id":"3 | provider now: None
+TRY PUT /buildings/152002388/producer/provider {"provider_id": "152202386005001"} -> 404 not found  | provider now: None
+TRY PATCH /buildings/152002388 {"provider_id": "152202386005001"} -> 200 {"name":"mansion 1","id":"152002388","type":"mansion","size":1,"capacity":"1","town_id":"152202387","owner_id":"39992","location":"1520:2388","locatio | provider now: 152202386005001
