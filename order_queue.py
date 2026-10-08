@@ -116,7 +116,7 @@ def _apply_transport(e, clean):
 
 def read_producer(bid):
     p = (m.get("/buildings/%s" % bid) or {}).get("producer") or {}
-    return {"recipe": p.get("recipe"), "target": p.get("target")}
+    return {"recipe": p.get("recipe"), "target": p.get("target"), "provider_id": p.get("provider_id")}
 
 
 def _apply_producer(e):
@@ -126,6 +126,8 @@ def _apply_producer(e):
             "autoset_buying": False, "autoset_selling": False, "allow_overprod": False}
     if want.get("recipe"):
         body["recipe"] = want["recipe"]
+    if want.get("provider_id"):
+        body["provider_id"] = str(want["provider_id"])
     tries = []
     for method in ("PUT", "POST"):
         ok, status, resp = _req(method, "/buildings/%s/producer" % bid, body)
@@ -133,7 +135,8 @@ def _apply_producer(e):
         if ok:
             break
     now = read_producer(bid)
-    good = _same(now.get("target"), want.get("target", 0)) and (not want.get("recipe") or now.get("recipe") == want["recipe"])
+    good = (_same(now.get("target"), want.get("target", 0)) and (not want.get("recipe") or now.get("recipe") == want["recipe"])
+            and (not want.get("provider_id") or str(now.get("provider_id")) == str(want["provider_id"])))
     return dict(ok=good, before=before, after=now, tries=tries, error=None if good else "not applied")
 
 
