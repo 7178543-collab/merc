@@ -1,0 +1,20 @@
+name: probe
+on:
+  workflow_dispatch:
+    inputs:
+      args:
+        default: ''
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - env:
+          MERC_CREDS: ${{ secrets.MERC_CREDS }}
+        run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
+      - run: python tools/probe.py ${{ inputs.args }}
