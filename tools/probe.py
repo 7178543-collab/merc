@@ -9,6 +9,10 @@ for tid in sys.argv[1:]:
     slim = {k: t.get(k) for k in ("id", "name", "type", "town_id", "state", "capacity", "journey", "provider_id") if k in t}
     slim["route"] = {k: r.get(k) for k in ("id", "local_town", "remote_town", "distance", "capacity", "managers")}
     slim["keys"] = sorted(t.keys())
+    j = dict(t.get("journey") or {}); j.pop("legs", None); slim["journey"] = j
+    slim["route"]["managers"] = {k: v for k, v in (r.get("managers") or {}).items()}
+    for k in ("location", "procedure", "previous_operation", "reference", "hometown_id"):
+        slim[k] = t.get(k)
     print("TRANSPORT", tid, json.dumps(slim, default=str)[:3000])
 
 html = urllib.request.urlopen("https://play.mercatorio.io/", timeout=30).read().decode("utf8", "ignore")
@@ -22,8 +26,8 @@ for s in list(srcs):
         print("JSFAIL", url, e); continue
     for more in re.findall(r'["\']([\w./-]+\.js)["\']', js):
         srcs.add(more)
-    for mt in re.finditer(r'.{0,120}(?:transports|/route|journey|voyage|navigate).{0,160}', js):
+    for mt in re.finditer(r'.{0,250}[A-Za-z]+Resource\)?\(`/transports[^`]*`.{0,250}', js):
         frag = mt.group(0)
-        if any(w in frag for w in ("api", "fetch", "post", "patch", "put", "PATCH", "POST", "PUT")) and frag not in seen:
+        if frag not in seen:
             seen.add(frag); print("JS", frag.replace("\n", " "))
 print("bundles", len(srcs))
