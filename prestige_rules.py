@@ -46,9 +46,18 @@ def profit_last_turns(n):
     return sum(by_turn[t] for t in turns), len(turns)
 
 
+_LINES = []
+
+
+def say(*a):
+    line = " ".join(str(x) for x in a)
+    print(line)
+    _LINES.append(line)
+
+
 def main():
     if not (m.USER and m.TOKEN):
-        print("prestige_rules: no credentials")
+        say("prestige_rules: no credentials")
         return
     pl = m.get("/player") or {}
     hh = m.get("/households/%s" % (pl.get("household") or {}).get("id")) or {}
@@ -66,7 +75,7 @@ def main():
 
     fish_mgrs = q._store_managers(q.STORE, FISH)
     fish_on = any(m.num(mg.get("buy_volume")) > 0 for mg in fish_mgrs)
-    print("prestige_rules: banquet %s -> want %s (%s); fish buy %s" % (
+    say("prestige_rules: banquet %s -> want %s (%s); fish buy %s" % (
         "on" if running else "off", "on" if want_on else "off", why, "on" if fish_on else "off"))
 
     todo = []
@@ -83,15 +92,21 @@ def main():
 
     for e in todo:
         if not LIVE:
-            print("  would send:", json.dumps(e))
+            say("  would send:", json.dumps(e))
             continue
         try:
             r = q.apply_entry(e)
         except Exception as ex:
             r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
         q.log(e, r, source="prestige_rules")
-        print("  %s -> %s" % (e.get("item") or e.get("building"), "OK" if r.get("ok") else "FAILED %s %s" % (r.get("error"), r.get("tries", ""))))
+        say("  %s -> %s" % (e.get("item") or e.get("building"), "OK" if r.get("ok") else "FAILED %s %s" % (r.get("error"), r.get("tries", ""))))
 
 
 if __name__ == "__main__":
-    main()
+    import datetime
+    try:
+        main()
+    except Exception as ex:
+        say("prestige_rules crashed: %s: %s" % (type(ex).__name__, ex))
+    with open(os.path.join(HERE, "state", "prestige_rules_last.txt"), "w") as f:
+        f.write(datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds") + "\n" + "\n".join(_LINES) + "\n")
