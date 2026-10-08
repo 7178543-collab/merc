@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot order queue: applies state/order_queue.json (list of {item, tier, set:{field:value}}) then clears it. Run by .github/workflows/order-queue.yml."""
+"""One-shot order queue: applies state/order_queue.json (list of {item, tier, set:{field:value}}; add "transport": <ship id> for a ship route order) then clears it. Run by .github/workflows/order-queue.yml."""
 import datetime
 import json
 import os
@@ -33,6 +33,29 @@ def _patch(building_id, item, managers):
         return False, None, "%s: %s" % (type(e).__name__, e)
 
 
+def _apply_transport(e, sets):
+    """Ship route import/export order: PATCH /transports/{id}/route/inventory/{item}
+    with one manager object (same call as the open-source pymerc library)."""
+    tid, item = str(e["transport"]), e["item"]
+    t = m.get("/transports/%s" % tid) or {}
+    route = t.get("route") or {}
+    if not route.get("id"):
+        return dict(ok=False, error="transport %s has no route" % tid)
+    before = (route.get("managers") or {}).get(item) or {}
+    mgr = {k: v for k, v in before.items() if k != "result"}
+    mgr.update({k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()})
+    url = "https://play.mercatorio.io/api/transports/%s/route/inventory/%s" % (tid, urllib.parse.quote(item, safe=""))
+    req = urllib.request.Request(
+        url, data=json.dumps(mgr, default=str).encode(), method="PATCH",
+        headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
+                 "Content-Type": "application/json", "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return dict(ok=True, status=r.status, body=r.read().decode()[:300], before=before, after=mgr)
+    except urllib.error.HTTPError as ex:
+        return dict(ok=False, status=ex.code, body=ex.read().decode()[:300], before=before, after=mgr)
+
+
 def _apply_one(e):
     item = e["item"]
     bid = str(e.get("building") or STORE)
@@ -40,6 +63,8 @@ def _apply_one(e):
     bad = set(sets) - FIELDS
     if bad:
         return dict(ok=False, error="refused fields %s" % sorted(bad))
+    if e.get("transport"):
+        return _apply_transport(e, sets)
     b = m.get("/buildings/%s" % bid) or {}
     hold = (((b.get("storage") or {}).get("inventory") or {}).get("holdings") or {}).get(item)
     if hold is None:
