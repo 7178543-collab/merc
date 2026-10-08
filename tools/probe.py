@@ -15,6 +15,8 @@ for tid in sys.argv[1:]:
         slim[k] = t.get(k)
     print("TRANSPORT", tid, json.dumps(slim, default=str)[:3000])
 
+print("ts", __import__("datetime").datetime.utcnow().isoformat())
+import sys as _s; _s.exit(0)
 html = urllib.request.urlopen("https://play.mercatorio.io/", timeout=30).read().decode("utf8", "ignore")
 srcs = set(re.findall(r'(?:src|href)="([^"]+\.js)"', html))
 seen = set()
@@ -26,7 +28,7 @@ for s in list(srcs):
         print("JSFAIL", url, e); continue
     for more in re.findall(r'["\']([\w./-]+\.js)["\']', js):
         srcs.add(more)
-    for mt in re.finditer(r'.{0,250}[A-Za-z]+Resource\)?\(`/transports[^`]*`.{0,250}', js):
+    for mt in [] or re.finditer(r'.{0,250}[A-Za-z]+Resource\)?\(`/transports[^`]*`.{0,250}', js):
         frag = mt.group(0)
         if frag not in seen:
             seen.add(frag); print("JS", frag.replace("\n", " "))
