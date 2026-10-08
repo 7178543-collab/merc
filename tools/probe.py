@@ -7,10 +7,13 @@ if sys.argv[1:2] == ["--link-test"]:
     bid, store = sys.argv[2], sys.argv[3]
     def prov():
         return ((m.get("/buildings/%s" % bid) or {}).get("producer") or {}).get("provider_id")
-    cands = [("PATCH", "/buildings/%s/producer" % bid, {"provider_id": store}),
-             ("PATCH", "/producers/%s" % bid, {"provider_id": store}),
-             ("POST", "/buildings/%s/operations" % store, {"reference": "producer/%s" % bid}),
-             ("PATCH", "/buildings/%s/operations" % store, {"add": ["producer/%s" % bid]})]
+    R = "hold banquet 1 (fish)"
+    cands = [("PATCH", "/buildings/%s/producer" % bid, {"target": "1", "provider_id": store}),
+             ("PATCH", "/buildings/%s/producer" % bid, {"target": "1", "provider": store}),
+             ("PUT", "/buildings/%s/producer" % bid, {"target": "1", "recipe": R, "provider_id": store, "manager": "static"}),
+             ("PATCH", "/buildings/%s/producer" % bid, {"target": "1", "provider_id": int(store)}),
+             ("PUT", "/buildings/%s/producer/provider" % bid, {"provider_id": store}),
+             ("PATCH", "/buildings/%s" % bid, {"provider_id": store})]
     print("before", prov())
     for method, path, body in cands:
         req = urllib.request.Request("https://play.mercatorio.io/api" + path, data=json.dumps(body).encode(), method=method,
