@@ -1,8 +1,25 @@
 """Read-only probe (Claude, Oct 2026): dumps a transport and greps the game's web bundle for API paths. Never prints credentials."""
-import json, re, sys, urllib.request
+import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--route-test"]:
+    tid, item, body = sys.argv[2], sys.argv[3], sys.argv[4]
+    for shape in (json.loads(body), {"managers": json.loads(body)}):
+        req = urllib.request.Request("https://play.mercatorio.io/api/transports/%s/route/inventory/%s" % (tid, item),
+            data=json.dumps(shape).encode(), method="PATCH",
+            headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN, "Content-Type": "application/json", "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                out = json.loads(r.read().decode())
+                print("SHAPE", list(shape)[:3], r.status, "managers:", json.dumps(out.get("managers"))[:400], "keys:", sorted(out)[:30])
+        except urllib.error.HTTPError as e:
+            print("SHAPE", list(shape)[:3], e.code, e.read().decode()[:400])
+        t = m.get("/transports/%s" % tid) or {}
+        print("AFTER GET managers:", json.dumps((t.get("route") or {}).get("managers"))[:400])
+        if ((t.get("route") or {}).get("managers") or {}).get(item):
+            break
+    sys.exit(0)
 for tid in sys.argv[1:]:
     t = m.get("/transports/%s" % tid) or {}
     r = t.get("route") or {}
