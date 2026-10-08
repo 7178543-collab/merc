@@ -233,6 +233,9 @@ def labour_proposal(building_id, building_name, stalled=()):
     need = m.num(f.get("consumption")) + short - m.num(f.get("production")) + LABOUR_BUFFER
     new = need
     why = ("%.1f labour short last turn" % short) if short > 0 else ("%.1f bought labour expired last turn" % exp)
+    if new < cur and _recent_manual("labour"):
+        print("labour trim skipped, set by order queue in the last 2h")
+        return None
     if new < cur and stalled:
         print("labour trim skipped, chain stalled/restarting: %s" % ", ".join(stalled))
         return None
@@ -252,6 +255,26 @@ def labour_proposal(building_id, building_name, stalled=()):
 
 
 LABOUR_BUFFER = 10
+
+
+def _recent_manual(item, hours=2):
+    """True if state/order_queue_done.jsonl applied a change to this item within
+    the last `hours` -- the bot shouldn't immediately undo a hand-queued value."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "order_queue_done.jsonl")
+    try:
+        lines = open(path).read().splitlines()[-50:]
+    except FileNotFoundError:
+        return False
+    cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=hours)
+    for ln in lines:
+        try:
+            r = json.loads(ln)
+            if r.get("ok") and (r.get("entry") or {}).get("item") == item and \
+                    datetime.datetime.fromisoformat(r["ts"]) >= cutoff:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def operating_mode(cash, last_op=None):
@@ -453,6 +476,14 @@ def run():
                     status = "OK" if result["sent"] else "FAILED"
                     print("  [LIVE %s] %s / %s -> %s = %s" %
                           (status, p["building"], p["item"], p["field"], p["new_value"]))
+
+    # one-shot hand-queued order changes (state/order_queue.json), applied last
+    # so they are the final word for this turn's auction
+    try:
+        import order_queue
+        order_queue.apply_queue(LIVE_MODE)
+    except Exception as e:
+        log_error("order queue failed: %r" % e)
 
     if QUIET:
         return
