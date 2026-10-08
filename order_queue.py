@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""One-shot order queue: applies state/order_queue.json (list of {item, tier, set:{field:value}}; add "transport": <ship id> for a ship route order) then clears it. Run by .github/workflows/order-queue.yml."""
+"""Order queue: applies state/order_queue.json then clears it. Run by .github/workflows/order-queue.yml.
+
+Entry kinds (a JSON list of these):
+  storehouse order  {"item": "cloth", "tier": 0, "set": {"sell_volume": 30, "sell_price": "8.00", "min_holding": 600}}
+  ship route order  {"transport": "<ship id>", "item": "limestone", "set": {"buy_volume": 20, ...}}
+  building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
+Every change is re-read after sending and only logged ok if the game actually holds it.
+apply_entry() is also used by rule scripts (prestige_rules.py).
+"""
 import datetime
 import json
 import os
@@ -17,11 +25,9 @@ FIELDS = {"buy_volume", "buy_price", "max_holding", "sell_volume", "sell_price",
 PRICE_FIELDS = {"buy_price", "sell_price"}
 
 
-def _patch(building_id, item, managers):
-    url = "https://play.mercatorio.io/api/buildings/%s/storage/inventory/%s" % (
-        building_id, urllib.parse.quote(item, safe=""))
+def _req(method, path, body):
     req = urllib.request.Request(
-        url, data=json.dumps({"managers": managers}, default=str).encode(), method="PATCH",
+        "https://play.mercatorio.io/api" + path, data=json.dumps(body, default=str).encode(), method=method,
         headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
                  "Content-Type": "application/json", "Accept": "application/json"})
     try:
@@ -33,68 +39,111 @@ def _patch(building_id, item, managers):
         return False, None, "%s: %s" % (type(e).__name__, e)
 
 
-def _apply_transport(e, sets):
-    """Ship route import/export order. Current API (Oct 2026): GET route.holdings[item].managers
-    (a list, like the storehouse), PATCH /transports/{id}/route/inventory/{item} {"managers": [...]}."""
-    tid, item = str(e["transport"]), e["item"]
-    t = m.get("/transports/%s" % tid) or {}
-    route = t.get("route") or {}
-    if not route.get("id"):
-        return dict(ok=False, error="transport %s has no route" % tid)
-    hold = (route.get("holdings") or {}).get(item) or {}
-    mgrs = [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
-    before = json.loads(json.dumps(mgrs, default=str))
-    tier = int(e.get("tier", 0))
-    clean = {k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()}
+def _same(a, b):
+    try:
+        return abs(float(a) - float(b)) < 1e-6
+    except (TypeError, ValueError):
+        return str(a) == str(b)
+
+
+def _merge(mgrs, tier, clean):
+    mgrs = [dict(x) for x in mgrs]
     if tier < len(mgrs):
         mgrs[tier].update(clean)
     else:
         mgrs.append(clean)
-    url = "https://play.mercatorio.io/api/transports/%s/route/inventory/%s" % (tid, urllib.parse.quote(item, safe=""))
-    req = urllib.request.Request(
-        url, data=json.dumps({"managers": mgrs}, default=str).encode(), method="PATCH",
-        headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
-                 "Content-Type": "application/json", "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            r.read()
-    except urllib.error.HTTPError as ex:
-        return dict(ok=False, status=ex.code, body=ex.read().decode()[:300], before=before, after=mgrs)
-    # verify it stuck (an ignored payload still returns 200)
-    t2 = m.get("/transports/%s" % tid) or {}
-    now = (((t2.get("route") or {}).get("holdings") or {}).get(item) or {}).get("managers") or []
-    def same(a, b):
-        try:
-            return abs(float(a) - float(b)) < 1e-6
-        except (TypeError, ValueError):
-            return str(a) == str(b)
-    ok = any(all(same(mg.get(k), v) for k, v in clean.items()) for mg in now if mg)
-    return dict(ok=ok, status=200, before=before, after=now, error=None if ok else "200 but not applied")
+    return mgrs
 
 
-def _apply_one(e):
-    item = e["item"]
-    bid = str(e.get("building") or STORE)
+def _held(now, clean):
+    return any(all(_same(mg.get(k), v) for k, v in clean.items()) for mg in now if mg)
+
+
+def _clean(sets):
+    return {k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()}
+
+
+def _store_managers(bid, item):
+    b = m.get("/buildings/%s" % bid) or {}
+    hold = (((b.get("storage") or {}).get("inventory") or {}).get("holdings") or {}).get(item) or {}
+    return [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
+
+
+def _route_managers(tid, item):
+    t = m.get("/transports/%s" % tid) or {}
+    route = t.get("route") or {}
+    hold = (route.get("holdings") or {}).get(item) or {}
+    return route.get("id"), [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
+
+
+def _apply_store(e, clean):
+    bid, item = str(e.get("building") or STORE), e["item"]
+    before = _store_managers(bid, item)  # empty if the item has no holding yet; the PATCH creates it
+    mgrs = _merge(before, int(e.get("tier", 0)), clean)
+    ok, status, body = _req("PATCH", "/buildings/%s/storage/inventory/%s" % (bid, urllib.parse.quote(item, safe="")),
+                            {"managers": mgrs})
+    if not ok:
+        return dict(ok=False, status=status, body=body, before=before)
+    now = _store_managers(bid, item)
+    good = _held(now, clean)
+    return dict(ok=good, status=status, before=before, after=now, error=None if good else "200 but not applied")
+
+
+def _apply_transport(e, clean):
+    tid, item = str(e["transport"]), e["item"]
+    rid, before = _route_managers(tid, item)
+    if not rid:
+        return dict(ok=False, error="transport %s has no route" % tid)
+    mgrs = _merge(before, int(e.get("tier", 0)), clean)
+    ok, status, body = _req("PATCH", "/transports/%s/route/inventory/%s" % (tid, urllib.parse.quote(item, safe="")),
+                            {"managers": mgrs})
+    if not ok:
+        return dict(ok=False, status=status, body=body, before=before)
+    _, now = _route_managers(tid, item)
+    good = _held(now, clean)
+    return dict(ok=good, status=status, before=before, after=now, error=None if good else "200 but not applied")
+
+
+def read_producer(bid):
+    p = (m.get("/buildings/%s" % bid) or {}).get("producer") or {}
+    return {"recipe": p.get("recipe"), "target": p.get("target")}
+
+
+def _apply_producer(e):
+    bid, want = str(e["building"]), e["producer"]
+    before = read_producer(bid)
+    body = {"target": "%.3f" % float(want.get("target", 0)),
+            "autoset_buying": False, "autoset_selling": False, "allow_overprod": False}
+    if want.get("recipe"):
+        body["recipe"] = want["recipe"]
+    tries = []
+    for method in ("PUT", "POST"):
+        ok, status, resp = _req(method, "/buildings/%s/producer" % bid, body)
+        tries.append([method, status, resp[:200]])
+        if ok:
+            break
+    now = read_producer(bid)
+    good = _same(now.get("target"), want.get("target", 0)) and (not want.get("recipe") or now.get("recipe") == want["recipe"])
+    return dict(ok=good, before=before, after=now, tries=tries, error=None if good else "not applied")
+
+
+def apply_entry(e):
+    if e.get("producer"):
+        return _apply_producer(e)
     sets = e.get("set") or {}
     bad = set(sets) - FIELDS
     if bad:
         return dict(ok=False, error="refused fields %s" % sorted(bad))
+    clean = _clean(sets)
     if e.get("transport"):
-        return _apply_transport(e, sets)
-    b = m.get("/buildings/%s" % bid) or {}
-    hold = (((b.get("storage") or {}).get("inventory") or {}).get("holdings") or {}).get(item)
-    if hold is None:
-        return dict(ok=False, error="item %r not in building %s" % (item, bid))
-    mgrs = [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
-    tier = int(e.get("tier", 0))
-    clean = {k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()}
-    before = json.loads(json.dumps(mgrs, default=str))
-    if tier < len(mgrs):
-        mgrs[tier].update(clean)
-    else:
-        mgrs.append(clean)
-    ok, status, body = _patch(bid, item, mgrs)
-    return dict(ok=ok, status=status, body=body, before=before, after=mgrs)
+        return _apply_transport(e, clean)
+    return _apply_store(e, clean)
+
+
+def log(e, r, source="queue"):
+    ts = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    with open(DONE, "a") as f:
+        f.write(json.dumps(dict(ts=ts, source=source, entry=e, **r), default=str) + "\n")
 
 
 def apply_queue(live):
@@ -111,15 +160,13 @@ def apply_queue(live):
     if not (m.USER and m.TOKEN):
         print("order queue: no credentials, left in place")
         return
-    ts = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
-    with open(DONE, "a") as f:
-        for e in q:
-            try:
-                r = _apply_one(e)
-            except Exception as ex:
-                r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
-            f.write(json.dumps(dict(ts=ts, entry=e, **r), default=str) + "\n")
-            print("order queue: %s %s -> %s" % (e.get("item"), e.get("set"), "OK" if r.get("ok") else "FAILED"))
+    for e in q:
+        try:
+            r = apply_entry(e)
+        except Exception as ex:
+            r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+        log(e, r)
+        print("order queue: %s -> %s" % (e.get("item") or e.get("building"), "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
     with open(QUEUE, "w") as f:
         f.write("[]\n")
 

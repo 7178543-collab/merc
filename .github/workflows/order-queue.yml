@@ -28,6 +28,8 @@ jobs:
         run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
       - name: Apply queue
         run: python order_queue.py --live
+      - name: Prestige rules
+        run: python prestige_rules.py --live || true
       - name: Save
         run: |
           git config user.name "merc-bot"
