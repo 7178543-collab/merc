@@ -3,6 +3,35 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--site"]:
+    site = sys.argv[2]
+    pl = m.get("/player") or {}
+    biz = m.get("/businesses/%s" % (pl.get("household") or {})["business_ids"][0]) or {}
+    for b in biz.get("buildings", []):
+        if b.get("type") == site:
+            full = m.get("/buildings/%s" % b["id"]) or {}
+            keep = {k: full.get(k) for k in full if k not in ("storage", "_embedded", "domain", "producer")}
+            print("BLD", json.dumps(keep, default=str)[:2000])
+            prod = full.get("producer") or {}
+            print("PRODUCER", json.dumps({k: v for k, v in prod.items() if k != "inventory"}, default=str)[:2000])
+    html = urllib.request.urlopen("https://play.mercatorio.io/", timeout=30).read().decode("utf8", "ignore")
+    srcs = set(re.findall(r'(?:src|href)="([^"]+\.js)"', html)); done = set()
+    while srcs:
+        s0 = srcs.pop()
+        if s0 in done: continue
+        done.add(s0)
+        url = s0 if s0.startswith("http") else "https://play.mercatorio.io" + ("" if s0.startswith("/") else "/") + s0
+        try: js = urllib.request.urlopen(url, timeout=30).read().decode("utf8", "ignore")
+        except Exception: continue
+        for more in re.findall(r'["\']([\w./-]+\.js)["\']', js):
+            if more not in done: srcs.add(more)
+        for mt in re.finditer(r'\{"name":"[^"]*","tier":\d+,"site":"%s".{0,700}' % re.escape(site), js):
+            print("RECIPE", mt.group(0))
+        for mt in re.finditer(r'"%s":\{"text".{0,600}' % re.escape(site), js):
+            print("TEXT", mt.group(0))
+        for mt in re.finditer(r'.{0,200}"type":"%s".{0,600}' % re.escape(site), js):
+            print("TYPE", mt.group(0)[:800])
+    sys.exit(0)
 if sys.argv[1:2] == ["--prestige"]:
     pl = m.get("/player") or {}
     hh = pl.get("household") or {}
