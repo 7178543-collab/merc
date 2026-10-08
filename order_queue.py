@@ -63,9 +63,13 @@ def _clean(sets):
     return {k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()}
 
 
-def _store_managers(bid, item):
+def _store_holding(bid, item):
     b = m.get("/buildings/%s" % bid) or {}
-    hold = (((b.get("storage") or {}).get("inventory") or {}).get("holdings") or {}).get(item) or {}
+    return (((b.get("storage") or {}).get("inventory") or {}).get("holdings") or {}).get(item) or {}
+
+
+def _store_managers(bid, item):
+    hold = _store_holding(bid, item)
     return [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
 
 
@@ -77,16 +81,22 @@ def _route_managers(tid, item):
 
 
 def _apply_store(e, clean):
+    """Storehouse order and/or storage capacity ("capacity": N frees or reserves space for the item)."""
     bid, item = str(e.get("building") or STORE), e["item"]
-    before = _store_managers(bid, item)  # empty if the item has no holding yet; the PATCH creates it
-    mgrs = _merge(before, int(e.get("tier", 0)), clean)
-    ok, status, body = _req("PATCH", "/buildings/%s/storage/inventory/%s" % (bid, urllib.parse.quote(item, safe="")),
-                            {"managers": mgrs})
+    hold = _store_holding(bid, item)
+    before = [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
+    mgrs = _merge(before, int(e.get("tier", 0)), clean) if clean else before
+    body = {"managers": mgrs}
+    if e.get("capacity") is not None:
+        body["capacity"] = int(e["capacity"])
+    ok, status, resp = _req("PATCH", "/buildings/%s/storage/inventory/%s" % (bid, urllib.parse.quote(item, safe="")), body)
     if not ok:
-        return dict(ok=False, status=status, body=body, before=before)
-    now = _store_managers(bid, item)
-    good = _held(now, clean)
-    return dict(ok=good, status=status, before=before, after=now, error=None if good else "200 but not applied")
+        return dict(ok=False, status=status, body=resp, before=before, capacity_before=hold.get("capacity"))
+    h2 = _store_holding(bid, item)
+    now = [{k: v for k, v in mg.items() if k != "result"} for mg in (h2.get("managers") or []) if mg]
+    good = (not clean or _held(now, clean)) and (e.get("capacity") is None or _same(h2.get("capacity"), e["capacity"]))
+    return dict(ok=good, status=status, before=before, after=now, capacity_before=hold.get("capacity"),
+                capacity_after=h2.get("capacity"), error=None if good else "200 but not applied")
 
 
 def _apply_transport(e, clean):
