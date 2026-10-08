@@ -22,4 +22,4 @@ jobs:
       - run: mkdir -p state && python tools/probe.py ${{ inputs.args }} > state/probe.txt 2>&1 || true
       - run: |
           git config user.name merc-bot; git config user.email merc-bot@users.noreply.github.com
-          git add -f state/probe.txt; git commit -qm "probe output" && git pull -q --rebase && git push -q
+          git add -f state/probe.txt; [ -d state/dump ] && git add -f state/dump; git commit -qm "probe output" && git pull -q --rebase && git push -q

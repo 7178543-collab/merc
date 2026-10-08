@@ -3,6 +3,39 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--dump"]:
+    import os
+    os.makedirs("state/dump/js", exist_ok=True)
+    def save(name, obj):
+        with open("state/dump/%s.json" % name, "w") as f:
+            json.dump(obj, f, default=str)
+    pl = m.get("/player") or {}
+    hh = pl.get("household") or {}
+    save("player", pl)
+    save("household", m.get("/households/%s" % hh.get("id")) or {})
+    biz = m.get("/businesses/%s" % hh["business_ids"][0]) or {}
+    save("business", biz)
+    for b in biz.get("buildings", []):
+        save("bld_%s_%s" % (b.get("type"), b["id"]), m.get("/buildings/%s" % b["id"]) or {})
+    for tid in biz.get("transport_ids", []):
+        save("transport_%s" % tid, m.get("/transports/%s" % tid) or {})
+    for path in ("/contracts/towns/152202387", "/towns/152202387"):
+        try: save(path.strip("/").replace("/", "_"), m.get(path) or {})
+        except SystemExit: pass
+    html = urllib.request.urlopen("https://play.mercatorio.io/", timeout=30).read().decode("utf8", "ignore")
+    srcs = set(re.findall(r'(?:src|href)="([^"]+\.js)"', html)); done = set()
+    while srcs:
+        s0 = srcs.pop()
+        if s0 in done: continue
+        done.add(s0)
+        url = s0 if s0.startswith("http") else "https://play.mercatorio.io" + ("" if s0.startswith("/") else "/") + s0
+        try: js = urllib.request.urlopen(url, timeout=30).read().decode("utf8", "ignore")
+        except Exception: continue
+        with open("state/dump/js/" + re.sub(r"[^\w.-]", "_", s0)[-80:], "w") as f: f.write(js)
+        for more in re.findall(r'["\']([\w./-]+\.js)["\']', js):
+            if more not in done: srcs.add(more)
+    print("dumped", len(os.listdir("state/dump")), "files,", len(done), "js")
+    sys.exit(0)
 if sys.argv[1:2] == ["--site"]:
     site = sys.argv[2]
     pl = m.get("/player") or {}
