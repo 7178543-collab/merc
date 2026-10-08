@@ -240,7 +240,10 @@ def main():
 
     assets = (inv.get("account") or {}).get("assets") or {}
     stocks = {i: m.num((assets.get(i) or {}).get("balance")) for i in BUFFERS}
-    cash = m.num(m.get("/households/21623").get("cash"))
+    # cash is on the business account; /households has no cash field (read as 0 = SOS forever)
+    _pl = m.get("/player") or {}
+    _biz = m.get("/businesses/%s" % (_pl.get("household") or {})["business_ids"][0]) or {}
+    cash = m.num(((_biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
     sales = garment_sales()
     # operating mode (SOS/STEADY/GROWTH) from cash + profit; last op from state file if present
     last_op = None

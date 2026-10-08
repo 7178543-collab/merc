@@ -422,7 +422,9 @@ def run():
                             proposals.append(p)
         # operating mode from household cash (same thresholds as Ops / chain_balancer)
         try:
-            cash = m.num((adv.safe_get("/households/%s" % hh.get("id", "21623")) or {}).get("cash"))
+            # cash lives on the business account (the household object has no cash field;
+            # reading it there gave 0 = permanent SOS, which blocked every labour raise)
+            cash = m.num(((biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
         except Exception:
             cash = 0
         op_mode = operating_mode(cash)

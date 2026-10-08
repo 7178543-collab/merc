@@ -60,8 +60,8 @@ def main():
         say("prestige_rules: no credentials")
         return
     pl = m.get("/player") or {}
-    hh = m.get("/households/%s" % (pl.get("household") or {}).get("id")) or {}
-    cash = m.num(hh.get("cash"))
+    biz = m.get("/businesses/%s" % (pl.get("household") or {})["business_ids"][0]) or {}
+    cash = m.num(((biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
     profit, n = profit_last_turns(PROFIT_TURNS)
     prod = q.read_producer(MANSION)
     running = prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
