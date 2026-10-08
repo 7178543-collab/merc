@@ -1,0 +1,36 @@
+name: order-queue
+# Applies hand-queued order changes (state/order_queue.json) as soon as the
+# queue file is committed, plus a backstop run each hour at :20.
+on:
+  push:
+    paths: ['state/order_queue.json']
+  schedule:
+    - cron: '20 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: merc-actor
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Write creds
+        env:
+          MERC_CREDS: ${{ secrets.MERC_CREDS }}
+        run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
+      - name: Apply queue
+        run: python order_queue.py --live
+      - name: Save
+        run: |
+          git config user.name "merc-bot"
+          git config user.email "merc-bot@users.noreply.github.com"
+          git add -f state
+          git diff --cached --quiet || { git commit -q -m "order queue applied $(date -u +%Y-%m-%dT%H:%MZ)" && git pull -q --rebase && git push -q; }

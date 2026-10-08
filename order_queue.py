@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot order queue (Oct 2026): lets Claude (or Taylor) change a storehouse
-order by committing a line to state/order_queue.json instead of clicking in-game.
-
-merc_actor.py calls apply_queue() at the start of every LIVE run. Each entry is
-applied once, its result is appended to state/order_queue_done.jsonl, and the
-queue file is emptied (the workflow's history step commits state/).
-
-Entry format (state/order_queue.json is a JSON list):
-  {"item": "cloth", "tier": 0, "set": {"sell_volume": 30, "sell_price": "8.00", "min_holding": 600},
-   "note": "why"}
-  - "building" optional, defaults to the main storehouse.
-  - "tier" = which manager rule (0 = tier 1). If that tier doesn't exist yet,
-    a new rule is added with just the "set" fields.
-  - Manager fields: buy_volume, buy_price, max_holding, sell_volume, sell_price, min_holding.
-Safety: only those six fields are accepted; anything else in "set" is refused.
-"""
+"""One-shot order queue: applies state/order_queue.json (list of {item, tier, set:{field:value}}) then clears it. Run by .github/workflows/order-queue.yml."""
 import datetime
 import json
 import os
@@ -72,7 +57,6 @@ def _apply_one(e):
 
 
 def apply_queue(live):
-    """Apply and clear the queue. Dry run (live=False) only prints what it would do."""
     try:
         with open(QUEUE) as f:
             q = json.load(f)
