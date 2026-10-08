@@ -3,6 +3,28 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--link-test"]:
+    bid, store = sys.argv[2], sys.argv[3]
+    def prov():
+        return ((m.get("/buildings/%s" % bid) or {}).get("producer") or {}).get("provider_id")
+    cands = [("PATCH", "/buildings/%s/producer" % bid, {"provider_id": store}),
+             ("PATCH", "/producers/%s" % bid, {"provider_id": store}),
+             ("POST", "/buildings/%s/operations" % store, {"reference": "producer/%s" % bid}),
+             ("PATCH", "/buildings/%s/operations" % store, {"add": ["producer/%s" % bid]})]
+    print("before", prov())
+    for method, path, body in cands:
+        req = urllib.request.Request("https://play.mercatorio.io/api" + path, data=json.dumps(body).encode(), method=method,
+            headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN, "Content-Type": "application/json", "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                res = "%s %s" % (r.status, r.read().decode()[:150])
+        except urllib.error.HTTPError as e:
+            res = "%s %s" % (e.code, e.read().decode()[:200])
+        now = prov()
+        print("TRY", method, path, json.dumps(body), "->", res.replace("\n", " "), "| provider now:", now)
+        if now:
+            break
+    sys.exit(0)
 if sys.argv[1:2] == ["--dump"]:
     import os
     os.makedirs("state/dump/js", exist_ok=True)
