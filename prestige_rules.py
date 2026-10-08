@@ -6,7 +6,7 @@ Rule 1, mansion banquet:
   ON  when cash > 15,000 and profit summed over the last 24 turns > 0 (Growth mode)
   OFF when cash < 10,000 (drops out of Growth)  -- hysteresis in between keeps the current state
   ON  = mansion "hold banquet 1 (fish)" at 1x (+4.2 prestige/turn; 35 labour, 15 beer, 5.5 cured fish)
-        + storehouse cured fish buy 6/turn @ max 24.50, stock to 20
+        + storehouse cured fish buy 6/turn @ max 24.60, stock to 20
   OFF = mansion target 0 + cured fish buy off
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MANSION = "152002388"
 RECIPE = "hold banquet 1 (fish)"
 FISH = "cured fish"
-FISH_ORDER = {"buy_volume": 6, "buy_price": "24.50", "max_holding": 20}
+FISH_ORDER = {"buy_volume": 6, "buy_price": "24.60", "max_holding": 20}
 ON_CASH, OFF_CASH, PROFIT_TURNS = 15000, 10000, 24
 
 
@@ -64,6 +64,10 @@ def main():
     cash = m.num(((biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
     profit, n = profit_last_turns(PROFIT_TURNS)
     prod = q.read_producer(MANSION)
+    full = (m.get("/buildings/%s" % MANSION) or {}).get("producer") or {}
+    say("mansion producer: recipe=%s target=%s provider=%s limited=%s last_op=%s" % (
+        full.get("recipe"), full.get("target"), full.get("provider_id"), full.get("limited"),
+        json.dumps(full.get("previous_operation"))[:200]))
     running = prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
 
     if cash < OFF_CASH:
