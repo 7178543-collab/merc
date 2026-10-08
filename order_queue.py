@@ -34,26 +34,37 @@ def _patch(building_id, item, managers):
 
 
 def _apply_transport(e, sets):
-    """Ship route import/export order: PATCH /transports/{id}/route/inventory/{item}
-    with one manager object (same call as the open-source pymerc library)."""
+    """Ship route import/export order. Current API (Oct 2026): GET route.holdings[item].managers
+    (a list, like the storehouse), PATCH /transports/{id}/route/inventory/{item} {"managers": [...]}."""
     tid, item = str(e["transport"]), e["item"]
     t = m.get("/transports/%s" % tid) or {}
     route = t.get("route") or {}
     if not route.get("id"):
         return dict(ok=False, error="transport %s has no route" % tid)
-    before = (route.get("managers") or {}).get(item) or {}
-    mgr = {k: v for k, v in before.items() if k != "result"}
-    mgr.update({k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()})
+    hold = (route.get("holdings") or {}).get(item) or {}
+    mgrs = [{k: v for k, v in mg.items() if k != "result"} for mg in (hold.get("managers") or []) if mg]
+    before = json.loads(json.dumps(mgrs, default=str))
+    tier = int(e.get("tier", 0))
+    clean = {k: (str(v) if k in PRICE_FIELDS else int(v)) for k, v in sets.items()}
+    if tier < len(mgrs):
+        mgrs[tier].update(clean)
+    else:
+        mgrs.append(clean)
     url = "https://play.mercatorio.io/api/transports/%s/route/inventory/%s" % (tid, urllib.parse.quote(item, safe=""))
     req = urllib.request.Request(
-        url, data=json.dumps(mgr, default=str).encode(), method="PATCH",
+        url, data=json.dumps({"managers": mgrs}, default=str).encode(), method="PATCH",
         headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
                  "Content-Type": "application/json", "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            return dict(ok=True, status=r.status, body=r.read().decode()[:300], before=before, after=mgr)
+            r.read()
     except urllib.error.HTTPError as ex:
-        return dict(ok=False, status=ex.code, body=ex.read().decode()[:300], before=before, after=mgr)
+        return dict(ok=False, status=ex.code, body=ex.read().decode()[:300], before=before, after=mgrs)
+    # verify it stuck (an ignored payload still returns 200)
+    t2 = m.get("/transports/%s" % tid) or {}
+    now = (((t2.get("route") or {}).get("holdings") or {}).get(item) or {}).get("managers") or []
+    ok = any(all(str(mg.get(k)) == str(v) or (k not in PRICE_FIELDS and str(mg.get(k)).split(".")[0] == str(v)) for k, v in clean.items()) for mg in now if mg)
+    return dict(ok=ok, status=200, before=before, after=now, error=None if ok else "200 but not applied")
 
 
 def _apply_one(e):
