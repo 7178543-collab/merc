@@ -6,6 +6,7 @@ Entry kinds (a JSON list of these):
   ship route order  {"transport": "<ship id>", "item": "limestone", "set": {"buy_volume": 20, ...}}
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
+  household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -159,7 +160,30 @@ def _apply_ship_operation(e):
                 note="applies at the turn tick")
 
 
+def _apply_household_slot(e):
+    """Household sustenance slot (gear / luxury / food): PATCH /households/{id}/sustenance/inventory/{item}
+    with its buy manager. Adding a product to an empty gear or luxury slot is how the game fills the slot."""
+    hid, item = str(e["household"]), e["item"]
+    path = "/households/%s/sustenance/inventory/%s" % (hid, urllib.parse.quote(item, safe=""))
+
+    def holding():
+        h = m.get("/households/%s" % hid) or {}
+        return (((h.get("sustenance") or {}).get("inventory") or {}).get("holdings") or {}).get(item)
+    before = holding()
+    body = {}
+    if e.get("set"):
+        body = {"managers": [_clean(e["set"])]}
+    ok, status, resp = _req("PATCH", path, body)
+    if not ok:
+        return dict(ok=False, status=status, body=resp, before=before)
+    after = holding()
+    good = after is not None and (not e.get("set") or _held([x for x in (after.get("managers") or [])], _clean(e["set"])))
+    return dict(ok=good, status=status, before=before, after=after, error=None if good else "200 but not applied")
+
+
 def apply_entry(e):
+    if e.get("household"):
+        return _apply_household_slot(e)
     if e.get("producer"):
         return _apply_producer(e)
     if e.get("transport") and "operation_target" in e:
