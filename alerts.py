@@ -357,6 +357,20 @@ def contract_alerts(wanted, prices, held):
     except Exception as e:
         print("contracts: scoring failed (%r)" % e)
         return
+    # a failed auto-fill (contracts.py --fill) in the last day needs a look
+    try:
+        import datetime as _dt
+        cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=1)
+        for ln in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "order_queue_done.jsonl")).read().splitlines()[-60:]:
+            x = json.loads(ln)
+            if x.get("source") == "contracts" and not x.get("ok") and _dt.datetime.fromisoformat(x["ts"]) >= cutoff:
+                e = x.get("entry") or {}
+                wanted["[merc] contract auto-fill failed: %s" % e.get("item")] = (
+                    "Tried to fill church contract %s (%s %s for +%s prestige) from stock and the game didn't take it "
+                    "(status %s: %s). Fill it by hand: Contracts > actions." % (
+                        e.get("contract"), e.get("volume"), e.get("item"), e.get("bonus"), x.get("status"), (x.get("body") or "")[:120]))
+    except Exception:
+        pass
     for r in scored:
         if r["verdict"] not in ("GOOD", "OK"):
             continue
