@@ -50,6 +50,11 @@ def _merge(mgrs, tier, clean):
     mgrs = [dict(x) for x in mgrs]
     if tier < len(mgrs):
         mgrs[tier].update(clean)
+        # the game refuses a fixed price and a markup on the same side
+        if "sell_price" in clean:
+            mgrs[tier].pop("sell_markup", None)
+        if "buy_price" in clean:
+            mgrs[tier].pop("buy_markup", None)
     else:
         mgrs.append(clean)
     return mgrs
