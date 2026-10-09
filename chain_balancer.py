@@ -72,10 +72,13 @@ CHAIN = {
 # fill = extra units per turn made while below target (and cash allows).
 STOCK_TURNS = MODE['STOCK_TURNS_CHAIN']
 BUFFERS = {
-    "flax fibres": {"fill": 5},
-    "thread":      {"fill": 15},
-    "cloth":       {"fill": 10},
+    "flax fibres": {"fill": 5,  "drain": 10},
+    "thread":      {"fill": 15, "drain": 30},
+    "cloth":       {"fill": 10, "drain": 40},
 }
+DRAIN_OVER = 1.5         # drain a buffer once it is over 1.5x its target
+DRAIN_TURNS = 12         # spread the excess over this many turns
+DRIFT = 0.10             # also rebalance when any planned target is this far (x) from the current one
 LOW_FRACTION = 0.5       # FILLING starts when a stock is under half its target
 FILL_CASH_MIN = MODE['FILL_CASH_MIN']  # below this cash: HOLD (no top-ups, make only what's used)
 SALES_WINDOW = MODE['SALES_WINDOW']   # turns of garment sales to average
@@ -145,12 +148,17 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     tg = targets(base, other_thread)
 
     def top(item):
-        if mode == "FILLING" and stocks.get(item, 0) < tg[item]:
+        have = stocks.get(item, 0)
+        if mode == "FILLING" and have < tg[item]:
             return BUFFERS[item]["fill"]
+        # glut drain (Oct 9): well over target, make less than is used so the pile shrinks
+        # (excess spread over DRAIN_TURNS, capped per turn), freeing labour upstream
+        if have > tg[item] * DRAIN_OVER:
+            return -min((have - tg[item]) / DRAIN_TURNS, BUFFERS[item]["drain"])
         return 0
-    weave = min(s["weave"], (sew * C["sew"]["in"] + top("cloth")) / C["weave"]["out"])
-    spin = min(s["spin"], (weave * C["weave"]["in"] + other_thread + top("thread")) / C["spin"]["out"])
-    ret = min(s["ret"], (spin * C["spin"]["in"] + top("flax fibres")) / C["ret"]["out"])
+    weave = max(0, min(s["weave"], (sew * C["sew"]["in"] + top("cloth")) / C["weave"]["out"]))
+    spin = max(0, min(s["spin"], (weave * C["weave"]["in"] + other_thread + top("thread")) / C["spin"]["out"]))
+    ret = max(0, min(s["ret"], (spin * C["spin"]["in"] + top("flax fibres")) / C["ret"]["out"]))
     flax = min(s["flax"], ret * C["ret"]["in"] / C["flax"]["out"])
     # if plots cap a step upstream, the buffers cover the gap; the alert tells us
     t = {"sew": sew, "weave": weave, "spin": spin, "ret": ret, "flax": flax}
@@ -282,8 +290,9 @@ def main():
         save()
         print("first run: saved sizes, no changes made")
         return
-    if not (changed or mode_changed or FORCE):
-        print("no expansion finished and buffer mode unchanged: nothing to do")
+    drift = [k for k in CHAIN if abs(new[k] - cur[k]) >= DRIFT]
+    if not (changed or mode_changed or FORCE or drift):
+        print("no expansion finished, buffer mode unchanged, targets within %.2fx of plan: nothing to do" % DRIFT)
         return
     if any(not r for r in recipes.values()):
         print("a chain building is stopped (%s): not rebalancing" % recipes)
@@ -299,6 +308,8 @@ def main():
     if mode_changed:
         why.append("mode %s -> %s (cash %.0f; %s)" % (last_mode, mode, cash, ", ".join(
             "%s %.0f/%.0f" % (i, stocks[i], tg[i]) for i in BUFFERS)))
+    if drift and not (changed or mode_changed):
+        why.append("sales/stock drift: " + ", ".join("%s %.2f->%.2f" % (k, cur[k], new[k]) for k in drift))
     lines = ["**Chain rebalanced** (%s)" % ("; ".join(why) or "forced")]
     lines += ["- %s %.2fx -> %.2fx" % (k, c, n) for k, c, n in moves] or ["- targets already right"]
     lines.append("- garments %.1f -> %.1f/turn, labour %+.0f/turn, tools %+.1f/turn" % (
