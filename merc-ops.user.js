@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Merc Ops panel
 // @namespace    strasclives
-// @version      1.9.2
+// @version      1.9.2.1
 // @updateURL    https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @downloadURL  https://raw.githubusercontent.com/7178543-collab/merc/main/merc-ops.user.js
 // @description  30-second ops panel for Mercatorio: needs-you list, issues with one-tap fixes, production, orders, builds, boats, contracts, markets, money, charts with projections, plan, and an emergency self-sufficient mode.
@@ -20,7 +20,7 @@
   window.__mercOps = true;
 
   // ---------------------------------------------------------------- config
-  const VERSION = '1.9.2';
+  const VERSION = '1.9.2.1';
   const BUSINESS = '39992';
   const HOUSEHOLD = '21623';
   const STORE = '152202386005001';
@@ -1950,6 +1950,8 @@
     return cost ? { ...q, cost, free: S.pr.free, eta: S.pr.rate > 0 ? Math.max(0, (cost - S.pr.free) / S.pr.rate) : Infinity } : null;
   }
   async function prestigeAuto() {
+    // v1.9.2.1 (Oct 9): prestige auto-buy moved to the bot (prestige_rules.py runs hourly, no tab needed).
+    return null;
     if (!store.get('pqAuto', true) || !S || !S.hh || !S.hh.prestige_board) return null;
     const n = pqNext(); if (!n || n.free < n.cost) return null;
     const last = store.get('pqLast', null); if (last && last.turn === S.turn) return null;   // one try per turn

@@ -386,6 +386,14 @@ def main():
     data = json.loads(out.stdout)
 
     wanted = {}
+    # one-off manual steps the rules can't do (state/needs_you.json, written by prestige_rules.py;
+    # delete the file, or let a later rule clear it, once done)
+    try:
+        nyu = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "needs_you.json")))
+        if nyu.get("what"):
+            wanted["[merc] needs you: farmstead"] = nyu["what"]
+    except (FileNotFoundError, ValueError):
+        pass
     for f in data.get("flags", []):
         if f.get("kind") in ALERT_KINDS:
             title = "[merc] %s: %s" % (f.get("item"), f.get("kind"))

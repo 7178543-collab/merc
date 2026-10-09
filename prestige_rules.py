@@ -10,6 +10,12 @@ Rule 1, mansion banquet:
   ON  = mansion "hold banquet 1 (fish)" at 1x (+4.2 prestige/turn; 35 labour, 15 beer, 5.5 cured fish)
         + storehouse cured fish buy 6/turn @ max 24.60, stock to 20
   OFF = mansion target 0 + cured fish buy off
+Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on a browser tab):
+  buy one Tenants level (+5) when free prestige covers the cost (50 x (level - 2)) and prestige
+  income is positive, up to TENANTS_MAX_LEVEL. Management has room for ~8 more farmstead plots, so
+  only one more level is useful. After buying, writes state/needs_you.json: the +5 farmstead plots
+  are a map pick in-game (no API for it yet), and alerts.py puts that in the status email.
+
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
 
@@ -31,6 +37,8 @@ RECIPE = "hold banquet 1 (fish)"
 FISH = "cured fish"
 FISH_ORDER = {"buy_volume": 6, "buy_price": "24.60", "max_holding": 20}
 ON_CASH, OFF_CASH, PROFIT_TURNS, GUARD_TURNS = 15000, 10000, 24, 12
+TENANTS_MAX_LEVEL = 11
+NEEDS_YOU = os.path.join(HERE, "state", "needs_you.json")
 
 
 def profit_last_turns(n):
@@ -55,6 +63,34 @@ def say(*a):
     line = " ".join(str(x) for x in a)
     print(line)
     _LINES.append(line)
+
+
+def tenants_rule():
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    hh = m.get("/households/%s" % hid) or {}
+    pb = hh.get("prestige_board") or {}
+    level = int(m.num(pb.get("tenants_level")))
+    total, allocated = m.num(hh.get("prestige")), m.num(pb.get("allocated"))
+    free = total - allocated
+    rate = sum(m.num(x.get("impact")) for x in (hh.get("prestige_impacts") or pb.get("prestige_impacts") or []))
+    cost = 50 * (level - 2)
+    say("tenants: level %d (max %d), cost %d, free %.1f, rate %+.2f" % (level, TENANTS_MAX_LEVEL, cost, free, rate))
+    if level >= TENANTS_MAX_LEVEL or cost <= 0 or free < cost or rate <= 0:
+        return
+    if not LIVE:
+        say("  would buy Tenants level %d for %d" % (level + 1, cost))
+        return
+    ok, status, body = q._req("POST", "/households/%s/prestige/allocate" % hid, {"track": "tenants", "cost": str(cost)})
+    after = int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get("tenants_level")))
+    good = after == level + 1
+    q.log({"prestige": "tenants", "cost": cost, "note": "tenants rule"},
+          dict(ok=good, status=status, body=body[:200], before=level, after=after), source="prestige_rules")
+    say("  bought Tenants level %d for %d -> %s" % (level + 1, cost, "OK" if good else "FAILED %s %s" % (status, body[:150])))
+    if good:
+        with open(NEEDS_YOU, "w") as f:
+            json.dump({"what": "Expand the farmstead +5 plots (map: farmstead > modify > expand). Tenants level %d was bought for %d prestige." % (after, cost),
+                       "since_turn": None}, f)
 
 
 def main():
@@ -99,6 +135,11 @@ def main():
             todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 0}, "note": "banquet rule: " + why})
         if fish_on:
             todo.append({"item": FISH, "tier": 0, "set": {"buy_volume": 0}, "note": "banquet rule: " + why})
+
+    try:
+        tenants_rule()
+    except Exception as ex:
+        say("tenants rule crashed: %s: %s" % (type(ex).__name__, ex))
 
     for e in todo:
         if not LIVE:
