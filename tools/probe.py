@@ -3,6 +3,20 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--ship"]:
+    for tid in sys.argv[2:]:
+        t = m.get("/transports/%s" % tid) or {}
+        inv = t.get("inventory") or {}
+        r = t.get("route") or {}
+        print("SHIP", t.get("name"), "town", t.get("town_id"), "loc", t.get("location"), "prev_op", t.get("previous_operation"))
+        print("  inv prev_flows", json.dumps(inv.get("previous_flows"))[:500])
+        print("  route trips", r.get("potential_trips"), r.get("actual_trips"), "res exp/imp", r.get("reserved_export"), r.get("reserved_import"))
+        print("  route holdings", json.dumps({k: v.get("managers") for k, v in (r.get("holdings") or {}).items() if v.get("managers")})[:600])
+        print("  route prev_flows", json.dumps(r.get("previous_flows"))[:500])
+        print("  journey", json.dumps({k: v for k, v in (t.get("journey") or {}).items() if k != "legs"}))
+    b = m.get("/buildings/152202386005001") or {}
+    print("STORE labour flow", json.dumps(((b.get("storage") or {}).get("inventory") or {}).get("previous_flows", {}).get("labour")))
+    sys.exit(0)
 if sys.argv[1:2] == ["--link-test"]:
     bid, store = sys.argv[2], sys.argv[3]
     def prov():
