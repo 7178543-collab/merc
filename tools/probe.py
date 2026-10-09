@@ -3,6 +3,25 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--towns"]:
+    import math
+    ts = m.get("/towns") or []
+    ts = ts.get("towns", ts) if isinstance(ts, dict) else ts
+    home = (1522, 2387)
+    out = []
+    for t in ts:
+        loc = t.get("location") or {}
+        x, y = loc.get("x", t.get("x")), loc.get("y", t.get("y"))
+        if x is None:
+            continue
+        d = math.hypot(float(x) - home[0], float(y) - home[1])
+        out.append((round(d), t.get("name"), x, y, t.get("region") or t.get("region_id")))
+    out.sort()
+    want = set(sys.argv[2:])
+    for r in out:
+        if not want or r[1] in want:
+            print("TOWN", r)
+    sys.exit(0)
 if sys.argv[1:2] == ["--ship-op"]:
     tid, tgt = sys.argv[2], sys.argv[3]
     for method in ("PUT", "PATCH"):
