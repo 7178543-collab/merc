@@ -30,6 +30,8 @@ jobs:
         run: python order_queue.py --live
       - name: Prestige rules
         run: python prestige_rules.py --live || true
+      - name: Contracts (score; auto-fill church offers fully covered from stock)
+        run: python contracts.py --fill || true
       - name: Payoff check
         run: python payoff.py || true
       - name: Save

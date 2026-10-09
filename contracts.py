@@ -15,10 +15,17 @@ scoreContract() does (money only) plus prestige.
   verdict: GOOD (fill now from stock, or coin/prestige well under the banquet), OK, POOR, SKIP
 
 Writes state/contracts_scored.json and returns the list; alerts.py puts GOOD/OK ones in the email.
-Signing and delivering stay with Taylor (or a queue entry he approves) until the delivery call is
-proven on a live contract: a church contract signed and not filled costs -100 prestige.
+Auto-fill (Oct 9, Taylor: "let the game win itself"): `python contracts.py --fill` accepts and
+delivers, in one call, a church offer that is GOOD and that we can cover ENTIRELY from stock right now
+(so nothing is left open that could miss and cost the -100 penalty), keeping RESERVE units of items
+we need for ourselves. Same call the game's Contracts > actions screen makes:
+  POST /contracts/{contract id}/actions/{transaction id | 64}
+       {participant_id: business, operation: "storage/<storehouse>", volume, asset, allow_alloc: true}
+Every attempt is logged to state/order_queue_done.jsonl (source "contracts") and checked afterwards
+(the offer must leave the open board or show as signed); a failure is flagged in the status email.
 
-    python contracts.py      # print the board with scores
+    python contracts.py          # print the board with scores
+    python contracts.py --fill   # also auto-fill what qualifies
 """
 import json
 import os
@@ -32,6 +39,8 @@ STORE = "152202386005001"
 BUSINESS = "39992"
 OUT = os.path.join(HERE, "state", "contracts_scored.json")
 BANQUET_COIN_PER_PRESTIGE = 57.0     # hold banquet 1 (fish), Oct 8 prices
+RESERVE = {"limestone": 60, "candles": 6, "arms": 2, "light armour": 1, "cured fish": 10}   # keep for our own use
+MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
 
@@ -181,6 +190,53 @@ def score_board():
     return scored
 
 
+def _post(path, body):
+    import urllib.error
+    req = urllib.request.Request(
+        "https://play.mercatorio.io/api" + path, data=json.dumps(body).encode(), method="POST",
+        headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
+                 "Content-Type": "application/json", "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return True, r.status, r.read().decode()[:300]
+    except urllib.error.HTTPError as e:
+        return False, e.code, e.read().decode()[:300]
+    except Exception as e:
+        return False, None, "%s: %s" % (type(e).__name__, e)
+
+
+def auto_fill(scored):
+    import order_queue as q
+    done = []
+    for r in scored:
+        if not (r["kind"] == "church" and r["verdict"] == "GOOD" and r.get("fill") == "now" and r["bonus"] >= MIN_BONUS):
+            continue
+        if r["held"] - r["volume"] < RESERVE.get(r["item"], 0):
+            print("contracts: %s offer skipped, would dip under our reserve of %s" % (r["item"], RESERVE.get(r["item"])))
+            continue
+        c = m.get("/contracts/%s" % r["id"]) or {}
+        t = (c.get("transactions") or [{}])[0]
+        if c.get("signed") or t.get("stage") != "ready":
+            continue
+        aid = str(int(t["id"]) | 64)
+        body = {"participant_id": BUSINESS, "operation": "storage/%s" % STORE,
+                "volume": int(r["volume"]), "asset": r["item"], "allow_alloc": True}
+        ok, status, resp = _post("/contracts/%s/actions/%s" % (r["id"], aid), body)
+        after = m.get("/contracts/%s" % r["id"]) or {}
+        at = (after.get("transactions") or [{}])[0]
+        good = ok and (after.get("signed") or at.get("stage") not in (None, "ready") or m.num(at.get("volume")) < r["volume"])
+        q.log({"contract": r["id"], "item": r["item"], "volume": r["volume"], "bonus": r["bonus"], "note": "auto-fill church offer from stock"},
+              dict(ok=bool(good), status=status, body=resp[:200], after_stage=at.get("stage"), after_signed=after.get("signed")),
+              source="contracts")
+        print("contracts: auto-fill %s %s for +%s prestige -> %s" % (r["volume"], r["item"], r["bonus"], "OK" if good else "FAILED %s %s" % (status, resp[:150])))
+        done.append(dict(r, filled=bool(good)))
+    return done
+
+
 if __name__ == "__main__":
-    for r in score_board():
+    import sys
+    board = score_board()
+    for r in board:
         print("%-4s %-9s %-12s %s" % (r["verdict"], r["kind"], r["item"], r["why"]))
+    if "--fill" in sys.argv and m.USER and m.TOKEN:
+        auto_fill(board)
