@@ -348,33 +348,20 @@ def post_status(wanted, hh, ships, dline):
 
 
 def contract_alerts(wanted, prices, held):
-    """New church/NPC offers in our town that pay bonus prestige (Taylor, Sep 26:
-    'keep a closer look for those contracts'). One issue per offer while it is
-    open and unsigned; it closes itself once signed or gone. Shows what we hold,
-    the rough cost at home prices and coin per prestige."""
+    """Open contract offers in town, money and church deals, scored by contracts.py (Oct 9:
+    replaces the church-only check). One issue per GOOD/OK offer; it closes itself once
+    signed, gone, or no longer worth it."""
     try:
-        c = m.get("/contracts/towns/152202387")
-    except SystemExit:
-        print("contracts: town board not readable with this token")
+        import contracts
+        scored = contracts.score_board()
+    except Exception as e:
+        print("contracts: scoring failed (%r)" % e)
         return
-    for x in (c.get("contracts") if isinstance(c, dict) else c) or []:
-        bonus = m.num(x.get("bonus"))
-        if not bonus or x.get("signed"):
+    for r in scored:
+        if r["verdict"] not in ("GOOD", "OK"):
             continue
-        for t in x.get("transactions") or []:
-            if t.get("direction") != "bid":      # they want goods delivered
-                continue
-            item, vol = t.get("asset"), m.num(t.get("volume"))
-            have = held.get(item, 0)
-            price = prices.get(item, 0)
-            cost = vol * price
-            per = ("%.0f coin/prestige" % (cost / bonus)) if cost else "no home price"
-            verdict = "WE HOLD ENOUGH: sign and deliver now" if have >= vol else "need %.0f more" % (vol - have)
-            length = (t.get("timeframe") or {}).get("length")
-            wanted["[merc] church contract: %s" % item] = (
-                "Deliver %.0f %s for +%.0f prestige (penalty %s, %s turns). We hold %.0f. "
-                "Cost about %.0f at home prices = %s. %s." % (
-                    vol, item, bonus, t.get("penalty", "?"), length, have, cost, per, verdict))
+        wanted["[merc] contract %s: %s %s" % (r["verdict"].lower(), r["kind"], r["item"])] = (
+            "%s. %d turns. Contract id %s." % (r["why"], r["turns"], r["id"]))
 
 
 def main():
