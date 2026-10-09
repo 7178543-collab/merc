@@ -3,6 +3,24 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--mainjs"]:
+    import gzip, zlib, os
+    os.makedirs("state/dump/js", exist_ok=True)
+    for name in sys.argv[2:]:
+        req = urllib.request.Request("https://play.mercatorio.io/static/js/" + name,
+                                     headers={"Accept-Encoding": "identity", "User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            raw, enc = r.read(), r.headers.get("Content-Encoding")
+        if enc == "gzip" or raw[:2] == b"\x1f\x8b":
+            raw = gzip.decompress(raw)
+        elif enc == "deflate":
+            raw = zlib.decompress(raw)
+        elif enc == "br":
+            import brotli
+            raw = brotli.decompress(raw)
+        open("state/dump/js/full_" + name, "wb").write(raw)
+        print("saved", name, len(raw), "enc", enc)
+    sys.exit(0)
 if sys.argv[1:2] == ["--ship"]:
     for tid in sys.argv[2:]:
         t = m.get("/transports/%s" % tid) or {}
