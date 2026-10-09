@@ -53,6 +53,7 @@ def _merge(mgrs, tier, clean):
         # the game refuses a fixed price and a markup on the same side
         if "sell_price" in clean:
             mgrs[tier].pop("sell_markup", None)
+            mgrs[tier].pop("markup_price", None)
         if "buy_price" in clean:
             mgrs[tier].pop("buy_markup", None)
     else:
