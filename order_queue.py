@@ -5,6 +5,7 @@ Entry kinds (a JSON list of these):
   storehouse order  {"item": "cloth", "tier": 0, "set": {"sell_volume": 30, "sell_price": "8.00", "min_holding": 600}}
   ship route order  {"transport": "<ship id>", "item": "limestone", "set": {"buy_volume": 20, ...}}
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
+  ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -148,9 +149,21 @@ def _apply_producer(e):
     return dict(ok=good, before=before, after=now, tries=tries, error=None if good else "not applied")
 
 
+def _apply_ship_operation(e):
+    """Ship crew/operation level: PUT /transports/{id}/operation {"operation_target"} (0 = paused in place,
+    route and orders kept). Takes effect at the turn tick; the next turn's previous_operation.target shows it."""
+    tid = str(e["transport"])
+    before = ((m.get("/transports/%s" % tid) or {}).get("previous_operation") or {}).get("target")
+    ok, status, resp = _req("PUT", "/transports/%s/operation" % tid, {"operation_target": "%.3f" % float(e["operation_target"])})
+    return dict(ok=ok, status=status, before=before, after=e["operation_target"], body=None if ok else resp,
+                note="applies at the turn tick")
+
+
 def apply_entry(e):
     if e.get("producer"):
         return _apply_producer(e)
+    if e.get("transport") and "operation_target" in e:
+        return _apply_ship_operation(e)
     sets = e.get("set") or {}
     bad = set(sets) - FIELDS
     if bad:
