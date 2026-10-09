@@ -39,7 +39,12 @@ STORE = "152202386005001"
 BUSINESS = "39992"
 OUT = os.path.join(HERE, "state", "contracts_scored.json")
 BANQUET_COIN_PER_PRESTIGE = 57.0     # hold banquet 1 (fish), Oct 8 prices
-RESERVE = {"limestone": 60, "candles": 6, "arms": 2, "light armour": 1, "cured fish": 10}   # keep for our own use
+RESERVE = {"limestone": 60, "candles": 6, "arms": 2, "light armour": 1, "cured fish": 10, "furniture": 10}   # keep for our own use
+# Church readiness (Oct 9): what the church has asked for since Sep 27 and what we stockpile so an offer
+# can be auto-filled the moment it appears (target = largest ask seen + RESERVE).
+#   furniture 120-125 (+75) | limestone 40 (+50) | candles 50-55 (+100-125) | jewellery 40-45 (+100-125)
+#   windows 6 (+150-175, Calange ~1/turn) | tapestries 6-7 (+150-175, Rouhomme): these two need a ship
+CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45}
 MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
