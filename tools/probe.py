@@ -63,6 +63,10 @@ if sys.argv[1:2] == ["--ship"]:
         print("  route holdings", json.dumps({k: v.get("managers") for k, v in (r.get("holdings") or {}).items() if v.get("managers")})[:600])
         print("  route prev_flows", json.dumps(r.get("previous_flows"))[:500])
         print("  journey", json.dumps({k: v for k, v in (t.get("journey") or {}).items() if k != "legs"}))
+        print("  route account", json.dumps({k: (v.get("balance"), v.get("reserved")) for k, v in (((r.get("account") or {}).get("assets")) or {}).items() if k in ("limestone", "thread", "firewood", "money")}))
+        print("  route current_flows", json.dumps(r.get("current_flows"))[:600])
+        print("  route flows", json.dumps(r.get("flows"))[:600])
+        print("  cargo", json.dumps(t.get("cargo"))[:400])
     b = m.get("/buildings/152202386005001") or {}
     print("STORE labour flow", json.dumps(((b.get("storage") or {}).get("inventory") or {}).get("previous_flows", {}).get("labour")))
     sys.exit(0)
