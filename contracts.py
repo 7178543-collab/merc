@@ -15,6 +15,8 @@ scoreContract() does (money only) plus prestige.
   verdict: GOOD (fill now from stock, or coin/prestige well under the banquet), OK, POOR, SKIP
 
 Writes state/contracts_scored.json and returns the list; alerts.py puts GOOD/OK ones in the email.
+Rule (Taylor, Oct 9): never take a contract we can't fill. So the bot never signs on its own; it only
+accepts an offer it can deliver IN FULL from stock in the same call, and checks nothing is left open.
 Auto-fill (Oct 9, Taylor: "let the game win itself"): `python contracts.py --fill` accepts and
 delivers, in one call, a church offer that is GOOD and that we can cover ENTIRELY from stock right now
 (so nothing is left open that could miss and cost the -100 penalty), keeping RESERVE units of items
@@ -229,9 +231,11 @@ def auto_fill(scored):
         ok, status, resp = _post("/contracts/%s/actions/%s" % (r["id"], aid), body)
         after = m.get("/contracts/%s" % r["id"]) or {}
         at = (after.get("transactions") or [{}])[0]
-        good = ok and (after.get("signed") or at.get("stage") not in (None, "ready") or m.num(at.get("volume")) < r["volume"])
+        remaining = m.num(at.get("volume"))
+        good = ok and (at.get("stage") == "done" or remaining <= 0.001)   # fully delivered, nothing left open
         q.log({"contract": r["id"], "item": r["item"], "volume": r["volume"], "bonus": r["bonus"], "note": "auto-fill church offer from stock"},
-              dict(ok=bool(good), status=status, body=resp[:200], after_stage=at.get("stage"), after_signed=after.get("signed")),
+              dict(ok=bool(good), status=status, body=resp[:200], after_stage=at.get("stage"), after_signed=after.get("signed"),
+                   remaining=remaining),
               source="contracts")
         print("contracts: auto-fill %s %s for +%s prestige -> %s" % (r["volume"], r["item"], r["bonus"], "OK" if good else "FAILED %s %s" % (status, resp[:150])))
         done.append(dict(r, filled=bool(good)))
