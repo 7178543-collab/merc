@@ -12,11 +12,16 @@ scoreContract() does (money only) plus prestige.
   money offer (they buy or sell goods for coin):
       edge   = (their price - home bid) x volume when they buy from us,
                (home ask - their price) x volume when they sell to us
-  verdict: GOOD (fill now from stock, or coin/prestige well under the banquet), OK, POOR, SKIP
+  verdict (church): GOOD = fillable now from stock and worth it (auto-filled); WAIT = worth it but not
+           fillable now (stockpile, never sign); POOR / SKIP = not worth it
+  verdict (money): GOOD / OK / POOR / SKIP on the edge vs home prices
 
 Writes state/contracts_scored.json and returns the list; alerts.py puts GOOD/OK ones in the email.
-Rule (Taylor, Oct 9): never take a contract we can't fill. So the bot never signs on its own; it only
-accepts an offer it can deliver IN FULL from stock in the same call, and checks nothing is left open.
+RULE (Taylor, Oct 9): a prestige (church) contract is only ever signed if we can fill it IMMEDIATELY,
+in full, from stock. That binds everyone: the bot, the daily check-in, Claude in chat. So no signing
+an offer and then buying or shipping to fill it. Offers we can't fill yet are marked WAIT with what's
+missing (a reason to stockpile, never to sign); auto-fill accepts and delivers in one call and checks
+nothing is left open.
 Auto-fill (Oct 9, Taylor: "let the game win itself"): `python contracts.py --fill` accepts and
 delivers, in one call, a church offer that is GOOD and that we can cover ENTIRELY from stock right now
 (so nothing is left open that could miss and cost the -100 penalty), keeping RESERVE units of items
@@ -151,18 +156,15 @@ def score(c, mk, st):
                 vol - held, k.get("best_ask") or 0, k.get("best_town") or "?", k.get("world_vol") or 0)
         else:
             fill, fill_txt = "thin", "thin market: ~%.1f/turn traded worldwide" % (k.get("world_vol") or 0)
-        if not market_px and held < vol:
-            verdict = "SKIP"
-        elif fill == "now" and (cpp or 0) <= BANQUET_COIN_PER_PRESTIGE * 2:
+        # Taylor's rule: only an offer we can fill immediately is ever signable
+        if fill == "now" and cpp is not None and cpp <= BANQUET_COIN_PER_PRESTIGE * 2:
             verdict = "GOOD"
-        elif fill in ("own", "buy") and cpp is not None and cpp <= BANQUET_COIN_PER_PRESTIGE * 0.8:
-            verdict = "GOOD"
-        elif fill in ("now", "own", "buy", "ship") and cpp is not None and cpp <= BANQUET_COIN_PER_PRESTIGE * 1.2:
-            verdict = "OK"
-        elif fill == "thin":
-            verdict = "SKIP"
-        else:
+        elif fill == "now":
             verdict = "POOR"
+        elif cpp is not None and cpp <= BANQUET_COIN_PER_PRESTIGE * 1.2 and fill != "thin":
+            verdict = "WAIT"        # worth it, but not fillable now: stockpile, don't sign
+        else:
+            verdict = "SKIP"
         r.update(cost=round(cost), coin_per_prestige=round(cpp, 1) if cpp else None, fill=fill, verdict=verdict,
                  why="+%.0f prestige (%.0f if missed) for ~%.0f coin = %s coin/prestige (banquet ~%.0f); %s" % (
                      bonus, penalty, cost, ("%.0f" % cpp) if cpp else "?", BANQUET_COIN_PER_PRESTIGE, fill_txt))
@@ -189,7 +191,7 @@ def score_board():
     items = sorted({(c.get("transactions") or [{}])[0].get("asset") for c in offers} - {None})
     mk, st = world_market(items), stock()
     scored = [score(c, mk, st) for c in offers]
-    order = {"GOOD": 0, "OK": 1, "POOR": 2, "SKIP": 3}
+    order = {"GOOD": 0, "OK": 1, "WAIT": 2, "POOR": 3, "SKIP": 4}
     scored.sort(key=lambda r: (order.get(r["verdict"], 9), -(r.get("bonus") or 0)))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as f:

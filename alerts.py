@@ -372,7 +372,12 @@ def contract_alerts(wanted, prices, held):
     except Exception:
         pass
     for r in scored:
-        if r["verdict"] not in ("GOOD", "OK"):
+        if r["verdict"] not in ("GOOD", "OK", "WAIT"):
+            continue
+        if r["verdict"] == "WAIT":
+            wanted["[merc] contract wait: %s %s" % (r["kind"], r["item"])] = (
+                "Not fillable now, so don't sign (rule: prestige contracts only when we can fill them immediately). "
+                "We hold %.0f of %.0f. %s." % (r["held"], r["volume"], r["why"]))
             continue
         wanted["[merc] contract %s: %s %s" % (r["verdict"].lower(), r["kind"], r["item"])] = (
             "%s. %d turns. Contract id %s." % (r["why"], r["turns"], r["id"]))
