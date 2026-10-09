@@ -6,7 +6,12 @@ import merc_status4 as m
 if sys.argv[1:2] == ["--mainjs"]:
     import gzip, zlib, os
     os.makedirs("state/dump/js", exist_ok=True)
-    for name in sys.argv[2:]:
+    names = sys.argv[2:]
+    if not names:
+        html = urllib.request.urlopen(urllib.request.Request("https://play.mercatorio.io/", headers={"Accept-Encoding": "identity", "User-Agent": "Mozilla/5.0"}), timeout=30).read().decode("utf8", "ignore")
+        names = sorted(set(re.findall(r'static/js/([\w.]+\.js)', html)))
+        print("found in page:", names)
+    for name in names:
         req = urllib.request.Request("https://play.mercatorio.io/static/js/" + name,
                                      headers={"Accept-Encoding": "identity", "User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=60) as r:
