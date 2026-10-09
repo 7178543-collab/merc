@@ -3,6 +3,20 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--ship-op"]:
+    tid, tgt = sys.argv[2], sys.argv[3]
+    for method in ("PUT", "PATCH"):
+        req = urllib.request.Request("https://play.mercatorio.io/api/transports/%s/operation" % tid,
+            data=json.dumps({"operation_target": "%.3f" % float(tgt)}).encode(), method=method,
+            headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN, "Content-Type": "application/json", "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                body = r.read().decode()
+                print(method, r.status, body[:1500])
+                break
+        except urllib.error.HTTPError as e:
+            print(method, e.code, e.read().decode()[:300])
+    sys.exit(0)
 if sys.argv[1:2] == ["--contracts"]:
     import os
     os.makedirs("state/dump", exist_ok=True)
