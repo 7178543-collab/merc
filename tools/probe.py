@@ -3,6 +3,18 @@ import json, re, sys, urllib.request, urllib.error
 sys.path.insert(0, ".")
 import merc_status4 as m
 
+if sys.argv[1:2] == ["--contracts"]:
+    import os
+    os.makedirs("state/dump", exist_ok=True)
+    for path in ("/businesses/39992/contracts", "/contracts/towns/152202387", "/households/21623/tasks", "/towns/152202387/church"):
+        try:
+            d = m.get(path)
+        except SystemExit as e:
+            print("FAIL", path, e); continue
+        name = path.strip("/").replace("/", "_")
+        json.dump(d, open("state/dump/%s.json" % name, "w"), default=str)
+        print("saved", path, len(json.dumps(d, default=str)))
+    sys.exit(0)
 if sys.argv[1:2] == ["--mainjs"]:
     import gzip, zlib, os
     os.makedirs("state/dump/js", exist_ok=True)
