@@ -18,6 +18,7 @@ Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on
 
 Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automatic.
 Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, then recruit + net duty.
+Rule 5, park plots (Oct 10): see park_ready_rule(); flags Taylor when a plot fits and materials are in.
 
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -93,6 +94,33 @@ def tenants_rule():
     if good:
         with open(NEEDS_YOU, "w") as f:
             json.dump({"what": "Expand the farmstead +5 plots (map: farmstead > modify > expand). Tenants level %d was bought for %d prestige." % (after, cost),
+                       "since_turn": None}, f)
+
+
+PARK = "152202388002004"
+PARK_PLOT = {"limestone": 60, "timber": 40}          # per plot (labour 260 is bought)
+
+
+def park_ready_rule():
+    """Rule 5 (Oct 10): tell Taylor when another park plot is ready to place. Prestige pool use is
+    mansion 1 + park (1 + 0.1 per plot); a plot fits when that stays within caps.prestige_management.
+    Placing a plot is a map pick, so this only writes needs_you (the status email shows it)."""
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    cap = m.num(((m.get("/households/%s" % hid) or {}).get("caps") or {}).get("prestige_management"))
+    park = m.get("/buildings/%s" % PARK) or {}
+    plots = m.num(park.get("size")) + m.num((park.get("construction") or {}).get("size"))
+    used = 1 + 1 + 0.1 * plots
+    store = m.get("/buildings/%s" % q.STORE) or {}
+    assets = ((((store.get("storage") or {}).get("inventory") or {}).get("account") or {}).get("assets")) or {}
+    held = {k: m.num((assets.get(k) or {}).get("balance")) for k in PARK_PLOT}
+    room = used + 0.1 <= cap + 1e-9
+    ready = room and all(held[k] >= v for k, v in PARK_PLOT.items())
+    say("park: %d plots, prestige pool %.1f/%.0f, limestone %.0f, timber %.0f -> %s" % (
+        plots, used, cap, held["limestone"], held["timber"], "READY for another plot" if ready else ("no pool room" if not room else "waiting on materials")))
+    if ready and LIVE and not os.path.exists(NEEDS_YOU):
+        with open(NEEDS_YOU, "w") as f:
+            json.dump({"what": "Add a park plot (park > expand on the map): pool %.1f/%.0f, limestone %.0f, timber %.0f on hand." % (used, cap, held["limestone"], held["timber"]),
                        "since_turn": None}, f)
 
 
@@ -268,6 +296,10 @@ def main():
         tenants_rule()
     except Exception as ex:
         say("tenants rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        park_ready_rule()
+    except Exception as ex:
+        say("park rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         apprentice_rule()
     except Exception as ex:

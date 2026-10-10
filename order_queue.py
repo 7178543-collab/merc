@@ -7,6 +7,7 @@ Entry kinds (a JSON list of these):
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
   household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
+  prestige spend    {"prestige": "prestige_management", "cost": 100, "confirm": true}   (permanent; Taylor's go-ahead only)
   donate building   {"donate": "<building id>", "confirm": true}   (permanent; Taylor's say-so only)
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -223,7 +224,24 @@ def _apply_donate(e):
                 error=None if good else "200 but still ours")
 
 
+def _apply_prestige(e):
+    """Spend prestige on a track (permanent; Taylor's go-ahead only): {"prestige": "prestige_management",
+    "cost": 100, "confirm": true}. POST /households/{id}/prestige/allocate (same call as the Tenants rule)."""
+    if e.get("confirm") is not True:
+        return dict(ok=False, error="prestige spend needs \"confirm\": true")
+    track, cost = e["prestige"], int(e["cost"])
+    hid = ((m.get("/player") or {}).get("household") or {}).get("id")
+    lvl = lambda: int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get(track + "_level")))
+    before = lvl()
+    ok, status, body = _req("POST", "/households/%s/prestige/allocate" % hid, {"track": track, "cost": str(cost)})
+    after = lvl()
+    good = after == before + 1
+    return dict(ok=good, status=status, body=body[:200], before=before, after=after, error=None if good else "level unchanged")
+
+
 def apply_entry(e):
+    if e.get("prestige"):
+        return _apply_prestige(e)
     if e.get("donate"):
         return _apply_donate(e)
     if e.get("dump"):
