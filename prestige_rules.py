@@ -124,13 +124,33 @@ def park_ready_rule():
                        "since_turn": None}, f)
 
 
-PM_FIRST = 2                                           # Oct 10: park pool before the apprentice (both cost 250)
+PM_FIRST = 2                                           # Taylor, Oct 10: buy prestige management level 2 (250) for park plots, then the apprentice
 APPRENTICES_WANT = 2                                   # Taylor, Oct 10: buy the 2nd apprentice slot
 APPRENTICE_COSTS = [50, 250, 1000, 2500, 5000, 7500, 10000]   # game code: cost of level n is [n-1]
 HOUSE_OP = "knight/%s"                                 # the household production slot (runs net duty)
 # an apprentice adds 20% to base household sustenance; fish was capped at one turn (6), so lift it
 SUSTENANCE_BUMP = [{"item": "fish", "tier": 0, "set": {"buy_volume": 8, "max_holding": 8}, "capacity": 8},
                    {"item": "meat", "tier": 0, "set": {"buy_volume": 8}}]
+
+
+PM_COSTS = [0, 100, 250, 500, 1000, 2000, 3000, 5000, 10000]   # game table; the game is the judge (see allocate)
+
+
+def allocate(hid, track, cost, free):
+    """POST a prestige allocation. If the game says the cost is different ("expected N"), retry once
+    at N when free prestige covers it. Returns (ok, level_after, info)."""
+    import re
+    key = track + "_level"
+    level = lambda: int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get(key)))
+    before = level()
+    ok, status, body = q._req("POST", "/households/%s/prestige/allocate" % hid, {"track": track, "cost": str(cost)})
+    if not ok and status == 409:
+        mm = re.search(r"expected (\d+)", body or "")
+        if mm and int(mm.group(1)) <= free:
+            cost = int(mm.group(1))
+            ok, status, body = q._req("POST", "/households/%s/prestige/allocate" % hid, {"track": track, "cost": str(cost)})
+    after = level()
+    return after == before + 1, after, "cost %s, status %s %s" % (cost, status, (body or "")[:120])
 
 
 def apprentice_rule():
@@ -152,7 +172,13 @@ def apprentice_rule():
     if level < APPRENTICES_WANT:
         pm = int(m.num(pb.get("prestige_management_level")))
         if pm < PM_FIRST:
-            say("  apprentice buy on hold: prestige management level %d first (Taylor to confirm the 250)" % PM_FIRST)
+            pm_cost = PM_COSTS[pm + 1] if pm + 1 < len(PM_COSTS) else 10 ** 9
+            say("  prestige management level %d first (cost %d, free %.1f); apprentice after" % (pm + 1, pm_cost, free))
+            if free >= pm_cost and rate > 0 and LIVE:
+                ok, after, info = allocate(hid, "prestige_management", pm_cost, free)
+                q.log({"prestige": "prestige_management", "cost": pm_cost, "note": "park pool (Taylor, Oct 10)"},
+                      dict(ok=ok, after=after, info=info), source="prestige_rules")
+                say("  bought prestige management level %s -> %s %s" % (pm + 1, "OK" if ok else "FAILED", info))
             return
         cost = APPRENTICE_COSTS[level]
         if free < cost or rate <= 0 or int(m.num(pb.get("tenants_level"))) < TENANTS_MAX_LEVEL:
@@ -160,12 +186,10 @@ def apprentice_rule():
         if not LIVE:
             say("  would buy apprentices level %d for %d" % (level + 1, cost))
             return
-        ok, status, body = q._req("POST", "/households/%s/prestige/allocate" % hid, {"track": "apprentices", "cost": str(cost)})
-        after = int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get("apprentices_level")))
-        good = after == level + 1
+        good, after, info = allocate(hid, "apprentices", cost, free)
         q.log({"prestige": "apprentices", "cost": cost, "note": "apprentice rule"},
-              dict(ok=good, status=status, body=body[:200], before=level, after=after), source="prestige_rules")
-        say("  bought apprentices level %d for %d -> %s" % (level + 1, cost, "OK" if good else "FAILED %s %s" % (status, body[:150])))
+              dict(ok=good, before=level, after=after, info=info), source="prestige_rules")
+        say("  bought apprentices level %d for %d -> %s %s" % (level + 1, cost, "OK" if good else "FAILED", info))
         return
     if len(workers) - 1 < cap:
         if not LIVE:
