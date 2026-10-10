@@ -7,6 +7,7 @@ Entry kinds (a JSON list of these):
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
   household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
+  read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -184,7 +185,22 @@ def _apply_household_slot(e):
     return dict(ok=good, status=status, before=before, after=after, error=None if good else "200 but not applied")
 
 
+def _apply_dump(e):
+    """Read-only: GET an API path and save it to state/dump/api/<path>.json (for analysis)."""
+    import re
+    path = e["dump"]
+    data = m.get(path)
+    name = re.sub(r"[^a-z0-9]+", "_", path.lower()).strip("_") or "root"
+    out = os.path.join(HERE, "state", "dump", "api")
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, name + ".json"), "w") as f:
+        json.dump(data, f)
+    return dict(ok=data is not None, saved="state/dump/api/%s.json" % name, size=len(json.dumps(data)))
+
+
 def apply_entry(e):
+    if e.get("dump"):
+        return _apply_dump(e)
     if e.get("household"):
         return _apply_household_slot(e)
     if e.get("producer"):
