@@ -189,7 +189,15 @@ def _apply_dump(e):
     """Read-only: GET an API path and save it to state/dump/api/<path>.json (for analysis)."""
     import re
     path = e["dump"]
-    data = m.get(path)
+    req = urllib.request.Request("https://play.mercatorio.io/api" + path, method="GET",
+                                 headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read().decode())
+    except urllib.error.HTTPError as ex:
+        return dict(ok=False, status=ex.code, error=ex.read().decode()[:200])
+    except Exception as ex:
+        return dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
     name = re.sub(r"[^a-z0-9]+", "_", path.lower()).strip("_") or "root"
     out = os.path.join(HERE, "state", "dump", "api")
     os.makedirs(out, exist_ok=True)
@@ -240,7 +248,7 @@ def apply_queue(live):
     for e in q:
         try:
             r = apply_entry(e)
-        except Exception as ex:
+        except (Exception, SystemExit) as ex:   # merc_status4.get() exits on HTTP errors; never let one entry stall the queue
             r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
         log(e, r)
         print("order queue: %s -> %s" % (e.get("item") or e.get("building"), "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
