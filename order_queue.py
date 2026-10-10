@@ -7,6 +7,7 @@ Entry kinds (a JSON list of these):
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
   household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
+  donate building   {"donate": "<building id>", "confirm": true}   (permanent; Taylor's say-so only)
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
@@ -206,7 +207,25 @@ def _apply_dump(e):
     return dict(ok=data is not None, saved="state/dump/api/%s.json" % name, size=len(json.dumps(data)))
 
 
+def _apply_donate(e):
+    """Donate a building to the church (permanent). Needs "confirm": true in the entry, so a stray
+    or mistyped entry can never give a building away. POST /buildings/{id}/donate (game code)."""
+    bid = str(e["donate"])
+    if e.get("confirm") is not True:
+        return dict(ok=False, error="donate needs \"confirm\": true")
+    before = m.get("/buildings/%s" % bid) or {}
+    ok, status, body = _req("POST", "/buildings/%s/donate" % bid, {"confirm_id": bid, "building_id": bid})
+    if not ok:
+        return dict(ok=False, status=status, body=body, before_owner=before.get("owner_id"))
+    ids = ((m.get("/businesses/%s" % before.get("owner_id")) or {}).get("building_ids") or []) if before.get("owner_id") else []
+    good = bid not in ids
+    return dict(ok=good, status=status, body=body[:200], building=before.get("name"),
+                error=None if good else "200 but still ours")
+
+
 def apply_entry(e):
+    if e.get("donate"):
+        return _apply_donate(e)
     if e.get("dump"):
         return _apply_dump(e)
     if e.get("household"):
