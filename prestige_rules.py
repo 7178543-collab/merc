@@ -124,6 +124,7 @@ def park_ready_rule():
                        "since_turn": None}, f)
 
 
+PM_FIRST = 2                                           # Oct 10: park pool before the apprentice (both cost 250)
 APPRENTICES_WANT = 2                                   # Taylor, Oct 10: buy the 2nd apprentice slot
 APPRENTICE_COSTS = [50, 250, 1000, 2500, 5000, 7500, 10000]   # game code: cost of level n is [n-1]
 HOUSE_OP = "knight/%s"                                 # the household production slot (runs net duty)
@@ -149,6 +150,10 @@ def apprentice_rule():
     cap = int(m.num((hh.get("caps") or {}).get("apprentices")))
     say("apprentices: level %d (want %d), cap %d, have %d, free prestige %.1f" % (level, APPRENTICES_WANT, cap, len(workers) - 1, free))
     if level < APPRENTICES_WANT:
+        pm = int(m.num(pb.get("prestige_management_level")))
+        if pm < PM_FIRST:
+            say("  apprentice buy on hold: prestige management level %d first (Taylor to confirm the 250)" % PM_FIRST)
+            return
         cost = APPRENTICE_COSTS[level]
         if free < cost or rate <= 0 or int(m.num(pb.get("tenants_level"))) < TENANTS_MAX_LEVEL:
             return
