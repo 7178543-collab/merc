@@ -16,6 +16,8 @@ Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on
   only one more level is useful. After buying, writes state/needs_you.json: the +5 farmstead plots
   are a map pick in-game (no API for it yet), and alerts.py puts that in the status email.
 
+Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automatic.
+
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
 
@@ -93,6 +95,61 @@ def tenants_rule():
                        "since_turn": None}, f)
 
 
+TIERS = [(100, "worker"), (700, "journeyman"), (3700, "master")]   # skill points per tier (game code)
+PROMOTIONS = os.path.join(HERE, "state", "promotions.json")
+
+
+def promote_rule():
+    """Rule 3 (Oct 10): promotions are free and no-choice, so take them as soon as they come up
+    (Taylor's standing rule). Each new tier is +1 management for that worker (up to +3) and a small
+    output bonus; the head's promotions also unlock recipes. Promote = POST
+    /households/{id}/workers/{worker id}/promote {"class": <skill>} (game code: resourceAction).
+    Only tries near a fresh crossing (threshold -1 to +50 points), never master (a one-class choice:
+    Taylor decides), and never repeats a refused attempt. Logs every worker's top skill each run."""
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    hh = m.get("/households/%s" % hid) or {}
+    try:
+        with open(PROMOTIONS) as f:
+            done = json.load(f)
+    except (FileNotFoundError, ValueError):
+        done = {}
+    changed = False
+    for i, w in enumerate(hh.get("workers") or []):
+        wid = str(w.get("id", i))
+        skills = {k: m.num(v) for k, v in (w.get("skills") or {}).items()}
+        if not skills:
+            continue
+        cls, pts = max(skills.items(), key=lambda kv: kv[1])
+        nxt = next(((thr, name) for thr, name in TIERS if pts < thr + 50), None)
+        say("worker %s %s: top %s %.1f%s" % (wid, w.get("name"), cls, pts,
+            ", %s at %d (%.1f to go)" % (nxt[1], nxt[0], max(0, nxt[0] - pts)) if nxt else ""))
+        if not nxt or nxt[1] == "master" or pts < nxt[0] - 1:
+            continue
+        key = "%s:%s:%s" % (wid, cls, nxt[1])
+        if key in done:
+            continue
+        if not LIVE:
+            say("  would promote worker %s to %s %s" % (wid, cls, nxt[1]))
+            continue
+        ok, status, body = q._req("POST", "/households/%s/workers/%s/promote" % (hid, wid), {"class": cls})
+        if not ok and status is not None and status < 500:
+            done[key] = {"ok": False, "status": status, "body": body[:160]}
+            changed = True
+            with open(NEEDS_YOU, "w") as f:
+                json.dump({"what": "Promote %s to %s %s in-game (the API refused it: %s)." % (w.get("name"), cls, nxt[1], status),
+                           "since_turn": None}, f)
+        elif ok:
+            done[key] = {"ok": True, "status": status}
+            changed = True
+        q.log({"promote": wid, "class": cls, "tier": nxt[1], "note": "promotion rule"},
+              dict(ok=ok, status=status, body=body[:200]), source="prestige_rules")
+        say("  promote worker %s to %s %s -> %s" % (wid, cls, nxt[1], "OK" if ok else "FAILED %s %s" % (status, body[:150])))
+    if changed:
+        with open(PROMOTIONS, "w") as f:
+            json.dump(done, f, indent=1)
+
+
 def main():
     if not (m.USER and m.TOKEN):
         say("prestige_rules: no credentials")
@@ -138,6 +195,10 @@ def main():
         tenants_rule()
     except Exception as ex:
         say("tenants rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        promote_rule()
+    except Exception as ex:
+        say("promote rule crashed: %s: %s" % (type(ex).__name__, ex))
 
     for e in todo:
         if not LIVE:
