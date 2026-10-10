@@ -2,11 +2,11 @@
 """Prestige rules (Taylor, Oct 8 2026): turn idle cash into prestige income, which drains into
 legacy (the leaderboard score) at ~0.5% of total prestige per turn.
 
-Rule 1, mansion banquet:
-  ON  when cash > 15,000 and profit summed over the last 24 turns > 0 (Growth mode)
-  OFF when cash < 10,000 (drops out of Growth), or profit summed over the last 12 turns < 0
-      (guard added Oct 8: stops a slow bleed long before cash matters)
-  turning back ON also needs the 12-turn profit positive, so it can't flap; in between keeps the current state
+Rule 1, mansion banquet (cash-only since Oct 10, Taylor: cash is worth nothing after the season
+  ends 30 Nov, so a noisy 12-turn profit dip shouldn't cost 4.2 prestige/turn):
+  ON  when cash > 15,000
+  OFF when cash < 10,000
+  in between keeps the current state, so it can't flap. Profit sums are still logged for context.
   ON  = mansion "hold banquet 1 (fish)" at 1x (+4.2 prestige/turn; 35 labour, 15 beer, 5.5 cured fish)
         + storehouse cured fish buy 6/turn @ max 24.60, stock to 20
   OFF = mansion target 0 + cured fish buy off
@@ -112,10 +112,8 @@ def main():
 
     if cash < OFF_CASH:
         want_on, why = False, "cash %.0f under %d" % (cash, OFF_CASH)
-    elif rn >= GUARD_TURNS // 2 and recent < 0:
-        want_on, why = False, "profit %+.0f over last %d turns is negative" % (recent, rn)
-    elif cash > ON_CASH and profit > 0 and recent > 0 and n >= PROFIT_TURNS // 2:
-        want_on, why = True, "cash %.0f over %d, profit %+.0f over %d turns, %+.0f over %d" % (cash, ON_CASH, profit, n, recent, rn)
+    elif cash > ON_CASH:
+        want_on, why = True, "cash %.0f over %d (profit %+.0f over %d turns, %+.0f over %d)" % (cash, ON_CASH, profit, n, recent, rn)
     else:
         want_on, why = running, "in between (cash %.0f, profit %+.0f over %d turns): keep as is" % (cash, profit, n)
 

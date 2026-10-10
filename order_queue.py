@@ -42,8 +42,11 @@ def _req(method, path, body):
 
 
 def _same(a, b):
+    # the game leaves a zeroed field out (buy_volume 0 comes back missing, a stopped
+    # producer's target comes back null), so treat missing/blank as 0
+    z = lambda x: 0.0 if x is None or x == "" else float(x)
     try:
-        return abs(float(a) - float(b)) < 1e-6
+        return abs(z(a) - z(b)) < 1e-6
     except (TypeError, ValueError):
         return str(a) == str(b)
 
