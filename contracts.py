@@ -227,6 +227,16 @@ def auto_fill(scored):
         t = (c.get("transactions") or [{}])[0]
         if c.get("signed") or t.get("stage") != "ready":
             continue
+        # An open offer is "idle"; delivering to it gives 409 "contract not active". Sign first (same call
+        # as the game's Contracts > manage > sign), then deliver in the same run. Stock was checked above.
+        sok, sstatus, sresp = _post("/contracts/%s/sign" % r["id"], {"participant_id": BUSINESS})
+        if not sok:
+            q.log({"contract": r["id"], "item": r["item"], "volume": r["volume"], "bonus": r["bonus"], "note": "auto-fill: sign step"},
+                  dict(ok=False, status=sstatus, body=sresp[:200]), source="contracts")
+            print("contracts: sign %s FAILED %s %s" % (r["item"], sstatus, sresp[:150]))
+            continue
+        c = m.get("/contracts/%s" % r["id"]) or c
+        t = (c.get("transactions") or [t])[0]
         aid = str(int(t["id"]) | 64)
         body = {"participant_id": BUSINESS, "operation": "storage/%s" % STORE,
                 "volume": int(r["volume"]), "asset": r["item"], "allow_alloc": True}
