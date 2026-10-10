@@ -17,6 +17,7 @@ Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on
   are a map pick in-game (no API for it yet), and alerts.py puts that in the status email.
 
 Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automatic.
+Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, then recruit + net duty.
 
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -93,6 +94,78 @@ def tenants_rule():
         with open(NEEDS_YOU, "w") as f:
             json.dump({"what": "Expand the farmstead +5 plots (map: farmstead > modify > expand). Tenants level %d was bought for %d prestige." % (after, cost),
                        "since_turn": None}, f)
+
+
+APPRENTICES_WANT = 2                                   # Taylor, Oct 10: buy the 2nd apprentice slot
+APPRENTICE_COSTS = [50, 250, 1000, 2500, 5000, 7500, 10000]   # game code: cost of level n is [n-1]
+HOUSE_OP = "knight/%s"                                 # the household production slot (runs net duty)
+# an apprentice adds 20% to base household sustenance; fish was capped at one turn (6), so lift it
+SUSTENANCE_BUMP = [{"item": "fish", "tier": 0, "set": {"buy_volume": 8, "max_holding": 8}, "capacity": 8},
+                   {"item": "meat", "tier": 0, "set": {"buy_volume": 8}}]
+
+
+def apprentice_rule():
+    """Rule 4 (Taylor, Oct 10): get a 2nd apprentice onto net duty. One step per run:
+    1) buy apprentices level 2 (250 prestige) once free prestige covers it, income is positive and
+       Tenants is maxed; 2) recruit (POST /households/{id}/workers); 3) assign any unassigned
+       apprentice to the household slot (PUT /households/{id}/workers/{n} {assignment}) and lift
+       the fish/meat buys for the extra sustenance. Endpoints are from the game's own code."""
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    hh = m.get("/households/%s" % hid) or {}
+    pb = hh.get("prestige_board") or {}
+    level = int(m.num(pb.get("apprentices_level")))
+    free = m.num(hh.get("prestige")) - m.num(pb.get("allocated"))
+    rate = sum(m.num(x.get("impact")) for x in (hh.get("prestige_impacts") or pb.get("prestige_impacts") or []))
+    workers = hh.get("workers") or []
+    cap = int(m.num((hh.get("caps") or {}).get("apprentices")))
+    say("apprentices: level %d (want %d), cap %d, have %d, free prestige %.1f" % (level, APPRENTICES_WANT, cap, len(workers) - 1, free))
+    if level < APPRENTICES_WANT:
+        cost = APPRENTICE_COSTS[level]
+        if free < cost or rate <= 0 or int(m.num(pb.get("tenants_level"))) < TENANTS_MAX_LEVEL:
+            return
+        if not LIVE:
+            say("  would buy apprentices level %d for %d" % (level + 1, cost))
+            return
+        ok, status, body = q._req("POST", "/households/%s/prestige/allocate" % hid, {"track": "apprentices", "cost": str(cost)})
+        after = int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get("apprentices_level")))
+        good = after == level + 1
+        q.log({"prestige": "apprentices", "cost": cost, "note": "apprentice rule"},
+              dict(ok=good, status=status, body=body[:200], before=level, after=after), source="prestige_rules")
+        say("  bought apprentices level %d for %d -> %s" % (level + 1, cost, "OK" if good else "FAILED %s %s" % (status, body[:150])))
+        return
+    if len(workers) - 1 < cap:
+        if not LIVE:
+            say("  would recruit an apprentice")
+            return
+        ok, status, body = q._req("POST", "/households/%s/workers" % hid, {})
+        now = (m.get("/households/%s" % hid) or {}).get("workers") or []
+        good = len(now) == len(workers) + 1
+        q.log({"recruit": "apprentice", "note": "apprentice rule"}, dict(ok=good, status=status, body=body[:200]), source="prestige_rules")
+        say("  recruit apprentice -> %s" % ("OK" if good else "FAILED %s %s" % (status, body[:150])))
+        if not good:
+            return
+        workers = now
+        for e in SUSTENANCE_BUMP:
+            r = q.apply_entry(dict(e, note="apprentice rule: +20% sustenance"))
+            q.log(e, r, source="prestige_rules")
+            say("  %s -> %s" % (e["item"], "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
+    for i, w in enumerate(workers):
+        if i == 0 or w.get("assignment"):
+            continue
+        if not LIVE:
+            say("  would assign worker %d (%s) to %s" % (i, w.get("name"), HOUSE_OP % hid))
+            continue
+        ok, status, body = q._req("PUT", "/households/%s/workers/%d" % (hid, i),
+                                  {"assignment": HOUSE_OP % hid, "update_buying": False, "mark_to_market": False})
+        now = ((m.get("/households/%s" % hid) or {}).get("workers") or [{}] * (i + 1))
+        good = len(now) > i and now[i].get("assignment") == HOUSE_OP % hid
+        q.log({"assign": i, "to": HOUSE_OP % hid, "note": "apprentice rule"}, dict(ok=good, status=status, body=body[:200]), source="prestige_rules")
+        say("  assign worker %d to net duty -> %s" % (i, "OK" if good else "FAILED %s %s" % (status, body[:150])))
+        if not good:
+            with open(NEEDS_YOU, "w") as f:
+                json.dump({"what": "Assign the new apprentice %s to household net duty (household > workers); the API refused it." % w.get("name"),
+                           "since_turn": None}, f)
 
 
 TIERS = [(100, "worker"), (700, "journeyman"), (3700, "master")]   # skill points per tier (game code)
@@ -195,6 +268,10 @@ def main():
         tenants_rule()
     except Exception as ex:
         say("tenants rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        apprentice_rule()
+    except Exception as ex:
+        say("apprentice rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         promote_rule()
     except Exception as ex:
