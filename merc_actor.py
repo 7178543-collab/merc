@@ -98,7 +98,7 @@ SELL_FLOORS = {
     "thread": 4.50,
     "garments": 22.00,
 }
-BUY_CEILINGS = {"grain": 3.10, "labour": 1.80, "firewood": 2.25, "bread": 2.60, "tools": 5.75, "charcoal": 2.20, "furniture": 15.00, "fish": 2.50, "meat": 2.40, "timber": 7.00, "limestone": 18.00}
+BUY_CEILINGS = {"grain": 3.10, "labour": 1.80, "firewood": 2.25, "bread": 2.60, "tools": 6.20, "charcoal": 2.20, "furniture": 15.00, "fish": 2.50, "meat": 2.40, "timber": 7.00, "limestone": 18.00}
 
 
 def snap_price(p, up):

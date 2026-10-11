@@ -43,7 +43,11 @@ BURN_TURNS = 12
 WATCH_BURN, BRAKE_BURN = 5000, 9000
 WATCH_CASH, BRAKE_CASH, STOP_CASH = 15000, 10000, 6000
 LABOUR_WASTE, LABOUR_BUFFER = 30, 10
-LABOUR_PRICE_CAP = "2.00"          # brake level: labour bid cap (market ~1.80)
+LABOUR_PRICE_CAP = "2.00"
+# tool guard (Oct 11: tools ran dry at 5am, camp + retting stopped, their labour expired)
+CAMP, CAMP_RECIPE, CAMP_FULL, CAMP_SLOW = "151402406", "split timber 2", 20, 10
+TOOLS_LOW_TURNS, TOOLS_OK_TURNS = 3, 8   # slow the camp under 3 turns of use, restore over 8
+TOOLS_ORDER = {"buy_volume": 31, "buy_price": "6.20", "max_holding": 200}   # ~25 turns of normal use          # brake level: labour bid cap (market ~1.80)
 
 # switched off at BRAKE: one-off build materials and stockpiles, never the production chain
 BRAKE_ITEMS = ["wheels", "timber", "furniture", "candles", "jewellery", "light armour", "arms",
@@ -105,6 +109,35 @@ def labour_guard(actions):
                         "note": "failsafe: %.0f bought labour expired last turn; buy %d -> %d" % (exp, cur, need)})
 
 
+def tool_guard(actions, st):
+    """Keep tools from running dry: bid at the cap while under ~25 turns of use, and slow the
+    logging camp (the biggest tool user we can spare) under TOOLS_LOW_TURNS of use, so retting and
+    the builds keep their tools; put the camp back once stock is over TOOLS_OK_TURNS."""
+    b = m.get("/buildings/%s" % q.STORE) or {}
+    inv = (b.get("storage") or {}).get("inventory") or {}
+    f = (inv.get("previous_flows") or {}).get("tools") or {}
+    held = m.num((((inv.get("account") or {}).get("assets") or {}).get("tools") or {}).get("balance"))
+    use = max(m.num(f.get("consumption")), 7.0)      # normal use ~7/turn; a stalled turn reads 0
+    turns = held / use
+    say("tools: held %.1f, use %.1f/turn -> %.1f turns" % (held, use, turns))
+    mgrs = q._store_managers(q.STORE, "tools")
+    top = mgrs[0] if mgrs else {}
+    if m.num(top.get("buy_price")) < float(TOOLS_ORDER["buy_price"]) or m.num(top.get("buy_volume")) < TOOLS_ORDER["buy_volume"]:
+        actions.append({"item": "tools", "tier": 0, "set": TOOLS_ORDER,
+                        "note": "tool guard: keep the tool bid at the cap (%.1f turns of stock)" % turns})
+    prod = q.read_producer(CAMP)
+    tgt = m.num(prod.get("target"))
+    if turns < TOOLS_LOW_TURNS and tgt > CAMP_SLOW:
+        st["camp_slowed"] = True
+        actions.append({"building": CAMP, "producer": {"recipe": CAMP_RECIPE, "target": CAMP_SLOW, "provider_id": q.STORE},
+                        "note": "tool guard: tools at %.1f turns of use; camp %g -> %d until stock recovers" % (turns, tgt, CAMP_SLOW)})
+    elif st.get("camp_slowed") and turns > TOOLS_OK_TURNS:
+        st["camp_slowed"] = False
+        if tgt < CAMP_FULL:
+            actions.append({"building": CAMP, "producer": {"recipe": CAMP_RECIPE, "target": CAMP_FULL, "provider_id": q.STORE},
+                            "note": "tool guard: tools back to %.1f turns; camp back to %d" % (turns, CAMP_FULL)})
+
+
 def main():
     if not (m.USER and m.TOKEN):
         say("failsafe: no credentials")
@@ -127,6 +160,11 @@ def main():
         labour_guard(actions)
     except (Exception, SystemExit) as ex:
         say("labour guard crashed: %s: %s" % (type(ex).__name__, ex))
+
+    try:
+        tool_guard(actions, st)
+    except (Exception, SystemExit) as ex:
+        say("tool guard crashed: %s: %s" % (type(ex).__name__, ex))
 
     paused = st.get("paused") or {}
     if lvl >= 2:
@@ -164,7 +202,7 @@ def main():
     new = {"level": lvl, "name": names[lvl], "cash": round(cash), "burn": round(burn),
            "burn_turns": BURN_TURNS, "t": now,
            "since": st.get("since") if st.get("level") == lvl else now,
-           "paused": paused,
+           "paused": paused, "camp_slowed": st.get("camp_slowed", False),
            "last_actions": [dict(set=e.get("set"), item=e.get("item"), ok=ok) for e, ok in results] or st.get("last_actions", [])}
     if LIVE:
         with open(STATE, "w") as f:
