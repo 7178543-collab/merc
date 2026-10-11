@@ -41,10 +41,17 @@ def _n(x, d=0.0):
 
 
 def first_tier(orders, field):
+    """(index of the first tier using field, that tier with field summed over ALL tiers): several buy
+    or sell tiers on one item (e.g. two labour bids) count together."""
+    idx, total, first = None, 0.0, None
     for i, o in enumerate(orders):
         if _n(o.get(field)) > 0:
-            return i, o
-    return None, None
+            total += _n(o.get(field))
+            if idx is None:
+                idx, first = i, dict(o)
+    if first is not None:
+        first[field] = total
+    return idx, first
 
 
 def plan(s, cfg=None, recipes=None):
