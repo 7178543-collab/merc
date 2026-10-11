@@ -414,8 +414,15 @@ def main():
             wanted["[merc] FAILSAFE %s: cash %s, burn %s over %s turns" % (
                 fs.get("name"), fs.get("cash"), fs.get("burn"), fs.get("burn_turns"))] = (
                 "paused buys: %s (not restored automatically)" % (", ".join(sorted(fs.get("paused") or {})) or "none"))
-    except (FileNotFoundError, ValueError):
-        pass
+        for item, txt in (fs.get("low_inputs") or {}).items():
+            wanted["[merc] FAILSAFE input running out: %s" % item] = txt
+        # heartbeat: the failsafe itself must be running
+        import datetime as _d
+        age = (_d.datetime.now(_d.timezone.utc) - _d.datetime.fromisoformat(fs["t"])).total_seconds() / 3600
+        if age > 2:
+            wanted["[merc] FAILSAFE NOT RUNNING (last run %.0fh ago)" % age] = "check the merc / order-queue workflows"
+    except (FileNotFoundError, ValueError, KeyError):
+        wanted["[merc] FAILSAFE NOT RUNNING (no state file)"] = "check the merc / order-queue workflows"
     # one-off manual steps the rules can't do (state/needs_you.json, written by prestige_rules.py;
     # delete the file, or let a later rule clear it, once done)
     try:

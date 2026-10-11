@@ -109,6 +109,51 @@ def labour_guard(actions):
                         "note": "failsafe: %.0f bought labour expired last turn; buy %d -> %d" % (exp, cur, need)})
 
 
+def avg_use(item, turns=12):
+    """Average consumption per turn over the last `turns` distinct turns (history files),
+    ignoring stalled turns that read 0, so one bad turn can't hide real demand."""
+    by_turn = {}
+    for path in sorted(glob.glob(os.path.join(HERE, "history", "merc-*.jsonl")))[-2:]:
+        for line in open(path):
+            try:
+                d = json.loads(line)
+                by_turn[int(d["turn"])] = float((d.get("items") or {}).get(item, [0, 0, 0])[2] or 0)
+            except (ValueError, KeyError, TypeError, IndexError):
+                continue
+    vals = [by_turn[t] for t in sorted(by_turn)[-turns:] if by_turn[t] > 0]
+    return (sum(vals) / len(vals), max(vals)) if vals else (0.0, 0.0)
+
+
+# bought inputs that stop a building when they run dry (its labour then expires)
+INPUTS = {"tools": "logging camp + retting + builds", "grain": "brewery", "firewood": "farmstead/households",
+          "fish": "sustenance", "meat": "sustenance", "cured fish": "banquet", "porterage": "ship/sales"}
+INPUT_LOW_TURNS = 3
+
+
+def input_runway(st):
+    """Every run: turns of stock left for each bought input. Under INPUT_LOW_TURNS goes in
+    state/failsafe.json "low_inputs" (alerts + the morning check-in read it)."""
+    b = m.get("/buildings/%s" % q.STORE) or {}
+    inv = (b.get("storage") or {}).get("inventory") or {}
+    assets = (inv.get("account") or {}).get("assets") or {}
+    flows = inv.get("previous_flows") or {}
+    low = {}
+    for item, who in INPUTS.items():
+        held = m.num((assets.get(item) or {}).get("balance"))
+        avg, peak = avg_use(item)
+        use = max(avg, m.num((flows.get(item) or {}).get("consumption")))
+        if use <= 0:
+            continue
+        turns = held / use
+        bought = m.num((flows.get(item) or {}).get("purchase"))
+        if turns < INPUT_LOW_TURNS and bought < use:
+            mgrs = q._store_managers(q.STORE, item)
+            bid = max([m.num(mg.get("buy_price")) for mg in mgrs if m.num(mg.get("buy_volume"))] or [0])
+            low[item] = "%.1f turns left (held %.0f, use %.1f, bought %.0f, bid %.2f) - feeds %s" % (turns, held, use, bought, bid, who)
+            say("LOW INPUT", item, low[item])
+    st["low_inputs"] = low
+
+
 def tool_guard(actions, st):
     """Keep tools from running dry: bid at the cap while under ~25 turns of use, and slow the
     logging camp (the biggest tool user we can spare) under TOOLS_LOW_TURNS of use, so retting and
@@ -117,7 +162,9 @@ def tool_guard(actions, st):
     inv = (b.get("storage") or {}).get("inventory") or {}
     f = (inv.get("previous_flows") or {}).get("tools") or {}
     held = m.num((((inv.get("account") or {}).get("assets") or {}).get("tools") or {}).get("balance"))
-    use = max(m.num(f.get("consumption")), 7.0)      # normal use ~7/turn; a stalled turn reads 0
+    avg, peak = avg_use("tools")
+    # plan on the worst of: last turn, the 12-turn peak (builds draw in bursts), normal ~7/turn
+    use = max(m.num(f.get("consumption")), peak, 7.0)
     turns = held / use
     say("tools: held %.1f, use %.1f/turn -> %.1f turns" % (held, use, turns))
     mgrs = q._store_managers(q.STORE, "tools")
@@ -162,6 +209,10 @@ def main():
         say("labour guard crashed: %s: %s" % (type(ex).__name__, ex))
 
     try:
+        input_runway(st)
+    except (Exception, SystemExit) as ex:
+        say("input runway crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
         tool_guard(actions, st)
     except (Exception, SystemExit) as ex:
         say("tool guard crashed: %s: %s" % (type(ex).__name__, ex))
@@ -203,6 +254,7 @@ def main():
            "burn_turns": BURN_TURNS, "t": now,
            "since": st.get("since") if st.get("level") == lvl else now,
            "paused": paused, "camp_slowed": st.get("camp_slowed", False),
+           "low_inputs": st.get("low_inputs", {}),
            "last_actions": [dict(set=e.get("set"), item=e.get("item"), ok=ok) for e, ok in results] or st.get("last_actions", [])}
     if LIVE:
         with open(STATE, "w") as f:
