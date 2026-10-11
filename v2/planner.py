@@ -341,6 +341,21 @@ def plan(s, cfg=None, recipes=None, goals=None):
     hhp = s.get("household") or {}
     sinks.sort(key=lambda x: x["coin_per_prestige"] or 1e9)
 
+    # every coin -> prestige sink ranked at today's prices, and the agreed permanent purchases (shadow)
+    pp = None
+    try:
+        import prestige
+        pp = prestige.rank_sinks(s, cfg, recipes, items, market, make)
+        pp["agreed"] = prestige.agreed_status(s, cfg)
+        for row in pp["ranked"]:        # a clearly cheaper tier at a site we already run is worth a look
+            cur = next((r for r in pp["ranked"] if r["running"] and r["site"] == row["site"]), None)
+            if cur and not row["running"] and row["owned"] and not row["thin"] and row["effective"] < 0.85 * cur["effective"]:
+                flag("tune", row["sink"], "%s costs %.1f coin per prestige at %s, vs %.1f for the running %s" % (
+                    row["sink"], row["effective"], row["site"], cur["effective"], cur["sink"]),
+                     "check it is unlocked, then switch")
+    except Exception as e:
+        notes.append("prestige skipped: %s: %s" % (type(e).__name__, e))
+
     # ---------- build buys: the one-off orders, once the regular ones exist ----------
     if bp:
         try:
@@ -378,7 +393,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
         "cash": s.get("cash"), "prestige": hhp.get("prestige"), "prestige_free": hhp.get("free"),
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
-        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp, "goals": goal_results,
+        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp, "goals": goal_results, "prestige_plan": pp,
         "stalls": {k: {"buildings": [n for n, _ in g["buildings"]], "knock_on": [n for n, _ in g["knock_on"]]}
                    for k, g in roots.items()},
         "demand": {k: round(v, 1) for k, v in sorted(use.items())},

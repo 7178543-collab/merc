@@ -119,6 +119,42 @@ def test_goals():
         os.remove(bad)
 
 
+def test_prestige_ranking():
+    pp = planner.plan(SNAP, CFG)["prestige_plan"]
+    by = {r["sink"]: r for r in pp["ranked"]}
+    assert 61 < by["jousting 1"]["coin_per_prestige"] < 62.5       # the doc's "~62 coin per prestige" for the arena
+    assert by["maintain 1"]["running"] and by["hold banquet 1 (fish)"]["running"]
+    assert [r["effective"] for r in pp["ranked"]] == sorted(r["effective"] for r in pp["ranked"])   # cheapest first
+    ch = by["hold sermon 2"]                                       # a church isn't built: capex is spread over the turns left
+    assert not ch["owned"] and ch["capex"] > 50000 and ch["effective"] > ch["coin_per_prestige"]
+    assert 1189 < pp["turns_left"] < 1191 and pp["legacy_factor"] > 0.99
+    late = copy.deepcopy(SNAP)
+    late["t"] = "2026-11-29T00:00:00+00:00"                        # 35 turns left: a 90-turn build can't pay back
+    assert "hold sermon 2" not in {r["sink"] for r in planner.plan(late, CFG)["prestige_plan"]["ranked"]}
+
+
+def test_prestige_agreed():
+    ag = {a["sink"]: a for a in planner.plan(SNAP, CFG)["prestige_plan"]["agreed"]}
+    assert ag["tenants"]["status"] == "done" and ag["prestige_management"]["status"] == "done"
+    assert ag["apprentices"]["status"] == "waiting" and ag["apprentices"]["cost"] == 250 and "51 turns" in ag["apprentices"]["detail"]
+    s = copy.deepcopy(SNAP)
+    s["household"]["free"] = 300
+    assert {a["sink"]: a for a in planner.plan(s, CFG)["prestige_plan"]["agreed"]}["apprentices"]["status"] == "ready"
+    s["household"]["levels"]["tenants"] = 10                       # v1's rule: 50 x (level - 2) from level 10 = 400
+    s["household"]["free"] = 500
+    a = {a["sink"]: a for a in planner.plan(s, CFG)["prestige_plan"]["agreed"]}["tenants"]
+    assert a["cost"] == 400 and a["status"] == "ready"
+    s["household"]["rate"] = 0                                     # no prestige income: never ready
+    assert {a["sink"]: a for a in planner.plan(s, CFG)["prestige_plan"]["agreed"]}["tenants"]["status"] == "waiting"
+
+
+def test_planner_survives_thin_snapshots():
+    for snap in ({}, {"t": "2026-10-11T20:00:00+00:00"}, {"t": "2026-10-11T20:00:00+00:00", "buildings": [], "store": {"items": {}}, "market": {}},
+                 dict(SNAP, market={}), dict(SNAP, buildings=[]), dict(SNAP, household={})):
+        p = planner.plan(snap, CFG, goals=[])
+        assert isinstance(p["flags"], list) and "skipped" not in " ".join(p["notes"]), p["notes"]
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

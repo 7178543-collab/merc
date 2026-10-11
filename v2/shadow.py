@@ -70,7 +70,30 @@ def report(p):
         L.append("")
     if p.get("notes"):
         L += ["## Notes", ""] + ["- " + n_ for n_ in p["notes"]] + [""]
-    if p.get("sinks"):
+    pp = p.get("prestige_plan")
+    if pp:
+        L += ["## Prestige spending, cheapest coin per prestige first", ""]
+        if pp.get("turns_left") is not None:
+            L.append("%d turns left: prestige gained now converts %.1f%% of itself into legacy. Church contracts (best known rate, "
+                     "16-38) are not in the snapshot, so they are not ranked here." % (pp["turns_left"], 100 * pp["legacy_factor"]))
+            L.append("")
+        for a in pp.get("agreed") or []:
+            L.append("- agreed **%s** to level %s: %s - %s" % (a["sink"], a["to_level"], a["status"], a.get("detail", "")))
+        L += ["", "| Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |", "| --- | --- | --- | --- | --- | --- |"]
+        for r in pp["ranked"][:12]:
+            notes_ = []
+            if r["running"]:
+                notes_.append("running")
+            elif not r["owned"]:
+                notes_.append("needs a %s (build cost %s)" % (r["site"], "{:,}".format(r["capex"]) if r["capex"] else "unknown"))
+            if r["thin"]:
+                notes_.append("thin at home: " + ", ".join(r["thin"]))
+            if r.get("class"):
+                notes_.append("needs %s skill" % r["class"])
+            L.append("| %s | %s | %s | %s | %s | %s |" % (r["sink"], r["site"], r["prestige_per_turn"], r["coin_per_prestige"],
+                                                         r["effective"], "; ".join(notes_)))
+        L.append("")
+    elif p.get("sinks"):
         L += ["## Prestige sinks running now", "", "| Sink | Prestige/turn | Coin per prestige |", "| --- | --- | --- |"]
         for x in p["sinks"]:
             L.append("| %s | %.1f | %s |" % (x["sink"], x["prestige_per_turn"], x["coin_per_prestige"]))
