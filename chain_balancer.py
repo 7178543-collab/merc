@@ -56,6 +56,7 @@ MODE = {
     "SALES_WINDOW": 12,             # was 24; Ops uses 12 — keep in step
     "SALES_MARGIN": 1.05,
     "HOUSEHOLD_GARMENTS": 1.8,
+    "EXPORT_GARMENTS": 20,          # Oct 10 (Taylor): Flax Wyrm sells garments at Blanans (~26.4 vs ~22 home); set 0 if the ship stops
     "MARKET_DEPTH_MULT": 3,
 }
 
@@ -140,7 +141,7 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     top-up per step while its stockpile is below target and mode is FILLING."""
     s, C = sizes, CHAIN
     stocks = stocks or {}
-    want = sales + MODE['HOUSEHOLD_GARMENTS'] if sales else s["sew"] * C["sew"]["out"]
+    want = sales + MODE['HOUSEHOLD_GARMENTS'] + MODE.get('EXPORT_GARMENTS', 0) if sales else s["sew"] * C["sew"]["out"]
     sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
     base["spin"] = (base["weave"] * C["weave"]["in"] + other_thread) / C["spin"]["out"]
