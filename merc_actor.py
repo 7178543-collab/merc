@@ -297,6 +297,7 @@ def operating_mode(cash, last_op=None):
 
 
 CHAIN_INTERMEDIATES = {"flax plants", "flax fibres", "thread", "cloth"}
+NEVER_DROP = {"porterage", "tools", "grain", "firewood"}   # inputs used in bursts: never auto-drop their buy
 
 
 def cleanup_proposals(building_id, building_name, short_items=()):
@@ -315,6 +316,10 @@ def cleanup_proposals(building_id, building_name, short_items=()):
         if item in ("labour", "money"):
             continue
         mgrs = (h or {}).get("managers") or []
+        # Oct 11 (second time after Sep 26): porterage is used in bursts by the outlying buildings
+        # (flax farm, retting pit, logging camp). One unused turn dropped its buy and starved the
+        # whole chain for 8 turns. Never auto-drop porterage or ship/sales inputs.
+        never_drop = item in NEVER_DROP
         if not mgrs:
             continue
         f = flows.get(item) or {}
@@ -329,6 +334,8 @@ def cleanup_proposals(building_id, building_name, short_items=()):
             why.append("%.1f short last turn while being sold; the chain needs it" % short)
         if item in short_items:
             print("keep %s buy: a building came up short on it last turn" % item)
+        elif never_drop and bought > 0 and cons == 0:
+            print("keep %s buy: never auto-dropped (outlying buildings use it in bursts)" % item)
         elif bought > 0 and cons == 0 and exp > 0 and any(m.num(mg.get("buy_volume")) for mg in patch):
             for mg in patch:
                 for k in ("buy_volume", "buy_price", "max_holding"):
