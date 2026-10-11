@@ -69,19 +69,23 @@ def main():
             return
         snap = snapshot.take()
     p = planner.plan(snap)
-    os.makedirs(OUT, exist_ok=True)
-    if "--from" not in sys.argv:
-        with open(os.path.join(OUT, "snapshot.json"), "w") as f:
+    replay = "--from" in sys.argv
+    out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
+    os.makedirs(out, exist_ok=True)
+    if not replay:
+        with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)
-    with open(os.path.join(OUT, "plan.json"), "w") as f:
+    with open(os.path.join(out, "plan.json"), "w") as f:
         json.dump(p, f, indent=1, default=str)
-    with open(os.path.join(OUT, "report.md"), "w") as f:
+    with open(os.path.join(out, "report.md"), "w") as f:
         f.write(report(p))
-    line = {"t": p.get("t"), "turn": p.get("turn"), "cash": p.get("cash"), "counts": p.get("counts"),
-            "top": [(f["severity"], f["item"], f["text"][:80]) for f in (p.get("flags") or [])[:5]],
-            "api": (snap.get("api") or {}).get("calls")}
-    with open(os.path.join(OUT, "history.jsonl"), "a") as f:
-        f.write(json.dumps(line, default=str) + "\n")
+    if not replay:      # a replay is not a new run: it must not add a line to the history
+        line = {"t": p.get("t"), "turn": p.get("turn"), "cash": p.get("cash"), "counts": p.get("counts"),
+                "top": [(f["severity"], f["item"], f["text"][:80]) for f in (p.get("flags") or [])[:5]],
+                "keys": ["%s:%s" % (f["severity"], f["item"]) for f in (p.get("flags") or [])],   # persistence = real, one-offs = noise
+                "api": (snap.get("api") or {}).get("calls")}
+        with open(os.path.join(OUT, "history.jsonl"), "a") as f:
+            f.write(json.dumps(line, default=str) + "\n")
     c = p["counts"]
     print("v2 shadow: turn %s, %d risks, %d waste, %d tuning; %d GETs, %d API errors" % (
         p.get("turn"), c["risk"], c["waste"], c["tune"], api.calls["GET"], len(api.errors)))

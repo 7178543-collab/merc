@@ -64,34 +64,90 @@ def plan(s, cfg=None, recipes=None):
     def flag(sev, item, text, fix=None):
         flags.append({"severity": sev, "item": item, "text": text, "fix": fix})
 
+    min_coin = cfg.get("flag_min_coin_per_turn", 25)
+
+    def buy_state(item):
+        """(what our buy for item looks like now, what to do about it)."""
+        it = items.get(item) or {}
+        tier = next((o for o in it.get("orders") or [] if _n(o.get("buy_volume")) > 0 or o.get("buy_price")), None)
+        if not tier:
+            return "no buy order", "add a %s buy" % item
+        m_ = market.get(item) or {}
+        px, vol, ask = _n(tier.get("buy_price")), _n(tier.get("buy_volume")), m_.get("ask")
+        d = "buy is live (%s @ %s)" % ("%d" % vol if vol else "no volume cap", tier.get("buy_price"))
+        if ask and px and ask > px:
+            return d + ", but the home ask %.2f is above it" % ask, "raise the buy price (or ceiling) or find another source"
+        if (it.get("flow") or {}).get("purchase", 0) <= 0:
+            return (d + ", home ask %.2f x%.0f, yet 0 bought last turn" % (ask or 0, m_.get("ask_vol") or 0),
+                    "find out why the buy isn't filling")
+        return d + ", %.0f bought last turn" % it["flow"]["purchase"], "the buy is too small for the stalled buildings: raise it"
+
+    # ---------- stalled buildings, and the one input that really stalls them ----------
+    blds = s.get("buildings") or []
+    stalled = {}        # building name -> the input it ran short of (a bin full of output is a throttle, not a stall)
+    for b in blds:
+        lim, tgt, prod = b.get("limitation"), b.get("target", 0), b.get("production", 0)
+        if tgt > 0 and prod < tgt * 0.9 and lim and lim != "labour" and "space" not in str(lim):
+            stalled[b["name"]] = lim
+    outputs = {b["name"]: {o["product"] for o in ((recipes.get(b.get("recipe") or "") or {}).get("outputs") or [])}
+               for b in blds}
+
+    def makers_stalled(item):
+        return [n for n in stalled if item in outputs.get(n, ())]
+
+    def root_item(name, depth=0):
+        ups = makers_stalled(stalled[name])
+        return stalled[name] if not ups or depth > 6 else root_item(ups[0], depth + 1)
+
+    roots = {}          # input item -> {"buildings": [...], "knock_on": [...]}: one entry per real cause
+    for name, lim in stalled.items():
+        r_ = roots.setdefault(root_item(name), {"buildings": [], "knock_on": []})
+        (r_["knock_on"] if makers_stalled(lim) else r_["buildings"]).append((name, lim))
+    stalled_items = set(roots) | set(stalled.values())
+    starved = set().union(*(outputs[n] for n in stalled)) if stalled else set()   # items the stalled buildings should be making
+
     # ---------- demand / supply from recipes ----------
-    use, make, users = {}, {}, {}
+    use, use_full, make, users = {}, {}, {}, {}      # use = buildings running now; use_full adds the stalled ones
     prestige_ops = []
 
-    def add_recipe(name, target, who):
+    def add_recipe(name, target, who, running=True):
         r = recipes.get(name or "")
         if not r or target <= 0:
             return
         for i in r.get("inputs") or []:
-            use[i["product"]] = use.get(i["product"], 0) + i["amount"] * target
-            users.setdefault(i["product"], []).append(who)
+            use_full[i["product"]] = use_full.get(i["product"], 0) + i["amount"] * target
+            if running:
+                use[i["product"]] = use.get(i["product"], 0) + i["amount"] * target
+                users.setdefault(i["product"], []).append(who)
+        if not running:
+            return          # a stalled building makes nothing and consumes nothing until its input comes back
         for o in r.get("outputs") or []:
             make[o["product"]] = make.get(o["product"], 0) + o["amount"] * target
         if r.get("prestige"):
             prestige_ops.append((who, name, target, r))
 
-    for b in s.get("buildings") or []:
-        add_recipe(b.get("recipe"), b.get("target", 0), b.get("name"))
-        # a building running under target because an input is missing
-        lim, tgt, prod = b.get("limitation"), b.get("target", 0), b.get("production", 0)
-        if tgt > 0 and prod < tgt * 0.9 and lim and lim != "labour" and "space" not in str(lim):
-            flag("risk", lim, "%s ran %.1f of %.1f: short of %s" % (b["name"], prod, tgt, lim),
-                 "keep a %s buy (or stock) that covers it" % lim)
+    for b in blds:
+        add_recipe(b.get("recipe"), b.get("target", 0), b.get("name"), running=b["name"] not in stalled)
     hd = s.get("household_duty") or {}
     add_recipe(hd.get("recipe"), hd.get("target", 0), "household")
     for k, v in (s.get("sustenance") or {}).items():
         use[k] = use.get(k, 0) + v
+        use_full[k] = use_full.get(k, 0) + v
         users.setdefault(k, []).append("household upkeep")
+
+    # one flag per real cause: the farm, the retting pit and everything downstream of them are one problem
+    for lim, g in sorted(roots.items()):
+        names = [n for n, _ in g["buildings"]]
+        d, fix = buy_state(lim)
+        restart = sum(i["amount"] * b_.get("target", 0)
+                      for b_ in blds if b_["name"] in stalled and root_item(b_["name"]) == lim
+                      for i in ((recipes.get(b_.get("recipe") or "") or {}).get("inputs") or []) if i["product"] == "labour")
+        text = "%s ran short of %s (%s)" % (", ".join(names), lim, d)
+        if g["knock_on"]:
+            text += "; knock-on: " + ", ".join("%s (no %s)" % kv for kv in g["knock_on"])
+        if restart > 0:
+            text += "; labour need rises ~%.0f/turn when they restart" % restart
+        flag("risk", lim, text, fix)
 
     hist = s.get("history_use") or {}
     perishable = set(cfg.get("perishable") or [])
@@ -132,9 +188,14 @@ def plan(s, cfg=None, recipes=None):
             if net <= 0.01 and item not in never_drop:
                 continue        # we make enough ourselves (chain intermediates land here)
             r = runway.get(item, runway.get("_default", 4))
+            m0 = market.get(item) or {}
+            if r and net > 0 and (m0.get("ask_vol") or 0) >= 20 * net:
+                r = min(r, 1)   # a deep market (donations at 1 coin, 99k offered) needs no runway
             hold = math.ceil(max(net, demand * 0.25) * r) if r else None
             short = (hold or 0) - it.get("held", 0)
             want = math.ceil(net + (min(net, short / 2.0) if short > 0 else 0))
+            if hold and it.get("held", 0) >= 2 * hold and item not in never_drop:
+                continue        # already stocked well past the runway: no order needed
         if want <= 0 and item not in never_drop:
             continue
         cap = ceil_.get(item)
@@ -148,8 +209,8 @@ def plan(s, cfg=None, recipes=None):
                 flag("risk" if (item in never_drop and rw < 2) else "tune", item,
                      "home ask %.2f is above our ceiling %.2f: the buy can't fill" % (ask, cap),
                      "raise the ceiling or find another source")
-        elif want > 0 and item != "labour":
-            flag("tune", item, "no sellers at home right now", "stock covers it, or import")
+        elif want > 0 and item != "labour" and (hold is None or it.get("held", 0) < hold):
+            flag("tune", item, "no sellers at home right now and stock is below the runway", "import it or find another source")
         o = {"buy_volume": int(want)}
         if price:
             o["buy_price"] = str(price)
@@ -163,20 +224,28 @@ def plan(s, cfg=None, recipes=None):
 
         # compare with what v1 has live
         ti, cur = first_tier(it.get("orders") or [], "buy_volume")
-        if cur is None:
+        # a buy with a price but no volume (arms, tar, timber) is a standing order v1 left open: it counts as a buy
+        standing = cur is None and any(o.get("buy_price") for o in it.get("orders") or [])
+        unit = ask or it.get("unit_cost") or 0
+        stalled_here = item in stalled_items     # demand seen while its own consumers are stalled is understated
+        if cur is None and not standing:
             covered = (runway_now is not None and runway_now >= 2) or net <= 0.01
             if want > 0 and (item in never_drop or not covered):
                 flag("risk", item, "needed (%.1f/turn) but there is NO buy order%s" % (
-                    max(net, demand), "" if covered else ", stock %.0f" % it.get("held", 0)),
+                    max(net, demand), "" if covered else ", stock %.1f" % it.get("held", 0)),
                      "add buy %d" % want)
-        else:
+        elif cur is not None:
             cv = _n(cur.get("buy_volume"))
             if item in perishable:
                 exp = fl.get("expiration", 0)
-                if exp > max(5, 0.05 * fl.get("purchase", 0)) and cv >= want * 0.9:
-                    flag("waste", item, "%.0f bought %s expired last turn (buy %d vs need %d)" % (exp, item, cv, want),
-                         "buy %d" % want)
-                elif cv > want * 1.25 + 5:
+                share = cfg.get("labour", {}).get("buffer_share", 0.05) if item == "labour" else 0.10
+                target_buf = math.ceil(demand * share)
+                if exp > max(5, 0.05 * fl.get("purchase", 0)) and exp * unit >= min_coin and it.get("held", 0) > 2 * target_buf:
+                    # the loss is the standing stock rotting, not the size of the buy: more buying would make it worse
+                    flag("waste", item, "%.0f %s expired last turn (~%.0f coin): holding %.0f against a ~%d buffer target" % (
+                        exp, item, exp * unit, it.get("held", 0), target_buf),
+                         "trim the buy until the stock is near %d" % target_buf)
+                elif cv > want * 1.25 + 5 and not stalled_here and (cv - want) * unit >= min_coin:
                     flag("waste", item, "buying %d, need ~%d" % (cv, want), "buy %d" % want)
                 elif cv < net * 0.9:
                     flag("risk", item, "buying %d, short of ~%d needed" % (cv, want), "buy %d" % want)
@@ -184,8 +253,13 @@ def plan(s, cfg=None, recipes=None):
                 if runway_now is not None and runway_now < 1 and cv < net:
                     flag("risk", item, "only %.1f turns of %s left and buying %d (need %d)" % (runway_now, item, cv, want),
                          "buy %d" % want)
-                elif abs(cv - want) > max(3, 0.25 * want):
-                    flag("tune", item, "buy %d vs v2 %d" % (cv, want), None)
+                elif hold and it.get("held", 0) >= 2 * hold:
+                    # buying well past the runway; v1 smaller or equal to v2 is just a different buffer policy
+                    room = (it.get("capacity") or 1e9) - it.get("held", 0)
+                    extra = min(cv, max(room, 0.0)) - net
+                    if extra * unit >= min_coin:
+                        flag("tune", item, "buying %d/turn with %.0f in stock (%.0f turns at current use); v2 buys %d" % (
+                            cv, it.get("held", 0), runway_now if runway_now is not None else 0, want), None)
 
     # ---------- chain intermediates: runway between steps ----------
     for item in inter:
@@ -195,7 +269,7 @@ def plan(s, cfg=None, recipes=None):
             continue
         turns = it.get("held", 0) / u
         target = buf_turns * u
-        if turns < 1:
+        if turns < 1 and item not in starved:       # a buffer empty because its maker is stalled is a knock-on, flagged once above
             flag("risk", item, "%s buffer %.1f turns (holds %.0f, next step uses %.0f/turn)" % (item, turns, it.get("held", 0), u),
                  "check the step that makes it")
         orders.setdefault(item, {})["buffer"] = {"target": int(target), "held": int(it.get("held", 0))}
@@ -217,10 +291,16 @@ def plan(s, cfg=None, recipes=None):
             flag("tune", item, "we make %.0f/turn more than we use but there is no sell order" % surplus, "sell %d" % surplus)
             continue
         cp = _n(cur.get("sell_price"))
-        if uc and cp and cp < uc:
-            flag("waste", item, "it costs us %.2f to make, the floor sells at %.2f" % (uc, cp),
-                 "cut its cost (labour price) or export it; a higher floor would just stop home sales")
-        sold = (it.get("flow") or {}).get("sale", 0)
+        fl_ = it.get("flow") or {}
+        sold = fl_.get("sale", 0)
+        # realized margin: what we got vs what the units we sold cost us. (The store's unit_cost is the average of
+        # everything held, and a floor under it only loses money if we are actually selling at it.)
+        if sold > 0 and fl_.get("sale_cost", 0) > 0 and fl_.get("sale_value", 0) < fl_["sale_cost"] * 0.995:
+            loss = fl_["sale_cost"] - fl_.get("sale_value", 0)
+            if loss >= min_coin:
+                flag("waste", item, "sold %.0f at %.2f avg against %.2f cost each: losing %.0f coin/turn" % (
+                    sold, fl_.get("sale_value", 0) / sold, fl_["sale_cost"] / sold, loss),
+                     "cut its cost (labour price) or export it; a higher floor would just stop home sales")
         if m.get("bid") and cp > m["bid"] * 1.15 and sold < surplus * 0.5:
             flag("tune", item, "floor %.2f vs home bid %.2f: barely selling (%.0f of %.0f)" % (cp, m["bid"], sold, surplus), None)
 
@@ -255,6 +335,8 @@ def plan(s, cfg=None, recipes=None):
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
         "flags": flags, "orders": orders, "sinks": sinks,
+        "stalls": {k: {"buildings": [n for n, _ in g["buildings"]], "knock_on": [n for n, _ in g["knock_on"]]}
+                   for k, g in roots.items()},
         "demand": {k: round(v, 1) for k, v in sorted(use.items())},
         "supply": {k: round(v, 1) for k, v in sorted(make.items())},
         "notes": notes,
