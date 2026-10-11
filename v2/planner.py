@@ -54,7 +54,7 @@ def first_tier(orders, field):
     return idx, first
 
 
-def plan(s, cfg=None, recipes=None):
+def plan(s, cfg=None, recipes=None, goals=None):
     cfg = cfg or load_json("config.json")
     recipes = recipes or load_json("data/recipes.json")
     items = (s.get("store") or {}).get("items") or {}
@@ -354,6 +354,22 @@ def plan(s, cfg=None, recipes=None):
         except Exception as e:
             notes.append("builds skipped: %s: %s" % (type(e).__name__, e))
 
+    # ---------- goal queue: standing goals become orders (shadow: written to the plan, never sent) ----------
+    goal_results = []
+    try:
+        import goals as goals_mod
+        if goals is None:
+            goals, gnote = goals_mod.load()
+            if gnote:
+                notes.append(gnote)
+        goal_results = goals_mod.plan_goals(goals, s, cfg, items, market, snap_price)
+        goals_mod.merge(orders, goal_results)
+        for r in goal_results:
+            if r["status"] in ("blocked", "conflict", "invalid"):
+                flag("tune", r["item"] or "goals", "goal %s: %s" % (r["id"], r["detail"]), None)
+    except Exception as e:
+        notes.append("goals skipped: %s: %s" % (type(e).__name__, e))
+
     # ---------- money ----------
     sev_rank = {"risk": 0, "waste": 1, "tune": 2}
     flags.sort(key=lambda f: (sev_rank.get(f["severity"], 9), f["item"] or ""))
@@ -362,7 +378,7 @@ def plan(s, cfg=None, recipes=None):
         "cash": s.get("cash"), "prestige": hhp.get("prestige"), "prestige_free": hhp.get("free"),
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
-        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp,
+        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp, "goals": goal_results,
         "stalls": {k: {"buildings": [n for n, _ in g["buildings"]], "knock_on": [n for n, _ in g["knock_on"]]}
                    for k, g in roots.items()},
         "demand": {k: round(v, 1) for k, v in sorted(use.items())},

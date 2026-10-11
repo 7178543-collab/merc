@@ -63,6 +63,11 @@ def report(p):
             L.append("")
             L.append("Labour metered per turn while a site can progress: " + ", ".join("%s %d" % kv for kv in bp["drip"].items()))
         L.append("")
+    if p.get("goals"):
+        L += ["## Goals", "", "| Goal | Kind | Item | Status | Detail |", "| --- | --- | --- | --- | --- |"]
+        for g in p["goals"]:
+            L.append("| %s | %s | %s | %s | %s |" % (g["id"], g.get("kind"), g.get("item"), g["status"], g["detail"]))
+        L.append("")
     if p.get("notes"):
         L += ["## Notes", ""] + ["- " + n_ for n_ in p["notes"]] + [""]
     if p.get("sinks"):

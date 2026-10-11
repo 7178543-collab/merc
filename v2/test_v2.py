@@ -14,6 +14,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import api        # noqa: E402
+import goals      # noqa: E402
 import planner    # noqa: E402
 
 SNAP = json.load(open(os.path.join(HERE, "fixtures", "snapshot_2026-10-11.json")))
@@ -86,6 +87,36 @@ def test_builds_cash_guard():
     s["market"]["timber"]["ask"] = 8.0
     e = planner.plan(s, CFG)["builds"]["buys"]["timber"]
     assert e["action"] == "buy" and 0 < e["buy_volume"] <= 12 < e["deficit"] and "cash guard" in e["why"]
+
+
+def test_goals():
+    gs = [{"id": "f150", "kind": "keep", "item": "furniture", "units": 150},
+          {"id": "t300", "kind": "keep", "item": "timber", "units": 300},
+          {"id": "tcap", "kind": "cap", "item": "timber", "units": 200},
+          {"id": "bcap", "kind": "cap", "item": "beer", "units": 40},
+          {"id": "exp", "kind": "export", "item": "garments", "to": "Blanans"},
+          {"id": "old", "kind": "keep", "item": "candles", "units": 99, "until": "2026-10-01"},
+          {"id": "bad", "kind": "hoard", "item": "x"},
+          {"id": "met", "kind": "keep", "item": "furniture", "units": 100}]
+    p = planner.plan(SNAP, CFG, goals=gs)
+    st = {g["id"]: g for g in p["goals"]}
+    assert st["f150"]["status"] == "ordering" and st["f150"]["order"] == {"buy_volume": 1, "buy_price": "15.4", "max_holding": 150}
+    assert st["t300"]["status"] == st["tcap"]["status"] == "conflict"
+    assert st["bcap"]["status"] == "ordering" and st["bcap"]["order"]["min_holding"] == 40
+    assert st["exp"]["status"] == "unsupported" and st["old"]["status"] == "expired"
+    assert st["bad"]["status"] == "invalid" and st["met"]["status"] == "met"
+    assert p["orders"]["furniture"]["effective_buy"]["max_holding"] == 150
+    # a goal can't lift a safety rule: timber ask 9.15 is above the 8.60 ceiling, so a lone keep is blocked
+    p = planner.plan(SNAP, CFG, goals=[{"id": "t", "kind": "keep", "item": "timber", "units": 300}])
+    assert p["goals"][0]["status"] == "blocked" and "tune:timber" in keys(p)
+    # the goals file that ships is valid and empty; a broken one is a note, not a crash
+    assert goals.load() == ([], None)
+    bad = os.path.join(HERE, "fixtures", "_broken_goals.json")
+    open(bad, "w").write("{nope")
+    try:
+        assert goals.load(bad)[0] == [] and "unreadable" in goals.load(bad)[1]
+    finally:
+        os.remove(bad)
 
 
 if __name__ == "__main__":
