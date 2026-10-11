@@ -327,6 +327,16 @@ def post_status(wanted, hh, ships, dline):
     save_history(dline)
     # the late-in-turn run only emails when something needs a look (no second "All good" per hour)
     import datetime as _dt
+    # quiet hours (Taylor asleep 23:00-07:00 Toronto, Oct 11): no emails; the failsafe acts on its
+    # own and the 7:58 morning check-in is the digest. Only a failsafe STOP still emails.
+    try:
+        from zoneinfo import ZoneInfo
+        _h = _dt.datetime.now(ZoneInfo("America/Toronto")).hour
+        if (_h >= 23 or _h < 7) and not any("FAILSAFE STOP" in k for k in wanted):
+            print("quiet hours: no status comment")
+            return
+    except Exception as ex:
+        print("quiet-hours check failed:", ex)
     if _dt.datetime.utcnow().minute >= 30 and not wanted:
         print("late run, all good: no status comment")
         return

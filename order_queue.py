@@ -337,6 +337,14 @@ def log(e, r, source="queue"):
 
 
 SPEND_GUARD = 0.05   # a queued buy costing more than 5% of cash per turn needs "confirm": true
+NIGHT = (23, 7)      # Taylor asleep (Toronto time): no hand-queued spending increases at all
+
+
+def night_now():
+    """True between 23:00 and 07:00 Toronto time (Taylor asleep, Oct 11)."""
+    from zoneinfo import ZoneInfo
+    h = datetime.datetime.now(ZoneInfo("America/Toronto")).hour
+    return h >= NIGHT[0] or h < NIGHT[1]
 
 
 def _cash():
@@ -350,7 +358,9 @@ def _spend_guard(e, cash):
     SPEND_GUARD of cash every turn are refused unless the entry says "confirm": true.
     Taylor's own app actions (note "app: ...") are never blocked."""
     s = e.get("set") or {}
-    if e.get("confirm") or str(e.get("note", "")).startswith("app:") or not e.get("item"):
+    if str(e.get("note", "")).startswith("app:") or not e.get("item"):
+        return None
+    if e.get("confirm") and not night_now():
         return None
     if "buy_volume" not in s and "buy_price" not in s:
         return None
@@ -363,6 +373,9 @@ def _spend_guard(e, cash):
     price = m.num(s.get("buy_price", base.get("buy_price")))
     cost = vol * price
     before = m.num(base.get("buy_volume")) * m.num(base.get("buy_price"))
+    if night_now() and cost > before + 1:
+        return "night guard: %s buy would rise %.0f -> %.0f/turn while Taylor is asleep (23:00-07:00 Toronto); leave it for the morning check-in" % (
+            e["item"], before, cost)
     if cash and cost > before + 1 and cost > SPEND_GUARD * cash:
         return "spend guard: %s buy %.0f x %.2f = %.0f/turn is over %d%% of cash %.0f; add \"confirm\": true if intended" % (
             e["item"], vol, price, cost, SPEND_GUARD * 100, cash)
