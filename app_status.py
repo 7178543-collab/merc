@@ -118,6 +118,11 @@ def build():
     s["queue_pending"] = len(pend) if isinstance(pend, list) else 0
     s["contracts"] = [{k: c.get(k) for k in ("id", "item", "volume", "kind", "bonus", "price", "held", "verdict", "why", "fill")}
                       for c in (_json("state/contracts_scored.json", []) or [])]
+    v2 = _json("state/v2/plan.json") or {}
+    if v2:
+        s["v2"] = {"t": v2.get("t"), "turn": v2.get("turn"), "counts": v2.get("counts"),
+                   "flags": [{k: f.get(k) for k in ("severity", "item", "text", "fix")} for f in (v2.get("flags") or [])[:12]],
+                   "sinks": (v2.get("sinks") or [])[:5]}
 
     # live: every order tier + last turn's P&L from the storehouse flows
     w = _get("/buildings/%s" % STORE)

@@ -1,0 +1,33 @@
+name: v2-shadow
+# Bot v2 in shadow mode: reads the game once an hour, plans every order, and writes
+# state/v2/ (snapshot, plan, report, history). It never writes to the game: v1 still runs it.
+on:
+  schedule:
+    - cron: '50 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: merc-actor
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Write creds
+        env:
+          MERC_CREDS: ${{ secrets.MERC_CREDS }}
+        run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
+      - name: v2 shadow (read-only)
+        run: python v2/shadow.py || true
+      - name: Save
+        run: |
+          git config user.name "merc-bot"
+          git config user.email "merc-bot@users.noreply.github.com"
+          git add -f state/v2
+          git diff --cached --quiet || { git commit -q -m "v2 shadow $(date -u +%Y-%m-%dT%H:%MZ)" && for i in 1 2 3; do git pull -q --rebase -X theirs && git push -q && break; git rebase --abort 2>/dev/null; sleep 5; done; }

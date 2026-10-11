@@ -267,6 +267,18 @@ function renderLog() {
       '<div class="r ' + (r.ok ? "pos" : "neg") + '">' + (r.ok ? "done" : "failed") + '<div class="mute">' + ago(r.ts) + "</div></div></div>";
   });
   h += "</div>";
+  if (s.v2) {
+    const c = s.v2.counts || {};
+    h += '<div class="card"><h2>Bot v2 (shadow: watching, not acting)</h2>' +
+      '<p class="mute">Turn ' + esc(s.v2.turn) + " · " + ago(s.v2.t) + " · where v2 would act differently from v1: " +
+      '<b class="neg">' + (c.risk || 0) + " risks</b>, <b class=\"warn\">" + (c.waste || 0) + " waste</b>, " + (c.tune || 0) + " tuning</p>";
+    (s.v2.flags || []).forEach((f) => {
+      const cl = f.severity === "risk" ? "neg" : f.severity === "waste" ? "warn" : "mute";
+      h += '<div class="row"><div class="l"><span class="chip ' + cl + '">' + esc(f.severity) + "</span><b>" + esc(f.item) + "</b>" +
+        '<div class="mute">' + esc(f.text) + (f.fix ? " → " + esc(f.fix) : "") + "</div></div></div>";
+    });
+    h += "</div>";
+  }
   h += '<div class="card"><h2>Rules log</h2><pre>' + esc((s.rules || []).join("\n")) + "</pre></div>";
   $("tab-log").innerHTML = h;
 }
