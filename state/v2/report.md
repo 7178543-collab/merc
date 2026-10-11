@@ -1,64 +1,74 @@
 # v2 shadow report
 
-Turn 13211, 2026-10-11 20:54. Mode: shadow (reads only; v1 runs the game).
-Cash 25,355, prestige 2,475 (55 free, +3.8/turn).
+Turn 13212, 2026-10-11 21:56. Mode: shadow (reads only; v1 runs the game).
+Cash 25,825, prestige 2,478 (58 free, +3.8/turn).
 
-**8 risks, 4 waste, 7 tuning** where v2 would act differently from v1.
+**1 risks, 1 waste, 3 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **arms**: needed (0.5/turn) but there is NO buy order, stock 0 -> v2: add buy 1
-- **flax fibres**: spinnery 1 ran 0.0 of 3.8: short of flax fibres -> v2: keep a flax fibres buy (or stock) that covers it
-- **flax fibres**: flax fibres buffer 0.0 turns (holds 0, next step uses 64/turn) -> v2: check the step that makes it
-- **labour**: buying 356, short of ~928 needed -> v2: buy 928
-- **porterage**: logging camp w/ tool ran 0.0 of 20.0: short of porterage -> v2: keep a porterage buy (or stock) that covers it
-- **porterage**: flax farm 1 ran 0.0 of 9.9: short of porterage -> v2: keep a porterage buy (or stock) that covers it
-- **porterage**: retting pit 1 ran 0.0 of 2.0: short of porterage -> v2: keep a porterage buy (or stock) that covers it
-- **thread**: thread buffer 0.0 turns (holds 0, next step uses 174/turn) -> v2: check the step that makes it
+- **flax fibres**: spinnery 1 ran short of flax fibres (no buy order); knock-on: weavery 1 (no thread); labour need rises ~508/turn when they restart -> v2: add a flax fibres buy
 
 ## Waste (money lost now)
 
-- **garments**: it costs us 23.46 to make, the floor sells at 22.00 -> v2: cut its cost (labour price) or export it; a higher floor would just stop home sales
-- **nets**: it costs us 36.85 to make, the floor sells at 36.00 -> v2: cut its cost (labour price) or export it; a higher floor would just stop home sales
-- **porterage**: buying 40, need ~26 -> v2: buy 26
-- **timber**: it costs us 8.01 to make, the floor sells at 7.00 -> v2: cut its cost (labour price) or export it; a higher floor would just stop home sales
+- **garments**: sold 74 at 22.00 avg against 23.46 cost each: losing 108 coin/turn -> v2: cut its cost (labour price) or export it; a higher floor would just stop home sales
 
 ## Tuning
 
-- **donations**: buy 40 vs v2 80
-- **firewood**: buy 40 vs v2 7
-- **fish**: buy 6 vs v2 12
-- **grain**: buy 33 vs v2 65
-- **meat**: buy 6 vs v2 12
-- **tar**: no sellers at home right now -> v2: stock covers it, or import
-- **tools**: buy 31 vs v2 9
+- **arms**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
+- **fish**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
+- **wheels**: build materials for ropewalk 1, quarry 1 are in (13.0 held, 11 needed) but a buy is still live -> v2: switch the wheels buy off
 
-## Prestige sinks running now
+## Builds under construction
 
-| Sink | Prestige/turn | Coin per prestige |
-| --- | --- | --- |
-| maintain 1 (park 1) | 4.5 | 50.7 |
-| hold banquet 1 (fish) (mansion 1) | 4.2 | 60.9 |
+- **ropewalk 1** 33% (INITIAL), about 17 turns left; still to deliver: labour 268, timber 175, tools 14, wheels 11; waiting on materials
+- **quarry 1** 38% (INITIAL), about 12 turns left; still to deliver: labour 496, timber 75, tools 13; waiting on materials
+  - note: game data lists a 20 discount on this build; not applied, so this buys slightly more than needed
+
+| Material | Need | Held | Deficit | v2 action |
+| --- | --- | --- | --- | --- |
+| timber | 250 | 265.9 | 30 | buy 30 @ 7.85, stop at 295 |
+| tools | 27 | 199.3 | 0 | off: covered |
+| wheels | 11 | 13.0 | 0 | off: covered; switch v1's buy off |
+
+## Prestige spending, cheapest coin per prestige first
+
+1189 turns left: prestige gained now converts 99.7% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+
+- agreed **tenants** to level 11: done - level 11 (agreed 11)
+- agreed **prestige_management** to level 2: done - level 2 (agreed 2)
+- agreed **apprentices** to level 2: waiting - level 2 costs 250, free 58: ~51 turns at +3.8/turn
+
+| Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
+| --- | --- | --- | --- | --- | --- |
+| maintain 1 | park | 0.5 | 49.2 | 49.2 | running |
+| hold banquet 3 (pies) | mansion | 8 | 53.2 | 53.2 | thin at home: hop beer, pies |
+| hold banquet 2 (pies) | mansion | 7 | 55.1 | 55.1 | thin at home: cheese, pies |
+| hold sermon 2 (candles) | church | 31 | 55.0 | 57.2 | needs a church (build cost 77,576); thin at home: jewellery, candles, furniture |
+| hold banquet 3 (fish) | mansion | 7.6 | 58.2 | 58.2 | thin at home: hop beer, cheese |
+| hold banquet 2 (fish) | mansion | 6.8 | 59.0 | 59.0 | thin at home: cheese |
+| hold banquet 4 (pies) | mansion | 18 | 59.0 | 59.0 | thin at home: hop beer, pies |
+| hold prayer 2 | chapel | 13 | 56.7 | 59.3 | needs a chapel (build cost 38,005); thin at home: furniture |
+| hold banquet 1 (fish) | mansion | 4.2 | 60.1 | 60.1 | running |
+| hold sermon 2 | church | 24 | 57.8 | 60.7 | needs a church (build cost 77,576); thin at home: jewellery, furniture |
+| hold mass 2 (premium) | cathedral | 360 | 60.1 | 60.9 | needs a cathedral (build cost 305,180); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| jousting 1 | arena | 170 | 62.2 | 62.3 | needs a arena (build cost 28,959); thin at home: protection, light armour, arms; needs weaponry skill |
 
 ## v2 orders
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| arms | 1 @ 27.8, stop 2 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 0 = 1.0 turns |
+| arms | 1 @ ?, stop 2 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 0 = 0.0 turns |
 | beer |  | 51 @ min 3.9 |  |
-| candles | 2 @ 69.5, stop 6 |  | uses 1.5/turn (household upkeep), makes 0.0, holds 55 = 36.7 turns |
-| cured fish | 7 @ 24.8, stop 20 |  | uses 5.5/turn (mansion 1), makes 0.0, holds 20 = 3.6 turns |
-| donations | 80 @ 1.02, stop 160 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
-| firewood | 7 @ 2.08, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 58 = 9.0 turns |
-| fish | 12 @ 1.86, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
-| furniture | 2 @ 15.4, stop 5 |  | uses 1.2/turn (household upkeep), makes 0.0, holds 141 = 117.7 turns |
+| cured fish | 7 @ 24.8, stop 20 |  | uses 5.5/turn (mansion 1), makes 0.0, holds 20 = 3.5 turns |
+| donations | 40 @ 1.02, stop 40 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
+| firewood | 7 @ 1.97, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 58 = 9.0 turns |
+| fish | 12 @ ?, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | garments |  | 80 @ min 22.0 |  |
-| grain | 65 @ 3.26, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 36 = 1.1 turns |
-| labour | 928 @ 1.72, stop - |  | uses 1333.7/turn (brewery 1, flax farm 1, household), makes 450.0, holds 378 = 0.4 turns |
-| light armour | 1 @ 87.0, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 8 = 39.0 turns |
-| meat | 12 @ 2.06, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
+| grain | 65 @ 3.16, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 36 = 1.1 turns |
+| labour | 394 @ 1.67, stop - |  | uses 825.2/turn (brewery 1, flax farm 1, household), makes 450.0, holds 356 = 0.9 turns |
+| meat | 12 @ 2.02, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 6 @ min 36.0 |  |
-| porterage | 26 @ 0.39, stop - |  | uses 23.4/turn (observed), makes 0.0, holds 24 = 1.0 turns |
-| tar | 1 @ ?, stop 2 |  | uses 0.5/turn (observed), makes 0.0, holds 47 = 97.7 turns |
+| porterage | 26 @ 0.38, stop - |  | uses 23.4/turn (observed), makes 0.0, holds 40 = 1.7 turns |
 | timber |  | 24 @ min 8.5 |  |
-| tools | 9 @ 5.95, stop 72 |  | uses 9.0/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 182 = 20.3 turns |
+| tools | 12 @ 5.65, stop 96 |  | uses 12.0/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 16.7 turns |
