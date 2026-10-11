@@ -5,6 +5,7 @@ Runs the planner on a frozen snapshot (v2/fixtures/), so the hourly job overwrit
 Also guards the one rule that matters: shadow mode never writes to the game.
 """
 import ast
+import copy
 import glob
 import json
 import os
@@ -57,6 +58,34 @@ def test_orders_sane():
     assert o["donations"]["buy"]["buy_volume"] == 40          # a deep market needs no runway
     assert "tar" not in o                                     # 97 turns in stock: no order
     assert o["labour"]["buy"]["buy_volume"] < 500             # stalled buildings no longer counted as running
+
+
+def test_builds_now():
+    b = planner.plan(SNAP, CFG)["builds"]
+    r = {st["building"]: st["remaining"] for st in b["sites"]}
+    assert r["ropewalk 1"] == {"labour": 284, "timber": 185, "tools": 15, "wheels": 12}      # 71% of the full cost
+    assert r["quarry 1"]["labour"] == 536 and "wheels" not in r["quarry 1"]
+    assert b["buys"]["wheels"]["action"] == "off" and b["buys"]["wheels"]["switch_off"]       # 13 held vs 12 needed: buy off
+    assert b["buys"]["timber"]["action"] == "blocked"                                         # ask 9.15 > ceiling 8.60
+    assert b["drip"] == {} and b["ready"] == []                                              # no labour until materials are in
+
+
+def test_builds_ready_meters_labour():
+    s = copy.deepcopy(SNAP)
+    s["store"]["items"]["timber"]["held"] = 600
+    base = planner.plan(SNAP, CFG)["orders"]["labour"]["buy"]["buy_volume"]
+    p = planner.plan(s, CFG)
+    assert sorted(p["builds"]["ready"]) == ["quarry 1", "ropewalk 1"]
+    assert p["builds"]["drip"] == {"labour": 16 + 42}                                        # 284/18 + 536/13, per turn, not 820 at once
+    assert p["orders"]["labour"]["buy"]["buy_volume"] > base
+
+
+def test_builds_cash_guard():
+    s = copy.deepcopy(SNAP)
+    s["cash"] = 4100                                                                          # 100 above the reserve
+    s["market"]["timber"]["ask"] = 8.0
+    e = planner.plan(s, CFG)["builds"]["buys"]["timber"]
+    assert e["action"] == "buy" and 0 < e["buy_volume"] <= 12 < e["deficit"] and "cash guard" in e["why"]
 
 
 if __name__ == "__main__":

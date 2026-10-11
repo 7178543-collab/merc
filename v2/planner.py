@@ -149,6 +149,21 @@ def plan(s, cfg=None, recipes=None):
             text += "; labour need rises ~%.0f/turn when they restart" % restart
         flag("risk", lim, text, fix)
 
+    # ---------- build manager: sites under construction (sized before the buy loop, because labour for a site that can
+    # progress is real demand) ----------
+    bp = None
+    try:
+        import builds
+        sites = builds.scan_sites(s, cfg)
+        if sites:
+            bp = builds.plan_builds(sites, s, cfg, items, market, use, snap_price)
+            for item, n in bp["drip"].items():
+                use[item] = use.get(item, 0) + n
+                use_full[item] = use_full.get(item, 0) + n
+                users.setdefault(item, []).append("construction")
+    except Exception as e:      # a new module must never blank the hourly report
+        notes.append("builds skipped: %s: %s" % (type(e).__name__, e))
+
     hist = s.get("history_use") or {}
     perishable = set(cfg.get("perishable") or [])
     never_drop = set(cfg.get("never_drop") or [])
@@ -326,6 +341,19 @@ def plan(s, cfg=None, recipes=None):
     hhp = s.get("household") or {}
     sinks.sort(key=lambda x: x["coin_per_prestige"] or 1e9)
 
+    # ---------- build buys: the one-off orders, once the regular ones exist ----------
+    if bp:
+        try:
+            builds.annotate(bp, orders, items)
+            for item, e in bp["buys"].items():
+                if e["action"] == "buy":
+                    orders.setdefault(item, {})["build_buy"] = {k: e[k] for k in ("buy_volume", "buy_price", "max_holding") if k in e}
+                if e.get("switch_off"):
+                    flag("tune", item, "build materials for %s are in (%s held, %d needed) but a buy is still live" % (
+                        ", ".join(x["building"] for x in bp["sites"]), e["held"], e["need"]), "switch the %s buy off" % item)
+        except Exception as e:
+            notes.append("builds skipped: %s: %s" % (type(e).__name__, e))
+
     # ---------- money ----------
     sev_rank = {"risk": 0, "waste": 1, "tune": 2}
     flags.sort(key=lambda f: (sev_rank.get(f["severity"], 9), f["item"] or ""))
@@ -334,7 +362,7 @@ def plan(s, cfg=None, recipes=None):
         "cash": s.get("cash"), "prestige": hhp.get("prestige"), "prestige_free": hhp.get("free"),
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
-        "flags": flags, "orders": orders, "sinks": sinks,
+        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp,
         "stalls": {k: {"buildings": [n for n, _ in g["buildings"]], "knock_on": [n for n, _ in g["knock_on"]]}
                    for k, g in roots.items()},
         "demand": {k: round(v, 1) for k, v in sorted(use.items())},

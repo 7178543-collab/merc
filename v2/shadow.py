@@ -43,6 +43,28 @@ def report(p):
         for f in fs:
             L.append("- **%s**: %s%s" % (f["item"], f["text"], (" -> v2: " + f["fix"]) if f.get("fix") else ""))
         L.append("")
+    bp = p.get("builds")
+    if bp:
+        L += ["## Builds under construction", ""]
+        for st in bp["sites"]:
+            L.append("- **%s** %.0f%% (%s), about %s turns left; still to deliver: %s%s" % (
+                st["building"], st["progress"], st.get("stage"), st.get("turns_left", "?"),
+                ", ".join("%s %d" % kv for kv in st["remaining"].items()) or "nothing",
+                "; ready for labour" if st.get("ready") else "; waiting on materials" if st["remaining"] else ""))
+            for n_ in st.get("notes") or []:
+                L.append("  - note: " + n_)
+        L += ["", "| Material | Need | Held | Deficit | v2 action |", "| --- | --- | --- | --- | --- |"]
+        for item, e in bp["buys"].items():
+            act = {"buy": "buy %s @ %s, stop at %s" % (e.get("buy_volume"), e.get("buy_price"), e.get("max_holding")),
+                   "off": "off: covered" + ("; switch v1's buy off" if e.get("switch_off") else ""),
+                   "blocked": "blocked: %s" % e.get("why")}[e["action"]]
+            L.append("| %s | %d | %s | %d | %s |" % (item, e["need"], e["held"], e["deficit"], act))
+        if bp["drip"]:
+            L.append("")
+            L.append("Labour metered per turn while a site can progress: " + ", ".join("%s %d" % kv for kv in bp["drip"].items()))
+        L.append("")
+    if p.get("notes"):
+        L += ["## Notes", ""] + ["- " + n_ for n_ in p["notes"]] + [""]
     if p.get("sinks"):
         L += ["## Prestige sinks running now", "", "| Sink | Prestige/turn | Coin per prestige |", "| --- | --- | --- |"]
         for x in p["sinks"]:
@@ -83,6 +105,7 @@ def main():
         line = {"t": p.get("t"), "turn": p.get("turn"), "cash": p.get("cash"), "counts": p.get("counts"),
                 "top": [(f["severity"], f["item"], f["text"][:80]) for f in (p.get("flags") or [])[:5]],
                 "keys": ["%s:%s" % (f["severity"], f["item"]) for f in (p.get("flags") or [])],   # persistence = real, one-offs = noise
+                "builds": {st["building"]: st["progress"] for st in ((p.get("builds") or {}).get("sites") or [])},   # checks the progress model
                 "api": (snap.get("api") or {}).get("calls")}
         with open(os.path.join(OUT, "history.jsonl"), "a") as f:
             f.write(json.dumps(line, default=str) + "\n")
