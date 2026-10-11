@@ -56,6 +56,15 @@ jobs:
           else
             python chain_balancer.py
           fi
+      - name: Failsafe (cash brake + labour waste guard)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.live }}" = "true" ]; then
+            python failsafe.py --live || true
+          else
+            python failsafe.py || true
+          fi
       - name: Alerts
         env:
           GH_TOKEN: ${{ github.token }}

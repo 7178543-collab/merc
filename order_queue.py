@@ -336,6 +336,39 @@ def log(e, r, source="queue"):
         f.write(json.dumps(dict(ts=ts, source=source, entry=e, **r), default=str) + "\n")
 
 
+SPEND_GUARD = 0.05   # a queued buy costing more than 5% of cash per turn needs "confirm": true
+
+
+def _cash():
+    pl = m.get("/player") or {}
+    biz = m.get("/businesses/%s" % (pl.get("household") or {})["business_ids"][0]) or {}
+    return m.num(((biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
+
+
+def _spend_guard(e, cash):
+    """Failsafe (Oct 11): hand-queued buys (Claude check-ins) that would cost more than
+    SPEND_GUARD of cash every turn are refused unless the entry says "confirm": true.
+    Taylor's own app actions (note "app: ...") are never blocked."""
+    s = e.get("set") or {}
+    if e.get("confirm") or str(e.get("note", "")).startswith("app:") or not e.get("item"):
+        return None
+    if "buy_volume" not in s and "buy_price" not in s:
+        return None
+    if e.get("transport"):
+        return None
+    cur = _store_managers(str(e.get("building") or STORE), e["item"])
+    tier = int(e.get("tier", 0))
+    base = cur[tier] if tier < len(cur) else {}
+    vol = m.num(s.get("buy_volume", base.get("buy_volume")))
+    price = m.num(s.get("buy_price", base.get("buy_price")))
+    cost = vol * price
+    before = m.num(base.get("buy_volume")) * m.num(base.get("buy_price"))
+    if cash and cost > before + 1 and cost > SPEND_GUARD * cash:
+        return "spend guard: %s buy %.0f x %.2f = %.0f/turn is over %d%% of cash %.0f; add \"confirm\": true if intended" % (
+            e["item"], vol, price, cost, SPEND_GUARD * 100, cash)
+    return None
+
+
 def apply_queue(live):
     try:
         with open(QUEUE) as f:
@@ -350,9 +383,13 @@ def apply_queue(live):
     if not (m.USER and m.TOKEN):
         print("order queue: no credentials, left in place")
         return
+    cash = None
     for e in q:
         try:
-            r = apply_entry(e)
+            if cash is None:
+                cash = _cash()
+            refuse = _spend_guard(e, cash)
+            r = dict(ok=False, error=refuse) if refuse else apply_entry(e)
         except (Exception, SystemExit) as ex:   # merc_status4.get() exits on HTTP errors; never let one entry stall the queue
             r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
         log(e, r)

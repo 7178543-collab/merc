@@ -397,6 +397,15 @@ def main():
     data = json.loads(out.stdout)
 
     wanted = {}
+    # cash failsafe (failsafe.py): first in the list so the app and email lead with it
+    try:
+        fs = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "failsafe.json")))
+        if fs.get("level", 0) >= 1 or fs.get("paused"):
+            wanted["[merc] FAILSAFE %s: cash %s, burn %s over %s turns" % (
+                fs.get("name"), fs.get("cash"), fs.get("burn"), fs.get("burn_turns"))] = (
+                "paused buys: %s (not restored automatically)" % (", ".join(sorted(fs.get("paused") or {})) or "none"))
+    except (FileNotFoundError, ValueError):
+        pass
     # one-off manual steps the rules can't do (state/needs_you.json, written by prestige_rules.py;
     # delete the file, or let a later rule clear it, once done)
     try:
