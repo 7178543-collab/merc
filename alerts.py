@@ -316,6 +316,11 @@ def save_history(dline):
             f.write(dline.split("merc-data: ", 1)[-1] + "\n")
     except Exception as e:
         print("history write failed:", e)
+    try:
+        import app_status
+        app_status.write()      # phone app overview (state/status.json), committed with history
+    except Exception as e:
+        print("app status failed:", e)
 
 
 def post_status(wanted, hh, ships, dline):

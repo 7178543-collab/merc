@@ -297,7 +297,14 @@ def main():
     running = (prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
                and str(prod.get("provider_id")) == q.STORE)
 
-    if cash < OFF_CASH:
+    try:
+        with open(os.path.join(HERE, "state", "overrides.json")) as f:
+            ov = (json.load(f) or {}).get("banquet", "auto")
+    except (FileNotFoundError, ValueError):
+        ov = "auto"
+    if ov in ("on", "off"):
+        want_on, why = ov == "on", "Taylor's override from the app: banquet %s" % ov
+    elif cash < OFF_CASH:
         want_on, why = False, "cash %.0f under %d" % (cash, OFF_CASH)
     elif cash > ON_CASH:
         want_on, why = True, "cash %.0f over %d (profit %+.0f over %d turns, %+.0f over %d)" % (cash, ON_CASH, profit, n, recent, rn)

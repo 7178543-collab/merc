@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3b2d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Merc</title>
+<style>
+:root{--bg:#f4efe2;--card:#fffaf0;--ink:#1d2a22;--mute:#6b6a5e;--line:#e2d8c3;--acc:#1f3b2d;--gold:#b8892e;--good:#2f7d4f;--bad:#b23b2e;--warn:#a86b12;--chip:#efe6d2}
+@media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9e4d6;--mute:#9a9a8a;--line:#2c3a31;--acc:#7fc19a;--gold:#d6aa4a;--good:#6cc08b;--bad:#e27a6c;--warn:#e0a54a;--chip:#24332a}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--acc);color:#f4efe2;padding:10px 14px calc(10px) 14px;display:flex;align-items:center;gap:10px}
+header h1{font:700 19px/1 Georgia,serif;margin:0;letter-spacing:.3px}
+header .sub{font-size:12px;opacity:.8}
+header .sp{flex:1}
+header button{background:rgba(255,255,255,.12);color:inherit;border:0;border-radius:10px;padding:8px 10px;font-size:14px}
+main{padding:12px 12px 90px;max-width:640px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--mute);padding:12px 0 10px;font-size:14px;font-weight:600}
+nav button.on{color:var(--acc);box-shadow:inset 0 3px 0 var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute);margin:0 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.tile .k{font-size:12px;color:var(--mute)}
+.tile .v{font-size:20px;font-weight:700;margin-top:2px}
+.tile .s{font-size:12px;color:var(--mute)}
+.pos{color:var(--good)}.neg{color:var(--bad)}.warn{color:var(--warn)}
+.banner{border-left:4px solid var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:5px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mute);font-weight:600}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .l{min-width:0}
+.row .r{text-align:right;flex-shrink:0}
+.mute{color:var(--mute);font-size:12px}
+.chip{display:inline-block;background:var(--chip);border-radius:999px;padding:1px 8px;font-size:12px;margin:2px 4px 2px 0}
+.list li{margin:3px 0}
+.list{margin:0;padding-left:18px}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+textarea{min-height:80px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;background:var(--acc);color:#f4efe2;margin-top:10px}
+.btn.alt{background:var(--chip);color:var(--ink)}
+.btn.danger{background:var(--bad)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:6px}
+.seg button{flex:1;border:0;background:none;color:var(--ink);padding:10px 0;font-weight:600}
+.seg button.on{background:var(--acc);color:#f4efe2}
+pre{white-space:pre-wrap;font-size:12px;margin:0;color:var(--mute)}
+.toast{position:fixed;left:12px;right:12px;bottom:76px;z-index:9;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;font-size:14px;display:none}
+.hide{display:none}
+details summary{cursor:pointer;color:var(--mute);font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Merc</h1>
+    <div class="sub" id="age">loading…</div>
+  </div>
+  <div class="sp"></div>
+  <button id="refresh" aria-label="Refresh">↻</button>
+  <button id="gear" aria-label="Settings">⚙</button>
+</header>
+
+<main>
+  <section id="tab-over"></section>
+  <section id="tab-act" class="hide"></section>
+  <section id="tab-log" class="hide"></section>
+  <section id="tab-set" class="hide">
+    <div class="card">
+      <h2>GitHub key</h2>
+      <p class="mute">The key lets this app add actions to the bot's queue. It is stored only on this phone.
+        Use a fine-grained key limited to the <b>merc</b> repo with <b>Contents: Read and write</b>.</p>
+      <label for="tok">Key</label>
+      <input id="tok" type="password" autocomplete="off" placeholder="github_pat_…">
+      <div class="btns">
+        <button class="btn" id="tok-save">Save</button>
+        <button class="btn alt" id="tok-test">Test</button>
+        <button class="btn alt" id="tok-clear">Remove</button>
+      </div>
+      <p class="mute" id="tok-msg"></p>
+    </div>
+    <div class="card">
+      <h2>About</h2>
+      <p class="mute">Overview comes from <code>state/status.json</code>, which the bot rewrites every run (about every 20–40 min).
+        Actions are written to <code>state/order_queue.json</code>; the bot applies them within about a minute and the result shows under Log.</p>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="over" class="on">Overview</button>
+  <button data-tab="act">Act</button>
+  <button data-tab="log">Log</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const REPO = "7178543-collab/merc";
+const API = "https://api.github.com/repos/" + REPO + "/contents/";
+let S = null;
+
+// ---------- small helpers ----------
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+const token = () => store("merc_token") || "";
+function num(x, d = 0) { const n = Number(x); return isFinite(n) ? n.toLocaleString(undefined, {maximumFractionDigits: d, minimumFractionDigits: d}) : "–"; }
+function kfmt(x) { const n = Number(x); if (!isFinite(n)) return "–"; return Math.abs(n) >= 10000 ? (n / 1000).toFixed(1) + "k" : num(n); }
+function signed(x, d = 0) { const n = Number(x); if (!isFinite(n)) return "–"; return (n > 0 ? "+" : "") + num(n, d); }
+function cls(x) { const n = Number(x); return n > 0 ? "pos" : n < 0 ? "neg" : ""; }
+function ago(ts) {
+  if (!ts) return "?";
+  const m = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
+  if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60); return h < 48 ? h + " h ago" : Math.round(h / 24) + " d ago";
+}
+function toast(msg, ms = 4000) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", ms); }
+function b64encode(str) { const bytes = new TextEncoder().encode(str); let bin = ""; bytes.forEach((b) => bin += String.fromCharCode(b)); return btoa(bin); }
+function b64decode(b64) { const bin = atob(b64.replace(/\n/g, "")); const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0)); return new TextDecoder().decode(bytes); }
+function ghHeaders(json) {
+  const h = {"Accept": json ? "application/vnd.github+json" : "application/vnd.github.raw"};
+  if (token()) h["Authorization"] = "Bearer " + token();
+  return h;
+}
+
+// ---------- data ----------
+async function loadStatus() {
+  $("age").textContent = "loading…";
+  let txt = null;
+  try {
+    const r = await fetch(API + "state/status.json?ref=main", {headers: ghHeaders(false), cache: "no-store"});
+    if (r.ok) txt = await r.text();
+  } catch (e) {}
+  if (!txt) {
+    try {
+      const r = await fetch("https://raw.githubusercontent.com/" + REPO + "/main/state/status.json?t=" + Date.now(), {cache: "no-store"});
+      if (r.ok) txt = await r.text();
+    } catch (e) {}
+  }
+  if (!txt) { $("age").textContent = "couldn't load (offline?)"; return; }
+  try { S = JSON.parse(txt); } catch (e) { $("age").textContent = "status unreadable"; return; }
+  store("merc_last_status", txt);
+  render();
+}
+
+async function queue(entries, summary) {
+  if (!token()) { toast("Add your GitHub key in ⚙ first."); show("set"); return false; }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const g = await fetch(API + "state/order_queue.json?ref=main", {headers: ghHeaders(true), cache: "no-store"});
+    if (g.status === 401 || g.status === 403) { toast("GitHub refused the key (" + g.status + "). Check it in ⚙."); return false; }
+    let sha = null, cur = [];
+    if (g.ok) {
+      const j = await g.json(); sha = j.sha;
+      try { cur = JSON.parse(b64decode(j.content || "") || "[]"); } catch (e) { cur = []; }
+      if (!Array.isArray(cur)) cur = [];
+    }
+    const next = cur.concat(entries);
+    const body = {message: "app: " + summary, content: b64encode(JSON.stringify(next, null, 1) + "\n"), branch: "main"};
+    if (sha) body.sha = sha;
+    const p = await fetch(API + "state/order_queue.json", {method: "PUT", headers: Object.assign({"Content-Type": "application/json"}, ghHeaders(true)), body: JSON.stringify(body)});
+    if (p.ok) { toast("Queued: " + summary + ". The bot applies it in about a minute; see Log."); setTimeout(loadStatus, 120000); return true; }
+    if (p.status === 409 || p.status === 422) continue;     // someone else wrote the queue: re-read and retry
+    toast("Couldn't queue (" + p.status + ")."); return false;
+  }
+  toast("Queue was busy, try again."); return false;
+}
+
+// ---------- rendering ----------
+function show(tab) {
+  ["over", "act", "log", "set"].forEach((t) => $("tab-" + t).classList.toggle("hide", t !== tab));
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  const s = S;
+  $("age").textContent = "turn " + (s.turn || "?") + " · data " + ago(s.data_t);
+  const days = s.season_end ? Math.max(0, (new Date(s.season_end) - Date.now()) / 86400000) : null;
+  const free = Number(s.prestige_free);
+  let h = "";
+  h += '<div class="tiles">';
+  h += tile("Cash", kfmt(s.cash), "last turn " + signed(s.profit_last));
+  h += tile("Profit, 24 turns", '<span class="' + cls(s.profit_24) + '">' + signed(s.profit_24) + "</span>", "sales " + kfmt(s.sales) + " · buys " + kfmt(s.buys));
+  h += tile("Prestige", kfmt(s.prestige), num(free, 0) + " free to spend");
+  h += tile("Prestige income", '<span class="' + cls(s.prestige_rate) + '">' + signed(s.prestige_rate, 1) + "</span>/turn", days != null ? "season ends in " + days.toFixed(1) + " days" : "");
+  h += "</div>";
+
+  const warn = [];
+  if (s.needs_you) warn.push("<b>Needs you:</b> " + esc(s.needs_you));
+  (s.alerts || []).forEach((a) => warn.push(esc(a)));
+  if (warn.length) h += '<div class="card banner"><h2>Attention</h2><ul class="list">' + warn.map((w) => "<li>" + w + "</li>").join("") + "</ul></div>";
+
+  // rules: workers / park / prestige plan lines
+  const keyRules = (s.rules || []).filter((l) => /^(worker|park|apprentices|tenants|prestige_rules|\s+prestige management|\s+apprentice)/.test(l));
+  if (keyRules.length) h += '<div class="card"><h2>Rules this hour</h2>' + keyRules.map((l) => '<div class="row"><div class="l mute">' + esc(l.trim()) + "</div></div>").join("") + "</div>";
+
+  if ((s.buildings || []).length) {
+    h += '<div class="card"><h2>Buildings</h2><table><tr><th>Building</th><th>Recipe</th><th>Ran / set</th></tr>';
+    s.buildings.forEach((b) => {
+      const st = (b[4] || []).join(" ");
+      h += "<tr><td>" + esc(b[0]) + (st ? ' <span class="chip">' + esc(st) + "</span>" : "") + "</td><td>" + esc(b[1] || "–") + "</td><td>" + num(b[2], 1) + " / " + num(b[3], 1) + "</td></tr>";
+    });
+    h += "</table></div>";
+  }
+
+  if ((s.ships || []).length) {
+    h += '<div class="card"><h2>Ships</h2>';
+    s.ships.forEach((sh) => { h += '<div class="row"><div class="l"><b>' + esc(sh.name) + '</b><div class="mute">' + esc(sh.state) + " · " + esc(sh.place) + (sh.route ? " · route " + esc(sh.route) : "") + "</div></div></div>"; });
+    h += "</div>";
+  }
+
+  if (s.stock) {
+    h += '<div class="card"><h2>Stock (last turn)</h2><table><tr><th>Item</th><th>Held</th><th>Made</th><th>Used</th><th>Sold</th><th>Bought</th><th>Price</th></tr>';
+    Object.keys(s.stock).forEach((k) => { const v = s.stock[k] || []; h += "<tr><td>" + esc(k) + "</td><td>" + num(v[0]) + "</td><td>" + num(v[1]) + "</td><td>" + num(v[2]) + "</td><td>" + num(v[3]) + "</td><td>" + num(v[4]) + "</td><td>" + (v[6] ? num(v[6], 2) : "–") + "</td></tr>"; });
+    h += "</table></div>";
+  }
+
+  if ((s.pnl || []).length || (s.purchases || []).length) {
+    h += '<div class="card"><h2>Profit and loss, last turn</h2><table><tr><th>Sold</th><th>Qty</th><th>Value</th><th>Margin</th></tr>';
+    (s.pnl || []).forEach((r) => { h += "<tr><td>" + esc(r.item) + "</td><td>" + num(r.sold) + "</td><td>" + num(r.value) + '</td><td class="' + cls(r.margin) + '">' + signed(r.margin) + "</td></tr>"; });
+    h += "</table>";
+    if ((s.purchases || []).length) {
+      h += '<details><summary>Purchases (' + s.purchases.length + ")</summary><table><tr><th>Bought</th><th>Qty</th><th>Cost</th></tr>";
+      s.purchases.forEach((r) => { h += "<tr><td>" + esc(r.item) + "</td><td>" + num(r.qty) + "</td><td>" + num(r.cost) + "</td></tr>"; });
+      h += "</table></details>";
+    }
+    h += "</div>";
+  }
+
+  if ((s.contracts || []).length) {
+    h += '<div class="card"><h2>Contracts on offer</h2>';
+    s.contracts.forEach((c) => {
+      const can = c.fill === "now" && (c.kind === "church" || c.kind === "they buy");
+      h += '<div class="row"><div class="l"><b>' + esc(c.verdict) + "</b> · " + esc(c.kind) + " · " + num(c.volume) + " " + esc(c.item) + (c.bonus ? " · +" + num(c.bonus) + " prestige" : "") +
+        '<div class="mute">' + esc(c.why) + "</div></div>" +
+        (can ? '<div class="r"><button class="btn" data-approve="' + esc(c.id) + '" data-what="' + esc(num(c.volume) + " " + c.item) + '">Fill</button></div>' : "") + "</div>";
+    });
+    h += "</div>";
+  }
+  $("tab-over").innerHTML = h;
+  document.querySelectorAll("[data-approve]").forEach((b) => b.onclick = () => {
+    if (!confirm("Sign and deliver " + b.dataset.what + " from stock now? (Only goes through if stock covers it.)")) return;
+    queue([{contract: b.dataset.approve, confirm: true, note: "app: approve contract " + b.dataset.what}], "fill contract " + b.dataset.what);
+  });
+  renderAct(); renderLog();
+}
+
+function tile(k, v, s) { return '<div class="tile"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + (s || "") + "</div></div>"; }
+
+function renderLog() {
+  const s = S; let h = "";
+  h += '<div class="card"><h2>Recent actions</h2>' + (s.queue_pending ? '<p class="mute">' + s.queue_pending + " waiting in the queue</p>" : "");
+  (s.recent || []).forEach((r) => {
+    h += '<div class="row"><div class="l"><b>' + esc(r.what) + "</b> " + '<span class="chip">' + esc(r.source) + "</span>" +
+      '<div class="mute">' + esc(r.note || "") + (r.error ? ' · <span class="neg">' + esc(r.error) + "</span>" : "") + "</div></div>" +
+      '<div class="r ' + (r.ok ? "pos" : "neg") + '">' + (r.ok ? "done" : "failed") + '<div class="mute">' + ago(r.ts) + "</div></div></div>";
+  });
+  h += "</div>";
+  h += '<div class="card"><h2>Rules log</h2><pre>' + esc((s.rules || []).join("\n")) + "</pre></div>";
+  $("tab-log").innerHTML = h;
+}
+
+// ---------- actions ----------
+function renderAct() {
+  const s = S;
+  const items = Array.from(new Set(Object.keys(s.orders || {}).concat(Object.keys(s.stock || {})))).sort();
+  const ships = s.ship_ids || [];
+  const ov = (s.overrides || {}).banquet || "auto";
+  let h = "";
+  // 1 order
+  h += '<div class="card"><h2>Change a buy or sell order</h2>' +
+    '<label for="o-item">Item</label><select id="o-item">' + items.map((i) => "<option>" + esc(i) + "</option>").join("") + "</select>" +
+    '<div id="o-cur" class="mute" style="margin-top:6px"></div>' +
+    '<label for="o-tier">Tier</label><select id="o-tier"></select>' +
+    '<div class="grid2"><div><label>Buy per turn</label><input id="o-bv" inputmode="decimal"></div><div><label>Buy max price</label><input id="o-bp" inputmode="decimal"></div></div>' +
+    '<div class="grid2"><div><label>Stop buying at</label><input id="o-mh" inputmode="decimal"></div><div><label>Sell per turn</label><input id="o-sv" inputmode="decimal"></div></div>' +
+    '<div class="grid2"><div><label>Sell min price</label><input id="o-sp" inputmode="decimal"></div><div><label>Keep at least</label><input id="o-kh" inputmode="decimal"></div></div>' +
+    '<p class="mute">Only filled boxes change. 0 switches a buy or sell off. Prices with 3 digits from 2.00 up must end even (24.60, not 24.50).</p>' +
+    '<button class="btn" id="o-go">Queue change</button></div>';
+  // 2 ship
+  h += '<div class="card"><h2>Ship</h2>' + (ships.length ? '<label for="s-id">Ship</label><select id="s-id">' +
+    ships.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.name) + " (now " + esc(x.target == null ? "?" : x.target) + ")</option>").join("") + "</select>" +
+    '<label for="s-t">Crew level when restarting</label><input id="s-t" inputmode="decimal" value="0.723">' +
+    '<div class="btns"><button class="btn" id="s-go">Restart</button><button class="btn danger" id="s-stop">Pause</button></div>' : '<p class="mute">No ship data yet.</p>') + "</div>";
+  // 3 banquet
+  h += '<div class="card"><h2>Banquet</h2><p class="mute">Auto follows the cash rule (on over 15k, off under 10k).</p><div class="seg" id="bq">' +
+    ["auto", "on", "off"].map((v) => '<button data-v="' + v + '" class="' + (ov === v ? "on" : "") + '">' + v + "</button>").join("") + "</div></div>";
+  // 4 prestige
+  h += '<div class="card"><h2>Spend prestige</h2><p class="mute">Permanent. ' + num(s.prestige_free, 0) + ' free now. If the game wants a different price than you enter, nothing is spent.</p>' +
+    '<label for="p-track">On</label><select id="p-track">' +
+    [["prestige_management", "Prestige management (park/chapel room)"], ["apprentices", "Apprentice slot"], ["tenants", "Tenants (+5)"], ["management", "Regular management"],
+     ["luxuries", "Luxury slot"], ["transports", "Transport slot"], ["cargo_slots", "Cargo slot"], ["contracts", "Contract slots"]].map((o) => '<option value="' + o[0] + '">' + o[1] + "</option>").join("") +
+    '</select><label for="p-cost">Cost (prestige)</label><input id="p-cost" inputmode="numeric" placeholder="e.g. 250"><button class="btn" id="p-go">Spend</button></div>';
+  // 5 contracts live on Overview
+  h += '<div class="card"><h2>Contracts</h2><p class="mute">Fill buttons sit on each offer under Overview. They only go through if our stock covers the offer right now.</p></div>';
+  // 6 note
+  h += '<div class="card"><h2>Note for Claude</h2><p class="mute">Read at the next check-in.</p><textarea id="n-text" placeholder="e.g. check why beer isn\'t selling"></textarea><button class="btn" id="n-go">Send</button></div>';
+  $("tab-act").innerHTML = h;
+
+  const fillTier = () => {
+    const it = $("o-item").value, cur = (s.orders || {})[it] || [];
+    $("o-cur").innerHTML = cur.length ? cur.map((m, i) => "Tier " + i + ": " + Object.entries(m).map(([k, v]) => esc(k.replace("_", " ")) + " " + esc(v)).join(", ")).join("<br>") : "No orders on this item yet.";
+    $("o-tier").innerHTML = cur.map((m, i) => '<option value="' + i + '">Tier ' + i + "</option>").join("") + '<option value="' + cur.length + '">New tier</option>';
+  };
+  $("o-item").onchange = fillTier; fillTier();
+  $("o-go").onclick = () => {
+    const set = {}, f = (id, key, price) => { const v = $(id).value.trim(); if (v !== "") { const n = Number(v); if (!isFinite(n) || n < 0) throw new Error(key); set[key] = price ? String(n) : Math.round(n); } };
+    try { f("o-bv", "buy_volume"); f("o-bp", "buy_price", true); f("o-mh", "max_holding"); f("o-sv", "sell_volume"); f("o-sp", "sell_price", true); f("o-kh", "min_holding"); }
+    catch (e) { toast("Check the " + e.message.replace("_", " ") + " box."); return; }
+    if (!Object.keys(set).length) { toast("Fill at least one box."); return; }
+    const it = $("o-item").value, tier = Number($("o-tier").value);
+    const sum = it + " tier " + tier + ": " + Object.entries(set).map(([k, v]) => k.replace("_", " ") + " " + v).join(", ");
+    if (confirm("Queue " + sum + "?")) queue([{item: it, tier: tier, set: set, note: "app: " + sum}], sum);
+  };
+  if (ships.length) {
+    const ship = () => ships.find((x) => x.id === $("s-id").value) || ships[0];
+    $("s-go").onclick = () => { const t = Number($("s-t").value); if (!(t > 0 && t <= 1)) { toast("Crew level between 0 and 1."); return; } queue([{transport: ship().id, operation_target: t, note: "app: restart " + ship().name}], "restart " + ship().name + " at " + t); };
+    $("s-stop").onclick = () => { if (confirm("Pause " + ship().name + " where it is?")) queue([{transport: ship().id, operation_target: 0, note: "app: pause " + ship().name}], "pause " + ship().name); };
+  }
+  document.querySelectorAll("#bq button").forEach((b) => b.onclick = () => queue([{override: {banquet: b.dataset.v}, note: "app: banquet " + b.dataset.v}], "banquet " + b.dataset.v));
+  $("p-go").onclick = () => {
+    const tr = $("p-track").value, cost = Math.round(Number($("p-cost").value));
+    if (!(cost > 0)) { toast("Enter the cost the game shows."); return; }
+    if (cost > Number(s.prestige_free || 0)) { toast("Only " + num(s.prestige_free, 0) + " free."); return; }
+    if (confirm("Spend " + cost + " prestige on " + tr.replace("_", " ") + "? This is permanent.")) queue([{prestige: tr, cost: cost, max_cost: cost, confirm: true, note: "app: spend " + cost + " on " + tr}], "spend " + cost + " on " + tr);
+  };
+  $("n-go").onclick = () => { const t = $("n-text").value.trim(); if (!t) return; queue([{message: t, note: "app: note for Claude"}], "note for Claude").then((ok) => { if (ok) $("n-text").value = ""; }); };
+}
+
+// ---------- settings ----------
+$("tok-save").onclick = () => { const v = $("tok").value.trim(); if (!v) return; store("merc_token", v); $("tok").value = ""; $("tok-msg").textContent = "Saved on this phone."; };
+$("tok-clear").onclick = () => { store("merc_token", null); $("tok-msg").textContent = "Removed."; };
+$("tok-test").onclick = async () => {
+  if (!token()) { $("tok-msg").textContent = "No key saved."; return; }
+  const r = await fetch("https://api.github.com/repos/" + REPO, {headers: ghHeaders(true)});
+  if (!r.ok) { $("tok-msg").textContent = "GitHub said " + r.status + ". Check the key."; return; }
+  const j = await r.json();
+  $("tok-msg").textContent = j.permissions && j.permissions.push ? "Works: this key can queue actions." : "Read works, but the key can't write. Give it Contents: Read and write.";
+};
+
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => show(b.dataset.tab));
+$("gear").onclick = () => show("set");
+$("refresh").onclick = loadStatus;
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loadStatus(); });
+
+const cached = store("merc_last_status");
+if (cached) { try { S = JSON.parse(cached); render(); } catch (e) {} }
+loadStatus();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

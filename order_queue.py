@@ -7,7 +7,11 @@ Entry kinds (a JSON list of these):
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
   household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
-  prestige spend    {"prestige": "prestige_management", "cost": 100, "confirm": true}   (permanent; Taylor's go-ahead only)
+  prestige spend    {"prestige": "prestige_management", "cost": 100, "confirm": true, "max_cost": 300}   (permanent; Taylor's go-ahead only;
+                    retries once at the game's stated cost if free prestige and max_cost allow)
+  rules override    {"override": {"banquet": "auto"|"on"|"off"}}    (phone app)
+  contract approval {"contract": "<id>", "confirm": true}           (phone app; contracts.py fills it only if stock covers it now)
+  note for Claude   {"message": "..."}                              (phone app; appended to state/notes_for_claude.md)
   donate building   {"donate": "<building id>", "confirm": true}   (permanent; Taylor's say-so only)
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -234,12 +238,74 @@ def _apply_prestige(e):
     lvl = lambda: int(m.num(((m.get("/households/%s" % hid) or {}).get("prestige_board") or {}).get(track + "_level")))
     before = lvl()
     ok, status, body = _req("POST", "/households/%s/prestige/allocate" % hid, {"track": track, "cost": str(cost)})
+    if not ok and status == 409:
+        import re
+        mm = re.search(r"expected (\d+)", body or "")
+        hh = m.get("/households/%s" % hid) or {}
+        free = m.num(hh.get("prestige")) - m.num((hh.get("prestige_board") or {}).get("allocated"))
+        if mm and int(mm.group(1)) <= free and int(mm.group(1)) <= int(e.get("max_cost", 10 ** 9)):
+            cost = int(mm.group(1))
+            ok, status, body = _req("POST", "/households/%s/prestige/allocate" % hid, {"track": track, "cost": str(cost)})
     after = lvl()
     good = after == before + 1
     return dict(ok=good, status=status, body=body[:200], before=before, after=after, error=None if good else "level unchanged")
 
 
+def _apply_override(e):
+    """App switches the rules read: {"override": {"banquet": "auto"|"on"|"off"}} -> state/overrides.json."""
+    path = os.path.join(HERE, "state", "overrides.json")
+    try:
+        with open(path) as f:
+            cur = json.load(f)
+    except (FileNotFoundError, ValueError):
+        cur = {}
+    allowed = {"banquet": {"auto", "on", "off"}}
+    for k, v in (e.get("override") or {}).items():
+        if k not in allowed or v not in allowed[k]:
+            return dict(ok=False, error="override %s=%s not allowed" % (k, v))
+        cur[k] = v
+    with open(path, "w") as f:
+        json.dump(cur, f, indent=1)
+    return dict(ok=True, after=cur)
+
+
+def _apply_contract_approval(e):
+    """Taylor approves a contract from the app: {"contract": "<id>", "confirm": true}. contracts.py (same
+    workflow run, right after) signs and delivers it ONLY if stock covers it now (Taylor's rule)."""
+    if e.get("confirm") is not True:
+        return dict(ok=False, error="contract approval needs \"confirm\": true")
+    path = os.path.join(HERE, "state", "contract_approvals.json")
+    try:
+        with open(path) as f:
+            cur = json.load(f)
+    except (FileNotFoundError, ValueError):
+        cur = []
+    cid = str(e["contract"])
+    if cid not in [str(x.get("id")) for x in cur]:
+        cur.append({"id": cid, "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")})
+    with open(path, "w") as f:
+        json.dump(cur[-50:], f, indent=1)
+    return dict(ok=True, approved=cid, info="contracts.py fills it this run if stock covers it")
+
+
+def _apply_message(e):
+    """A note from Taylor for the next Claude check-in: {"message": "..."} -> state/notes_for_claude.md."""
+    text = str(e.get("message") or "").strip()[:1000]
+    if not text:
+        return dict(ok=False, error="empty message")
+    ts = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes")
+    with open(os.path.join(HERE, "state", "notes_for_claude.md"), "a") as f:
+        f.write("- %s: %s\n" % (ts, text.replace("\n", " ")))
+    return dict(ok=True)
+
+
 def apply_entry(e):
+    if "override" in e:
+        return _apply_override(e)
+    if "contract" in e:
+        return _apply_contract_approval(e)
+    if "message" in e:
+        return _apply_message(e)
     if e.get("prestige"):
         return _apply_prestige(e)
     if e.get("donate"):
@@ -252,6 +318,8 @@ def apply_entry(e):
         return _apply_producer(e)
     if e.get("transport") and "operation_target" in e:
         return _apply_ship_operation(e)
+    if not e.get("item"):
+        return dict(ok=False, error="unknown queue entry (no item): %s" % json.dumps(e)[:120])
     sets = e.get("set") or {}
     bad = set(sets) - FIELDS
     if bad:

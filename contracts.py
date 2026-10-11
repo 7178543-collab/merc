@@ -177,6 +177,7 @@ def score(c, mk, st):
         can = held >= vol or held + max(0, net) * max(turns, 1) >= vol
         verdict = "GOOD" if edge > 0.05 * home * vol and can else ("OK" if edge > 0 and can else ("POOR" if can else "SKIP"))
         why = "they buy %.0f %s at %.2f vs home bid %.2f: %+.0f vs selling at home; we hold %.0f" % (vol, item, price, home, edge, held)
+        r["fill"] = "now" if held >= vol else "later"     # the phone app can approve a fill-now delivery
     else:
         home = k.get("home_ask") or 0
         edge = (home - price) * vol if home else 0
@@ -215,11 +216,22 @@ def _post(path, body):
         return False, None, "%s: %s" % (type(e).__name__, e)
 
 
+def approvals():
+    """Contract ids Taylor approved from the phone app (state/contract_approvals.json)."""
+    try:
+        with open(os.path.join(HERE, "state", "contract_approvals.json")) as f:
+            return {str(x.get("id")) for x in json.load(f)}
+    except (FileNotFoundError, ValueError):
+        return set()
+
+
 def auto_fill(scored):
     import order_queue as q
     done = []
+    ok_ids = approvals()
     for r in scored:
-        if not (r["kind"] == "church" and r["verdict"] == "GOOD" and r.get("fill") == "now" and r["bonus"] >= MIN_BONUS):
+        approved = str(r["id"]) in ok_ids and r["kind"] in ("church", "they buy") and r.get("fill") == "now"
+        if not approved and not (r["kind"] == "church" and r["verdict"] == "GOOD" and r.get("fill") == "now" and r["bonus"] >= MIN_BONUS):
             continue
         if r["held"] - r["volume"] < RESERVE.get(r["item"], 0):
             print("contracts: %s offer skipped, would dip under our reserve of %s" % (r["item"], RESERVE.get(r["item"])))
@@ -262,3 +274,8 @@ if __name__ == "__main__":
         print("%-4s %-9s %-12s %s" % (r["verdict"], r["kind"], r["item"], r["why"]))
     if "--fill" in sys.argv and m.USER and m.TOKEN:
         auto_fill(board)
+    try:
+        import app_status
+        app_status.write()      # phone app overview, after queue + rules + contracts in this workflow run
+    except Exception as ex:
+        print("app status failed:", ex)
