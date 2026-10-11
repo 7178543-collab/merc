@@ -254,7 +254,7 @@ def promote_rule():
         nxt = next(((thr, name) for thr, name in TIERS if pts < thr + 50), None)
         say("worker %s %s: top %s %.1f%s" % (wid, w.get("name"), cls, pts,
             ", %s at %d (%.1f to go)" % (nxt[1], nxt[0], max(0, nxt[0] - pts)) if nxt else ""))
-        if not nxt or nxt[1] == "master" or pts < nxt[0] - 1:
+        if not nxt or nxt[1] == "master" or pts < nxt[0]:
             continue
         key = "%s:%s:%s" % (wid, cls, nxt[1])
         if key in done:
@@ -263,7 +263,9 @@ def promote_rule():
             say("  would promote worker %s to %s %s" % (wid, cls, nxt[1]))
             continue
         ok, status, body = q._req("POST", "/households/%s/workers/%s/promote" % (hid, wid), {"class": cls})
-        if not ok and status is not None and status < 500:
+        if not ok and "not ready" in (body or ""):
+            pass        # Oct 11: the game counts points slightly differently; just retry next run
+        elif not ok and status is not None and status < 500:
             done[key] = {"ok": False, "status": status, "body": body[:160]}
             changed = True
             with open(NEEDS_YOU, "w") as f:
