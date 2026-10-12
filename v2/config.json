@@ -1,6 +1,10 @@
 {
   "_about": "Bot v2 rules, all in one place (Taylor's season settings). Ids are discovered from the API; nothing here is season-specific except the rules themselves. Prices are coin, volumes are units per turn.",
   "mode": "shadow",
+  "live": {
+    "_about": "items bot v2 runs live (v2/act.py at :50); every v1 writer skips them (v2_owned.py). Empty = v2 only plans. An item v2 suspends itself goes to state/v2/suspended.json and back to v1.",
+    "items": []
+  },
   "season_end": "2026-11-30T11:00:00+00:00",
   "cash": {
     "reserve": 4000,
@@ -86,9 +90,18 @@
   "prestige": {
     "_about": "coin per prestige of every sink is computed live (v2/prestige.py); agreed = the permanent purchases v2 may make on its own, up to to_level (costs from the game tables)",
     "agreed": [
-      {"sink": "tenants", "to_level": 11},
-      {"sink": "prestige_management", "to_level": 2},
-      {"sink": "apprentices", "to_level": 2}
+      {
+        "sink": "tenants",
+        "to_level": 11
+      },
+      {
+        "sink": "prestige_management",
+        "to_level": 2
+      },
+      {
+        "sink": "apprentices",
+        "to_level": 2
+      }
     ],
     "legacy_rate_per_turn": 0.005
   },

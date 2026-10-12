@@ -93,7 +93,7 @@ def plan_goals(goals, s, cfg, items, market, snap_price):
             elif limit and ask > limit:
                 r.update(status="blocked", detail="need %.0f more but the home ask %.2f is above the %.2f limit" % (gap, ask, limit))
             else:
-                price = snap_price(min(ask * 1.02, limit) if limit else ask * 1.02, up=False)
+                price = snap_price(limit if limit else ask * 1.05, up=False)   # a limit: trades clear at the market (planner.py)
                 vol = min(_per_turn(g, gap), int(gap + 0.999), int(min(per_buy, budget) // price) if price else 0)
                 if vol <= 0:
                     r.update(status="blocked", detail="cash guard: reserve or single-buy share leaves no room this turn")

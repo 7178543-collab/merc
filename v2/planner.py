@@ -217,8 +217,15 @@ def plan(s, cfg=None, recipes=None, goals=None):
         m = market.get(item) or {}
         ask = m.get("ask")
         price = None
+        # a buy price is a LIMIT: trades clear at the market, not at our bid (Oct 12 turn 13237: labour bid 2.00
+        # paid 1.66, fish 2.50 paid 1.70, meat 3.02 paid 2.28, tools 6.20 paid 5.14, cured fish 26 paid 24.8).
+        # Bidding just over the lowest ask only under-fills a deep need (labour 490 vs 430 offered near the ask),
+        # so bid at our ceiling; with no ceiling, a little over the ask.
+        if cap:
+            price = snap_price(cap, up=False)
+        elif ask:
+            price = snap_price(ask * 1.05, up=False)
         if ask:
-            price = snap_price(min(ask * 1.02, cap) if cap else ask * 1.02, up=False)
             if cap and ask > cap:
                 # the lowest ask above our ceiling only matters if the buy is really failing: the bid side can still
                 # clear (porterage fills at 0.42 against a 1.1 ask). Flag only when last turn's purchases fell short

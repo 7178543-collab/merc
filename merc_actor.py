@@ -452,6 +452,18 @@ def run():
             print("Run failed partway: %r (logged)" % e, file=sys.stderr)
         sys.exit(1)
 
+    # items bot v2 runs live are v2's alone (v2_owned.py): v1 proposes nothing for them
+    try:
+        import v2_owned
+        mine = v2_owned.owned_items()
+    except Exception:
+        mine = set()
+    if mine:
+        handed = [p for p in proposals if p.get("item") in mine]
+        proposals = [p for p in proposals if p.get("item") not in mine]
+        if handed and not QUIET:
+            print("skipped (v2 runs these): %s" % ", ".join(sorted(set(p["item"] for p in handed))))
+
     record = dict(
         ts=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         mode="dry_run" if not LIVE_MODE else "live",

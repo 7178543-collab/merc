@@ -13,8 +13,11 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import act        # noqa: E402
 import api        # noqa: E402
 import goals      # noqa: E402
+import shutil     # noqa: E402
+import tempfile   # noqa: E402
 import planner    # noqa: E402
 
 SNAP = json.load(open(os.path.join(HERE, "fixtures", "snapshot_2026-10-11.json")))
@@ -30,12 +33,113 @@ def test_read_only():
     for path in glob.glob(os.path.join(HERE, "*.py")):
         if os.path.basename(path) in ("api.py", "test_v2.py"):
             continue
+        n = 0
         for node in ast.walk(ast.parse(open(path).read())):       # real calls only, not mentions in comments or docstrings
             if isinstance(node, ast.Call):
                 fn = node.func
-                assert getattr(fn, "attr", getattr(fn, "id", None)) != "allow_writes", "%s enables writes" % path
+                n += getattr(fn, "attr", getattr(fn, "id", None)) == "allow_writes"
+        # the actor is the one place writes can be enabled, once, behind --live + owned items (tested below)
+        assert n == (1 if os.path.basename(path) == "act.py" else 0), "%s enables writes" % path
     ok, status, msg = api.write("PUT", "/anything", {})
     assert not ok and api.calls["write"] == 0, "api.write must refuse in shadow mode"
+
+
+def _act_dir(cfg_live=(), failsafe_level=0, snap=None):
+    d = tempfile.mkdtemp()
+    s = snap or SNAP
+    json.dump(s, open(os.path.join(d, "snapshot.json"), "w"))
+    json.dump(planner.plan(s, CFG, goals=[]), open(os.path.join(d, "plan.json"), "w"), default=str)
+    json.dump({"level": failsafe_level}, open(os.path.join(d, "failsafe.json"), "w"))
+    cfg = copy.deepcopy(CFG)
+    cfg["live"] = {"items": list(cfg_live)}
+    return d, cfg
+
+
+def test_act_merge():
+    beer = [{"min_holding": 60, "max_holding": 8, "buy_volume": 4, "buy_price": "6", "sell_volume": 20, "sell_price": "4.1"},
+            {"min_holding": 60, "sell_volume": 140, "sell_price": "3.7"}]
+    new = act.merge(beer, None, {"sell_volume": 51, "sell_price": "3.9"})
+    assert new == [{"min_holding": 60, "max_holding": 8, "buy_volume": 4, "buy_price": "6", "sell_volume": 51, "sell_price": "3.9"}]
+    tools = [{"max_holding": 200, "buy_volume": 31, "buy_price": "6.2"}, {"max_holding": 200, "buy_volume": 10, "buy_price": "4.9"}]
+    assert act.merge(tools, {"buy_volume": 8, "buy_price": "6.2", "max_holding": 60}, None) == \
+        [{"max_holding": 60, "buy_volume": 8, "buy_price": "6.2"}]                     # one buy tier, the other's buy goes
+    timber = [{"min_holding": 350, "sell_volume": 20, "sell_price": "7"}, {"buy_price": "8.6"}]
+    assert act.merge(timber, None, {"sell_volume": 24, "sell_price": "8.5"})[0]["min_holding"] == 350   # kept-back stock untouched
+    assert act.merge([], {"buy_volume": 5, "buy_price": "1"}, None) == [{"buy_volume": 5, "buy_price": "1"}]
+    assert act._canon([{"sell_price": "22"}]) == act._canon([{"sell_price": 22.0}])
+
+
+def test_act_guards():
+    cfg = copy.deepcopy(CFG)
+    live = [{"buy_volume": 40, "buy_price": "2.4"}]
+    assert any("50%" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "1.0"}], cfg, 20000))
+    assert any("ceiling" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "2.6"}], cfg, 20000))
+    assert any("no buy ceiling" in w for w in act.check("donations", [], [{"buy_volume": 40, "buy_price": "1"}], cfg, 20000))
+    assert any("2x+10" in w for w in act.check("firewood", live, [{"buy_volume": 95, "buy_price": "2.4"}], cfg, 20000))
+    assert any("reserve" in w for w in act.check("firewood", live, [{"buy_volume": 45, "buy_price": "2.4"}], cfg, 3000))
+    assert any("floor" in w for w in act.check("garments", [{"sell_volume": 39, "sell_price": "22"}],
+                                               [{"sell_volume": 39, "sell_price": "20"}], cfg, 20000))
+    assert any("never_drop" in w for w in act.check("porterage", [{"buy_volume": 24, "buy_price": "0.6"}], [], cfg, 20000))
+    assert act.check("firewood", live, [{"buy_volume": 30, "buy_price": "2.4", "max_holding": 60}], cfg, 20000) == []
+    plan = planner.plan(SNAP, CFG, goals=[])
+    live_t = {k: v.get("orders") or [] for k, v in SNAP["store"]["items"].items()}
+    assert act.decide(SNAP, plan, cfg, {"grain"}, live_t, 2)[1].startswith("failsafe")          # BRAKE: v2 stands down
+    rows, stand = act.decide(SNAP, plan, cfg, {"grain"}, live_t, 0, manual=lambda i: True)
+    assert stand is None and any("by hand" in w for r in rows if r["item"] == "grain" for w in r["refused"])
+    bad = dict(plan, notes=["builds skipped: KeyError: x"])
+    assert "skipped" in act.decide(SNAP, bad, cfg, {"grain"}, live_t, 0)[1]
+
+
+def test_act_dry_run_never_writes():
+    d, cfg = _act_dir(cfg_live=["grain"])
+    try:
+        before = api.calls["write"]
+        res = act.main(argv=["act.py"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert res["mode"] == "dry" and api.calls["write"] == before and not api._writes
+        assert res["would_change"] > 0 and os.path.exists(os.path.join(d, "act.json"))
+        cfg["live"]["items"] = []
+        res = act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert not api._writes and api.calls["write"] == before                  # --live with nothing owned: still read-only
+    finally:
+        shutil.rmtree(d)
+
+
+def test_act_live_sends_only_owned_and_suspends():
+    d, cfg = _act_dir(cfg_live=["grain"])
+    store = {k: {"managers": copy.deepcopy(v.get("orders") or [])} for k, v in SNAP["store"]["items"].items()}
+    sent = []
+    real = (api.get, api.write, api.allow_writes)
+
+    def fake_get(path):
+        return {"storage": {"inventory": {"holdings": copy.deepcopy(store)}}}
+
+    def fake_write(method, path, body):
+        item = path.rsplit("/", 1)[1].replace("%20", " ")
+        sent.append((method, item, body))
+        store[item]["managers"] = copy.deepcopy(body["managers"])
+        return True, 200, {}
+    api.get, api.write, api.allow_writes = fake_get, fake_write, lambda: None
+    try:
+        res = act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert [s[1] for s in sent] == ["grain"], sent                            # owned item only
+        g = next(r for r in res["rows"] if r["item"] == "grain")
+        assert g["verified"] and sent[0][2]["managers"][0]["buy_price"] == "3.7"  # bids at the ceiling (a limit)
+        # second run: already set, nothing to send
+        sent.clear()
+        act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert sent == []
+        # a risk flag on an owned item two runs in a row: suspended, back to v1
+        p = json.load(open(os.path.join(d, "plan.json")))
+        p["flags"].append({"severity": "risk", "item": "grain", "text": "test", "fix": None})
+        json.dump(p, open(os.path.join(d, "plan.json"), "w"))
+        act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        res = act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert "grain" in json.load(open(os.path.join(d, "suspended.json")))
+        res = act.main(argv=["act.py", "--live"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert res["owned"] == []
+    finally:
+        api.get, api.write, api.allow_writes = real
+        shutil.rmtree(d)
 
 
 def test_false_flags_cut():
@@ -112,7 +216,7 @@ def test_goals():
           {"id": "met", "kind": "keep", "item": "furniture", "units": 100}]
     p = planner.plan(SNAP, CFG, goals=gs)
     st = {g["id"]: g for g in p["goals"]}
-    assert st["f150"]["status"] == "ordering" and st["f150"]["order"] == {"buy_volume": 1, "buy_price": "15.4", "max_holding": 150}
+    assert st["f150"]["status"] == "ordering" and st["f150"]["order"] == {"buy_volume": 1, "buy_price": "15.5", "max_holding": 150}
     assert st["t300"]["status"] == st["tcap"]["status"] == "conflict"
     assert st["bcap"]["status"] == "ordering" and st["bcap"]["order"]["min_holding"] == 40
     assert st["exp"]["status"] == "unsupported" and st["old"]["status"] == "expired"

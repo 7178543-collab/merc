@@ -1,12 +1,14 @@
 name: v2-shadow
-# Bot v2 in shadow mode: reads the game once an hour, plans every order, and writes
-# state/v2/ (snapshot, plan, report, history). It never writes to the game: v1 still runs it.
+# Bot v2: reads the game once an hour, plans every order, writes state/v2/ (snapshot, plan, report,
+# history), then v2/act.py sends orders ONLY for items listed in v2/config.json live.items (v1 skips those).
+# Empty list = read-only, as before.
 on:
   schedule:
     - cron: '50 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
+  issues: read
 concurrency:
   group: merc-actor
   cancel-in-progress: false
@@ -25,6 +27,15 @@ jobs:
         run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
       - name: v2 shadow (read-only)
         run: python v2/shadow.py || true
+      - name: v2 act (writes only items listed in v2/config.json live.items; dry run for the rest)
+        run: |
+          if [ "$(gh issue list --label merc-paused --state open --json number --jq length 2>/dev/null || echo 0)" != "0" ]; then
+            echo "PAUSED (/pause) - v2 act skipped"
+          else
+            python v2/act.py --live || true
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Save
         run: |
           git config user.name "merc-bot"

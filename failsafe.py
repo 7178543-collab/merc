@@ -236,6 +236,19 @@ def main():
                 actions.append({"item": "labour", "tier": i, "set": {"buy_price": LABOUR_PRICE_CAP},
                                 "note": "failsafe level %d: labour bid capped at %s" % (lvl, LABOUR_PRICE_CAP)})
 
+    # items bot v2 runs live are left to v2 below brake level; at BRAKE/STOP v2 stands down
+    # (v2/act.py reads state/failsafe.json) and the failsafe acts on everything
+    try:
+        import v2_owned
+        mine = v2_owned.owned_items() if lvl < 2 else set()
+    except Exception:
+        mine = set()
+    if mine:
+        left = [e for e in actions if e.get("item") in mine]
+        actions = [e for e in actions if e.get("item") not in mine]
+        for e in left:
+            say("left to v2:", e.get("item"), e.get("note"))
+
     results = []
     for e in actions:
         if not LIVE:

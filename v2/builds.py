@@ -87,7 +87,7 @@ def plan_builds(sites, s, cfg, items, market, use, snap_price):
         elif cap and ask > cap:
             e.update(action="blocked", why="home ask %.2f is above our ceiling %.2f" % (ask, cap))
         else:
-            price = snap_price(min(ask * 1.02, cap) if cap else ask * 1.02, up=False)
+            price = snap_price(cap if cap else ask * 1.05, up=False)   # a limit: trades clear at the market (planner.py)
             vol = min(deficit, int(min(per_buy, budget) // price)) if price else 0
             e.update(action="buy" if vol > 0 else "blocked", buy_volume=vol, buy_price=str(price),
                      max_holding=keep + n_need,   # the order stops itself here: bought once
