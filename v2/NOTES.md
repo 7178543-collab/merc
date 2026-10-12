@@ -69,3 +69,14 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   from the world market data; return trip and arrival detection belong in the bot, not in clicks.
 - **Next season**: the map may change. The area-parity rule and the dock rule are generic; regenerate `state/seamap`
   and `state/dump/api/towns.json` at season start. Don't assume ids or coordinates carry over.
+
+## v2 shadow review (Oct 12, turn 13237)
+- Running hourly, read-only, 10 checks pass. Latest: 3 risks, 1 tuning item; it plans orders but sends none.
+- **Bug (false alarm)**: the "buy can't fill" flag compares our ceiling to the market's lowest ask. Porterage showed
+  "ask 1.10 above ceiling 0.80" while our buy of 24 filled at 0.424 (the clearing price; the 1.10 ask is a deep placeholder
+  offer). Flag it only when the last turn's buy actually under-filled, or the clearing price is above the ceiling.
+- **Real finding**: intermediate buffers are thin (cloth 0.6 turns, flax plants 0.9), against the multi-turn stockpile goal.
+  Production is slightly ahead of use, so nothing stalls today, but one upstream hiccup would. Candidate v2 rule: hold N turns
+  of each chain stage, and size the downstream throttle to protect it.
+- Porterage over-buys by ~9/turn (expires unused, ~4 coin/turn). Harmless; do NOT trim it (Oct 11 outage: porterage must
+  never be dropped).
