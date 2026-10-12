@@ -80,3 +80,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   of each chain stage, and size the downstream throttle to protect it.
 - Porterage over-buys by ~9/turn (expires unused, ~4 coin/turn). Harmless; do NOT trim it (Oct 11 outage: porterage must
   never be dropped).
+
+## v2 fixes + takeover plan (Oct 12)
+- Fixed: "home ask above ceiling: can't fill" now fires only if last turn's purchases < 80% of need or stock is under runway (porterage fills on the bid side). Test added (11 checks).
+- Added: tune flag when a chain buffer is under 2 turns (risk flag still <1 turn).
+- Sea grid: batch 1 of 8 chunks queued Oct 12; remaining ~24 chunks in 8s after it lands (whole map x0-3039, y640-3103). Unreached tiles are treated as land, so travel dry-runs stay safe.
+- "Perfect" is not provable; staged takeover is the safe path. Gates, one job at a time, each only after >=48 turns of shadow with no flag v1 handled better:
+  1. Pricing/ceilings (buy/sell orders)  2. chain buffers  3. prestige agreed buys  4. build manager  5. travel/expand via goals.
+  Each handover = flip a per-job switch in config.json, turn that job off in v1 in the same commit, watch 6 turns, auto-revert on any risk flag. Not yet coded: the per-job switches.
