@@ -79,6 +79,9 @@ BUFFERS = {
 }
 DRAIN_OVER = 1.5         # drain a buffer once it is over 1.5x its target
 DRAIN_TURNS = 12         # spread the excess over this many turns
+GARMENT_KEEP_TURNS = 2    # finished garments: keep ~2 turns of sales on hand (Oct 12: 557 held vs ~65/turn sold)
+GARMENT_DRAIN_TURNS = 20  # spread the excess over this many turns by sewing less than we sell
+GARMENT_DRAIN_MAX = 30    # at most this many garments/turn of drain
 DRIFT = 0.10             # also rebalance when any planned target is this far (x) from the current one
 LOW_FRACTION = 0.5       # FILLING starts when a stock is under half its target
 FILL_CASH_MIN = MODE['FILL_CASH_MIN']  # below this cash: HOLD (no top-ups, make only what's used)
@@ -142,6 +145,11 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     s, C = sizes, CHAIN
     stocks = stocks or {}
     want = sales + MODE['HOUSEHOLD_GARMENTS'] + MODE.get('EXPORT_GARMENTS', 0) if sales else s["sew"] * C["sew"]["out"]
+    have_g = stocks.get("garments", 0)
+    if sales and have_g > GARMENT_KEEP_TURNS * sales:
+        # glut drain for the finished good (Oct 12): sell the pile down instead of sewing on top of it
+        drain = min((have_g - GARMENT_KEEP_TURNS * sales) / GARMENT_DRAIN_TURNS, GARMENT_DRAIN_MAX)
+        want = max(want - drain, 0.3 * want)
     sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
     base["spin"] = (base["weave"] * C["weave"]["in"] + other_thread) / C["spin"]["out"]
@@ -249,6 +257,7 @@ def main():
 
     assets = (inv.get("account") or {}).get("assets") or {}
     stocks = {i: m.num((assets.get(i) or {}).get("balance")) for i in BUFFERS}
+    stocks["garments"] = m.num((assets.get("garments") or {}).get("balance"))
     # cash is on the business account; /households has no cash field (read as 0 = SOS forever)
     _pl = m.get("/player") or {}
     _biz = m.get("/businesses/%s" % (_pl.get("household") or {})["business_ids"][0]) or {}
