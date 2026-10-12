@@ -14,6 +14,8 @@ Entry kinds (a JSON list of these):
   note for Claude   {"message": "..."}                              (phone app; appended to state/notes_for_claude.md)
   donate building   {"donate": "<building id>", "confirm": true}   (permanent; Taylor's say-so only)
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
+  sea map (read-only) {"seamap": {"x0": 1312, "y0": 2208, "x1": 1535, "y1": 2399}}  (GET map sections, saved as one compact
+                    sea/land grid in state/seamap/; used by tools/seapath.py)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -303,6 +305,47 @@ def _apply_message(e):
     return dict(ok=True)
 
 
+def _apply_seamap(e):
+    """Read-only: fetch the map sections covering a bounding box and save one compact grid.
+    Tile type 3 = sea (alt -1); no type = land. Rows are strings of '1' (sea) / '0' (land)."""
+    import gzip
+    import time
+    b = e["seamap"]
+    S = 32
+    x0, y0 = int(b["x0"]) // S * S, int(b["y0"]) // S * S
+    x1, y1 = int(b["x1"]) // S * S + S - 1, int(b["y1"]) // S * S + S - 1
+    w, h = x1 - x0 + 1, y1 - y0 + 1
+    if w * h > 600 * 600:
+        return dict(ok=False, error="bbox too big (%dx%d), max 600x600 per entry" % (w, h))
+    rows = [["0"] * w for _ in range(h)]
+    failed = []
+    for sy in range(y0, y1 + 1, S):
+        for sx in range(x0, x1 + 1, S):
+            path = "/map/section/position/%d:%d" % (sx, sy)
+            req = urllib.request.Request("https://play.mercatorio.io/api" + path, method="GET",
+                                         headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
+                                                  "Accept": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    raw = r.read()
+                if raw[:2] == b"\x1f\x8b":
+                    raw = gzip.decompress(raw)
+                plots = json.loads(raw.decode())["plots"]
+            except Exception as ex:
+                failed.append("%d:%d %s" % (sx, sy, type(ex).__name__))
+                continue
+            for i, t in enumerate(plots):
+                if t.get("type") == 3:
+                    rows[sy - y0 + i // S][sx - x0 + i % S] = "1"
+            time.sleep(0.2)
+    out = os.path.join(HERE, "state", "seamap")
+    os.makedirs(out, exist_ok=True)
+    name = "seamap_%d_%d_%d_%d.json" % (x0, y0, x1, y1)
+    with open(os.path.join(out, name), "w") as f:
+        json.dump(dict(x0=x0, y0=y0, w=w, h=h, rows=["".join(r) for r in rows]), f)
+    return dict(ok=not failed, saved="state/seamap/" + name, sections=((w // S) * (h // S)), failed=failed[:5])
+
+
 def apply_entry(e):
     if "override" in e:
         return _apply_override(e)
@@ -316,6 +359,8 @@ def apply_entry(e):
         return _apply_donate(e)
     if e.get("dump"):
         return _apply_dump(e)
+    if e.get("seamap"):
+        return _apply_seamap(e)
     if e.get("household"):
         return _apply_household_slot(e)
     if e.get("producer"):
