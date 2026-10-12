@@ -320,8 +320,18 @@ def plan(s, cfg=None, recipes=None, goals=None):
         m = market.get(item) or {}
         si, cur = first_tier(it.get("orders") or [], "sell_volume")
         floor = min(floor, floor_.get(item) or floor) if floor_.get(item) else floor
-        want = {"sell_volume": int(round(surplus)), "sell_price": str(snap_price(floor, up=True)) if floor else None}
+        # stock above what is kept back (the live min_holding, a stockpile target, a build's need) is sold down
+        # over sell_drawdown_turns on top of the turn's surplus: selling only the surplus never clears a pile
+        # (garments: 497 held against 30 kept back)
+        keep = max([_n(o.get("min_holding")) for o in it.get("orders") or []] + [float(stockpiles.get(item, 0) or 0)]
+                   + [float(((bp or {}).get("buys") or {}).get(item, {}).get("need", 0) or 0)])
+        excess = max(0.0, it.get("held", 0) - keep - surplus)
+        draw = excess / float(cfg.get("sell_drawdown_turns", 12))
+        want = {"sell_volume": int(round(surplus + draw)), "sell_price": str(snap_price(floor, up=True)) if floor else None}
         orders.setdefault(item, {})["sell"] = want
+        if draw >= 1:
+            orders[item]["why"] = "makes %.1f, uses %.1f, holds %.0f (keeps %.0f): sells the surplus + %.0f/turn of the excess" % (
+                mk, use.get(item, 0), it.get("held", 0), keep, draw)
         if cur is None:
             flag("tune", item, "we make %.0f/turn more than we use but there is no sell order" % surplus, "sell %d" % surplus)
             continue
