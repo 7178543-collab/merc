@@ -522,12 +522,28 @@ def _expansion_candidates(bld, town, rng):
     return out
 
 
+def _tile_owner(town, tile):
+    cx, sx, cy, sy = _parse_loc(tile)
+    ent = (town.get("domain") or {}).get(str((cx * 100000 + cy) * 1000000 + sx * 1000 + sy)) or {}
+    return str(ent.get("owner_id") or "")
+
+
+def _claim_tile(town_id, tile):
+    """Claim unowned land: POST /towns/{id}/expand {claims: [{x, y, sub: {x, y}}], properties: []} (the game's own shape;
+    `landing` is left out). Returns (ok, error text)."""
+    cx, sx, cy, sy = _parse_loc(tile)
+    body = {"claims": [{"x": cx, "y": cy, "sub": {"x": sx, "y": sy}}], "properties": []}
+    ok, status, resp = _req("POST", "/towns/%s/expand" % town_id, body)
+    return ok, (None if ok else "claim refused %s: %s" % (status, (resp or "")[:160].replace("\n", " ")))
+
+
 def _apply_expand(e):
     """Add plots to an existing building (a park plot is an expansion of the park):
     {"expand": {"building": "152202388002004", "count": 1}, "confirm": true}   or  "tiles": ["1522.6:2388.2"].
     PATCH /buildings/{id} {construction: {stage: "EXPANSION", domain: ["x.sx:y.sy", ...]}} (shape confirmed by probe_write).
     No confirm = DRY RUN (lists the free tiles it would try, and the materials). With confirm it tries candidates
-    nearest-first (the game rejects a bad tile harmlessly) and verifies the building now shows an expansion.
+    nearest-first (the game rejects a bad tile harmlessly), claims the land first if it is unowned, and verifies
+    the building now shows an expansion.
     Materials come from the provider storehouse by the building's own construction settings; the game enforces
     range, prestige-management and capacity, and its refusal text is logged."""
     ex = e["expand"]
@@ -554,12 +570,23 @@ def _apply_expand(e):
         return dict(ok=False, error="no free tile in range", **info)
     plan = wanted or [c["tile"] for c in cands[:count]]
     info["would_try"] = plan
+    info["claims_needed"] = [t for t in plan if _tile_owner(town, t) != OWNER_ID]
     info["materials_total"] = {k: v * len(plan) for k, v in per.items()}
     if e.get("confirm") is not True:
         return dict(ok=True, dry_run=True, **info)
     attempts, errors = [], []
     options = [plan] if (wanted or count > 1) else [[c["tile"]] for c in cands[:5]]
     for tiles in options:
+        claim_err = None
+        for t in tiles:
+            if _tile_owner(town, t) != OWNER_ID:
+                cok, cerr = _claim_tile(bld["town_id"], t)
+                if not cok:
+                    claim_err = cerr
+                    break
+        if claim_err:
+            errors.append("%s: %s" % (",".join(tiles), claim_err))
+            continue
         body = {"construction": {"stage": "EXPANSION", "domain": tiles}}
         ok, status, resp = _req("PATCH", "/buildings/%s" % bid, body)
         attempts.append(tiles)
