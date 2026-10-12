@@ -88,3 +88,39 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - "Perfect" is not provable; staged takeover is the safe path. Gates, one job at a time, each only after >=48 turns of shadow with no flag v1 handled better:
   1. Pricing/ceilings (buy/sell orders)  2. chain buffers  3. prestige agreed buys  4. build manager  5. travel/expand via goals.
   Each handover = flip a per-job switch in config.json, turn that job off in v1 in the same commit, watch 6 turns, auto-revert on any risk flag. Not yet coded: the per-job switches.
+
+## Handover machinery + first live items (Oct 12-13)
+- **Per-item, not per-job.** v2 owns an item when it is in `v2/config.json` `live.items` and not in `state/v2/suspended.json`.
+  `v2_owned.py` (repo root) is the one shared answer; merc_actor, chain_balancer, failsafe (below BRAKE) and prestige_rules all
+  skip owned items. At failsafe BRAKE/STOP v2 stands down and the failsafe acts on everything.
+- **v2/act.py** runs after shadow.py in the v2-shadow workflow, now at **:25** (mid-turn; :50 runs started ~:57, right on the
+  tick). It re-reads the store, merges v2's buy/sell into the live tiers (keeps min_holding and non-buy fields, folds extra
+  buy tiers into one), checks guards (ceiling/floor, 50% price move, 2x+10 volume, cash reserve, never_drop, 2h manual window,
+  8 writes/run), PATCHes, re-reads and verifies. Log: `state/v2/act.jsonl`; last run: `state/v2/act.json` (dry rows for every
+  item too, so the next candidates can be judged).
+- **Self-suspension**: risk flag on an owned item 2 runs in a row, or 2 failed writes in a row -> `state/v2/suspended.json`,
+  item goes straight back to v1. Delete the entry to hand it back.
+- **v2 owns the whole buy**: the planner marks `buy_off` when nothing needs a live buy (made at home, stocked 2x the runway,
+  nothing used it); act takes it off for owned items only; never_drop items never get one.
+- **First live run, turn 13238 (Oct 12 23:56 UTC)**: donations, cured fish, fish, grain, firewood -- 5 PATCHes, all verified.
+  Chosen because each is a single-tier household/brewery buy within a few units of v1's order, with a ceiling set.
+- **Not handed over yet, and why**: labour (v1 has 3 writers on it; shortfall and expiry in the same turn need study),
+  porterage (outage history; v2's peak sizing is better but wants a few more days), tools (v2 holds 8 turns, the failsafe's tool
+  guard holds ~25: a policy choice for Taylor), meat (ask often above the 2.40 ceiling; v1's live bid is 3.02 -- Taylor to pick
+  the ceiling), every sell (v2 now draws down excess stock, but beer/timber floors sit above the home bid: Taylor's floors).
+
+## Finding: our bid is a limit, not the price we pay (Oct 12, turn 13237)
+- Bought at well under our bids: labour bid 2.00 paid 1.66 avg, fish 2.50/1.70, meat 3.02/2.28, tools 6.20/5.14, cured fish
+  26/24.8, grain 3.70/2.78, porterage 0.60/0.41. Sells likewise received the market (nets floor 36, got 41.4).
+- So v2 now bids at the ceiling (planner, goals, builds). Bidding just over the lowest ask only under-fills deep needs
+  (labour wanted 490, 430 offered near the ask). The ceiling is the real risk control.
+
+## Ship routes (Oct 13)
+- Whole map pulled (36 chunks, x 0-3039, y 640-3103, 5M sea tiles). `tools/sea_distances.py`: one Dijkstra (~20 s) ->
+  `state/v2/sea_routes.json`, 92 of 101 towns reachable. Matches the game within ~1 move (Blanans 296.8 vs 297.2).
+- `v2/routes.py` ranks every town for one ship at world prices (public market data, refreshed every 6 h in the shadow run;
+  report section "Ship routes"). Conservative: only what each market takes now (10% depth), 5% slippage, crew ~266/turn at 0.5.
+- **Result at Oct 12 prices: no route pays.** Best (Blanans, garments out) grosses ~120/trip against ~1,600 crew. Even with 3x
+  the depth and half the crew cost it only breaks even. Taylor's parked ships are the right call; the report will say when
+  that changes.
+- Phone app ship list = all 91 sea-reachable towns, by sea distance.
