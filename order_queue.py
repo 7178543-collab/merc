@@ -19,6 +19,8 @@ Entry kinds (a JSON list of these):
   build (new site)  {"build": {"type": "park", "town_id": "152202387", "location": "1522:2388", "sublocation": {"x": 3, "y": 3}}, "confirm": true}
                     (no confirm = dry run: cost + payload only)
   expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
+  deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
+                    runs on the first workflow run at/after that time; for steps that need a turn tick in between)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -721,22 +723,66 @@ def _spend_guard(e, cash):
     return None
 
 
+DEFERRED = os.path.join(HERE, "state", "deferred.json")
+
+
+def _utc(ts):
+    d = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    return d if d.tzinfo else d.replace(tzinfo=datetime.timezone.utc)
+
+
+def _load_deferred():
+    try:
+        with open(DEFERRED) as f:
+            cur = json.load(f)
+        return cur if isinstance(cur, list) else []
+    except (FileNotFoundError, ValueError):
+        return []
+
+
 def apply_queue(live):
+    """Apply state/order_queue.json, plus any deferred entries that are due.
+    A deferred entry is queued as {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...}}}: it is parked in
+    state/deferred.json and runs (same guards, logged with source "deferred") on the first run at or after that time.
+    The workflow runs hourly at :20 and on every queue push, so it fires within the hour. Use it for steps that need
+    a turn tick in between (claim land now, expand once the claim has settled)."""
     try:
         with open(QUEUE) as f:
             q = json.load(f)
     except (FileNotFoundError, ValueError):
-        return
-    if not q:
-        return
+        q = []
     if not live:
-        print("order queue (dry run, not sent): %s" % json.dumps(q))
+        if q:
+            print("order queue (dry run, not sent): %s" % json.dumps(q))
         return
     if not (m.USER and m.TOKEN):
-        print("order queue: no credentials, left in place")
+        if q:
+            print("order queue: no credentials, left in place")
+        return
+    now = datetime.datetime.now(datetime.timezone.utc)
+    waiting, due = [], []
+    for d in _load_deferred():
+        try:
+            (due if _utc(d["after"]) <= now else waiting).append(d)
+        except Exception:
+            log(d, dict(ok=False, error="bad deferred entry, dropped"), "deferred")
+    entries = [("deferred", d["entry"]) for d in due] + [("queue", x) for x in q]
+    if not entries and not _load_deferred():
         return
     cash = None
-    for e in q:
+    for source, e in entries:
+        if isinstance(e, dict) and "later" in e:
+            lt = e["later"] or {}
+            try:
+                _utc(lt["after"])
+                inner = lt["entry"]
+                if not isinstance(inner, dict) or "later" in inner:
+                    raise ValueError("entry must be a plain entry")
+                waiting.append(dict(after=lt["after"], entry=inner))
+                log(e, dict(ok=True, deferred_until=lt["after"]), source)
+            except Exception as ex:
+                log(e, dict(ok=False, error="bad later entry: %s" % ex), source)
+            continue
         try:
             if cash is None:
                 cash = _cash()
@@ -744,10 +790,15 @@ def apply_queue(live):
             r = dict(ok=False, error=refuse) if refuse else apply_entry(e)
         except (Exception, SystemExit) as ex:   # merc_status4.get() exits on HTTP errors; never let one entry stall the queue
             r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
-        log(e, r)
+        log(e, r, source)
         print("order queue: %s -> %s" % (e.get("item") or e.get("building"), "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
-    with open(QUEUE, "w") as f:
-        f.write("[]\n")
+    if q:
+        with open(QUEUE, "w") as f:
+            f.write("[]\n")
+    if due or waiting or _load_deferred():
+        os.makedirs(os.path.dirname(DEFERRED), exist_ok=True)
+        with open(DEFERRED, "w") as f:
+            json.dump(waiting, f, indent=1)
 
 
 if __name__ == "__main__":
