@@ -199,7 +199,11 @@ def _apply_dump(e):
                                  headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            data = json.loads(r.read().decode())
+            raw = r.read()
+            if raw[:2] == b"\x1f\x8b":  # map sections come back gzipped
+                import gzip
+                raw = gzip.decompress(raw)
+            data = json.loads(raw.decode())
     except urllib.error.HTTPError as ex:
         return dict(ok=False, status=ex.code, error=ex.read().decode()[:200])
     except Exception as ex:
