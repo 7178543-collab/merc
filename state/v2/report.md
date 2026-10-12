@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13220, 2026-10-12 05:00. Mode: shadow (reads only; v1 runs the game).
+Turn 13220, 2026-10-12 05:58. Mode: shadow (reads only; v1 runs the game).
 Cash 22,359, prestige 2,493 (73 free, +4.2/turn).
 
 **2 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
@@ -48,7 +48,7 @@ Labour metered per turn while a site can progress: labour 51
 | hold banquet 1 (fish) | mansion | 4.2 | 57.6 | 57.6 | running |
 | hold banquet 2 (fish) | mansion | 6.8 | 57.6 | 57.6 | thin at home: cheese |
 | hold sermon 2 | church | 24 | 55.1 | 57.7 | needs a church (build cost 68,075); thin at home: jewellery, furniture |
-| hold prayer 2 | chapel | 13 | 56.1 | 58.3 | needs a chapel (build cost 32,127); thin at home: furniture |
+| hold prayer 2 | chapel | 13 | 56.1 | 58.4 | needs a chapel (build cost 32,127); thin at home: furniture |
 | hold mass 2 (premium) | cathedral | 360 | 57.7 | 58.5 | needs a cathedral (build cost 275,700); thin at home: furniture, jewellery, glassware, candles, premium garments |
 | jousting 1 | arena | 170 | 58.7 | 58.9 | needs a arena (build cost 25,593); thin at home: protection, light armour, arms; needs weaponry skill |
 
@@ -58,7 +58,7 @@ Labour metered per turn while a site can progress: labour 51
 | --- | --- | --- | --- |
 | arms | 1 @ 28.2, stop 2 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 3 = 6.0 turns |
 | beer |  | 51 @ min 3.9 |  |
-| bread | 4 @ 2.22, stop 15 |  | uses 3.6/turn (household upkeep), makes 0.0, holds 15 = 4.1 turns |
+| bread | 4 @ 2.42, stop 15 |  | uses 3.6/turn (household upkeep), makes 0.0, holds 15 = 4.1 turns |
 | cured fish | 7 @ 24.8, stop 20 |  | uses 5.5/turn (mansion 1), makes 0.0, holds 20 = 3.6 turns |
 | donations | 40 @ 1.02, stop 40 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 1.81, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 57 = 9.0 turns |
