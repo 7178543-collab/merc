@@ -322,7 +322,7 @@ def _get_json(path):
 
 def _apply_seamap(e):
     """Read-only: fetch the map sections covering a bounding box and save one compact grid.
-    Tile type 3 = sea (alt -1); no type = land. Rows are strings of '1' (sea) / '0' (land).
+    A tile is navigable when its area id is even and > 0 (game client rule; odd = land). Rows are '1' (navigable) / '0'.
     Saved gzipped as state/seamap/seamap_<x0>_<y0>_<x1>_<y1>.json.gz (tools/seapath.py reads these)."""
     import gzip
     from concurrent.futures import ThreadPoolExecutor
@@ -352,7 +352,8 @@ def _apply_seamap(e):
                 failed.append("%d:%d %s" % (sx, sy, err))
                 continue
             for i, t in enumerate(plots):
-                if t.get("type") == 3:
+                a = t.get("area") or 0
+                if a > 0 and a % 2 == 0:  # the game's own ship rule: even area id = water a ship can use
                     rows[sy - y0 + i // S][sx - x0 + i % S] = "1"
     out = os.path.join(HERE, "state", "seamap")
     os.makedirs(out, exist_ok=True)
