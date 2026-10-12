@@ -99,6 +99,11 @@ def report(p):
         for x in p["sinks"]:
             L.append("| %s | %.1f | %s |" % (x["sink"], x["prestige_per_turn"], x["coin_per_prestige"]))
         L.append("")
+    try:
+        import routes
+        L += routes.report_lines(p.get("routes"))
+    except Exception:
+        pass
     L += ["## v2 orders", "", "| Item | v2 buy | v2 sell | Why |", "| --- | --- | --- | --- |"]
     for item, o in sorted((p.get("orders") or {}).items()):
         b, s_ = o.get("buy"), o.get("sell")
@@ -108,6 +113,42 @@ def report(p):
         st = ("%d @ min %s" % (s_["sell_volume"], s_.get("sell_price"))) if s_ else ""
         L.append("| %s | %s | %s | %s |" % (item, bt, st, o.get("why", "")))
     return "\n".join(L) + "\n"
+
+
+def ship_routes(snap, out, replay):
+    """Ship routes ranked at world prices: refreshed every ROUTES_EVERY_H hours (one public download), else the last
+    result is carried. A replay uses --world FILE if given. Never fails the run."""
+    import routes
+    path = os.path.join(out, "routes.json")
+    last = None
+    try:
+        with open(path) as f:
+            last = json.load(f)
+    except (OSError, ValueError):
+        pass
+    try:
+        if replay:
+            if "--world" not in sys.argv:
+                return last
+            with open(sys.argv[sys.argv.index("--world") + 1]) as f:
+                world = json.load(f)
+        else:
+            if last and last.get("t"):
+                age = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(last["t"])
+                if age < datetime.timedelta(hours=ROUTES_EVERY_H):
+                    return last
+            world = routes.fetch_world()
+        rr = routes.rank(snap, world, routes.load_sea(), cfg=planner.load_json("config.json"))
+        rr["t"] = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+        with open(path, "w") as f:
+            json.dump(rr, f, indent=1)
+        return rr
+    except Exception as e:
+        print("routes skipped: %s: %s" % (type(e).__name__, e))
+        return last
+
+
+ROUTES_EVERY_H = 6
 
 
 def main():
@@ -123,6 +164,7 @@ def main():
     replay = "--from" in sys.argv
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
     os.makedirs(out, exist_ok=True)
+    p["routes"] = ship_routes(snap, out, replay)
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)

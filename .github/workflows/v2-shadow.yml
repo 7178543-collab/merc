@@ -4,7 +4,8 @@ name: v2-shadow
 # Empty list = read-only, as before.
 on:
   schedule:
-    - cron: '50 * * * *'
+    # mid-turn: after v1's early run (:01) and clear of the turn tick (~:59-:00), so a write never lands on the tick
+    - cron: '25 * * * *'
   workflow_dispatch:
 permissions:
   contents: write

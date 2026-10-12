@@ -170,6 +170,27 @@ def test_no_false_cant_fill():
     assert any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
 
 
+def test_routes():
+    import routes
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 150.0}, "3": {"name": "Far", "moves": 900.0}}
+    mk = lambda bid, ask, bv, av: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av}
+    world = [{"name": "Home", "markets": {"garments": mk(20, 21, 50, 50), "salt": mk(4, 5, 100, 100)}},
+             {"name": "Near", "markets": {"garments": mk(40, 0, 100, 0), "salt": mk(0, 1, 0, 300)}},
+             {"name": "Far", "markets": {"garments": mk(40, 0, 100, 0)}}]
+    snap = {"home_town": "1", "store": {"items": {"garments": {"held": 230, "orders": [{"min_holding": 30}], "flow": {}},
+                                                  "salt": {"held": 0, "orders": [], "flow": {}}}}}
+    rr = routes.rank(snap, world, sea)
+    near = rr["routes"][0]
+    assert near["town"] == "Near" and near["trip_turns"] == 4                      # 1 turn each way + a turn at each end
+    out = {x["item"]: x for x in near["out"]}
+    assert out["garments"]["units"] == 100 and out["garments"]["buy"] == 20         # our spare stock, valued at the home bid, capped by their bids
+    back = {x["item"]: x for x in near["back"]}
+    assert back["salt"]["units"] == 100                                             # capped by what home can take
+    assert near["gross"] == round(100 * (38 - 20) + 100 * (3.8 - 1.05)) and near["crew_cost"] == 4 * 266
+    assert rr["routes"][1]["town"] == "Far" and rr["routes"][1]["per_turn"] < near["per_turn"]
+    assert "Verdict" in "\n".join(routes.report_lines(rr))
+
+
 def test_orders_sane():
     o = planner.plan(SNAP, CFG)["orders"]
     assert o["donations"]["buy"]["buy_volume"] == 40          # a deep market needs no runway

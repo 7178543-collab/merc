@@ -88,7 +88,8 @@ def write(method, path, body):
         errors.append((method, path, None, "refused: shadow mode is read-only"))
         return False, None, "shadow mode"
     calls["write"] += 1
-    return _request(method, path, body, tries=1)
+    # PATCH/PUT send the whole wanted state, so a retry after a turn change or a 5xx can't double anything; POST can
+    return _request(method, path, body, tries=3 if method in ("PATCH", "PUT") else 1)
 
 
 def q(item):

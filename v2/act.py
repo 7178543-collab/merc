@@ -4,7 +4,7 @@
     python v2/act.py             # dry run: state/v2/act.json lists what v2 would send for EVERY planned item
     python v2/act.py --live      # sends only for owned items (v2/config.json "live" -> "items"), verifies each
 
-Runs right after v2/shadow.py in the v2-shadow workflow (:50, the last word before the turn tick), on the
+Runs right after v2/shadow.py in the v2-shadow workflow (:25, mid-turn, clear of the tick), on the
 snapshot and plan that run just wrote. v1's writers skip owned items (v2_owned.py), so nobody fights.
 
 How a write is built (merge, never a blind replace):
