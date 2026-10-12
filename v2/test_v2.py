@@ -29,7 +29,7 @@ def keys(p):
 
 
 def test_read_only():
-    assert CFG["mode"] == "shadow"
+    assert CFG["mode"] in ("shadow", "handover")
     for path in glob.glob(os.path.join(HERE, "*.py")):
         if os.path.basename(path) in ("api.py", "test_v2.py"):
             continue
@@ -74,7 +74,7 @@ def test_act_guards():
     live = [{"buy_volume": 40, "buy_price": "2.4"}]
     assert any("50%" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "1.0"}], cfg, 20000))
     assert any("ceiling" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "2.6"}], cfg, 20000))
-    assert any("no buy ceiling" in w for w in act.check("donations", [], [{"buy_volume": 40, "buy_price": "1"}], cfg, 20000))
+    assert any("no buy ceiling" in w for w in act.check("bricks", [], [{"buy_volume": 40, "buy_price": "1"}], cfg, 20000))
     assert any("2x+10" in w for w in act.check("firewood", live, [{"buy_volume": 95, "buy_price": "2.4"}], cfg, 20000))
     assert any("reserve" in w for w in act.check("firewood", live, [{"buy_volume": 45, "buy_price": "2.4"}], cfg, 3000))
     assert any("floor" in w for w in act.check("garments", [{"sell_volume": 39, "sell_price": "22"}],

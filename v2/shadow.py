@@ -28,7 +28,8 @@ OUT = os.path.join(ROOT, "state", "v2")
 
 def report(p):
     L = ["# v2 shadow report", "",
-         "Turn %s, %s. Mode: %s (reads only; v1 runs the game)." % (p.get("turn"), (p.get("t") or "")[:16].replace("T", " "), p.get("mode")),
+         "Turn %s, %s. Mode: %s. v2 runs: %s; v1 runs everything else." % (
+             p.get("turn"), (p.get("t") or "")[:16].replace("T", " "), p.get("mode"), ", ".join(p.get("live_items") or []) or "nothing (reads only)"),
          "Cash %s, prestige %s (%s free, %+.1f/turn)." % (
              "{:,.0f}".format(p.get("cash") or 0), "{:,.0f}".format(p.get("prestige") or 0),
              "{:,.0f}".format(p.get("prestige_free") or 0), p.get("prestige_rate") or 0), ""]

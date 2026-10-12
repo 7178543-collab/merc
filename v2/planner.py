@@ -244,7 +244,10 @@ def plan(s, cfg=None, recipes=None, goals=None):
         if price:
             o["buy_price"] = str(price)
         if hold:
-            o["max_holding"] = int(min(hold, it.get("capacity") or hold))
+            # the stop-at never sits under two turns of use: if the game checks it before the turn's use is
+            # drawn, a one-turn cap (donations: hold 40, use 40) would skip the buy every other turn
+            stop = max(hold, math.ceil(2 * demand))
+            o["max_holding"] = int(min(stop, it.get("capacity") or stop))
         orders.setdefault(item, {})["buy"] = o
         runway_now = (it.get("held", 0) / net) if net > 0 else None
         orders[item]["why"] = "uses %.1f/turn (%s), makes %.1f, holds %.0f%s" % (
@@ -407,6 +410,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
     flags.sort(key=lambda f: (sev_rank.get(f["severity"], 9), f["item"] or ""))
     return {
         "turn": s.get("turn"), "t": s.get("t"), "mode": cfg.get("mode"),
+        "live_items": sorted(((cfg.get("live") or {}).get("items")) or []),
         "cash": s.get("cash"), "prestige": hhp.get("prestige"), "prestige_free": hhp.get("free"),
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
