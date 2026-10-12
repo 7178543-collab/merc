@@ -16,6 +16,8 @@ Entry kinds (a JSON list of these):
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
   sea map (read-only) {"seamap": {"x0": 1312, "y0": 2208, "x1": 1535, "y1": 2399}}  (GET map sections, saved as one compact
                     sea/land grid in state/seamap/; used by tools/seapath.py)
+  build (new site)  {"build": {"type": "park", "town_id": "152202387", "location": "1522:2388", "sublocation": {"x": 3, "y": 3}}, "confirm": true}
+                    (no confirm = dry run: cost + payload only)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -431,6 +433,48 @@ def _apply_probe_write(e):
     return dict(ok=True, probe=True, sent="%s %s" % (method, path), status=status, accepted=bool(ok), body=resp)
 
 
+OWNER_ID = "39992"  # our business id (owner_id on every building; also the contract participant id)
+
+
+def _apply_build(e):
+    """Start a building: {"build": {"type": "park", "town_id": "152202387", "location": "1522:2388",
+    "sublocation": {"x": 3, "y": 3}}, "confirm": true}. No confirm = DRY RUN (checks the type, shows the cost and
+    the payload, sends nothing). The create call is POST /buildings {type, owner_id, town_id, location, sublocation,
+    construction: {stage: "INITIAL"}} (shape confirmed by probe_write, Oct 12). It only creates the empty site
+    (stage INITIAL); materials and labour still have to be supplied to the construction account."""
+    b = e["build"]
+    typ = str(b.get("type", ""))
+    try:
+        specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
+    except Exception as ex:
+        return dict(ok=False, error="cannot read v2/data/buildings.json: %s" % ex)
+    spec = specs.get(typ)
+    if not spec:
+        return dict(ok=False, error="unknown building type %r" % typ)
+    body = {"type": typ, "owner_id": OWNER_ID, "town_id": str(b["town_id"]), "location": str(b["location"]),
+            "construction": {"stage": "INITIAL"}}
+    sub = b.get("sublocation")
+    if sub:
+        body["sublocation"] = {"x": int(sub["x"]), "y": int(sub["y"])}
+    cons = spec.get("construction") or {}
+    info = dict(type=typ, materials=cons.get("materials"), build_turns=cons.get("time"), payload=body)
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, **info)
+    import re
+    ok, status, resp = _req("POST", "/buildings", body)
+    if not ok:
+        return dict(ok=False, status=status, body=resp, **info)
+    m_id = re.search(r'"id"\s*:\s*"?(\d{6,})', resp or "")
+    new_id = m_id.group(1) if m_id else None
+    stage = None
+    if new_id:
+        try:
+            stage = ((_get_json("/buildings/%s" % new_id).get("construction") or {}).get("stage"))
+        except Exception:
+            pass
+    return dict(ok=bool(new_id) and stage == "INITIAL", status=status, building_id=new_id, stage=stage, **info)
+
+
 def apply_entry(e):
     if "override" in e:
         return _apply_override(e)
@@ -448,6 +492,8 @@ def apply_entry(e):
         return _apply_seamap(e)
     if e.get("probe_write"):
         return _apply_probe_write(e)
+    if e.get("build"):
+        return _apply_build(e)
     if e.get("travel"):
         return _apply_travel(e)
     if e.get("household"):
