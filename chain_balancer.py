@@ -56,7 +56,7 @@ MODE = {
     "SALES_WINDOW": 12,             # was 24; Ops uses 12 — keep in step
     "SALES_MARGIN": 1.05,
     "HOUSEHOLD_GARMENTS": 1.8,
-    "EXPORT_GARMENTS": 20,          # Oct 10 (Taylor): Flax Wyrm sells garments at Blanans (~26.4 vs ~22 home); set 0 if the ship stops
+    "EXPORT_GARMENTS": 0,           # Oct 12 (Taylor OK): Flax Wyrm parked at Blanans on crew 0, so no export demand; set back to 20 when it sails
     "MARKET_DEPTH_MULT": 3,
 }
 
