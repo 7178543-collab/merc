@@ -154,6 +154,7 @@ async function loadStatus() {
   render();
 }
 
+const TOWNS = [["151802239","Grandgues",148],["137102412","Vauxvais",153],["140502554","Calange",204],["144702149","Clairas",250],["133002223","Blanans",253],["132002632","Pontmont",318],["120102307","Rouhomme",331],["159202035","Hanstein",359],["134102075","Caillechâtel",361],["170502066","Fontaux",369],["111802426","Orleans",406],["115102613","Bedenis",434],["125202026","Unterhufe",451],["164901941","Nürnnieder",464],["105702283","Bordees",476],["105202565","Angefont",503],["138201891","Essenbrucke",515],["109102068","Etallaen",536],["108202735","Toqueque",561],["100502130","Orlesailles",577],["112902838","Marmont",598],["110801910","Karlmoor",632],["199101938","Heidlowe",649],["101101950","Donaunieder",672]]; // [town id, name, straight-line distance from home] inside the sea grid (seamap x 992-2015, y 1888-2911)
 async function queue(entries, summary) {
   if (!token()) { toast("Add your GitHub key in ⚙ first."); show("set"); return false; }
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -304,7 +305,10 @@ function renderAct() {
   h += '<div class="card"><h2>Ship</h2>' + (ships.length ? '<label for="s-id">Ship</label><select id="s-id">' +
     ships.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.name) + " (now " + esc(x.target == null ? "?" : x.target) + ")</option>").join("") + "</select>" +
     '<label for="s-t">Crew level when restarting</label><input id="s-t" inputmode="decimal" value="0.723">' +
-    '<div class="btns"><button class="btn" id="s-go">Restart</button><button class="btn danger" id="s-stop">Pause</button></div>' : '<p class="mute">No ship data yet.</p>') + "</div>";
+    '<div class="btns"><button class="btn" id="s-go">Restart</button><button class="btn danger" id="s-stop">Pause</button></div>' +
+    '<label for="s-to">Send to town</label><select id="s-to">' + TOWNS.map((t) => '<option value="' + t[0] + '">' + esc(t[1]) + " (" + t[2] + ")</option>").join("") + "</select>" +
+    '<div class="btns"><button class="btn" id="s-plan">Plan route</button><button class="btn" id="s-send">Send</button></div>' +
+    '<p class="mute">Plan only works out the route (length and cost show under Log). Send starts the crew at the level above if the ship is paused, then sails. Local sea only.</p>' : '<p class="mute">No ship data yet.</p>') + "</div>";
   // 3 banquet
   h += '<div class="card"><h2>Banquet</h2><p class="mute">Auto follows the cash rule (on over 15k, off under 10k).</p><div class="seg" id="bq">' +
     ["auto", "on", "off"].map((v) => '<button data-v="' + v + '" class="' + (ov === v ? "on" : "") + '">' + v + "</button>").join("") + "</div></div>";
@@ -339,6 +343,14 @@ function renderAct() {
     const ship = () => ships.find((x) => x.id === $("s-id").value) || ships[0];
     $("s-go").onclick = () => { const t = Number($("s-t").value); if (!(t > 0 && t <= 1)) { toast("Crew level between 0 and 1."); return; } queue([{transport: ship().id, operation_target: t, note: "app: restart " + ship().name}], "restart " + ship().name + " at " + t); };
     $("s-stop").onclick = () => { if (confirm("Pause " + ship().name + " where it is?")) queue([{transport: ship().id, operation_target: 0, note: "app: pause " + ship().name}], "pause " + ship().name); };
+    const dest = () => TOWNS.find((t) => t[0] === $("s-to").value) || TOWNS[0];
+    $("s-plan").onclick = () => queue([{travel: {transport: ship().id, to_town: dest()[0]}, note: "app: plan " + ship().name + " to " + dest()[1]}], "plan " + ship().name + " to " + dest()[1]);
+    $("s-send").onclick = () => {
+      const t = Number($("s-t").value), sh = ship(), d = dest(), list = [];
+      if (!(Number(sh.target) > 0)) { if (!(t > 0 && t <= 1)) { toast("Crew level between 0 and 1."); return; } list.push({transport: sh.id, operation_target: t, note: "app: crew for trip"}); }
+      list.push({travel: {transport: sh.id, to_town: d[0]}, confirm: true, note: "app: send " + sh.name + " to " + d[1]});
+      if (confirm("Send " + sh.name + " to " + d[1] + "?")) queue(list, "send " + sh.name + " to " + d[1]);
+    };
   }
   document.querySelectorAll("#bq button").forEach((b) => b.onclick = () => queue([{override: {banquet: b.dataset.v}, note: "app: banquet " + b.dataset.v}], "banquet " + b.dataset.v));
   $("p-go").onclick = () => {

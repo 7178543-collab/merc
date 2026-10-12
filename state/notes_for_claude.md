@@ -1,0 +1,1 @@
+- 2026-10-12T21:34Z: Check-in: verify Linen Snake's Oct 12 test trip to Grandgues (sent 17:32 Toronto, crew 0.5, 150 tiles). If it arrived, add the result and the real turns taken to v2/NOTES.md (Test log), then queue a travel dry run for the return trip and set crew back to 0 when docked at home. If it did not move, read /transports/1948883264 and note why.
