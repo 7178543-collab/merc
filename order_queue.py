@@ -602,6 +602,30 @@ def _apply_expand(e):
     return dict(ok=False, error="all attempts refused", refusals=errors, **info)
 
 
+def _apply_claim(e):
+    """Claim unowned land: {"claim": {"town_id": "152202387", "tiles": ["1522.3:2388.5"]}, "confirm": true}.
+    No confirm = dry run (lists tiles, owner and asking price from the live town data). Logs the game's reply verbatim."""
+    c = e["claim"]
+    tid = str(c["town_id"])
+    tiles = [str(t) for t in c.get("tiles") or []]
+    try:
+        town = _get_json("/towns/%s" % tid)
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s" % exn)
+    dom = town.get("domain") or {}
+    seen = []
+    for t in tiles:
+        cx, sx, cy, sy = _parse_loc(t)
+        ent = dom.get(str((cx * 100000 + cy) * 1000000 + sx * 1000 + sy))
+        seen.append("%s: %s" % (t, ent if ent is not None else "no entry"))
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, tiles=seen)
+    body = {"claims": [{"x": _parse_loc(t)[0], "y": _parse_loc(t)[2], "sub": {"x": _parse_loc(t)[1], "y": _parse_loc(t)[3]}}
+                       for t in tiles], "properties": []}
+    ok, status, resp = _req("POST", "/towns/%s/expand" % tid, body)
+    return dict(ok=bool(ok), status=status, reply=(resp or "")[:300], tiles=seen)
+
+
 def apply_entry(e):
     if "override" in e:
         return _apply_override(e)
@@ -623,6 +647,8 @@ def apply_entry(e):
         return _apply_build(e)
     if e.get("expand"):
         return _apply_expand(e)
+    if e.get("claim"):
+        return _apply_claim(e)
     if e.get("travel"):
         return _apply_travel(e)
     if e.get("household"):
