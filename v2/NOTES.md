@@ -38,14 +38,27 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Service worker cache name must change with each app release (`merc-shell-vN`), or installed copies keep the old UI.
 
 ## Still open (v2 candidates)
-- **Building placement: SOLVED (Oct 12)** by probing the API with an impossible type (`probe_write`, type `zzz_probe`; the game
-  can only reject it, and its error text names the next missing field). `POST /buildings` with
-  `{type, owner_id: "39992", town_id: "152202387", location: "1522:2388", sublocation: {x, y}, construction: {stage: "INITIAL"}}`.
-  Ids must be strings. Creates an empty site (stage INITIAL); materials and labour then go to the construction account.
-  Queue entry `{"build": {...}}`: dry run unless `"confirm": true`. A "park plot" is simply another `park` building on a free
-  centre tile (260 labour, 40 timber, 60 limestone, 12 turns). Building ids encode the tile: `1522 2388 | 002 004` = sub (2, 4).
-  Still to do: choose a free tile automatically (centre grid is 8 x 8; occupied tiles from our dumps plus other players'),
-  fund the construction account, app button.
+- **Building placement: SOLVED (Oct 12)**.
+  * New building: `POST /buildings {type, owner_id: "39992", town_id: "152202387", location: "1522:2388", sublocation: {x, y},
+    construction: {stage: "INITIAL"}}` (ids are strings). Queue entry `{"build": {...}}`, dry run unless `"confirm": true`.
+  * **A park plot is NOT a new building: it is an EXPANSION of the existing park.**
+    `PATCH /buildings/{id} {construction: {stage: "EXPANSION", domain: ["1522.6:2388.2"]}}`; domain tiles are strings `cx.sx:cy.sy`.
+    Rules the game states: tile within `range` (8) sub-tiles of the building (8 sub-tiles per map tile), must own the land
+    ("domain conflict: must own the land"), materials scale per plot (260 labour, 60 limestone, 40 timber, 12 turns).
+    Queue entry `{"expand": {"building": id, "count": 1 | "tiles": [...]}, "confirm": true}`: reads the live town, skips
+    structures and the fixed roads (grid column 4, row 3), prefers tiles we own then nearest, claims unowned land first, tries
+    candidates nearest-first (a bad tile is refused harmlessly), verifies the building then shows an expansion.
+  * **Land claims**: `POST /towns/{id}/expand {claims: [{x, y, sub: {x, y}}], properties: []}` (omit `landing`; it is not a
+    boolean). Replies 200 with the account embedded, **but settles at the next turn tick** (money stays reserved); the tile
+    still reads `{ask_price: "24"}` until then. So claim, wait a tick, then expand. Queue entry `{"claim": {...}}`.
+  * Town centre data: `GET /towns/{id}` `domain` holds one entry per sub-tile, key = centre * 1,000,000 + sx * 1000 + sy, value
+    `{owner_id, structure?, ask_price?}`. No entry or an ask-price-only entry = unowned land. Centres are in `center_ids`; the
+    main centre (town location) has reserved plaza/hall tiles, so skip it.
+  * Mistake to avoid: my first `expand` claimed the tile of EVERY candidate it tried (5 small claims) before the expansion
+    could start. Claim only the tile you will use. Fixed in intent: pass `"tiles": [...]` when the tile is known.
+- **Deferred steps** (`{"later": {"after": ISO time, "entry": {...}}}`): parked in `state/deferred.json`, run on the first
+  workflow run at or after that time (hourly at :20, or any queue push), same guards, logged with source `deferred`.
+  Tested offline with a stubbed module (no network, no credentials). Use for anything that needs a turn tick in between.
 - **Learning an API without docs**: a write endpoint can be mapped safely by posting a payload that can only fail validation.
   Status tells the story: 404 = no such route, 405 = wrong method, 401 = missing owner, 400 text = the next field. The public
   `pymerc` client (github.com/jmgilman/pymerc) has no building or travel calls, so don't look there.
