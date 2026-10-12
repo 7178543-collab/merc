@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sea path finder for ships (same rules as the game's own client: A*, 8 directions, step cost 1 / 1.414).
 
-Reads a grid written by the queue's {"seamap": {...}} entry (state/seamap/*.json; '1' = sea, '0' = land)
+Reads a grid written by the queue's {"seamap": {...}} entry (state/seamap/*.json[.gz]; '1' = sea, '0' = land)
 and returns a path in the format POST /transports/{id}/travel expects:
     [{"x": 1523, "y": 2387, "c": "0"}, {"x": 1524, "y": 2386, "c": "1.414"}, ...]
 
@@ -11,6 +11,7 @@ Usage:
 Read-only: never talks to the game.
 """
 import glob
+import gzip
 import heapq
 import json
 import math
@@ -30,10 +31,10 @@ class SeaGrid:
     @classmethod
     def load(cls, pattern=None):
         """Merge every state/seamap/*.json into one grid (later files fill gaps; land if unknown)."""
-        files = sorted(glob.glob(pattern or os.path.join(ROOT, "state", "seamap", "seamap_*.json")))
+        files = sorted(glob.glob(pattern or os.path.join(ROOT, "state", "seamap", "seamap_*.json*")))
         if not files:
             raise SystemExit("no seamap files; queue a {\"seamap\": {...}} entry first")
-        parts = [json.load(open(f)) for f in files]
+        parts = [json.load(gzip.open(f, "rt") if f.endswith(".gz") else open(f)) for f in files]
         x0 = min(p["x0"] for p in parts)
         y0 = min(p["y0"] for p in parts)
         x1 = max(p["x0"] + p["w"] for p in parts)

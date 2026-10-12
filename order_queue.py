@@ -16,6 +16,8 @@ Entry kinds (a JSON list of these):
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
   sea map (read-only) {"seamap": {"x0": 1312, "y0": 2208, "x1": 1535, "y1": 2399}}  (GET map sections, saved as one compact
                     sea/land grid in state/seamap/; used by tools/seapath.py)
+  ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
+                    logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -305,11 +307,25 @@ def _apply_message(e):
     return dict(ok=True)
 
 
+def _get_json(path):
+    """Authenticated GET returning parsed JSON; handles gzip. Raises on any error."""
+    import gzip
+    req = urllib.request.Request("https://play.mercatorio.io/api" + path, method="GET",
+                                 headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
+                                          "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        raw = r.read()
+    if raw[:2] == b"\x1f\x8b":
+        raw = gzip.decompress(raw)
+    return json.loads(raw.decode())
+
+
 def _apply_seamap(e):
     """Read-only: fetch the map sections covering a bounding box and save one compact grid.
-    Tile type 3 = sea (alt -1); no type = land. Rows are strings of '1' (sea) / '0' (land)."""
+    Tile type 3 = sea (alt -1); no type = land. Rows are strings of '1' (sea) / '0' (land).
+    Saved gzipped as state/seamap/seamap_<x0>_<y0>_<x1>_<y1>.json.gz (tools/seapath.py reads these)."""
     import gzip
-    import time
+    from concurrent.futures import ThreadPoolExecutor
     b = e["seamap"]
     S = 32
     x0, y0 = int(b["x0"]) // S * S, int(b["y0"]) // S * S
@@ -319,31 +335,84 @@ def _apply_seamap(e):
         return dict(ok=False, error="bbox too big (%dx%d), max 600x600 per entry" % (w, h))
     rows = [["0"] * w for _ in range(h)]
     failed = []
-    for sy in range(y0, y1 + 1, S):
-        for sx in range(x0, x1 + 1, S):
-            path = "/map/section/position/%d:%d" % (sx, sy)
-            req = urllib.request.Request("https://play.mercatorio.io/api" + path, method="GET",
-                                         headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
-                                                  "Accept": "application/json"})
+
+    def fetch(pos):
+        sx, sy = pos
+        for attempt in range(3):
             try:
-                with urllib.request.urlopen(req, timeout=30) as r:
-                    raw = r.read()
-                if raw[:2] == b"\x1f\x8b":
-                    raw = gzip.decompress(raw)
-                plots = json.loads(raw.decode())["plots"]
+                return pos, _get_json("/map/section/position/%d:%d" % (sx, sy))["plots"], None
             except Exception as ex:
-                failed.append("%d:%d %s" % (sx, sy, type(ex).__name__))
+                err = type(ex).__name__
+        return pos, None, err
+
+    todo = [(sx, sy) for sy in range(y0, y1 + 1, S) for sx in range(x0, x1 + 1, S)]
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        for (sx, sy), plots, err in pool.map(fetch, todo):
+            if plots is None:
+                failed.append("%d:%d %s" % (sx, sy, err))
                 continue
             for i, t in enumerate(plots):
                 if t.get("type") == 3:
                     rows[sy - y0 + i // S][sx - x0 + i % S] = "1"
-            time.sleep(0.2)
     out = os.path.join(HERE, "state", "seamap")
     os.makedirs(out, exist_ok=True)
-    name = "seamap_%d_%d_%d_%d.json" % (x0, y0, x1, y1)
-    with open(os.path.join(out, name), "w") as f:
+    name = "seamap_%d_%d_%d_%d.json.gz" % (x0, y0, x1, y1)
+    with gzip.open(os.path.join(out, name), "wt") as f:
         json.dump(dict(x0=x0, y0=y0, w=w, h=h, rows=["".join(r) for r in rows]), f)
-    return dict(ok=not failed, saved="state/seamap/" + name, sections=((w // S) * (h // S)), failed=failed[:5])
+    return dict(ok=not failed, saved="state/seamap/" + name, sections=len(todo), failed=failed[:5])
+
+
+def _apply_travel(e):
+    """Send a ship to a town: {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}.
+    Without "confirm": true it is a DRY RUN: computes the sea path (tools/seapath.py) and logs tiles/cost, sends nothing.
+    Path rules are the game client's own (A*, 8 directions, step 1 / 1.414); the docking tile is the town's nearest
+    sea tile (navigation_zones with an even zone number), as in the client."""
+    import math
+    import sys
+    sys.path.insert(0, os.path.join(HERE, "tools"))
+    import seapath
+    tr = e["travel"]
+    sid, tid = str(tr["transport"]), str(tr["to_town"])
+    try:
+        ship = _get_json("/transports/%s" % sid)
+        town = _get_json("/towns/%s" % tid)
+    except Exception as ex:
+        return dict(ok=False, error="read failed: %s: %s" % (type(ex).__name__, ex))
+    loc = ship.get("location") or {}
+    start = (int(loc["x"]), int(loc["y"]))
+    tl = town.get("location") or {}
+    docks = []
+    for k, zone in (town.get("navigation_zones") or {}).items():
+        if int(zone) % 2 == 0:
+            docks.append((int(k) // 100000, int(k) % 100000))
+    if not docks:
+        return dict(ok=False, error="town %s has no sea dock tile" % tid)
+    end = min(docks, key=lambda d: math.hypot(d[0] - tl.get("x", 0), d[1] - tl.get("y", 0)))
+    if start == end:
+        return dict(ok=False, error="ship is already at %s" % (end,))
+    try:
+        grid = seapath.SeaGrid.load()
+    except SystemExit as ex:
+        return dict(ok=False, error=str(ex))
+    path, cost = seapath.find_path(grid, start, end)
+    if not path:
+        return dict(ok=False, error="no sea path %s -> %s in the grid (grid too small, or start/end not sea)" % (start, end))
+    info = dict(ship=ship.get("name"), to=town.get("name"), start=start, end=end, tiles=len(path), cost=round(cost, 3))
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, **info)
+    prev_end = (ship.get("journey") or {}).get("end_town_id")
+    body = {"location": {"x": end[0], "y": end[1]}, "path": path, "use_ferry": True,
+            "end_town_id": int(tid) if isinstance(prev_end, int) or prev_end is None else tid}
+    ok, status, resp = _req("POST", "/transports/%s/travel" % sid, body)
+    if not ok:
+        return dict(ok=False, status=status, body=resp, **info)
+    try:
+        after = _get_json("/transports/%s" % sid)
+        j = after.get("journey") or {}
+        held = str(j.get("end_town_id")) == tid
+    except Exception:
+        held = False
+    return dict(ok=held, status=status, **info, error=None if held else "journey not updated after travel")
 
 
 def apply_entry(e):
@@ -361,6 +430,8 @@ def apply_entry(e):
         return _apply_dump(e)
     if e.get("seamap"):
         return _apply_seamap(e)
+    if e.get("travel"):
+        return _apply_travel(e)
     if e.get("household"):
         return _apply_household_slot(e)
     if e.get("producer"):
