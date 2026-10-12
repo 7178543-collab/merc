@@ -38,7 +38,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Service worker cache name must change with each app release (`merc-shell-vN`), or installed copies keep the old UI.
 
 ## Still open (v2 candidates)
-- **Building placement**: the create-building call is not in the client's action-style API list. Buildings have
+- **Building placement**: the create-building call is not in the client's action-style API list, and a long search of the
+  minified bundle did not find it (searched: /buildings, /towns, /businesses subpaths, INITIAL stage, sublocation, build menu;
+  the build-menu module is town land expansion). Also found: new ship = `POST /transports {type, owner_id, name, location,
+  operation_target: "0", autoset_inventory: true}`; resize = `PATCH /transports/{id} {size}`. To catch the real call:
+  `tools/netlog.user.js` (Tampermonkey) logs write calls only; place one building, tap the button, paste the log. Buildings have
   `location` (town centre) + `sublocation {x, y}` (grid in the centre); construction runs via
   `/buildings/{id}/construction`. Next step: watch one real placement in the game tab, or search the bundle for the
   call that creates the building in stage INITIAL.
