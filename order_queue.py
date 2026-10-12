@@ -402,7 +402,8 @@ def _apply_travel(e):
     if e.get("confirm") is not True:
         return dict(ok=True, dry_run=True, **info)
     prev_end = (ship.get("journey") or {}).get("end_town_id")
-    body = {"location": {"x": end[0], "y": end[1]}, "path": path, "use_ferry": True,
+    # Ships send no use_ferry (that flag is the land-cart branch; the server answers "ferry-path must start on land")
+    body = {"location": {"x": end[0], "y": end[1]}, "path": path,
             "end_town_id": int(tid) if isinstance(prev_end, int) or prev_end is None else tid}
     ok, status, resp = _req("POST", "/transports/%s/travel" % sid, body)
     if not ok:
