@@ -176,6 +176,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
 
     # ---------- inputs we buy ----------
     bursty = set(cfg.get("bursty") or [])
+    no_buy = {}         # item -> why v2 plans no buy (used to take a live buy off, for items v2 owns)
     candidates = set(use) | never_drop | set(i for i in items if (items[i].get("flow") or {}).get("consumption")
                                             or (items[i].get("flow") or {}).get("shortfall"))
     for item in sorted(candidates):
@@ -201,6 +202,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
             demand = max(planned, observed)
             net = max(0.0, demand - own)
             if net <= 0.01 and item not in never_drop:
+                no_buy[item] = "we make %.1f/turn and use %.1f: nothing to buy" % (own, demand)
                 continue        # we make enough ourselves (chain intermediates land here)
             r = runway.get(item, runway.get("_default", 4))
             m0 = market.get(item) or {}
@@ -210,8 +212,10 @@ def plan(s, cfg=None, recipes=None, goals=None):
             short = (hold or 0) - it.get("held", 0)
             want = math.ceil(net + (min(net, short / 2.0) if short > 0 else 0))
             if hold and it.get("held", 0) >= 2 * hold and item not in never_drop:
+                no_buy[item] = "holds %.0f, twice the %d-unit runway" % (it.get("held", 0), hold)
                 continue        # already stocked well past the runway: no order needed
         if want <= 0 and item not in never_drop:
+            no_buy[item] = "nothing needed this turn"
             continue
         cap = ceil_.get(item)
         m = market.get(item) or {}
@@ -414,6 +418,20 @@ def plan(s, cfg=None, recipes=None, goals=None):
                 flag("tune", r["item"] or "goals", "goal %s: %s" % (r["id"], r["detail"]), None)
     except Exception as e:
         notes.append("goals skipped: %s: %s" % (type(e).__name__, e))
+
+    # ---------- buys nothing needs: a live buy with no planned buy, use or purpose ----------
+    held_on_purpose = set(stockpiles) | set(((bp or {}).get("buys") or {}))
+    for item, it in items.items():
+        if item in never_drop or item in held_on_purpose or item in inter or item == "money":
+            continue
+        live_buy = any(_n(o.get("buy_volume")) > 0 for o in it.get("orders") or [])
+        o = orders.get(item) or {}
+        if not live_buy or o.get("buy") or o.get("effective_buy") or o.get("build_buy") or "buy_volume" in (o.get("goal") or {}):
+            continue
+        if item not in candidates:
+            no_buy.setdefault(item, "nothing used it last turn and no building plans to")
+        if item in no_buy:
+            orders.setdefault(item, {})["buy_off"] = no_buy[item]
 
     # ---------- money ----------
     sev_rank = {"risk": 0, "waste": 1, "tune": 2}

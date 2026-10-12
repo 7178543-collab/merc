@@ -86,6 +86,8 @@ def desired(item, o):
                 buy.pop("max_holding")
         else:
             buy = dict(bb)
+    if buy is None and o.get("buy_off"):
+        buy = "off"             # the planner says nothing needs this buy (an owned item only: decide() checks)
     sell = o.get("sell")
     return buy, sell
 
@@ -228,7 +230,8 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
     for item, o in sorted((plan.get("orders") or {}).items()):
         buy, sell = desired(item, o)
         is_owned = item in owned
-        # a side v2 plans nothing for is left exactly as it is: v2 never takes an order off on its own (yet)
+        if buy == "off" and not is_owned:
+            buy = None          # v2 takes a buy off only for items it owns; a side it plans nothing for is left as it is
         if buy is None and sell is None:
             continue
         live = live_tiers.get(item, [])

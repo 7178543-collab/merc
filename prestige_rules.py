@@ -203,7 +203,14 @@ def apprentice_rule():
         if not good:
             return
         workers = now
+        try:
+            import v2_owned
+            mine = v2_owned.owned_items()
+        except Exception:
+            mine = set()
         for e in SUSTENANCE_BUMP:
+            if e["item"] in mine:       # v2 sizes it from observed use, the bump would be overwritten anyway
+                continue
             r = q.apply_entry(dict(e, note="apprentice rule: +20% sustenance"))
             q.log(e, r, source="prestige_rules")
             say("  %s -> %s" % (e["item"], "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
@@ -347,7 +354,15 @@ def main():
     except Exception as ex:
         say("promote rule crashed: %s: %s" % (type(ex).__name__, ex))
 
+    try:
+        import v2_owned
+        mine = v2_owned.owned_items()
+    except Exception:
+        mine = set()
     for e in todo:
+        if e.get("item") in mine:       # v2 sizes this item from what the mansion actually uses
+            say("  %s left to v2 (%s)" % (e["item"], e.get("note")))
+            continue
         if not LIVE:
             say("  would send:", json.dumps(e))
             continue

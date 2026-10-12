@@ -170,6 +170,24 @@ def test_no_false_cant_fill():
     assert any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
 
 
+def test_act_takes_off_an_unneeded_buy():
+    s = copy.deepcopy(SNAP)                                  # banquet switched off: the mansion no longer eats cured fish
+    for b in s["buildings"]:
+        if b["type"] == "mansion":
+            b["target"], b["flows"] = 0.0, {}
+    s["store"]["items"]["cured fish"]["flow"] = {}
+    s["history_use"] = {k: v for k, v in (s.get("history_use") or {}).items() if k != "cured fish"}
+    plan = planner.plan(s, CFG, goals=[])
+    assert "buy_off" in plan["orders"]["cured fish"] and "buy" not in plan["orders"]["cured fish"]
+    live = {k: v.get("orders") or [] for k, v in s["store"]["items"].items()}
+    cfg = copy.deepcopy(CFG)
+    rows = {r["item"]: r for r in act.decide(s, plan, cfg, {"cured fish"}, live, 0, manual=lambda i: False)[0]}
+    assert rows["cured fish"]["new"] == [] and not rows["cured fish"]["refused"]           # owned: the buy comes off
+    rows = {r["item"]: r for r in act.decide(s, plan, cfg, set(), live, 0, manual=lambda i: False)[0]}
+    assert "cured fish" not in rows                                                        # not owned: v2 leaves v1's order alone
+    assert all("buy_off" not in (plan["orders"].get(i) or {}) for i in CFG["never_drop"])  # never_drop items are never offered up
+
+
 def test_routes():
     import routes
     sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 150.0}, "3": {"name": "Far", "moves": 900.0}}
