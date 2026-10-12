@@ -20,7 +20,7 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Saved journeys exist (`/businesses/{id}/journeys`, `POST /transports/{id}` action `savejourney`); the list is empty here.
   Not needed now that paths can be computed.
 - Test log: Oct 12 ~17:32 Toronto, Linen Snake sent home -> Grandgues (150 tiles, cost 152.7), crew 0.5. Server accepted (200).
-  Arrival not yet confirmed (see bottom of file).
+  Arrived: docked at Grandgues by the next turn (150 tiles in one turn at crew 0.5). Level shows 0 after arrival.
 
 ## Queue and workflow constraints
 - `order-queue` job: **5 minute timeout**, shares the `merc-actor` concurrency group with the bot. Long jobs block the bot.
@@ -38,14 +38,18 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Service worker cache name must change with each app release (`merc-shell-vN`), or installed copies keep the old UI.
 
 ## Still open (v2 candidates)
-- **Building placement**: the create-building call is not in the client's action-style API list, and a long search of the
-  minified bundle did not find it (searched: /buildings, /towns, /businesses subpaths, INITIAL stage, sublocation, build menu;
-  the build-menu module is town land expansion). Also found: new ship = `POST /transports {type, owner_id, name, location,
-  operation_target: "0", autoset_inventory: true}`; resize = `PATCH /transports/{id} {size}`. To catch the real call:
-  `tools/netlog.user.js` (Tampermonkey) logs write calls only; place one building, tap the button, paste the log. Buildings have
-  `location` (town centre) + `sublocation {x, y}` (grid in the centre); construction runs via
-  `/buildings/{id}/construction`. Next step: watch one real placement in the game tab, or search the bundle for the
-  call that creates the building in stage INITIAL.
+- **Building placement: SOLVED (Oct 12)** by probing the API with an impossible type (`probe_write`, type `zzz_probe`; the game
+  can only reject it, and its error text names the next missing field). `POST /buildings` with
+  `{type, owner_id: "39992", town_id: "152202387", location: "1522:2388", sublocation: {x, y}, construction: {stage: "INITIAL"}}`.
+  Ids must be strings. Creates an empty site (stage INITIAL); materials and labour then go to the construction account.
+  Queue entry `{"build": {...}}`: dry run unless `"confirm": true`. A "park plot" is simply another `park` building on a free
+  centre tile (260 labour, 40 timber, 60 limestone, 12 turns). Building ids encode the tile: `1522 2388 | 002 004` = sub (2, 4).
+  Still to do: choose a free tile automatically (centre grid is 8 x 8; occupied tiles from our dumps plus other players'),
+  fund the construction account, app button.
+- **Learning an API without docs**: a write endpoint can be mapped safely by posting a payload that can only fail validation.
+  Status tells the story: 404 = no such route, 405 = wrong method, 401 = missing owner, 400 text = the next field. The public
+  `pymerc` client (github.com/jmgilman/pymerc) has no building or travel calls, so don't look there.
+  `tools/netlog.user.js` is no longer needed for this (kept in case another call hides).
 - **Sea grid coverage**: only x 992-2015, y 1888-2911 (every town within ~500 tiles of home). Far towns need more
   sections. Idea: let the travel handler fetch missing sections itself, cached by bbox.
 - **Route economics** (v2 goal queue): a `route` goal = ship + destination + cargo + crew level; pick the destination
