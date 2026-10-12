@@ -417,6 +417,20 @@ def _apply_travel(e):
     return dict(ok=held, status=status, **info, error=None if held else "journey not updated after travel")
 
 
+def _apply_probe_write(e):
+    """Schema discovery with NO side effects: {"probe_write": {"method": "POST", "path": "/buildings", "body": {...}}}.
+    Refused unless the body's "type" is the impossible value "zzz_probe", so the game can only ever reject it;
+    the status and error text show which endpoint exists and which fields it wants."""
+    pw = e["probe_write"]
+    method, path, body = str(pw.get("method", "POST")).upper(), str(pw.get("path", "")), pw.get("body") or {}
+    if method not in ("POST", "PUT", "PATCH") or body.get("type") != "zzz_probe":
+        return dict(ok=False, error='probe_write needs method POST/PUT/PATCH and body.type == "zzz_probe"')
+    if not path.startswith(("/buildings", "/towns", "/businesses", "/plots", "/place", "/construction")):
+        return dict(ok=False, error="probe_write path not allowed: %s" % path[:60])
+    ok, status, resp = _req(method, path, body)
+    return dict(ok=True, probe=True, sent="%s %s" % (method, path), status=status, accepted=bool(ok), body=resp)
+
+
 def apply_entry(e):
     if "override" in e:
         return _apply_override(e)
@@ -432,6 +446,8 @@ def apply_entry(e):
         return _apply_dump(e)
     if e.get("seamap"):
         return _apply_seamap(e)
+    if e.get("probe_write"):
+        return _apply_probe_write(e)
     if e.get("travel"):
         return _apply_travel(e)
     if e.get("household"):
