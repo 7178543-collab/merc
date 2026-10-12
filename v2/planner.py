@@ -220,10 +220,17 @@ def plan(s, cfg=None, recipes=None, goals=None):
         if ask:
             price = snap_price(min(ask * 1.02, cap) if cap else ask * 1.02, up=False)
             if cap and ask > cap:
+                # the lowest ask above our ceiling only matters if the buy is really failing: the bid side can still
+                # clear (porterage fills at 0.42 against a 1.1 ask). Flag only when last turn's purchases fell short
+                # of need, or stock is under the runway.
                 rw = (it.get("held", 0) / net) if net > 0 else 99
-                flag("risk" if (item in never_drop and rw < 2) else "tune", item,
-                     "home ask %.2f is above our ceiling %.2f: the buy can't fill" % (ask, cap),
-                     "raise the ceiling or find another source")
+                bought = fl.get("purchase", 0)
+                failing = (net > 0.01 and bought < 0.8 * net) or (hold and it.get("held", 0) < hold)
+                if failing:
+                    flag("risk" if (item in never_drop and rw < 2) else "tune", item,
+                         "home ask %.2f is above our ceiling %.2f and last turn bought %.0f of ~%.0f needed: the buy can't fill" % (
+                             ask, cap, bought, net),
+                         "raise the ceiling or find another source")
         elif want > 0 and item != "labour" and (hold is None or it.get("held", 0) < hold):
             flag("tune", item, "no sellers at home right now and stock is below the runway", "import it or find another source")
         o = {"buy_volume": int(want)}
@@ -287,6 +294,9 @@ def plan(s, cfg=None, recipes=None, goals=None):
         if turns < 1 and item not in starved:       # a buffer empty because its maker is stalled is a knock-on, flagged once above
             flag("risk", item, "%s buffer %.1f turns (holds %.0f, next step uses %.0f/turn)" % (item, turns, it.get("held", 0), u),
                  "check the step that makes it")
+        elif turns < min(2, buf_turns) and item not in starved:
+            flag("tune", item, "%s buffer thin: %.1f turns (target %d)" % (item, turns, buf_turns),
+                 "lift the maker's rate or hold back sales until it reaches %d" % int(target))
         orders.setdefault(item, {})["buffer"] = {"target": int(target), "held": int(it.get("held", 0))}
 
     # ---------- outputs we sell ----------

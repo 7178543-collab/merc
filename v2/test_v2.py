@@ -54,6 +54,18 @@ def test_false_flags_cut():
     assert p["counts"]["risk"] + p["counts"]["waste"] + p["counts"]["tune"] <= 5
 
 
+def test_no_false_cant_fill():
+    s = copy.deepcopy(SNAP)
+    it = s["store"]["items"]["porterage"]
+    s["market"]["porterage"]["ask"] = 1.1
+    it.setdefault("flow", {})["purchase"] = 40            # buy is filling at the bid side
+    k = keys(planner.plan(s, CFG))
+    assert "tune:porterage" not in k and "risk:porterage:cantfill" not in k
+    assert not any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
+    it["flow"]["purchase"] = 0; it["held"] = 0             # really failing: flagged
+    assert any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
+
+
 def test_orders_sane():
     o = planner.plan(SNAP, CFG)["orders"]
     assert o["donations"]["buy"]["buy_volume"] == 40          # a deep market needs no runway
