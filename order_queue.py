@@ -18,6 +18,7 @@ Entry kinds (a JSON list of these):
                     sea/land grid in state/seamap/; used by tools/seapath.py)
   build (new site)  {"build": {"type": "park", "town_id": "152202387", "location": "1522:2388", "sublocation": {"x": 3, "y": 3}}, "confirm": true}
                     (no confirm = dry run: cost + payload only)
+  expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -475,6 +476,105 @@ def _apply_build(e):
     return dict(ok=bool(new_id) and stage == "INITIAL", status=status, building_id=new_id, stage=stage, **info)
 
 
+def _tile_str(cx, sx, cy, sy):
+    return "%d.%d:%d.%d" % (cx, sx, cy, sy)
+
+
+def _parse_loc(loc):
+    """'1522.2:2388.4' -> (1522, 2, 2388, 4)."""
+    a, b = str(loc).split(":")
+    cx, sx = a.split(".")
+    cy, sy = b.split(".")
+    return int(cx), int(sx), int(cy), int(sy)
+
+
+def _expansion_candidates(bld, town, rng):
+    """Free tiles on the town-centre grids (8 x 8 per centre, 8 sub-tiles per map tile) a building could expand onto:
+    no structure, not a road (grid column 4 and row 3), not the main centre (reserved plaza/hall), within `rng`
+    sub-tiles of the building, ours or unowned. Ours first, then nearest."""
+    bx, bsx, by, bsy = _parse_loc(bld["location"])
+    gx0, gy0 = bx * 8 + bsx, by * 8 + bsy
+    mine = {t for t in (bld.get("domain") or [])}
+    main = (int(town["location"]["x"]), int(town["location"]["y"]))
+    dom = town.get("domain") or {}
+    out = []
+    for cid in town.get("center_ids") or []:
+        cx, cy = int(cid) // 100000, int(cid) % 100000
+        if (cx, cy) == main:
+            continue
+        for sy in range(8):
+            for sx in range(8):
+                if sx == 4 or sy == 3:
+                    continue
+                tile = _tile_str(cx, sx, cy, sy)
+                if tile in mine or tile == bld["location"]:
+                    continue
+                ent = dom.get(str(cid * 1000000 + sx * 1000 + sy)) or {}
+                if ent.get("structure"):
+                    continue
+                owner = str(ent.get("owner_id") or "")
+                if owner not in ("", OWNER_ID):
+                    continue
+                dist = ((cx * 8 + sx - gx0) ** 2 + (cy * 8 + sy - gy0) ** 2) ** 0.5
+                if dist <= rng:
+                    out.append(dict(tile=tile, dist=round(dist, 2), ours=(owner == OWNER_ID)))
+    out.sort(key=lambda c: (not c["ours"], c["dist"]))
+    return out
+
+
+def _apply_expand(e):
+    """Add plots to an existing building (a park plot is an expansion of the park):
+    {"expand": {"building": "152202388002004", "count": 1}, "confirm": true}   or  "tiles": ["1522.6:2388.2"].
+    PATCH /buildings/{id} {construction: {stage: "EXPANSION", domain: ["x.sx:y.sy", ...]}} (shape confirmed by probe_write).
+    No confirm = DRY RUN (lists the free tiles it would try, and the materials). With confirm it tries candidates
+    nearest-first (the game rejects a bad tile harmlessly) and verifies the building now shows an expansion.
+    Materials come from the provider storehouse by the building's own construction settings; the game enforces
+    range, prestige-management and capacity, and its refusal text is logged."""
+    ex = e["expand"]
+    bid = str(ex["building"])
+    count = max(1, int(ex.get("count", 1)))
+    try:
+        specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
+        bld = _get_json("/buildings/%s" % bid)
+        town = _get_json("/towns/%s" % bld["town_id"])
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
+    spec = (specs.get(bld.get("type")) or {}).get("construction") or {}
+    rng = float(spec.get("range") or 8)
+    stage = (bld.get("construction") or {}).get("stage")
+    if stage not in (None, "", "NONE"):
+        return dict(ok=False, error="building already under construction (stage %s)" % stage)
+    cands = _expansion_candidates(bld, town, rng)
+    wanted = [str(t) for t in ex.get("tiles") or []]
+    per = spec.get("materials") or {}
+    info = dict(building=bld.get("type"), size=bld.get("size"), range=rng,
+                materials_per_plot=per, build_turns=spec.get("time"),
+                candidates=[("%s%s %.1f" % (c["tile"], "" if c["ours"] else " (unowned)", c["dist"])) for c in cands[:8]])
+    if not wanted and not cands:
+        return dict(ok=False, error="no free tile in range", **info)
+    plan = wanted or [c["tile"] for c in cands[:count]]
+    info["would_try"] = plan
+    info["materials_total"] = {k: v * len(plan) for k, v in per.items()}
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, **info)
+    attempts, errors = [], []
+    options = [plan] if (wanted or count > 1) else [[c["tile"]] for c in cands[:5]]
+    for tiles in options:
+        body = {"construction": {"stage": "EXPANSION", "domain": tiles}}
+        ok, status, resp = _req("PATCH", "/buildings/%s" % bid, body)
+        attempts.append(tiles)
+        if ok:
+            try:
+                after = (_get_json("/buildings/%s" % bid).get("construction") or {})
+            except Exception:
+                after = {}
+            held = after.get("stage") == "EXPANSION" and set(tiles) <= set(after.get("domain") or [])
+            return dict(ok=held, status=status, tiles=tiles, stage=after.get("stage"),
+                        error=None if held else "expansion not visible after PATCH", **info)
+        errors.append("%s: %s" % (",".join(tiles), (resp or "")[:160].replace("\n", " ")))
+    return dict(ok=False, error="all attempts refused", refusals=errors, **info)
+
+
 def apply_entry(e):
     if "override" in e:
         return _apply_override(e)
@@ -494,6 +594,8 @@ def apply_entry(e):
         return _apply_probe_write(e)
     if e.get("build"):
         return _apply_build(e)
+    if e.get("expand"):
+        return _apply_expand(e)
     if e.get("travel"):
         return _apply_travel(e)
     if e.get("household"):
