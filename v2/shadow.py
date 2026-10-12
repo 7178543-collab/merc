@@ -33,6 +33,17 @@ def report(p):
          "Cash %s, prestige %s (%s free, %+.1f/turn)." % (
              "{:,.0f}".format(p.get("cash") or 0), "{:,.0f}".format(p.get("prestige") or 0),
              "{:,.0f}".format(p.get("prestige_free") or 0), p.get("prestige_rate") or 0), ""]
+    live_items = p.get("live_items") or []
+    if live_items and p.get("_items"):
+        L += ["## Items v2 runs (last turn)", "", "| Item | Held | Bought | Used | Short | Expired | Live order |", "| --- | --- | --- | --- | --- | --- | --- |"]
+        for item in live_items:
+            it = p["_items"].get(item) or {}
+            fl = it.get("flow") or {}
+            o = "; ".join(", ".join("%s %s" % (k.replace("_volume", "").replace("_price", " @").replace("max_holding", "stop"), v)
+                                    for k, v in tier.items()) for tier in it.get("orders") or []) or "none"
+            L.append("| %s | %.0f | %.0f | %.0f | %.0f | %.0f | %s |" % (item, it.get("held", 0), fl.get("purchase", 0),
+                                                                     fl.get("consumption", 0), fl.get("shortfall", 0), fl.get("expiration", 0), o))
+        L.append("")
     c = p.get("counts") or {}
     L.append("**%d risks, %d waste, %d tuning** where v2 would act differently from v1." % (c.get("risk", 0), c.get("waste", 0), c.get("tune", 0)))
     L.append("")
@@ -170,6 +181,7 @@ def main():
             json.dump(snap, f, separators=(",", ":"), default=str)
     with open(os.path.join(out, "plan.json"), "w") as f:
         json.dump(p, f, indent=1, default=str)
+    p["_items"] = {k: v for k, v in ((snap.get("store") or {}).get("items") or {}).items() if k in (p.get("live_items") or [])}
     with open(os.path.join(out, "report.md"), "w") as f:
         f.write(report(p))
     if not replay:      # a replay is not a new run: it must not add a line to the history
