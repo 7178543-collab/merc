@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13240, 2026-10-13 01:01. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13240, 2026-10-13 01:04. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 22,520, prestige 2,572 (152 free, +3.8/turn).
 
 ## Items v2 runs (last turn)
@@ -11,7 +11,7 @@ Cash 22,520, prestige 2,572 (152 free, +3.8/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 44 | 0 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 12 | 12 | 6 | 0 | 6 | stop 24, buy 12, buy @ 2.5 |
-| grain | 127 | 41 | 32 | 0 | 0 | stop 130, buy 37, buy @ 3.7 |
+| grain | 127 | 41 | 32 | 0 | 0 | stop 130, buy 34, buy @ 3.7 |
 | meat | 11 | 6 | 6 | 0 | 0 | stop 24, buy 12, buy @ 3.02 |
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
 | porterage | 26 | 24 | 19 | 0 | 5 | buy 26, buy @ 0.8 |
@@ -70,15 +70,15 @@ Labour metered per turn while a site can progress: labour 22
 
 28 towns in range by sea. A snekkja on a route: 250 units a trip, 3000 moves a turn at full crew, running cost ~103 coin a turn at full crew (crew is sized to the cargo, floor 0.23). Markets: up to 30% of what each town trades a turn, 5% slippage each way.
 
-| Town | Moves | Ship cost/unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
+| Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Fontaux | 411 | 0.11 | 0.23 (24/turn) | timber 23 (7.5->10.26), garments 18 (21.4->23.56), beer 45 (3.01->3.82), firewood 3 (1.67->4.07) | thread 79 (5.46->5.7), pies 1 (16.17->17.1) | +152 |
-| Neuborn | 780 | 0.21 | 0.28 (28/turn) | timber 14 (7.5->11.4), lodging 30 (5.04->6.84), firewood 3 (1.67->6.41), limestone 1 (18.9->28.5) | flax fibres 5 (5.83->6.27), thread 8 (5.41->5.7), leather 1 (24.15->24.51) | +130 |
-| Pontmont | 341 | 0.09 | 0.23 (24/turn) | beer 68 (3.01->3.69), bread 132 (2.42->2.7), protection 40 (3.97->4.69), cheese 12 (7.19->7.79) | thread 3 (5.57->5.7), yarn 4 (4.3->4.46) | +88 |
-| Rouhomme | 368 | 0.10 | 0.23 (24/turn) | beer 68 (3.01->3.67), lead bars 1 (10.61->31.35), cured meat 2 (29.4->37.43), meat 4 (2.21->4.75) | thread 10 (5.02->5.7), cured fish 5 (26.04->26.4), flax plants 1 (1.67->2.02), tools 7 (5.04->5.15) | +79 |
-| Etallaen | 774 | 0.21 | 0.26 (26/turn) | beer 50 (3.01->3.88), limestone 1 (18.9->35.34), lodging 30 (5.04->5.65), protection 23 (3.97->4.52) | hop beer 3 (7.72->9.69), flax fibres 1 (6.04->6.27) | +67 |
+| Fontaux | 411 | 0.11 | 0.55 (56/turn) | garments 18 (21.4->23.56), beer 45 (3.01->3.82), timber 23 (7.5->10.26), charcoal 2 (1.81->4.16) | thread 79 (5.46->5.7), pies 1 (16.17->17.1) | +107 |
+| Rouhomme | 368 | 0.10 | 0.23 (24/turn) | beer 68 (3.01->3.67), lead bars 1 (10.61->31.35), cured meat 2 (29.4->37.43) | thread 10 (5.02->5.7), cured fish 5 (26.04->26.4), flax plants 1 (1.67->2.02), tools 7 (5.04->5.15) | +69 |
+| Friedwerp | 684 | 0.19 | 0.23 (24/turn) | garments 15 (21.4->24.7), lead bars 5 (10.61->11.59), varnish 1 (18.17->20.52), dyed yarn 1 (8.56->10.07) | thread 10 (5.12->5.7), hop beer 1 (8.66->9.69), leather 1 (23.52->24.51), flax plants 1 (1.22->2.02) | +46 |
+| Pontmont | 341 | 0.09 | 0.49 (51/turn) | beer 68 (3.01->3.69), cheese 12 (7.19->7.79), bread 132 (2.42->2.7) | thread 3 (5.57->5.7), yarn 4 (4.3->4.46) | +40 |
+| Etallaen | 774 | 0.21 | 0.30 (31/turn) | beer 50 (3.01->3.88), limestone 1 (18.9->35.34), flax plants 2 (1.56->2.24) | hop beer 3 (7.72->9.69) | +36 |
 
-**Best:** Fontaux at about +152 coin a turn.
+**Best:** Fontaux at about +107 coin a turn.
 
 ## v2 orders
 
