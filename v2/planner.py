@@ -348,9 +348,12 @@ def plan(s, cfg=None, recipes=None, goals=None):
         # price: a sale clears at the market, so a low limit with a big volume drags the clearing price down for every
         # unit (Oct 12: garments asked 22 for 60 and got 22.3 each, with home bids at ~25.8 for ~41). With a live bid,
         # ask a little under it (97%) and let what it can't take wait for the ships; never under the cost floor.
+        # With no bid up right now, the last clearing price stands in (05:44 Oct 13: the bid was gone for a moment and
+        # the ask fell back to the 22 floor for 44 garments while the market price was ~25).
         price = floor
-        if m.get("bid") and m["bid"] * 0.97 > (floor or 0):
-            price = m["bid"] * 0.97
+        ref = m.get("bid") or m.get("price")
+        if ref and ref * 0.97 > (floor or 0):
+            price = ref * 0.97
         want = {"sell_volume": int(round(surplus + draw)), "sell_price": str(snap_price(price, up=True)) if price else None}
         orders.setdefault(item, {})["sell"] = want
         if draw >= 1:
