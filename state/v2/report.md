@@ -1,21 +1,21 @@
 # v2 shadow report
 
-Turn 13247, 2026-10-13 08:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13247, 2026-10-13 08:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 225 | 0 | 19 | 0 | 0 | min_holding 60, sell 53, sell @ 3.98 |
+| beer | 225 | 0 | 19 | 0 | 0 | min_holding 60, sell 10, sell @ 3.7 |
 | cured fish | 20 | 5 | 6 | 0 | 0 | stop 20, buy 7, buy @ 26 |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 26 | 7 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 2.5 |
-| garments | 410 | 0 | 2 | 0 | 0 | min_holding 30, sell 73, sell @ 22 |
+| garments | 410 | 0 | 2 | 0 | 0 | min_holding 30, sell 72, sell @ 22 |
 | grain | 130 | 32 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
-| nets | 48 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 38.4 |
+| nets | 48 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 41.6 |
 | porterage | 37 | 37 | 32 | 0 | 5 | buy 37, buy @ 0.8 |
 
 **0 risks, 1 waste, 5 tuning** where v2 would act differently from v1.
@@ -26,7 +26,7 @@ Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 
 ## Tuning
 
-- **candles**: home ask 77.00 is above our ceiling 70.00 and last turn bought 0 of ~2 needed: the buy can't fill -> v2: raise the ceiling or find another source
+- **candles**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 - **cloth**: cloth buffer thin: 1.6 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 358
 - **flax plants**: flax plants buffer thin: 1.1 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 619
 - **limestone**: we make 5/turn more than we use but there is no sell order -> v2: sell 5
@@ -54,13 +54,13 @@ Labour metered per turn while a site can progress: labour 21
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 52.2 | 55.2 | running |
-| hold banquet 4 (pies) | mansion | 18 | 58.1 | 58.1 | thin at home: pasties, cheese |
-| hold sermon 2 (candles) | church | 31 | 56.1 | 58.2 | needs a church (build cost 69,692); thin at home: jewellery, candles, furniture |
-| hold banquet 2 (pies) | mansion | 7 | 58.3 | 58.3 | thin at home: pasties, cheese, pies |
-| hold banquet 3 (pies) | mansion | 8 | 59.2 | 59.2 | thin at home: pasties, cheese, pies |
-| hold prayer 2 | chapel | 13 | 56.9 | 59.2 | needs a chapel (build cost 32,510) |
-| hold mass 2 (premium) | cathedral | 360 | 58.6 | 59.3 | needs a cathedral (build cost 280,895); thin at home: furniture, jewellery, glassware, candles, premium garments |
-| hold sermon 2 | church | 24 | 57.0 | 59.7 | needs a church (build cost 69,692); thin at home: jewellery, furniture |
+| hold banquet 4 (pies) | mansion | 18 | 58.1 | 58.1 | thin at home: pasties, cheese, candles |
+| hold banquet 2 (pies) | mansion | 7 | 58.3 | 58.3 | thin at home: pasties, cheese, pies, candles |
+| hold sermon 2 (candles) | church | 31 | 56.2 | 58.3 | needs a church (build cost 69,740); thin at home: jewellery, candles, furniture |
+| hold banquet 3 (pies) | mansion | 8 | 59.2 | 59.2 | thin at home: pasties, cheese, pies, candles |
+| hold mass 2 (premium) | cathedral | 360 | 58.6 | 59.3 | needs a cathedral (build cost 281,075); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| hold prayer 2 | chapel | 13 | 57.0 | 59.3 | needs a chapel (build cost 32,546) |
+| hold sermon 2 | church | 24 | 57.1 | 59.9 | needs a church (build cost 69,740); thin at home: jewellery, furniture |
 | jousting 1 | arena | 170 | 59.7 | 59.9 | needs a arena (build cost 25,876); thin at home: protection, light armour, arms; needs weaponry skill |
 | hold banquet 2 (fish) | mansion | 6.8 | 60.1 | 60.1 | thin at home: cured fish, cheese |
 | jousting 3 | arena | 230 | 60.0 | 60.1 | needs a arena (build cost 25,876); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
@@ -71,13 +71,13 @@ Labour metered per turn while a site can progress: labour 21
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 117401698 | 0 | - | - | 0 |
-| linen snake | 1.0 / 1.00 | 104 | 159601387 | 1.112 | beer 4, timber 13 | - | 77 |
+| linen snake | 0.5 / 1.00 | 104 | 159601387 | 0.032 | beer 4, timber 13 | - | 77 |
 
 ## Ship plans (this turn's world prices)
 
-- **linen snake** on Kirchwerp: beer sell 65 @ 5.05, candles buy 1 @ 73.0; crew 0.5; est +40 a turn
-- **Flax Wyrm** on Brebronn: nothing pays; crew 0.0; est +0 a turn; best orders clear only 5 a turn after crew: ship stays at 0
-- best towns now: Clairlond +222, Kirchwerp +40, Fontaux +30, Bremcop +28, Neuborn +23
+- **linen snake** on Kirchwerp: beer sell 65 @ 5.05, candles buy 1 @ 73.0; crew 0.5; est +20 a turn
+- **Flax Wyrm** on Brebronn: nothing pays; crew 0.0; est +0 a turn; best orders clear only 4 a turn after crew: ship stays at 0
+- best towns now: Clairlond +216, Fontaux +28, Bremcop +24, Kirchwerp +20, Chribruck +18
 - Clairlond would trade: garments sell 42 @ 27.8; crew 0.2
 
 ## Ship routes at today's world prices (estimate, per turn)
