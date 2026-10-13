@@ -57,6 +57,12 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   * **Construction pace**: a new construction starts at `settings.pace = 0` and receives nothing, so it never progresses.
     `PUT /buildings/{id}/construction/settings {..., pace: 100}` (client slider: 0/25/50/100; per-turn delivery =
     ceil(capacity * pace / (100 * total_time)) from the provider storehouse). Queue `{"pace": {...}}`; `expand` now sets 100.
+  * **Construction provider (Oct 13)**: an expansion started by API has NO provider of its own (`construction.provider_id`
+    missing; the building's provider doesn't count), so even at pace 100 nothing was delivered for 2 turns (progress 0,
+    turn 13241). `PATCH /buildings/{id}/construction {provider_id: <storehouse>}` (the client's call shape, as for
+    `{stage: "NONE"}` = abort) links it: the storehouse then projected limestone 5/turn and timber 4.2/turn for it. Queue
+    `{"construction": {"building": id, "set": {...}}}`; `expand` now links the building's own provider, then sets pace 100.
+    Without a provider the client instead puts buy orders on the construction's own inventory (it buys from the market).
   * **Park plot 11 placed with no click, Oct 13 00:15 UTC** (turn 13239): queue `{"plot": {"building": park}, "confirm": true}`
     bought 1522.3:2388.5 and started the expansion; pace set to 100 at 00:18. prestige_rules `AUTO_PLOT = True`: the park
     rule now places the next plot itself when pool room + limestone 60 + timber 40 are there and no plot is building.

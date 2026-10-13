@@ -605,7 +605,12 @@ def _apply_expand(e):
                 after = {}
             held = after.get("stage") == "EXPANSION" and set(tiles) <= set(after.get("domain") or [])
             pace = None
-            if held:        # a new construction sits at pace 0 (no deliveries): start it moving
+            if held:        # a new construction has no provider and sits at pace 0: nothing is delivered until both are set
+                prov = bld.get("provider_id")
+                if prov:
+                    lok, _, lresp = _req("PATCH", "/buildings/%s/construction" % bid, {"provider_id": str(prov)})
+                    if not lok:
+                        info["provider_error"] = (lresp or "")[:160]
                 pok, _, perr, pace = _set_pace(bid, ex.get("pace", 100))
                 if not pok:
                     info["pace_error"] = perr
