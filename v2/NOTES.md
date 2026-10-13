@@ -159,3 +159,18 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   projects limestone 5 + timber 4.2 a turn for it); `expand` links it automatically from now on. Re-check progress after the
   03:00 tick.
 - All workflows green.
+
+## Ships: the Flax Wyrm leak and a measured route test (Oct 13 ~02:45 UTC)
+- The Flax Wyrm was NOT parked. Set to 0.723 crew on Oct 11 03:03 and never changed; the storehouse operations showed
+  `transport/845668271 target 0.723`, its own flows ~47.7 labour + cloth/tar/timber a turn (~72-95 coin). The status line
+  (alerts.ship_info) read a `producer` field ships don't have, so it showed crew 0 and everyone (the doc, chain_balancer's
+  EXPORT_GARMENTS note) believed it parked. Fixed ship_info. Last turn's records: every garment sold at home at 22, route
+  "limited by firewood", only a firewood shortfall realized; 40 garments sat reserved for export. Paused at 02:45.
+- Route creation (client code): `PUT /transports/{id}/route {provider_id, journey_id}` with an empty cargo and a journey that
+  ends at a town. Route trades show up in the STOREHOUSE operations (`GET /buildings/{store}/operations`, reference
+  `route/<ship id>`, flows realized), not on the ship.
+- v2 now snapshots the storehouse operations, reports each ship's real running cost and route trades ("Ships" section),
+  flags a ship that costs crew while trading nothing, and pauses it after 3 such turns (config `live.ships`, both ships).
+- **Test started 02:48**: Flax Wyrm on Blanans, garments only (sell 40 at min 25, keep 60 at home; firewood and thread
+  exports removed), limestone import left (at max), crew 0.25 (~25 coin/turn). Read the Ships section after the 04:00 tick:
+  garments sold at Blanans = the route works; nothing sold = v2 pauses it by ~06:00 and the route mechanics need more work.
