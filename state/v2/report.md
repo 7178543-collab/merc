@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13244, 2026-10-13 05:15. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13244, 2026-10-13 05:20. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 24,284, prestige 2,578 (158 free, -5.0/turn).
 
 ## Items v2 runs (last turn)
@@ -16,15 +16,14 @@ Cash 24,284, prestige 2,578 (158 free, -5.0/turn).
 | grain | 130 | 32 | 0 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
 | nets | 46 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
-| porterage | 26 | 26 | 11 | 0 | 15 | buy 26, buy @ 0.8 |
+| porterage | 26 | 26 | 11 | 0 | 15 | buy 37, buy @ 0.8 |
 
-**3 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
+**2 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **cloth**: cloth buffer 0.7 turns (holds 115, next step uses 160/turn) -> v2: check the step that makes it
-- **flax plants**: retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 0.00 x0, yet 0 bought last turn); labour need rises ~50/turn when they restart -> v2: find out why the buy isn't filling
-- **porterage**: buying 26, short of ~37 needed -> v2: buy 37
+- **cloth**: cloth buffer 0.8 turns (holds 115, next step uses 136/turn) -> v2: check the step that makes it
+- **flax plants**: retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 0.00 x0, yet 0 bought last turn); labour need rises ~48/turn when they restart -> v2: find out why the buy isn't filling
 
 ## Tuning
 
@@ -102,13 +101,13 @@ Labour metered per turn while a site can progress: labour 22
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 2.4, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 26 = 4.0 turns |
 | fish | 7 @ 2.5, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
-| garments |  | 55 @ min 22.0 | makes 82.0, uses 1.8, holds 407 (keeps 30): sells the surplus + 25/turn of the excess; ships offer 50 a turn abroad, so home sells 55 (was 105) |
+| garments |  | 44 @ min 25.2 | makes 69.7, uses 1.8, holds 407 (keeps 30): sells the surplus + 26/turn of the excess; ships offer 50 a turn abroad, so home sells 44 (was 94) |
 | grain | 33 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 130 = 4.0 turns |
-| labour | 975 @ 2.2, stop - |  | uses 1378.5/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 945 = 1.0 turns |
+| labour | 973 @ 2.2, stop - |  | uses 1375.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 945 = 1.0 turns |
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 1 = 6.0 turns |
-| limestone |  | 5 @ min 25.0 |  |
+| limestone |  | 5 @ min 25.4 |  |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | nets |  | 6 @ min 36.0 |  |
-| porterage | 37 @ 0.8, stop - |  | uses 33.0/turn (observed), makes 0.0, holds 26 = 0.8 turns |
+| porterage | 37 @ 0.8, stop - |  | uses 32.9/turn (observed), makes 0.0, holds 26 = 0.8 turns |
 | timber |  | 28 @ min 8.5 | makes 24.0, uses 0.0, holds 420 (keeps 350): sells the surplus + 4/turn of the excess |
-| tools | 9 @ 6.2, stop 72 |  | uses 8.9/turn (logging camp w/ tool), makes 0.0, holds 199 = 22.4 turns |
+| tools | 9 @ 6.2, stop 72 |  | uses 8.9/turn (logging camp w/ tool), makes 0.0, holds 199 = 22.5 turns |
