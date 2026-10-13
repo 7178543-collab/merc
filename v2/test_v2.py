@@ -327,6 +327,14 @@ def test_ship_voyage_steps():
         out = act.ship_voyages(plan, cfg, snap, sst, log, apply)            # route running: done
         assert "running" in out[0] and sst["9"]["voyage"] is None and calls == []
         assert act.ship_voyages(plan, cfg, dict(snap, turn=5), sst, log, apply) == []   # cooldown
+        # an idle ship (its plan has no orders) waits only 2 turns; an earning one waits 12
+        far = {"ship_plans": {"plans": [{"id": "9", "est_net": 0.0, "orders": {}}],
+                              "best": [{"town": "Clairlond", "town_id": "88002195", "per_turn": 220}]}}
+        assert act.ship_voyages(far, cfg, dict(snap, turn=5), sst, log, apply) == []
+        assert "heading for Clairlond" in act.ship_voyages(far, cfg, dict(snap, turn=6), sst, log, apply)[0]
+        sst["9"] = {"last_voyage_turn": 4}
+        earning = {"ship_plans": dict(far["ship_plans"], plans=[{"id": "9", "est_net": 40.0, "orders": {"beer": {}}}])}
+        assert act.ship_voyages(earning, cfg, dict(snap, turn=6), sst, log, apply) == []
         # at home, the target is re-checked: a better free town wins, and nothing paying ends the voyage at crew 0
         sst = {"9": {"voyage": {"target": "159601387", "name": "Kirchwerp", "step": "home", "turn": 7, "moves": 1072}}}
         calls.clear()

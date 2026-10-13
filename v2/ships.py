@@ -25,6 +25,9 @@ MIN_MARGIN_SHARE = 0.04        # at least 4% of the home value per unit, after s
 MIN_MARGIN_ABS = 0.25
 FILL_SHARE = 0.98              # our ask sits at 98% of their best bid
 MIN_NET_PER_TURN = 15          # a route must clear this after crew, or the ship stays at 0
+# route fare per cargo size unit (storehouse operations export_fare / units x size): Blanans 0.04, Etallaen 0.10,
+# Kirchwerp 0.19 (timber 13 x 15 = 195 size units paid 36.66, Oct 13). Not modelled per town yet: a middle value.
+FARE_PER_SIZE = 0.15
 
 
 def _f(x):
@@ -73,6 +76,7 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
         it = items.get(item) or {}
         h = home.get(item) or {}
         ship_cost = per_space * size(item)
+        fare = FARE_PER_SIZE * size(item)        # the route's export/import fare, paid per unit on top of the crew
         fl = it.get("flow") or {}
         made = _f(fl.get("production")) > 0
         # ---- export: goods we make, above what we keep back
@@ -84,12 +88,12 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                 # what a unit fetches at home: the best of the home bid and what our home sales actually got last turn
                 realized = (_f(fl.get("sale_value")) / _f(fl.get("sale"))) if _f(fl.get("sale")) else 0.0
                 home_val = max(h.get("bid") or 0.0, realized, _f(it.get("unit_cost")))
-                floor = home_val + ship_cost + max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * home_val)
+                floor = home_val + ship_cost + fare + max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * home_val)
                 price = routes_snap(m["bid"] * FILL_SHARE, up=True)
                 if price <= m["bid"] and price >= floor:
                     vol = int(min(spare, m["sell_room"]))
                     if vol >= 1:
-                        gain = price - home_val - ship_cost
+                        gain = price - home_val - ship_cost - fare
                         orders[item] = {"sell_volume": vol, "sell_price": str(price), "min_holding": int(math.ceil(keep)),
                                         "_gain": gain}
                         est += vol * gain
@@ -98,12 +102,12 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
         # ---- import: something we use and don't make, cheaper there than our home ask after shipping
         use = _f(fl.get("consumption"))
         if m["ask"] > 0 and use >= 1 and h.get("ask") and not made and item not in inter:
-            ceiling = h["ask"] - ship_cost - max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * h["ask"])
+            ceiling = h["ask"] - ship_cost - fare - max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * h["ask"])
             price = routes_snap(min(m["ask"] * 1.02, ceiling), up=False)
             if price >= m["ask"]:
                 vol = int(min(use, m["buy_room"]))
                 if vol >= 1:
-                    gain = h["ask"] - m["ask"] - ship_cost
+                    gain = h["ask"] - m["ask"] - ship_cost - fare
                     orders[item] = {"buy_volume": vol, "buy_price": str(price),
                                     "max_holding": int(math.ceil(max(_f(it.get("held")), use * 4))), "_gain": gain}
                     est += vol * gain

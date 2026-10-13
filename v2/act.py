@@ -344,6 +344,7 @@ def ship_auto(plan, cfg, snap, log_path, sst=None):
 VOYAGE_CREW = 0.5
 VOYAGE_MIN_GAIN = 60           # a better town must promise this much a turn more before a ship sails
 VOYAGE_COOLDOWN = 12           # turns between voyages per ship
+VOYAGE_COOLDOWN_IDLE = 2       # ... when the ship's own town pays nothing
 HOME_TOWN = "152202387"
 
 
@@ -437,9 +438,12 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 r2 = apply({"route": {"transport": sid, "start": True}, "confirm": True})
                 out.append("%s: at %s, route %s" % (sh.get("name"), v.get("name"), "started" if r2.get("ok") else "FAILED %s" % (r2.get("error") or r2.get("status"))))
             continue
-        if turn - (c.get("last_voyage_turn") or -999) < VOYAGE_COOLDOWN:
-            continue
         cur = (plans.get(sid) or {}).get("est_net", 0.0) if sh.get("route_to") else 0.0
+        # an idle ship (nothing pays where it is) waits only VOYAGE_COOLDOWN_IDLE turns: Oct 13 Flax Wyrm sat at crew 0
+        # in Brebronn with Clairlond paying ~+220 a turn, held back by the 12-turn cooldown meant for earning ships
+        idle = not (plans.get(sid) or {}).get("orders")
+        if turn - (c.get("last_voyage_turn") or -999) < (VOYAGE_COOLDOWN_IDLE if idle else VOYAGE_COOLDOWN):
+            continue
         cand = next((b for b in best if str(b.get("town_id")) not in taken and b["per_turn"] >= cur + VOYAGE_MIN_GAIN), None)
         if not cand:
             continue
