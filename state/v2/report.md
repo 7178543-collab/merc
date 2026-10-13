@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13247, 2026-10-13 08:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13247, 2026-10-13 08:12. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
@@ -71,7 +71,7 @@ Labour metered per turn while a site can progress: labour 21
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 117401698 | 0 | - | - | 0 |
-| linen snake | 0.5 / 1.00 | 104 | 159601387 | 0.032 | beer 4, timber 13 | - | 77 |
+| linen snake | 0.5 / 1.00 | 104 | 159601387 | 0.52 | beer 4, timber 13 | - | 77 |
 
 ## Ship plans (this turn's world prices)
 
