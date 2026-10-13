@@ -238,3 +238,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   (transports level 1; table 10/25/50/100...), but no snekkja is for sale near home (asks 2,680 at Deanfold/Angefont;
   launching = POST /transports {type, owner_id, name, location, operation_target "0", autoset_inventory} from a ship
   asset we own). Worth it once beer runs full and has buyers abroad: Taylor's call (~2.7k).
+- 05:08 turn 13244: **Flax Wyrm / Brebronn sold garments 22 at 28.00 (616) and beer 30 at 4.80 (144)**, ~+150 vs home
+  before crew. Linen Snake / Etallaen sold nothing: at crew 0.1 it makes 0.19 round trips a turn, and a route only trades
+  in port. Fix: crew for at least one round trip a turn (Etallaen 0.6, ~60 coin/turn). v2 re-planned: Etallaen garments
+  50 at 33.20 (their bid rose to ~33.9), crew 0.6, est +306. Brebronn's bids were used up by our own sales -> nothing pays
+  there this turn -> Flax Wyrm crew 0 (no cost) until a town pays.
+- chain_balancer ramped with the counted exports (sew 2, flax 11, retting 1.98): garments 82/turn, labour ~1,370/turn
+  (bought 945 at ~1.71). It now averages route exports over 6 turns (v2 history `exports`) so it doesn't swing turn to turn.
+- Quarry: porterage-limited (7 stranded); v2 sizes porterage from the shortfall next run. Park plot 11 progressing.
