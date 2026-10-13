@@ -178,12 +178,20 @@ def ship_routes(snap, out, replay):
         rr["t"] = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
         with open(path, "w") as f:
             json.dump(rr, f, indent=1)
-        plans = []
+        # ships share one storehouse: plan the best-paying route first and give the next ships what is left
+        prelim = []
         for sh in snap.get("ships") or []:
             pl = ships.plan_ship(sh, snap, world, sea, cfg)
             if pl:
-                pl["diff"] = ships.route_diff(sh, pl)
-                plans.append(pl)
+                prelim.append((pl["est_net"], sh))
+        plans, taken = [], {}
+        for _, sh in sorted(prelim, key=lambda x: -x[0]):
+            pl = ships.plan_ship(sh, snap, world, sea, cfg, taken=taken)
+            for item, o in pl["orders"].items():
+                if "sell_volume" in o:
+                    taken[item] = taken.get(item, 0) + o["sell_volume"]
+            pl["diff"] = ships.route_diff(sh, pl)
+            plans.append(pl)
         return rr, {"t": rr["t"], "plans": plans, "best": ships.best_towns(snap, world, sea, cfg)}
     except Exception as e:
         print("routes skipped: %s: %s" % (type(e).__name__, e))

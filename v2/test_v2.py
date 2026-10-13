@@ -258,6 +258,9 @@ def test_ships_plan():
     assert g["sell_volume"] == 59 and g["sell_price"] == "28.0" and g["min_holding"] == 30     # 98% of their 28.4 bid, grid-snapped
     assert p["orders"]["cured fish"]["buy_volume"] == 5 and "cloth" not in p["orders"]       # we use it / we make cloth
     assert p["crew"] == 0.2 and p["est_net"] > 250                                           # 64 units / 483 a turn -> 0.2
+    shared = ships.plan_ship({"name": "s2", "id": "8", "route_to": "2"}, snap, world, sea, cfg, recipes=rec,
+                             taken={"garments": 60})
+    assert shared["orders"]["garments"]["sell_volume"] == 14            # 74 spare a turn, 60 already on another route
     diff = ships.route_diff({"route_orders": {"limestone": [{"buy_volume": 30}]}}, p)
     assert diff["limestone"] == [] and "garments" in diff
     world[1]["markets"]["garments"] = mk(23.0, 0, 59, 0, 72)                                 # bid gone below home value + margin

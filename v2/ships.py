@@ -38,8 +38,9 @@ def _keep(it, cfg, item):
     return max([_f(o.get("min_holding")) for o in it.get("orders") or []] + [_f((cfg.get("stockpiles") or {}).get(item))])
 
 
-def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None):
-    """Orders + crew for one ship's current route town. Returns a dict (see keys below) or None if it has no route."""
+def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=None):
+    """Orders + crew for one ship's current route town. Returns a dict (see keys below) or None if it has no route.
+    taken: {item: units a turn} already given to other ships' routes this run (they share one storehouse)."""
     town_id = str(ship.get("route_to") or "")
     if not town_id:
         return None
@@ -78,7 +79,7 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None):
         if m["bid"] > 0 and made and item not in inter and item not in never:
             keep = _keep(it, cfg, item)
             spare = max(0.0, _f(fl.get("production")) - _f(fl.get("consumption"))) + max(0.0, _f(it.get("held")) - keep) / 12.0
-            spare = min(spare, max(0.0, _f(it.get("held")) - keep))
+            spare = min(spare, max(0.0, _f(it.get("held")) - keep)) - float((taken or {}).get(item, 0))
             if spare >= 1:
                 # what a unit fetches at home: the best of the home bid and what our home sales actually got last turn
                 realized = (_f(fl.get("sale_value")) / _f(fl.get("sale"))) if _f(fl.get("sale")) else 0.0
