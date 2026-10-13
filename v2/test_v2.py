@@ -265,6 +265,38 @@ def test_ships_plan():
     assert "garments" not in p["orders"]
 
 
+def test_ship_voyage_steps():
+    d = tempfile.mkdtemp()
+    calls = []
+
+    def apply(e):
+        calls.append(e)
+        return {"ok": True}
+    try:
+        cfg = {"live": {"ship_modes": {"9": "auto"}}}
+        plan = {"ship_plans": {"plans": [{"id": "9", "est_net": 0.0}],
+                               "best": [{"town": "Etallaen", "town_id": "109102068", "per_turn": 300}]}}
+        sst = {}
+        log = os.path.join(d, "a.jsonl")
+        snap = {"turn": 1, "ships": [{"id": "9", "name": "s", "town": "133002223", "route_to": "133002223"}]}
+        out = act.ship_voyages(plan, cfg, snap, sst, log, apply)            # decides: heading for Etallaen
+        assert "heading for Etallaen" in out[0] and calls == []
+        snap["turn"] = 2
+        act.ship_voyages(plan, cfg, snap, sst, log, apply)                  # stop the route, sail home
+        assert calls[0]["route"]["stop"] and calls[-1]["travel"]["to_town"] == "152202387"
+        calls.clear()
+        snap = {"turn": 3, "ships": [{"id": "9", "name": "s", "town": "152202387", "route_to": None}]}
+        act.ship_voyages(plan, cfg, snap, sst, log, apply)                  # home: sail out and start the route
+        assert calls[1]["travel"]["to_town"] == "109102068" and calls[2]["route"]["start"]
+        calls.clear()
+        snap = {"turn": 4, "ships": [{"id": "9", "name": "s", "town": "109102068", "route_to": "109102068"}]}
+        out = act.ship_voyages(plan, cfg, snap, sst, log, apply)            # route running: done
+        assert "running" in out[0] and sst["9"]["voyage"] is None and calls == []
+        assert act.ship_voyages(plan, cfg, dict(snap, turn=5), sst, log, apply) == []   # cooldown
+    finally:
+        shutil.rmtree(d)
+
+
 def test_routes():
     import routes
     sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 300.0}, "3": {"name": "Far", "moves": 750.0},

@@ -318,6 +318,89 @@ def ship_auto(plan, cfg, snap, log_path, sst=None):
     return done
 
 
+VOYAGE_CREW = 0.5
+VOYAGE_MIN_GAIN = 60           # a better town must promise this much a turn more before a ship sails
+VOYAGE_COOLDOWN = 12           # turns between voyages per ship
+HOME_TOWN = "152202387"
+
+
+def _queue_apply(entry):
+    """The order queue's tested handlers (travel with the sea grid, route start/stop, crew), logged the same way."""
+    sys.path.insert(0, ROOT)
+    import order_queue
+    r = order_queue.apply_entry(entry)
+    order_queue.log(entry, r, source="v2-ships")
+    return r
+
+
+def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
+    """Move an auto ship to a better town, one step per run (a ship moves at the turn tick):
+      route that no longer pays (or no route) + a town promising VOYAGE_MIN_GAIN more -> stop the route, sail home;
+      at home -> sail to the town and start the route there (the route runs on the home -> town journey);
+      route on the target town -> done (ship_auto takes it from there).
+    State per ship in act_state ships[id].voyage. At most one voyage per VOYAGE_COOLDOWN turns per ship."""
+    apply = apply or _queue_apply
+    modes = (cfg.get("live") or {}).get("ship_modes") or {}
+    sp = (plan or {}).get("ship_plans") or {}
+    turn = (snap or {}).get("turn") or 0
+    plans = {str(p_.get("id")): p_ for p_ in sp.get("plans") or []}
+    best = sp.get("best") or []
+    taken = {str(s.get("route_to")) for s in (snap or {}).get("ships") or [] if s.get("route_to")}
+    out = []
+    for sh in (snap or {}).get("ships") or []:
+        sid = str(sh.get("id"))
+        if modes.get(sid) != "auto":
+            continue
+        c = sst.setdefault(sid, {})
+        v = c.get("voyage")
+        if v:
+            tgt = v["target"]
+            if str(sh.get("route_to")) == tgt:
+                c["voyage"] = None
+                c["last_voyage_turn"] = turn
+                out.append("%s: route on %s running" % (sh.get("name"), v.get("name")))
+                continue
+            if v.get("turn") == turn:
+                continue                        # one step per turn: the ship moves at the tick
+            v["turn"] = turn
+            if sh.get("route_to"):
+                r = apply({"route": {"transport": sid, "stop": True}, "confirm": True})
+                out.append("%s: stop route %s" % (sh.get("name"), "ok" if r.get("ok") else r.get("error") or r.get("status")))
+                if not r.get("ok"):
+                    continue
+            if str(sh.get("town")) != HOME_TOWN and v["step"] == "home":
+                apply({"transport": sid, "operation_target": VOYAGE_CREW})
+                r = apply({"travel": {"transport": sid, "to_town": HOME_TOWN}, "confirm": True})
+                out.append("%s: sail home %s" % (sh.get("name"), "ok" if r.get("ok") else r.get("error")))
+                continue
+            if str(sh.get("town")) == HOME_TOWN:
+                apply({"transport": sid, "operation_target": VOYAGE_CREW})
+                r = apply({"travel": {"transport": sid, "to_town": tgt}, "confirm": True})
+                r2 = apply({"route": {"transport": sid, "start": True}, "confirm": True})
+                v["step"] = "out"
+                out.append("%s: sail to %s %s, route %s" % (sh.get("name"), v.get("name"), "ok" if r.get("ok") else r.get("error"),
+                                                            "started" if r2.get("ok") else "not yet (%s)" % (r2.get("error") or r2.get("status"))))
+                continue
+            if v["step"] == "out" and str(sh.get("town")) == tgt:
+                r2 = apply({"route": {"transport": sid, "start": True}, "confirm": True})
+                out.append("%s: at %s, route %s" % (sh.get("name"), v.get("name"), "started" if r2.get("ok") else "FAILED %s" % (r2.get("error") or r2.get("status"))))
+            continue
+        if turn - (c.get("last_voyage_turn") or -999) < VOYAGE_COOLDOWN:
+            continue
+        cur = (plans.get(sid) or {}).get("est_net", 0.0) if sh.get("route_to") else 0.0
+        cand = next((b for b in best if str(b.get("town_id")) not in taken and b["per_turn"] >= cur + VOYAGE_MIN_GAIN), None)
+        if not cand:
+            continue
+        c["voyage"] = {"target": str(cand["town_id"]), "name": cand["town"], "step": "home", "turn": None, "from_turn": turn,
+                       "expected": cand["per_turn"]}
+        out.append("%s: heading for %s (est %+.0f a turn vs %+.0f now)" % (sh.get("name"), cand["town"], cand["per_turn"], cur))
+        with open(log_path, "a") as f:
+            f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": turn, "ship": sh.get("name"),
+                                "voyage_to": cand["town"], "expected": cand["per_turn"], "current": cur}, default=str) + "\n")
+        taken.add(str(cand["town_id"]))
+    return out
+
+
 def ship_guard(plan, ship_ids, st, turn, log_path):
     """A ship v2 watches (config live.ships) that costs crew for SHIP_IDLE_TURNS turns in a row while its route trades
     nothing is paused (crew 0). Oct 13: the Flax Wyrm ran ~2 days at 0.72 crew this way. Counts once per game turn."""
@@ -327,6 +410,10 @@ def ship_guard(plan, ship_ids, st, turn, log_path):
         if sid not in ship_ids:
             continue
         c = st.setdefault(sid, {"idle": 0, "turn": None})
+        c.setdefault("idle", 0)
+        if c.get("voyage"):
+            c["idle"] = 0
+            continue                    # sailing to a new town costs crew without trading: expected
         if c.get("turn") == turn:
             continue
         c["turn"] = turn
@@ -401,6 +488,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     if live_mode and ship_ids and not stand:
         paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
         ship_done = ship_auto(plan or {}, cfg, snap, LOG, st["ships"])
+        try:
+            ship_done += ship_voyages(plan or {}, cfg, snap, st["ships"], LOG)
+        except Exception as e:      # a voyage step must never stop the store orders
+            ship_done.append("voyages failed: %s: %s" % (type(e).__name__, e))
     newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results) if live_mode else {}
     if newly:
         for item, why in newly.items():
