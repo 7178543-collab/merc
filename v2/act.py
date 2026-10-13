@@ -318,7 +318,9 @@ def ship_auto(plan, cfg, snap, log_path, sst=None):
             done.append("%s held at crew 0 by the ship guard since turn %s" % (pl.get("ship"), gp))
             continue
         writes = 0
-        for item, managers in (pl.get("diff") or {}).items():
+        # clears first: a route's orders reserve cargo room, so raising one before another is cleared can be refused
+        # (Oct 13: beer 4 -> 65 got 409 "no capacity" while the old timber order still held 270 units)
+        for item, managers in sorted((pl.get("diff") or {}).items(), key=lambda kv: bool(kv[1])):
             if writes >= MAX_ROUTE_WRITES:
                 break
             ok, status, body = api.write("PATCH", "/transports/%s/route/inventory/%s" % (sid, api.q(item)), {"managers": managers})
