@@ -372,6 +372,19 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
     plans = {str(p_.get("id")): p_ for p_ in sp.get("plans") or []}
     best = sp.get("best") or []
     taken = {str(s.get("route_to")) for s in (snap or {}).get("ships") or [] if s.get("route_to")}
+    # Oct 13: reserve every in-progress voyage's target up front so two ships never head for the same town
+    # (Flax Wyrm and linen snake both picked Etallaen an hour apart; the second would undercut the first's sales)
+    voy_targets = {}
+    for _s in (snap or {}).get("ships") or []:
+        _sid = str(_s.get("id"))
+        _v = (sst.get(_sid) or {}).get("voyage")
+        if not _v:
+            continue
+        if str(_v["target"]) in voy_targets.values():
+            sst[_sid]["voyage"] = None          # duplicate target: this ship re-plans below
+            continue
+        voy_targets[_sid] = str(_v["target"])
+    taken |= set(voy_targets.values())
     out = []
     for sh in (snap or {}).get("ships") or []:
         sid = str(sh.get("id"))
@@ -404,7 +417,7 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 # last look before sailing out: prices move, and a target picked on an over-full plan (Oct 13: Kirchwerp
                 # scored +158 on cargo twice the ship's room) may no longer be the best. Take this run's best free town,
                 # or end the voyage and wait at home at crew 0 if nothing pays.
-                now_best = next((b for b in best if str(b.get("town_id")) not in taken), None)
+                now_best = next((b for b in best if str(b.get("town_id")) not in taken or str(b.get("town_id")) == tgt), None)
                 if not now_best:
                     apply({"transport": sid, "operation_target": 0.0})
                     c["voyage"] = None

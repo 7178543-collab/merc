@@ -357,6 +357,31 @@ def test_ship_voyage_steps():
         shutil.rmtree(d)
 
 
+def test_two_ships_never_share_a_voyage_target():
+    # Oct 13: Flax Wyrm and linen snake both picked Etallaen; the second must re-plan to the next free town
+    d = tempfile.mkdtemp()
+    try:
+        cfg = {"live": {"ship_modes": {"1": "auto", "2": "auto"}}}
+        plan = {"ship_plans": {"plans": [{"id": "1", "est_net": 0.0, "orders": {}}, {"id": "2", "est_net": 0.0, "orders": {}}],
+                               "best": [{"town": "Etallaen", "town_id": "109102068", "per_turn": 217},
+                                        {"town": "Rouhomme", "town_id": "111", "per_turn": 101}]}}
+        sst = {"1": {"voyage": {"target": "109102068", "name": "Etallaen", "step": "home", "turn": 9}, "last_voyage_turn": 1},
+               "2": {"voyage": {"target": "109102068", "name": "Etallaen", "step": "home", "turn": 9}, "last_voyage_turn": 1}}
+        snap = {"turn": 9, "ships": [{"id": "1", "name": "a", "town": "5", "route_to": None},
+                                     {"id": "2", "name": "b", "town": "6", "route_to": None}]}
+        out = act.ship_voyages(plan, cfg, snap, sst, os.path.join(d, "a.jsonl"), lambda e: {"ok": True})
+        assert sst["1"]["voyage"]["target"] == "109102068", sst
+        assert sst["2"]["voyage"]["target"] == "111" and any("heading for Rouhomme" in o for o in out), (out, sst)
+        # a ship back home re-checking its own reserved target keeps it (doesn't count itself as taken)
+        sst = {"1": {"voyage": {"target": "109102068", "name": "Etallaen", "step": "home", "turn": 8, "moves": 774}}}
+        calls = []
+        home = {"turn": 9, "ships": [{"id": "1", "name": "a", "town": "152202387", "route_to": None}]}
+        act.ship_voyages(plan, cfg, home, sst, os.path.join(d, "a.jsonl"), lambda e: calls.append(e) or {"ok": True, "route": {"remote_town": "109102068"}})
+        assert any((c.get("travel") or {}).get("to_town") == "109102068" for c in calls), calls
+    finally:
+        shutil.rmtree(d)
+
+
 def test_ships_fit_capacity():
     import ships
     # 1,072 moves -> 279 size units a turn at full crew: beer 63 (126) + timber 26 (390) can't both go
