@@ -312,3 +312,5 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   cut home sells to 30 / 10 for ship plans that then sold nothing. Fixed: export-first only cuts home sells when stock
   can't cover home + routes (garments 402 and beer 283 held cover both). Home now 70 garments / 65 beer.
   Handoff doc Snapshot updated (Now table, Oct 13 lesson, v2 item).
+- 10:51 morning report sent (cash 23,424 at 23:14 Toronto -> 22,686; boats ~-30 net; decisions: labour to v2, garment
+  chain size, no third ship, no brewery increase). Handoff Snapshot updated. Night shift ends.
