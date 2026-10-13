@@ -676,7 +676,8 @@ def _apply_world(e):
         if want != "all" and tw.get("name") not in want:
             continue
         out[tw.get("name")] = {k: [v.get("highest_bid"), v.get("bid_volume_10"), v.get("lowest_ask"), v.get("ask_volume_10"),
-                                   v.get("volume_ema_12")] for k, v in (tw.get("markets") or {}).items() if isinstance(v, dict)}
+                                   v.get("volume_ema_12"), v.get("price_ema_12")]
+                               for k, v in (tw.get("markets") or {}).items() if isinstance(v, dict)}
     path = os.path.join(HERE, "state", "dump", "world.json.gz")
     with gzip.open(path, "wt") as f:
         json.dump({"t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), "towns": out}, f)

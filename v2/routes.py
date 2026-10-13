@@ -60,7 +60,8 @@ def journey_capacity(moves, ship=SHIP):
 def world_from_compact(w):
     """state/dump/world.json.gz ({town: {item: [bid, bid depth, ask, ask depth, traded]}}) -> marketdata-like list."""
     return [{"name": town, "markets": {k: {"highest_bid": v[0], "bid_volume_10": v[1], "lowest_ask": v[2],
-                                             "ask_volume_10": v[3], "volume_ema_12": v[4]} for k, v in m.items()}}
+                                             "ask_volume_10": v[3], "volume_ema_12": v[4],
+                                             "price_ema_12": v[5] if len(v) > 5 else None} for k, v in m.items()}}
             for town, m in ((w or {}).get("towns") or {}).items()]
 TAKE_SHARE = 0.3
 SLIP = 0.05
@@ -90,7 +91,7 @@ def fetch_world(timeout=90):
 
 def _mk(m):
     traded = _f(m.get("volume_ema_12"))
-    return {"bid": _f(m.get("highest_bid")), "ask": _f(m.get("lowest_ask")),
+    return {"bid": _f(m.get("highest_bid")), "ask": _f(m.get("lowest_ask")), "ema": _f(m.get("price_ema_12")),
             "sell_room": max(_f(m.get("bid_volume_10")), TAKE_SHARE * traded),     # what they'd buy from us per turn
             "buy_room": max(_f(m.get("ask_volume_10")), TAKE_SHARE * traded),      # what we could buy there per turn
             "traded": traded}

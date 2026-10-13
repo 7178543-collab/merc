@@ -24,6 +24,7 @@ import routes
 MIN_MARGIN_SHARE = 0.04        # at least 4% of the home value per unit, after shipping
 MIN_MARGIN_ABS = 0.25
 FILL_SHARE = 0.98              # our ask sits at 98% of their best bid
+EMA_CAP = 1.03                 # ... and never over 103% of the town's 12-turn average price for it
 MIN_NET_PER_TURN = 15          # a route must clear this after crew, or the ship stays at 0
 # route fare per cargo size unit (storehouse operations export_fare / units x size): Blanans 0.04, Etallaen 0.10,
 # Kirchwerp 0.19 (timber 13 x 15 = 195 size units paid 36.66, Oct 13). Not modelled per town yet: a middle value.
@@ -89,7 +90,11 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                 realized = (_f(fl.get("sale_value")) / _f(fl.get("sale"))) if _f(fl.get("sale")) else 0.0
                 home_val = max(h.get("bid") or 0.0, realized, _f(it.get("unit_cost")))
                 floor = home_val + ship_cost + fare + max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * home_val)
-                price = routes_snap(m["bid"] * FILL_SHARE, up=True)
+                # the best bid can be a one-off spike (Oct 13: Etallaen 33.8, Clairlond 28.4 for garments while
+                # garments trade at 22-24 almost everywhere, 12-turn price EMA ~22.3): by the time the route's ask is up
+                # it is gone, and the ship sails for nothing. Price off the lower of the bid and 103% of the EMA.
+                ref = min(m["bid"], m["ema"] * EMA_CAP) if m.get("ema") else m["bid"]
+                price = routes_snap(ref * FILL_SHARE, up=True)
                 if price <= m["bid"] and price >= floor:
                     vol = int(min(spare, m["sell_room"]))
                     if vol >= 1:
