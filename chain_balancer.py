@@ -62,7 +62,7 @@ MODE = {
 
 # building id, recipe inputs/outputs per 1x (read from the game's production pages)
 CHAIN = {
-    "flax":  {"id": "151602400",       "labour": 11,  "tools": 0.6, "out": 18},   # plants
+    "flax":  {"id": "151602400",       "labour": 12,  "tools": 0,   "out": 16},   # plants (grow flax 1; Oct 13: was 11/0.6/18, so the farm was sized 11% short and retting ran short ~14 plants a turn)
     "ret":   {"id": "151802398",       "labour": 25,  "tools": 2,   "in": 90, "out": 35},   # plants -> fibres
     "spin":  {"id": "152202388002007", "labour": 75,  "tools": 0,   "in": 17, "out": 50},   # fibres -> thread
     "weave": {"id": "152202388001005", "labour": 75,  "tools": 0,   "in": 50, "out": 50},   # thread -> cloth
