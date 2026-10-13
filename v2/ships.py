@@ -154,7 +154,18 @@ def _canon(tiers):
     return sorted([sorted((k, v(x)) for k, x in t.items()) for t in tiers])
 
 
-def best_towns(snap, world, sea, cfg, top=5):
-    """Where an idle ship should go: routes.rank, positive only."""
-    rr = routes.rank(snap, world, sea, cfg=cfg, top=top)
-    return [r for r in rr["routes"] if r["per_turn"] > MIN_NET_PER_TURN]
+def best_towns(snap, world, sea, cfg, top=5, recipes=None, products=None):
+    """Where a ship should go: every reachable town scored with plan_ship itself (the orders the bot would really place
+    there), so a voyage is never chosen on trades the ship plan would not make. Positive, above MIN_NET_PER_TURN."""
+    home = str(snap.get("home_town") or "")
+    prods = products if products is not None else routes._products()
+    out = []
+    for tid, d in sea.items():
+        if tid == home or not d.get("moves") or not routes.trips_per_turn(d["moves"]):
+            continue
+        pl = plan_ship({"name": "?", "id": "?", "route_to": tid}, snap, world, sea, cfg, recipes, prods)
+        if pl and pl["orders"] and pl["est_net"] > MIN_NET_PER_TURN:
+            out.append({"town": d["name"], "town_id": tid, "per_turn": pl["est_net"], "crew": pl["crew"],
+                        "orders": pl["orders"]})
+    out.sort(key=lambda r: -r["per_turn"])
+    return out[:top]
