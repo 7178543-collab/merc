@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:08. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13243, 2026-10-13 04:10. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 24,658, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
@@ -70,11 +70,12 @@ Labour metered per turn while a site can progress: labour 22
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.5 / 0.25 | 25 | - | 0 | - | - | 0 |
+| Flax Wyrm | 0.5 / 0.25 | 25 | 137102412 | 0 | - | - | 0 |
 | linen snake | 0.1 / 0.40 | 39 | 109102068 | 0.136 | garments 30 | - | 277 |
 
 ## Ship plans (this turn's world prices)
 
+- **Flax Wyrm** on Vauxvais: nothing pays; crew 0.0; est +0 a turn; best orders clear only 11 a turn after crew: ship stays at 0
 - **linen snake** on Etallaen: garments sell 34 @ 28.6; crew 0.1; est +204 a turn
 - best towns now: Brebronn +259, Etallaen +206, Donaunieder +124, Orlesailles +117, Vauxvais +100
 
@@ -105,7 +106,7 @@ Labour metered per turn while a site can progress: labour 22
 | fish | 7 @ 2.5, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | garments |  | 67 @ min 22.0 | makes 42.2, uses 1.8, holds 389 (keeps 30): sells the surplus + 27/turn of the excess |
 | grain | 33 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 130 = 4.0 turns |
-| labour | 564 @ 2.2, stop - |  | uses 986.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 507 = 0.9 turns |
+| labour | 564 @ 2.2, stop - |  | uses 986.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 504 = 0.9 turns |
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 1 = 7.0 turns |
 | limestone |  | 5 @ min 25.0 |  |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
