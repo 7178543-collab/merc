@@ -48,14 +48,23 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
     Queue entry `{"expand": {"building": id, "count": 1 | "tiles": [...]}, "confirm": true}`: reads the live town, skips
     structures and the fixed roads (grid column 4, row 3), prefers tiles we own then nearest, claims unowned land first, tries
     candidates nearest-first (a bad tile is refused harmlessly), verifies the building then shows an expansion.
-  * **Land claims**: `POST /towns/{id}/expand {claims: [{x, y, sub: {x, y}}], properties: []}` (omit `landing`; it is not a
-    boolean). Replies 200 with the account embedded, **but settles at the next turn tick** (money stays reserved); the tile
-    still reads `{ask_price: "24"}` until then. So claim, wait a tick, then expand. Queue entry `{"claim": {...}}`.
+  * **Buying a centre tile (CORRECTED Oct 13)**: a centre sub-tile nobody owns is a *property* the town sells (ask 24 by
+    default), so `POST /towns/{id}/expand {claims: [], properties: [{location: "1522.3:2388.5"}]}`. It is ours at once (the
+    expansion started in the same run). `claims` are for unowned *map* land outside the centres (domain growth, with a landing
+    route). My Oct 12 "claims" of centre tiles returned 200 and did nothing (the tile stayed owner 0 after the tick; the money
+    "reserved" in the reply was the normal order reserve, 1,570 before any claim). Source: the game client's town-expand
+    dialog (`L('/towns/{id}', 'expand', {claims, properties: ue.map(e => ({location: v(xH(e.id))})), landing})`).
+  * **Construction pace**: a new construction starts at `settings.pace = 0` and receives nothing, so it never progresses.
+    `PUT /buildings/{id}/construction/settings {..., pace: 100}` (client slider: 0/25/50/100; per-turn delivery =
+    ceil(capacity * pace / (100 * total_time)) from the provider storehouse). Queue `{"pace": {...}}`; `expand` now sets 100.
+  * **Park plot 11 placed with no click, Oct 13 00:15 UTC** (turn 13239): queue `{"plot": {"building": park}, "confirm": true}`
+    bought 1522.3:2388.5 and started the expansion; pace set to 100 at 00:18. prestige_rules `AUTO_PLOT = True`: the park
+    rule now places the next plot itself when pool room + limestone 60 + timber 40 are there and no plot is building.
   * Town centre data: `GET /towns/{id}` `domain` holds one entry per sub-tile, key = centre * 1,000,000 + sx * 1000 + sy, value
     `{owner_id, structure?, ask_price?}`. No entry or an ask-price-only entry = unowned land. Centres are in `center_ids`; the
     main centre (town location) has reserved plaza/hall tiles, so skip it.
-  * Mistake to avoid: my first `expand` claimed the tile of EVERY candidate it tried (5 small claims) before the expansion
-    could start. Claim only the tile you will use. Fixed in intent: pass `"tiles": [...]` when the tile is known.
+  * Mistake to avoid: my first `expand` "claimed" the tile of every candidate it tried. Buy only the tile you will use
+    (`plot` does exactly one).
 - **Deferred steps** (`{"later": {"after": ISO time, "entry": {...}}}`): parked in `state/deferred.json`, run on the first
   workflow run at or after that time (hourly at :20, or any queue push), same guards, logged with source `deferred`.
   Tested offline with a stubbed module (no network, no credentials). Use for anything that needs a turn tick in between.
@@ -63,8 +72,7 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   Status tells the story: 404 = no such route, 405 = wrong method, 401 = missing owner, 400 text = the next field. The public
   `pymerc` client (github.com/jmgilman/pymerc) has no building or travel calls, so don't look there.
   `tools/netlog.user.js` is no longer needed for this (kept in case another call hides).
-- **Sea grid coverage**: only x 992-2015, y 1888-2911 (every town within ~500 tiles of home). Far towns need more
-  sections. Idea: let the travel handler fetch missing sections itself, cached by bbox.
+- **Sea grid coverage**: whole map since Oct 13 (see "Ship routes").
 - **Route economics** (v2 goal queue): a `route` goal = ship + destination + cargo + crew level; pick the destination
   from the world market data; return trip and arrival detection belong in the bot, not in clicks.
 - **Next season**: the map may change. The area-parity rule and the dock rule are generic; regenerate `state/seamap`
