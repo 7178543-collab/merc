@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13240, 2026-10-13 01:04. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
-Cash 22,520, prestige 2,572 (152 free, +3.8/turn).
+Turn 13240, 2026-10-13 01:44. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Cash 22,650, prestige 2,572 (152 free, +3.8/turn).
 
 ## Items v2 runs (last turn)
 
@@ -53,18 +53,18 @@ Labour metered per turn while a site can progress: labour 22
 
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
-| maintain 1 | park | 0.5 | 49.5 | 52.5 | running |
+| maintain 1 | park | 0.5 | 49.5 | 53.0 | running |
 | hold banquet 2 (pies) | mansion | 7 | 57.2 | 57.2 | thin at home: pies, candles |
-| hold sermon 2 (candles) | church | 31 | 55.1 | 57.2 | needs a church (build cost 70,166); thin at home: jewellery, candles, furniture |
-| jousting 1 | arena | 170 | 57.7 | 57.9 | needs a arena (build cost 25,676); thin at home: protection, light armour, arms; needs weaponry skill |
+| jousting 1 | arena | 170 | 57.9 | 58.0 | needs a arena (build cost 27,106); thin at home: protection, light armour, arms; needs weaponry skill |
 | hold banquet 3 (pies) | mansion | 8 | 58.3 | 58.3 | thin at home: pies, candles |
-| hold prayer 2 | chapel | 13 | 56.3 | 58.6 | needs a chapel (build cost 33,269) |
-| hold banquet 4 (pies) | mansion | 18 | 58.8 | 58.8 | thin at home: candles |
-| hold sermon 2 | church | 24 | 56.1 | 58.8 | needs a church (build cost 70,166); thin at home: jewellery, furniture |
+| hold sermon 2 (candles) | church | 31 | 56.2 | 58.4 | needs a church (build cost 72,810); thin at home: jewellery, candles, furniture |
+| hold banquet 4 (pies) | mansion | 18 | 58.9 | 58.9 | thin at home: candles |
 | hold banquet 2 (fish) | mansion | 6.8 | 59.2 | 59.2 | thin at home: cured fish |
 | hold banquet 1 (fish) | mansion | 4.2 | 59.4 | 59.4 | running |
-| jousting 3 | arena | 230 | 59.4 | 59.5 | needs a arena (build cost 25,676); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold mass 2 (premium) | cathedral | 360 | 59.0 | 59.8 | needs a cathedral (build cost 283,045); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| jousting 3 | arena | 230 | 59.4 | 59.5 | needs a arena (build cost 27,106); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold mass 2 (premium) | cathedral | 360 | 59.2 | 59.9 | needs a cathedral (build cost 290,320); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| hold sermon 2 | church | 24 | 57.5 | 60.4 | needs a church (build cost 72,810); thin at home: jewellery, furniture |
+| hold prayer 2 | chapel | 13 | 58.0 | 60.5 | needs a chapel (build cost 34,812) |
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -84,7 +84,7 @@ Labour metered per turn while a site can progress: labour 22
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| beer |  | 65 @ min 3.7 | makes 70.0, uses 18.6, holds 271 (keeps 60): sells the surplus + 13/turn of the excess |
+| beer |  | 62 @ min 3.7 | makes 70.0, uses 18.6, holds 236 (keeps 60): sells the surplus + 10/turn of the excess |
 | cured fish | 7 @ 26.0, stop 20 |  | uses 5.5/turn (mansion 1), makes 0.0, holds 20 = 3.6 turns |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 2.4, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 44 = 6.9 turns |
