@@ -533,10 +533,11 @@ def _tile_owner(town, tile):
 
 
 def _claim_tile(town_id, tile):
-    """Claim unowned land: POST /towns/{id}/expand {claims: [{x, y, sub: {x, y}}], properties: []} (the game's own shape;
-    `landing` is left out). Returns (ok, error text)."""
-    cx, sx, cy, sy = _parse_loc(tile)
-    body = {"claims": [{"x": cx, "y": cy, "sub": {"x": sx, "y": sy}}], "properties": []}
+    """Buy a town-centre tile: POST /towns/{id}/expand {claims: [], properties: [{location: "x.sx:y.sy"}]}.
+    From the game's own client (Oct 13): a centre tile nobody owns is a PROPERTY the town sells (ask 24 by default) and
+    goes in `properties`; `claims` are for unowned map land outside the centres (domain growth, with a landing route).
+    Our Oct 12 attempts sent centre tiles as claims: 200, money reserved, tile never became ours. Returns (ok, error)."""
+    body = {"claims": [], "properties": [{"location": str(tile)}]}
     ok, status, resp = _req("POST", "/towns/%s/expand" % town_id, body)
     return ok, (None if ok else "claim refused %s: %s" % (status, (resp or "")[:160].replace("\n", " ")))
 
@@ -657,12 +658,20 @@ def _apply_plot(e):
     cok, cerr = _claim_tile(bld["town_id"], c["tile"])
     if not cok:
         return dict(ok=False, tile=c["tile"], error=cerr)
+    try:
+        town = _get_json("/towns/%s" % bld["town_id"])
+    except Exception:
+        town = {}
+    if _tile_owner(town, c["tile"]) == OWNER_ID:          # bought outright: build now
+        r = _apply_expand(step)
+        r.update(tile=c["tile"], bought=True)
+        return r
     after = _defer(step)
-    return dict(ok=True, tile=c["tile"], claimed=True, expand_after=after)
+    return dict(ok=True, tile=c["tile"], claimed=True, owner_now=_tile_owner(town, c["tile"]), expand_after=after)
 
 
 def _apply_claim(e):
-    """Claim unowned land: {"claim": {"town_id": "152202387", "tiles": ["1522.3:2388.5"]}, "confirm": true}.
+    """Buy town-centre tiles: {"claim": {"town_id": "152202387", "tiles": ["1522.3:2388.5"]}, "confirm": true}.
     No confirm = dry run (lists tiles, owner and asking price from the live town data). Logs the game's reply verbatim."""
     c = e["claim"]
     tid = str(c["town_id"])
@@ -679,10 +688,15 @@ def _apply_claim(e):
         seen.append("%s: %s" % (t, ent if ent is not None else "no entry"))
     if e.get("confirm") is not True:
         return dict(ok=True, dry_run=True, tiles=seen)
-    body = {"claims": [{"x": _parse_loc(t)[0], "y": _parse_loc(t)[2], "sub": {"x": _parse_loc(t)[1], "y": _parse_loc(t)[3]}}
-                       for t in tiles], "properties": []}
+    body = {"claims": [], "properties": [{"location": t} for t in tiles]}      # centre tiles are bought (see _claim_tile)
     ok, status, resp = _req("POST", "/towns/%s/expand" % tid, body)
-    return dict(ok=bool(ok), status=status, reply=(resp or "")[:300], tiles=seen)
+    try:
+        dom = (_get_json("/towns/%s" % tid).get("domain")) or {}
+        after = [(t, _tile_owner({"domain": dom}, t)) for t in tiles]
+    except Exception:
+        after = None
+    return dict(ok=bool(ok) and bool(after) and all(o == OWNER_ID for _, o in after), status=status,
+                reply=(resp or "")[:300], tiles=seen, owner_after=after)
 
 
 def apply_entry(e):
