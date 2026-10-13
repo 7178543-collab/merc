@@ -246,3 +246,13 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - chain_balancer ramped with the counted exports (sew 2, flax 11, retting 1.98): garments 82/turn, labour ~1,370/turn
   (bought 945 at ~1.71). It now averages route exports over 6 turns (v2 history `exports`) so it doesn't swing turn to turn.
 - Quarry: porterage-limited (7 stranded); v2 sizes porterage from the shortfall next run. Park plot 11 progressing.
+- 05:20 turn 13244: **porterage**: the quarry ran at 20% (0.078 of 0.4) because the three farms draw 24.3 porterage and the
+  26 bought left it 1.7 of its 8.7. v2 now sizes perishables from the buildings' projected draw (storehouse operations
+  projection consumption + shortfall): porterage 26 -> 37 at 0.80 (live, verified).
+- **Home pricing**: sales clear at the market, so asking 22 for 60 garments dragged the clearing price to 22.3 while home
+  bids sat at ~25.8 for ~41. v2's home sell now asks 97% of a live bid (never under cost): garments 25.20.
+- **Stepping**: v2 refused a home sell change of 10 -> 55 every run (2x+10 guard) and sat at 10. It now steps by 2x+10 a
+  run instead: garments 10 -> 30 @ 25.20, beer 10 -> 30 @ 3.70 (live).
+- Labour: last turn 413 short (bought 512 of 945 at <=2.00; the town's asks near 1.76 were ~216 deep). That stalled the
+  logging camp, brewery, park upkeep and mansion banquet for one turn. 945 held now covers this turn's ~1,380 with the
+  household's 450. Labour stays v1's; v2's shadow says 973 @ 2.20. Taylor's call in the morning.
