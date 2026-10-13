@@ -206,3 +206,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   = 44 labour -> 5.2 limestone a turn (~14 coin each vs ~21 bought), linked to the storehouse. It is remote (26.8 tiles):
   ~8 extra porterage a turn by the size-x-distance rule (camp: 24 timber x 15 x 22.3 -> 12.6 porterage). The hand-queued
   porterage raise was refused by the night guard (Taylor's rule); v2 sizes porterage from observed use next run.
+- **04:03 ROUTE SALES PROVEN** (turn 13243, storehouse operations `route/<ship>` realized flows: export, export_value,
+  export_cost, export_fare). Flax Wyrm at Blanans: timber 6 sold for 45.0 (7.50 each, our ask 7.30: it clears at the
+  market), beer 4 for 15.2 (3.80). Linen Snake at Etallaen: **garments 30 sold for 882 (29.40 each)**, cost 601.7 (20.06
+  each), fare 3.06; vs selling at home (22.2) = +216, minus crew ~39 = **~+177 its first turn**. Beer there: shortfall 13
+  (route beer "atmin": the home sell orders and min_holding 60 took it first).
+- Quarry first turn: limited by labour (shortfall 39 of 44), 0.57 limestone made; porterage short 2.9 (stranded). Labour
+  is v1's: its labour rule tops up on shortfall next run. Flax farm 7.15 -> retting projects its full 114 plants.
+- 04:05 Flax Wyrm -> v2 auto: v2 clears the Blanans test orders and, with Etallaen taken, sails it to the best other town.
