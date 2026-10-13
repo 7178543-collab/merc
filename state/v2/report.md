@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13244, 2026-10-13 05:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13244, 2026-10-13 05:15. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 24,284, prestige 2,578 (158 free, -5.0/turn).
 
 ## Items v2 runs (last turn)
@@ -18,12 +18,13 @@ Cash 24,284, prestige 2,578 (158 free, -5.0/turn).
 | nets | 46 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
 | porterage | 26 | 26 | 11 | 0 | 15 | buy 26, buy @ 0.8 |
 
-**2 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
+**3 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
 - **cloth**: cloth buffer 0.7 turns (holds 115, next step uses 160/turn) -> v2: check the step that makes it
 - **flax plants**: retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 0.00 x0, yet 0 bought last turn); labour need rises ~50/turn when they restart -> v2: find out why the buy isn't filling
+- **porterage**: buying 26, short of ~37 needed -> v2: buy 37
 
 ## Tuning
 
@@ -68,8 +69,8 @@ Labour metered per turn while a site can progress: labour 22
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.4 / 0.52 | 51 | 117401698 | 0.548 | beer 30, garments 22 | - | 221 |
-| linen snake | 0.1 / 0.00 | 0 | 109102068 | 0.136 | - | - | 0 |
+| Flax Wyrm | 0.0 / 0.52 | 51 | 117401698 | 0 | beer 30, garments 22 | - | 221 |
+| linen snake | 0.6 / 0.00 | 0 | 109102068 | 0.2 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -108,6 +109,6 @@ Labour metered per turn while a site can progress: labour 22
 | limestone |  | 5 @ min 25.0 |  |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | nets |  | 6 @ min 36.0 |  |
-| porterage | 26 @ 0.8, stop - |  | uses 23.4/turn (observed), makes 0.0, holds 26 = 1.1 turns |
+| porterage | 37 @ 0.8, stop - |  | uses 33.0/turn (observed), makes 0.0, holds 26 = 0.8 turns |
 | timber |  | 28 @ min 8.5 | makes 24.0, uses 0.0, holds 420 (keeps 350): sells the surplus + 4/turn of the excess |
-| tools | 5 @ 6.2, stop 40 |  | uses 5.0/turn (logging camp w/ tool), makes 0.0, holds 199 = 39.9 turns |
+| tools | 9 @ 6.2, stop 72 |  | uses 8.9/turn (logging camp w/ tool), makes 0.0, holds 199 = 22.4 turns |
