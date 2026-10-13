@@ -22,6 +22,7 @@ Entry kinds (a JSON list of these):
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
   bot v2 item       {"v2": {"suspend": "porterage"}} hands it back to v1 now; {"v2": {"resume": "porterage"}} gives it back to v2
+  world market      {"world": "all"} or {"world": ["Blanans"]}   (public market data, saved compact to state/dump/world.json.gz)
   construction link {"construction": {"building": "<id>", "set": {"provider_id": "<storehouse>"}}}   (PATCH its construction)
   construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
   one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
@@ -659,6 +660,28 @@ def _apply_v2(e):
     return dict(ok=True, suspended=sorted(sus))
 
 
+def _apply_world(e):
+    """{"world": ["Blanans", ...]} (or {"world": "all"}): the public world market (one call), saved compact to
+    state/dump/world.json.gz: {town: {item: [best bid, bid depth 10%, best ask, ask depth 10%, traded per turn]}}."""
+    import gzip
+    want = e["world"]
+    try:
+        req = urllib.request.Request("https://api.mercatorio-tools.tech/data/marketdata", headers={"User-Agent": "merc-bot"})
+        md = json.loads(urllib.request.urlopen(req, timeout=90).read())
+    except Exception as exn:
+        return dict(ok=False, error="world market unavailable: %s" % exn)
+    out = {}
+    for tw in md:
+        if want != "all" and tw.get("name") not in want:
+            continue
+        out[tw.get("name")] = {k: [v.get("highest_bid"), v.get("bid_volume_10"), v.get("lowest_ask"), v.get("ask_volume_10"),
+                                   v.get("volume_ema_12")] for k, v in (tw.get("markets") or {}).items() if isinstance(v, dict)}
+    path = os.path.join(HERE, "state", "dump", "world.json.gz")
+    with gzip.open(path, "wt") as f:
+        json.dump({"t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), "towns": out}, f)
+    return dict(ok=True, towns=len(out), saved="state/dump/world.json.gz")
+
+
 def _apply_construction(e):
     """{"construction": {"building": "<id>", "set": {"provider_id": "<storehouse id>"}}}: PATCH /buildings/{id}/construction
     (the client's own call for a construction's settings, e.g. {stage: "NONE"} to abort). Oct 13: an expansion started by API
@@ -802,6 +825,8 @@ def apply_entry(e):
         return _apply_pace(e)
     if e.get("v2"):
         return _apply_v2(e)
+    if e.get("world"):
+        return _apply_world(e)
     if isinstance(e.get("construction"), dict) and e["construction"].get("building"):
         return _apply_construction(e)
     if e.get("claim"):
