@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13247, 2026-10-13 08:13. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13247, 2026-10-13 08:14. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
@@ -22,7 +22,7 @@ Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 
 ## Waste (money lost now)
 
-- **labour**: 96 labour expired last turn (~167 coin): holding 759 against a ~58 buffer target -> v2: trim the buy until the stock is near 58
+- **labour**: 96 labour expired last turn (~167 coin): holding 737 against a ~58 buffer target -> v2: trim the buy until the stock is near 58
 
 ## Tuning
 
@@ -30,7 +30,7 @@ Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 - **cloth**: cloth buffer thin: 1.6 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 358
 - **flax plants**: flax plants buffer thin: 1.1 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 619
 - **limestone**: we make 5/turn more than we use but there is no sell order -> v2: sell 5
-- **timber**: build materials for park 1 are in (423.8 held, 26 needed) but a buy is still live -> v2: switch the timber buy off
+- **timber**: build materials for park 1 are in (423.7 held, 26 needed) but a buy is still live -> v2: switch the timber buy off
 
 ## Builds under construction
 
@@ -39,7 +39,7 @@ Cash 23,318, prestige 2,591 (171 free, +4.2/turn).
 | Material | Need | Held | Deficit | v2 action |
 | --- | --- | --- | --- | --- |
 | limestone | 39 | 152.5 | 0 | off: covered |
-| timber | 26 | 423.8 | 0 | off: covered; switch v1's buy off |
+| timber | 26 | 423.7 | 0 | off: covered; switch v1's buy off |
 
 Labour metered per turn while a site can progress: labour 21
 
@@ -70,11 +70,12 @@ Labour metered per turn while a site can progress: labour 21
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.5 / 0.00 | 0 | - | 0 | - | - | 0 |
+| Flax Wyrm | 0.83 / 0.00 | 0 | 88002195 | 0 | - | - | 0 |
 | linen snake | 0.5 / 1.00 | 104 | 159601387 | 0.52 | beer 4, timber 13 | - | 77 |
 
 ## Ship plans (this turn's world prices)
 
+- **Flax Wyrm** on Clairlond: garments sell 42 @ 27.8; crew 0.2; est +216 a turn
 - **linen snake** on Kirchwerp: beer sell 65 @ 5.05, candles buy 1 @ 73.0; crew 0.5; est +20 a turn
 - best towns now: Clairlond +216, Fontaux +28, Bremcop +24, Kirchwerp +20, Chribruck +18
 - Clairlond would trade: garments sell 42 @ 27.8; crew 0.2
@@ -104,9 +105,9 @@ Labour metered per turn while a site can progress: labour 21
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 2.4, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 26 = 4.0 turns |
 | fish | 7 @ 2.5, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
-| garments |  | 72 @ min 22.0 | makes 45.9, uses 1.8, holds 410 (keeps 30): sells the surplus + 28/turn of the excess |
+| garments |  | 30 @ min 22.0 | makes 45.9, uses 1.8, holds 410 (keeps 30): sells the surplus + 28/turn of the excess; ships offer 42 a turn abroad, so home sells 30 (was 72) |
 | grain | 33 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 130 = 4.0 turns |
-| labour | 740 @ 2.2, stop - |  | uses 1153.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 759 = 1.1 turns |
+| labour | 740 @ 2.2, stop - |  | uses 1153.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 737 = 1.0 turns |
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 1 = 3.0 turns |
 | limestone |  | 5 @ min 24.4 |  |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
