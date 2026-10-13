@@ -1,6 +1,6 @@
 {
  "turn": 13243,
- "t": "2026-10-13T04:06:36+00:00",
+ "t": "2026-10-13T04:08:24+00:00",
  "mode": "handover",
  "live_items": [
   "cured fish",
@@ -18,7 +18,7 @@
  "prestige_rate": 4.205000000000001,
  "counts": {
   "risk": 1,
-  "waste": 0,
+  "waste": 1,
   "tune": 3
  },
  "flags": [
@@ -27,6 +27,12 @@
    "item": "flax plants",
    "text": "retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 0.00 x0, yet 0 bought last turn); labour need rises ~32/turn when they restart",
    "fix": "find out why the buy isn't filling"
+  },
+  {
+   "severity": "waste",
+   "item": "Flax Wyrm",
+   "text": "Flax Wyrm cost 25 coin last turn (crew 0.25) and its route traded nothing",
+   "fix": "pause it (crew 0) until a route is proven to sell"
   },
   {
    "severity": "tune",
@@ -43,7 +49,7 @@
   {
    "severity": "tune",
    "item": "timber",
-   "text": "build materials for park 1 are in (443.6 held, 36 needed) but a buy is still live",
+   "text": "build materials for park 1 are in (443.5 held, 36 needed) but a buy is still live",
    "fix": "switch the timber buy off"
   }
  ],
@@ -112,7 +118,7 @@
     "buy_volume": 564,
     "buy_price": "2.2"
    },
-   "why": "uses 986.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 512 = 1.0 turns"
+   "why": "uses 986.9/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 507 = 0.9 turns"
   },
   "light armour": {
    "buy": {
@@ -148,6 +154,12 @@
    },
    "why": "uses 6.1/turn (logging camp w/ tool), makes 0.0, holds 199 = 32.8 turns"
   },
+  "cloth": {
+   "buffer": {
+    "target": 329,
+    "held": 102
+   }
+  },
   "flax fibres": {
    "buffer": {
     "target": 158,
@@ -158,12 +170,6 @@
    "buffer": {
     "target": 466,
     "held": 489
-   }
-  },
-  "cloth": {
-   "buffer": {
-    "target": 329,
-    "held": 102
    }
   },
   "timber": {
@@ -242,33 +248,30 @@
   {
    "ship": "Flax Wyrm",
    "id": "845668271",
-   "crew_set": 0.0,
+   "crew_set": 0.5,
    "crew_last": 0.25,
    "cost": 24.6,
-   "route_to": "133002223",
+   "route_to": null,
    "trips": 0.0,
-   "sold": {
-    "beer": 4.0,
-    "timber": 6.0
-   },
+   "sold": {},
    "bought": {},
-   "trade_value": 5.2,
+   "trade_value": 0,
    "limitation": null
   },
   {
    "ship": "linen snake",
    "id": "1948883264",
-   "crew_set": 0.4,
+   "crew_set": 0.1,
    "crew_last": 0.4,
    "cost": 39.3,
    "route_to": "109102068",
-   "trips": 0.632,
+   "trips": 0.136,
    "sold": {
     "garments": 30.0
    },
    "bought": {},
    "trade_value": 277.3,
-   "limitation": "beer"
+   "limitation": null
   }
  ],
  "builds": {
@@ -299,7 +302,7 @@
    },
    "timber": {
     "need": 36,
-    "held": 443.6,
+    "held": 443.5,
     "keep_for_chain": 17,
     "deficit": 0,
     "action": "off",
@@ -316,8 +319,8 @@
  },
  "goals": [],
  "prestige_plan": {
-  "turns_left": 1158.89,
-  "legacy_factor": 0.9969995247730835,
+  "turns_left": 1158.86,
+  "legacy_factor": 0.9969990735389299,
   "ranked": [
    {
     "sink": "maintain 1",
@@ -1780,27 +1783,11 @@
    "take_share": 0.3,
    "slippage": 0.05
   },
-  "t": "2026-10-13T04:06:46+00:00"
+  "t": "2026-10-13T04:08:31+00:00"
  },
  "ship_plans": {
-  "t": "2026-10-13T04:06:46+00:00",
+  "t": "2026-10-13T04:08:31+00:00",
   "plans": [
-   {
-    "ship": "Flax Wyrm",
-    "id": "845668271",
-    "town": "Blanans",
-    "town_id": "133002223",
-    "orders": {},
-    "crew": 0.0,
-    "est_net": 0.0,
-    "capacity": 1262,
-    "space": [
-     0,
-     0
-    ],
-    "notes": [],
-    "diff": {}
-   },
    {
     "ship": "linen snake",
     "id": "1948883264",
@@ -1821,16 +1808,7 @@
      0
     ],
     "notes": [],
-    "diff": {
-     "garments": [
-      {
-       "sell_volume": 34,
-       "sell_price": "28.6",
-       "min_holding": 30
-      }
-     ],
-     "beer": []
-    }
+    "diff": {}
    }
   ],
   "best": [
