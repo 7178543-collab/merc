@@ -1,16 +1,18 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:21. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13243, 2026-10-13 04:42. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
+| beer | 211 | 0 | 19 | 0 | 0 | min_holding 60, stop 8, buy 4, buy @ 6, sell 20, sell @ 4.1; min_holding 60, sell 140, sell @ 3.7 |
 | cured fish | 19 | 6 | 6 | 0 | 0 | stop 20, buy 7, buy @ 26 |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 25 | 0 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 2.5 |
+| garments | 371 | 0 | 2 | 0 | 0 | min_holding 30, sell 45, sell @ 22; min_holding 30, sell 15, sell @ 21.6 |
 | grain | 130 | 34 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
@@ -24,7 +26,7 @@ Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
 
 ## Waste (money lost now)
 
-- **Flax Wyrm**: Flax Wyrm cost 25 coin last turn (crew 0.25) and its route traded nothing -> v2: pause it (crew 0) until a route is proven to sell
+- **Flax Wyrm**: Flax Wyrm cost 25 coin last turn (crew 0.25) and its route traded nothing (route limited by beer) -> v2: pause it (crew 0) until a route is proven to sell
 
 ## Tuning
 
@@ -70,13 +72,13 @@ Labour metered per turn while a site can progress: labour 22
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.65 / 0.25 | 25 | 117401698 | 0 | - | - | 0 |
+| Flax Wyrm | 0.4 / 0.25 | 25 | 117401698 | 0.548 | - | - | 0 |
 | linen snake | 0.1 / 0.40 | 39 | 109102068 | 0.136 | garments 48 | - | 444 |
 
 ## Ship plans (this turn's world prices)
 
-- **Flax Wyrm** on Brebronn: beer sell 56 @ 4.8, garments sell 25 @ 28.0; crew 0.4; est +163 a turn
 - **linen snake** on Etallaen: garments sell 34 @ 28.6; crew 0.1; est +204 a turn
+- **Flax Wyrm** on Brebronn: beer sell 56 @ 4.8, garments sell 25 @ 28.0; crew 0.4; est +163 a turn
 - best towns now: Etallaen +204, Brebronn +163, Donaunieder +66, Orlesailles +60, Herschweig +56
 
 ## Ship routes at today's world prices (estimate, per turn)
@@ -98,13 +100,13 @@ Labour metered per turn while a site can progress: labour 22
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
 | arms | 1 @ 27.6, stop 2 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 4 = 7.0 turns |
-| beer |  | 60 @ min 3.7 | makes 70.0, uses 18.6, holds 211 (keeps 60): sells the surplus + 8/turn of the excess |
+| beer |  | 10 @ min 3.7 | makes 70.0, uses 18.6, holds 211 (keeps 60): sells the surplus + 8/turn of the excess; ships offer 56 a turn abroad, so home sells 10 (was 60) |
 | candles | 2 @ 70.0, stop 6 |  | uses 1.5/turn (household upkeep), makes 0.0, holds 10 = 6.7 turns |
 | cured fish | 7 @ 26.0, stop 20 |  | uses 5.5/turn (mansion 1), makes 0.0, holds 19 = 3.5 turns |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 2.4, stop 26 |  | uses 6.4/turn (brewery 1, household upkeep), makes 0.0, holds 25 = 3.9 turns |
 | fish | 7 @ 2.5, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
-| garments |  | 69 @ min 22.0 | makes 46.3, uses 1.8, holds 371 (keeps 30): sells the surplus + 25/turn of the excess |
+| garments |  | 10 @ min 22.0 | makes 46.3, uses 1.8, holds 371 (keeps 30): sells the surplus + 25/turn of the excess; ships offer 59 a turn abroad, so home sells 10 (was 69) |
 | grain | 33 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 130 = 4.0 turns |
 | labour | 610 @ 2.2, stop - |  | uses 1030.1/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 486 = 0.8 turns |
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 1 = 7.0 turns |
