@@ -129,25 +129,28 @@ def ship_info():
                 state, place = "docked", "at %s" % town_name(town)
             else:
                 state, place = "anchored", "at sea %s:%s" % (loc.get("x"), loc.get("y"))
+            # a ship's operation is top-level previous_operation (it has no "producer"): reading producer showed every
+            # ship at 0 and hid the Flax Wyrm running at 0.72 crew for two days (Oct 11-13)
+            po = t.get("previous_operation") or prod.get("previous_operation") or {}
             entry = {"name": t.get("name"), "state": state, "place": place,
-                     "recipe": recipe, "level": m.num(prod.get("target"))}
+                     "recipe": recipe, "level": m.num(po.get("production") or prod.get("target"))}
             # --- extended fields (never break the existing keys) ---
             try:
                 route = t.get("route") or {}
                 dest = route.get("remote_town") or end or route.get("local_town")
                 entry["route"] = town_name(dest) if dest else None
-                prev = prod.get("previous_operation") or {}
-                tgt = m.num(prod.get("target") or prev.get("target"))
+                tgt = m.num(po.get("target") or prod.get("target"))
                 entry["op"] = round(100.0 * tgt, 1) if tgt and tgt <= 1 else tgt
                 imp, exp = {}, {}
-                for item, mg in (route.get("managers") or {}).items():
-                    if not isinstance(mg, dict):
-                        continue
-                    bv, sv = m.num(mg.get("buy_volume")), m.num(mg.get("sell_volume"))
-                    if bv:
-                        imp[item] = round(bv, 1)
-                    if sv:
-                        exp[item] = round(sv, 1)
+                for item, h in (route.get("holdings") or {}).items():
+                    for mg in ((h or {}).get("managers") or []):
+                        if not isinstance(mg, dict):
+                            continue
+                        bv, sv = m.num(mg.get("buy_volume")), m.num(mg.get("sell_volume"))
+                        if bv:
+                            imp[item] = round(imp.get(item, 0) + bv, 1)
+                        if sv:
+                            exp[item] = round(exp.get(item, 0) + sv, 1)
                 entry["imp"] = imp or None
                 entry["exp"] = exp or None
                 cargo = {}
