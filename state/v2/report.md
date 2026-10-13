@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:44. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13243, 2026-10-13 04:46. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 25,135, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 211 | 0 | 19 | 0 | 0 | min_holding 60, stop 8, buy 4, buy @ 6, sell 20, sell @ 4.1; min_holding 60, sell 140, sell @ 3.7 |
+| beer | 211 | 0 | 19 | 0 | 0 | min_holding 60, sell 10, sell @ 3.7 |
 | cured fish | 19 | 6 | 6 | 0 | 0 | stop 20, buy 7, buy @ 26 |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 25 | 0 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
@@ -18,7 +18,7 @@ Cash 25,135, prestige 2,583 (163 free, +4.2/turn).
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
 | porterage | 26 | 26 | 17 | 0 | 9 | buy 26, buy @ 0.8 |
 
-**1 risks, 1 waste, 3 tuning** where v2 would act differently from v1.
+**1 risks, 1 waste, 4 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -31,6 +31,7 @@ Cash 25,135, prestige 2,583 (163 free, +4.2/turn).
 ## Tuning
 
 - **cloth**: cloth buffer thin: 1.1 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 361
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 - **limestone**: we make 5/turn more than we use but there is no sell order -> v2: sell 5
 - **timber**: build materials for park 1 are in (443.4 held, 36 needed) but a buy is still live -> v2: switch the timber buy off
 
@@ -62,7 +63,7 @@ Labour metered per turn while a site can progress: labour 22
 | hold banquet 2 (fish) | mansion | 6.8 | 58.2 | 58.2 | thin at home: cured fish |
 | hold sermon 2 (candles) | church | 31 | 56.1 | 58.4 | needs a church (build cost 76,282); thin at home: jewellery, candles, furniture |
 | jousting 1 | arena | 170 | 58.3 | 58.4 | needs a arena (build cost 28,684); thin at home: protection, light armour, arms; needs weaponry skill |
-| hold feast 2 | townhouse | 2.6 | 56.7 | 58.9 | needs a townhouse (build cost 6,608) |
+| hold feast 2 | townhouse | 2.6 | 56.7 | 59.0 | needs a townhouse (build cost 6,882) |
 | hold banquet 1 (fish) | mansion | 4.2 | 59.2 | 59.2 | running |
 | hold prayer 2 | chapel | 13 | 56.7 | 59.3 | needs a chapel (build cost 36,446); thin at home: furniture |
 | hold banquet 3 (fish) | mansion | 7.6 | 59.4 | 59.4 | thin at home: hop beer, cured fish |
