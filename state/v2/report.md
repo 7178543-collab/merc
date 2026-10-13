@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:42. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
-Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
+Turn 13243, 2026-10-13 04:44. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Cash 25,135, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
 
@@ -12,7 +12,7 @@ Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 25 | 0 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 2.5 |
-| garments | 371 | 0 | 2 | 0 | 0 | min_holding 30, sell 45, sell @ 22; min_holding 30, sell 15, sell @ 21.6 |
+| garments | 371 | 0 | 2 | 0 | 0 | min_holding 30, sell 10, sell @ 22 |
 | grain | 130 | 34 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
@@ -40,7 +40,7 @@ Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
 
 | Material | Need | Held | Deficit | v2 action |
 | --- | --- | --- | --- | --- |
-| limestone | 54 | 151.0 | 0 | off: covered |
+| limestone | 54 | 153.0 | 0 | off: covered |
 | timber | 36 | 443.4 | 0 | off: covered; switch v1's buy off |
 
 Labour metered per turn while a site can progress: labour 22
