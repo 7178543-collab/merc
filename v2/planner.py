@@ -185,6 +185,20 @@ def plan(s, cfg=None, recipes=None, goals=None):
         it = items.get(item) or {"held": 0, "orders": [], "flow": {}}
         fl = it.get("flow") or {}
         observed = fl.get("consumption", 0) + fl.get("shortfall", 0)
+        # a remote building that couldn't get its delivery shows it only in the storehouse operations ("stranded",
+        # Oct 13: the quarry's 7 porterage), not in the store's own flow
+        observed += sum(((((op.get("flows") or {}).get(item) or {}).get("realized") or {}).get("stranded", 0) or 0)
+                        for op in (s.get("operations") or {}).values())
+        # what the buildings say they will draw next turn at their set rates (consumption + shortfall per operation).
+        # Porterage Oct 13: three farms project 24.3 and the quarry 8.7 = 33, while last turn's use + peak said 23-26,
+        # so the quarry got the 1.7 left over and ran at 20%.
+        projected = 0.0
+        if item != "labour":
+            for k, op in (s.get("operations") or {}).items():
+                if k.startswith(("producer/", "construction/")):
+                    pj = (((op.get("flows") or {}).get(item) or {}).get("projection") or {})
+                    projected += (pj.get("consumption", 0) or 0) + (pj.get("shortfall", 0) or 0)
+        observed = max(observed, projected)
         peak = max(hist.get(item) or [0])
         planned = use.get(item, 0)
         own = make.get(item, 0)
