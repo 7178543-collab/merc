@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13242, 2026-10-13 03:14. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13242, 2026-10-13 03:17. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 23,424, prestige 2,579 (159 free, +3.7/turn).
 
 ## Items v2 runs (last turn)
@@ -11,7 +11,7 @@ Cash 23,424, prestige 2,579 (159 free, +3.7/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 32 | 0 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 12 | 6 | 0 | 6 | stop 24, buy 7, buy @ 2.5 |
-| grain | 130 | 34 | 32 | 0 | 0 | stop 130, buy 34, buy @ 3.7 |
+| grain | 130 | 34 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 12 | 6 | 0 | 6 | stop 24, buy 7, buy @ 3.02 |
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
 | porterage | 26 | 26 | 19 | 0 | 7 | buy 26, buy @ 0.8 |
@@ -70,11 +70,12 @@ Labour metered per turn while a site can progress: labour 20
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.25 / 0.25 | 25 | 133002223 | 0.552 | - | - | 0 |
-| linen snake | 0.5 / 0.00 | 0 | - | 0 | - | - | 0 |
+| linen snake | 0.5 / 0.00 | 0 | 109102068 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
 - **Flax Wyrm** on Blanans: nothing pays; crew 0.0; est +0 a turn
+- **linen snake** on Etallaen: beer sell 51 @ 4.38, garments sell 56 @ 29.4; crew 0.4; est +386 a turn
 - best towns now: Etallaen +384, Vauxvais +161, Angefont +152, Friedwerp +114, Orlesailles +80
 
 ## Ship routes at today's world prices (estimate, per turn)
@@ -103,7 +104,7 @@ Labour metered per turn while a site can progress: labour 20
 | fish | 7 @ 2.5, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | garments |  | 71 @ min 22.0 | makes 42.2, uses 1.8, holds 434 (keeps 30): sells the surplus + 30/turn of the excess |
 | grain | 33 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 130 = 4.0 turns |
-| labour | 528 @ 2.2, stop - |  | uses 952.2/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 464 = 0.9 turns |
+| labour | 528 @ 2.2, stop - |  | uses 952.2/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 452 = 0.9 turns |
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 2 = 8.0 turns |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | nets |  | 6 @ min 36.0 |  |
