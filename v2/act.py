@@ -267,6 +267,34 @@ def suspend_check(plan, owned, st, results):
     return out
 
 
+SHIP_IDLE_TURNS = 3
+
+
+def ship_guard(plan, ship_ids, st, turn, log_path):
+    """A ship v2 watches (config live.ships) that costs crew for SHIP_IDLE_TURNS turns in a row while its route trades
+    nothing is paused (crew 0). Oct 13: the Flax Wyrm ran ~2 days at 0.72 crew this way. Counts once per game turn."""
+    out = []
+    for sh in plan.get("ships") or []:
+        sid = str(sh.get("id"))
+        if sid not in ship_ids:
+            continue
+        c = st.setdefault(sid, {"idle": 0, "turn": None})
+        if c.get("turn") == turn:
+            continue
+        c["turn"] = turn
+        idle = (sh.get("cost") or 0) >= 5 and not sh.get("sold") and not sh.get("bought")
+        c["idle"] = c["idle"] + 1 if idle else 0
+        if c["idle"] >= SHIP_IDLE_TURNS and (sh.get("crew_set") or 0) > 0:
+            ok, status, body = api.write("PUT", "/transports/%s/operation" % sid, {"operation_target": "0.000"})
+            with open(log_path, "a") as f:
+                f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": turn, "ship": sh.get("ship"),
+                                    "action": "pause (crew 0)", "why": "%d turns of crew cost with no route trade" % c["idle"],
+                                    "ok": bool(ok), "status": status}, default=str) + "\n")
+            out.append(sh.get("ship"))
+            c["idle"] = 0
+    return out
+
+
 def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     argv = sys.argv if argv is None else argv
     live_mode = "--live" in argv
@@ -295,8 +323,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
 
     rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
     results, sent = {}, 0
-    if live_mode and owned and not stand:
+    ship_ids = set(((cfg.get("live") or {}).get("ships")) or [])
+    if live_mode and not stand and (owned or ship_ids):
         api.allow_writes()
+    if live_mode and owned and not stand:
         for r in rows:
             if not r["owned"] or r["same"] or r.get("refused"):
                 continue
@@ -318,6 +348,9 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                                     "verified": verified, "status": status}, default=str) + "\n")
 
     st = _load(STATE, {})
+    paused_ships = []
+    if live_mode and ship_ids and not stand:
+        paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
     newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results) if live_mode else {}
     if newly:
         for item, why in newly.items():
@@ -340,7 +373,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                                 "sent": sorted(r["item"] for r in rows if r.get("sent"))}, default=str) + "\n")
     print("v2 act (%s): owned %s; %d items differ from live; %d sent%s%s" % (
         res["mode"], ", ".join(sorted(owned)) or "none", res["would_change"], sent,
-        ("; STAND DOWN: " + stand) if stand else "", ("; suspended " + ", ".join(newly)) if newly else ""))
+        ("; STAND DOWN: " + stand) if stand else "", ("; suspended " + ", ".join(newly)) if newly else "")
+        + (("; paused ships " + ", ".join(paused_ships)) if paused_ships else ""))
     for r in rows:
         if r["owned"] and not r["same"]:
             print("  %s: %s%s" % (r["item"], "refused: " + "; ".join(r["refused"]) if r.get("refused") else

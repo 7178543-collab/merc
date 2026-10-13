@@ -433,6 +433,25 @@ def plan(s, cfg=None, recipes=None, goals=None):
         if item in no_buy:
             orders.setdefault(item, {})["buy_off"] = no_buy[item]
 
+    # ---------- ships: what each one cost last turn and what its route actually traded ----------
+    ships = []
+    for sh in s.get("ships") or []:
+        rf = sh.get("route_flows") or {}
+        sold = {k: (v.get("realized") or {}).get("sale", 0) for k, v in rf.items() if (v.get("realized") or {}).get("sale")}
+        bought = {k: (v.get("realized") or {}).get("purchase", 0) for k, v in rf.items() if (v.get("realized") or {}).get("purchase")}
+        value = sum((v.get("realized") or {}).get("sale_value", 0) for v in rf.values()) - \
+            sum((v.get("realized") or {}).get("purchase_cost", 0) for v in rf.values())
+        cost = sh.get("running_cost") or 0
+        row = {"ship": sh.get("name"), "id": sh.get("id"), "crew_set": sh.get("set_target"), "crew_last": sh.get("production"),
+               "cost": round(cost, 1), "route_to": sh.get("route_to"), "trips": sh.get("route_trips"),
+               "sold": sold, "bought": bought, "trade_value": round(value, 1), "limitation": sh.get("route_limitation")}
+        ships.append(row)
+        if cost >= 5 and not sold and not bought:
+            flag("waste", sh.get("name") or "ship", "%s cost %.0f coin last turn (crew %.2f) and its route traded nothing%s" % (
+                sh.get("name"), cost, sh.get("production") or 0,
+                (" (route limited by %s)" % sh["route_limitation"]) if sh.get("route_limitation") else ""),
+                 "pause it (crew 0) until a route is proven to sell")
+
     # ---------- money ----------
     sev_rank = {"risk": 0, "waste": 1, "tune": 2}
     flags.sort(key=lambda f: (sev_rank.get(f["severity"], 9), f["item"] or ""))
@@ -442,7 +461,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
         "cash": s.get("cash"), "prestige": hhp.get("prestige"), "prestige_free": hhp.get("free"),
         "prestige_rate": hhp.get("rate"),
         "counts": {k: sum(1 for f in flags if f["severity"] == k) for k in ("risk", "waste", "tune")},
-        "flags": flags, "orders": orders, "sinks": sinks, "builds": bp, "goals": goal_results, "prestige_plan": pp,
+        "flags": flags, "orders": orders, "sinks": sinks, "ships": ships, "builds": bp, "goals": goal_results, "prestige_plan": pp,
         "stalls": {k: {"buildings": [n for n, _ in g["buildings"]], "knock_on": [n for n, _ in g["knock_on"]]}
                    for k, g in roots.items()},
         "demand": {k: round(v, 1) for k, v in sorted(use.items())},

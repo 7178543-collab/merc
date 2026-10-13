@@ -110,6 +110,15 @@ def report(p):
         for x in p["sinks"]:
             L.append("| %s | %.1f | %s |" % (x["sink"], x["prestige_per_turn"], x["coin_per_prestige"]))
         L.append("")
+    if p.get("ships"):
+        L += ["## Ships (last turn, real)", "", "| Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for sh in p["ships"]:
+            L.append("| %s | %s / %.2f | %.0f | %s | %s | %s | %s | %.0f |" % (
+                sh["ship"], sh.get("crew_set"), sh.get("crew_last") or 0, sh["cost"], sh.get("route_to") or "-", sh.get("trips") or 0,
+                ", ".join("%s %.0f" % kv for kv in sh["sold"].items()) or "-",
+                ", ".join("%s %.0f" % kv for kv in sh["bought"].items()) or "-", sh["trade_value"]))
+        L.append("")
     try:
         import routes
         L += routes.report_lines(p.get("routes"))

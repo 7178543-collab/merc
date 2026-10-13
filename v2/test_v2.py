@@ -190,6 +190,26 @@ def test_act_takes_off_an_unneeded_buy():
     assert all("buy_off" not in (plan["orders"].get(i) or {}) for i in CFG["never_drop"])  # never_drop items are never offered up
 
 
+def test_ship_guard_pauses_an_idle_ship():
+    d = tempfile.mkdtemp()
+    calls = []
+    real = api.write
+    api.write = lambda m, p, b: (calls.append((m, p, b)) or (True, 200, {}))
+    try:
+        plan = {"ships": [{"ship": "Flax Wyrm", "id": "845668271", "cost": 72, "sold": {}, "bought": {}, "crew_set": 0.723},
+                          {"ship": "Busy", "id": "2", "cost": 30, "sold": {"garments": 20}, "bought": {}, "crew_set": 0.3}]}
+        st = {}
+        log = os.path.join(d, "act.jsonl")
+        for turn in (1, 1, 2):                          # the same turn twice counts once
+            assert act.ship_guard(plan, {"845668271", "2"}, st, turn, log) == []
+        assert act.ship_guard(plan, {"845668271", "2"}, st, 3, log) == ["Flax Wyrm"]     # 3rd idle turn: paused
+        assert calls == [("PUT", "/transports/845668271/operation", {"operation_target": "0.000"})]
+        assert st["2"]["idle"] == 0                      # a ship that trades is never touched
+    finally:
+        api.write = real
+        shutil.rmtree(d)
+
+
 def test_routes():
     import routes
     sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 300.0}, "3": {"name": "Far", "moves": 750.0},

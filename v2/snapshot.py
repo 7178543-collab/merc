@@ -115,15 +115,35 @@ def take():
                     "flow": {kk: n(vv) for kk, vv in (flows.get(k) or {}).items()}}
     s["store"] = {"id": store_id, "capacity": n(inv.get("capacity")), "used": n(inv.get("used")), "items": items}
 
+    # the storehouse's operations: every building, ship and route it supplies, with this turn's set target and
+    # last turn's realized flows (a route's sales and purchases show here, not on the ship)
+    ops = {}
+    if store_id:
+        for op in ((api.get("/buildings/%s/operations" % store_id) or {}).get("operations") or []):
+            ops[op.get("reference")] = {
+                "recipe": op.get("recipe"), "target": n(op.get("target")), "volume": n(op.get("volume")),
+                "limitation": op.get("limitation"),
+                "flows": {k: {kind: {kk: n(vv) for kk, vv in (v.get(kind) or {}).items()} for kind in ("projection", "realized")}
+                          for k, v in (op.get("flows") or {}).items()}}
+    s["operations"] = ops
+
     s["ships"] = []
     for tid in biz.get("transport_ids") or []:
         t = api.get("/transports/%s" % tid) or {}
         po = t.get("previous_operation") or {}
         r = t.get("route") or {}
+        fl = ((t.get("inventory") or {}).get("previous_flows")) or {}
         s["ships"].append({"id": str(tid), "name": t.get("name"), "town": str(t.get("town_id")),
                            "target": n(po.get("target")), "production": n(po.get("production")),
-                           "route_to": r.get("remote_town"),
-                           "route_orders": {k: _orders(h) for k, h in (r.get("holdings") or {}).items()}})
+                           "set_target": (ops.get("transport/%s" % tid) or {}).get("target"),
+                           "running_cost": n((fl.get("none") or {}).get("production_cost")),
+                           "route_to": r.get("remote_town"), "route_id": r.get("id"),
+                           "route_trips": n(r.get("actual_trips")), "route_capacity_cost": n(r.get("capacity_cost")),
+                           "route_orders": {k: _orders(h) for k, h in (r.get("holdings") or {}).items()},
+                           "route_results": {k: [(mg or {}).get("result") for mg in ((h or {}).get("managers") or [])]
+                                             for k, h in (r.get("holdings") or {}).items()},
+                           "route_flows": ((ops.get("route/%s" % tid) or {}).get("flows")) or {},
+                           "route_limitation": (ops.get("route/%s" % tid) or {}).get("limitation")})
 
     md = api.get("/towns/%s/marketdata" % s["home_town"]) or {}
     mk = md.get("markets", md) if isinstance(md, dict) else {}
