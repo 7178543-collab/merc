@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13242, 2026-10-13 03:17. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
-Cash 23,424, prestige 2,579 (159 free, +3.7/turn).
+Turn 13242, 2026-10-13 03:46. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Cash 23,367, prestige 2,579 (159 free, +3.7/turn).
 
 ## Items v2 runs (last turn)
 
@@ -29,7 +29,7 @@ Cash 23,424, prestige 2,579 (159 free, +3.7/turn).
 ## Tuning
 
 - **cloth**: cloth buffer thin: 1.1 turns (target 4) -> v2: lift the maker's rate or hold back sales until it reaches 329
-- **timber**: build materials for park 1 are in (452.4 held, 37 needed) but a buy is still live -> v2: switch the timber buy off
+- **timber**: build materials for park 1 are in (449.4 held, 37 needed) but a buy is still live -> v2: switch the timber buy off
 
 ## Builds under construction
 
@@ -37,8 +37,8 @@ Cash 23,424, prestige 2,579 (159 free, +3.7/turn).
 
 | Material | Need | Held | Deficit | v2 action |
 | --- | --- | --- | --- | --- |
-| limestone | 56 | 150.0 | 0 | off: covered |
-| timber | 37 | 452.4 | 0 | off: covered; switch v1's buy off |
+| limestone | 56 | 153.0 | 0 | off: covered |
+| timber | 37 | 449.4 | 0 | off: covered; switch v1's buy off |
 
 Labour metered per turn while a site can progress: labour 20
 
@@ -53,24 +53,24 @@ Labour metered per turn while a site can progress: labour 20
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 48.6 | 52.5 | running |
+| hold banquet 3 (pies) | mansion | 8 | 55.8 | 55.8 | thin at home: pasties, pies, candles |
 | hold banquet 2 (pies) | mansion | 7 | 56.7 | 56.7 | thin at home: pasties, pies, candles |
-| hold banquet 3 (pies) | mansion | 8 | 58.2 | 58.2 | thin at home: pasties, pies, candles |
-| hold banquet 4 (pies) | mansion | 18 | 58.5 | 58.5 | thin at home: pasties, candles |
+| hold banquet 4 (pies) | mansion | 18 | 57.5 | 57.5 | thin at home: pasties, candles |
 | hold banquet 2 (fish) | mansion | 6.8 | 58.7 | 58.7 | thin at home: cured fish |
-| hold sermon 2 (candles) | church | 31 | 56.4 | 58.8 | needs a church (build cost 78,250); thin at home: jewellery, candles, furniture |
+| hold banquet 3 (fish) | mansion | 7.6 | 58.7 | 58.7 | thin at home: cured fish |
+| hold sermon 2 (candles) | church | 31 | 56.4 | 58.8 | needs a church (build cost 77,690); thin at home: jewellery, candles, furniture |
 | hold feast 2 | townhouse | 2.6 | 57.1 | 59.3 | needs a townhouse (build cost 6,616) |
-| jousting 1 | arena | 170 | 59.2 | 59.3 | needs a arena (build cost 29,212); thin at home: protection, light armour, arms; needs weaponry skill |
-| jousting 3 | arena | 230 | 59.2 | 59.3 | needs a arena (build cost 29,212); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold prayer 2 | chapel | 13 | 57.1 | 59.7 | needs a chapel (build cost 37,769) |
+| jousting 1 | arena | 170 | 59.2 | 59.3 | needs a arena (build cost 29,072); thin at home: protection, light armour, arms; needs weaponry skill |
+| jousting 3 | arena | 230 | 59.2 | 59.3 | needs a arena (build cost 29,072); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold prayer 2 | chapel | 13 | 57.1 | 59.7 | needs a chapel (build cost 37,349) |
 | hold banquet 1 (fish) | mansion | 4.2 | 60.0 | 60.0 | running; thin at home: cured fish |
-| hold sermon 2 | church | 24 | 57.6 | 60.6 | needs a church (build cost 78,250); thin at home: jewellery, furniture |
 
 ## Ships (last turn, real)
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.25 / 0.25 | 25 | 133002223 | 0.552 | - | - | 0 |
-| linen snake | 0.5 / 0.00 | 0 | 109102068 | 0 | - | - | 0 |
+| linen snake | 0.4 / 0.00 | 0 | 109102068 | 0.632 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -109,5 +109,5 @@ Labour metered per turn while a site can progress: labour 20
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | nets |  | 6 @ min 36.0 |  |
 | porterage | 26 @ 0.8, stop - |  | uses 23.4/turn (observed), makes 0.0, holds 26 = 1.1 turns |
-| timber |  | 31 @ min 8.5 | makes 24.0, uses 0.0, holds 452 (keeps 350): sells the surplus + 7/turn of the excess |
+| timber |  | 30 @ min 8.5 | makes 24.0, uses 0.0, holds 449 (keeps 350): sells the surplus + 6/turn of the excess |
 | tools | 8 @ 6.2, stop 58 |  | uses 7.2/turn (logging camp w/ tool), makes 0.0, holds 199 = 27.6 turns |
