@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:04. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13243, 2026-10-13 04:06. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 24,658, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
@@ -16,16 +16,11 @@ Cash 24,658, prestige 2,583 (163 free, +4.2/turn).
 | nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
 | porterage | 26 | 26 | 17 | 0 | 9 | buy 26, buy @ 0.8 |
 
-**1 risks, 2 waste, 3 tuning** where v2 would act differently from v1.
+**1 risks, 0 waste, 3 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
 - **flax plants**: retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 0.00 x0, yet 0 bought last turn); labour need rises ~32/turn when they restart -> v2: find out why the buy isn't filling
-
-## Waste (money lost now)
-
-- **Flax Wyrm**: Flax Wyrm cost 25 coin last turn (crew 0.25) and its route traded nothing -> v2: pause it (crew 0) until a route is proven to sell
-- **linen snake**: linen snake cost 39 coin last turn (crew 0.40) and its route traded nothing (route limited by beer) -> v2: pause it (crew 0) until a route is proven to sell
 
 ## Tuning
 
@@ -71,14 +66,14 @@ Labour metered per turn while a site can progress: labour 22
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.25 / 0.25 | 25 | 133002223 | 0.552 | - | - | 0 |
-| linen snake | 0.4 / 0.40 | 39 | 109102068 | 0.632 | - | - | 0 |
+| Flax Wyrm | 0.0 / 0.25 | 25 | 133002223 | 0 | beer 4, timber 6 | - | 5 |
+| linen snake | 0.4 / 0.40 | 39 | 109102068 | 0.632 | garments 30 | - | 277 |
 
 ## Ship plans (this turn's world prices)
 
 - **Flax Wyrm** on Blanans: nothing pays; crew 0.0; est +0 a turn
-- **linen snake** on Etallaen: beer sell 51 @ 4.38, garments sell 56 @ 29.4; crew 0.4; est +391 a turn
-- best towns now: Etallaen +384, Vauxvais +156, Angefont +147, Friedwerp +114, Orlesailles +80
+- **linen snake** on Etallaen: garments sell 34 @ 28.6; crew 0.1; est +204 a turn
+- best towns now: Brebronn +259, Etallaen +206, Donaunieder +124, Orlesailles +117, Vauxvais +100
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -86,13 +81,13 @@ Labour metered per turn while a site can progress: labour 22
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Etallaen | 774 | 0.21 | 0.40 (41/turn) | garments 56 (22.2->28.5), beer 51 (2.98->4.24) | hop beer 3 (7.46->8.74), arms 3 (25.2->26.22), flax plants 1 (1.55->2.41) | +384 |
-| Vauxvais | 204 | 0.06 | 0.30 (31/turn) | garments 39 (22.2->24.32), timber 21 (6.6->8.22), beer 57 (2.98->3.23), bricks 1 (3.66->9.79) | limestone 2 (12.6->24.7), cloth 15 (7.93->8.65), thread 14 (4.98->5.55), flax fibres 4 (5.78->6.84) | +156 |
-| Angefont | 686 | 0.19 | 0.20 (20/turn) | garments 70 (22.2->23.56), cheese 12 (7.14->7.89), tackles 1 (157.5->164.35), charcoal 2 (1.79->3.67) | spinning wheels 1 (222.6->250.8), cloth 25 (7.56->8.65), flax plants 1 (1.47->2.41), flax fibres 4 (6.46->6.84) | +147 |
-| Friedwerp | 684 | 0.19 | 0.30 (31/turn) | garments 15 (22.2->25.46), beer 38 (2.98->4.22), glassware 1 (72.45->95), cloth 4 (8.5->9.79) | flax plants 1 (1.4->2.41), leather 1 (23.52->24.7), nails 1 (5.41->6.22), thread 10 (5.25->5.55) | +114 |
-| Orlesailles | 1178 | 0.42 | 0.20 (20/turn) | garments 32 (22.2->24.51), yarn 4 (3.82->6.27), cheese 9 (7.14->7.74), varnish 1 (18.17->20.14) | wax 4 (20.58->22.23), wheels 1 (16.07->20.33), pies 1 (16.17->17.86), stockfish 1 (106.05->107.35) | +80 |
+| Brebronn | 862 | 0.25 | 0.40 (41/turn) | garments 25 (21.4->26.98), beer 56 (2.98->4.64), glassware 1 (74.03->92.62), nets 2 (44->45.41) | cloth 38 (8.4->9), soap 1 (103.43->114), thread 13 (4.83->5.75), salt 5 (5.17->6.74) | +259 |
+| Etallaen | 774 | 0.21 | 0.20 (20/turn) | garments 34 (21.4->27.55), grindstones 1 (342.3->353.4) | flax fibres 1 (6.09->7.03), hop beer 6 (7.46->8.12), resin 1 (1.6->2.18) | +206 |
+| Donaunieder | 985 | 0.32 | 0.60 (61/turn) | beer 63 (2.98->5.22), garments 21 (21.4->22.23), cloth 11 (7.4->8.17), tar 1 (9.65->12.54) | salt 4 (4.58->6.74), potash 1 (14.8->16.05), flax plants 1 (1.67->2.38) | +124 |
+| Orlesailles | 1178 | 0.42 | 0.30 (31/turn) | garments 32 (21.4->23.94), cloth 17 (7.4->8.84), cheese 13 (7.14->8.74), varnish 1 (18.17->20.14) | salt 5 (4.6->6.74), wax 4 (20.58->22.23), flax fibres 2 (5.67->7.03), pies 1 (16.28->17.95) | +117 |
+| Vauxvais | 204 | 0.06 | 0.30 (31/turn) | garments 20 (21.4->22.42), timber 21 (6.6->8.22), beer 57 (2.98->3.23), bricks 1 (3.64->9.79) | limestone 2 (12.6->24.7), thread 14 (4.73->5.75), cloth 12 (8.03->9), salt 2 (4.64->6.74) | +100 |
 
-**Best:** Etallaen at about +384 coin a turn.
+**Best:** Brebronn at about +259 coin a turn.
 
 ## v2 orders
 
