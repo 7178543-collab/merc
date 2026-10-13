@@ -278,3 +278,13 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   685482739510122816 (cap 278). Orders: timber 18 @ 14.70 + beer 4 @ 4.72, crew 1.0, est +36 (vs Etallaen +16, Vauxvais
   +31). Garments no longer pay abroad: Etallaen's bid fell from 33.8 to under 29, and our home garment price slid
   25.8 -> 22.0 as we sold 44-55 a turn into a ~65/turn market. Garments: 426 held, making ~58-70 a turn.
+- 08:07 turn 13247: **Linen Snake / Kirchwerp sold timber 13 for 191 (14.70) + beer 4 for 21**, but the route fare was
+  36.7 for the timber (~0.19 per cargo size unit; Etallaen ~0.10, Blanans ~0.04). Real: +68 over home value before crew,
+  -36 after its 104 crew (crew 0.76 -> 1.0 the voyage turn). Timber bids there are used up; re-planned beer 65 @ 5.05,
+  crew 0.5, est +20. Fare now in the plan's costs (0.15 per size unit, not per-town yet).
+- **Clairlond pays garments 28.4** (42 a turn): est +216 at crew 0.2. Flax Wyrm was idle in Brebronn but held by the
+  12-turn voyage cooldown. Idle ships now wait 2 turns (earning ships 12). v2 sailed it Brebronn -> home -> Clairlond
+  (863 + 1,288 moves, crew 0.83 for the trip), route 377966550346882991 (cap 210/turn), garments 42 @ 27.80, crew 0.2.
+  Home garment sell cut to 30 @ 22 (export-first).
+- Route writes now clear old orders first (a raise was refused 409 "no capacity" while timber still reserved 270 units).
+- Park plot 12 at 36%. Labour: 96 expired again (~167 coin); v1 trims a little each turn (773 now).
