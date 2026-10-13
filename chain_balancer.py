@@ -90,6 +90,7 @@ SALES_MARGIN = MODE['SALES_MARGIN']   # sew 5% over average sales (garment stock
 # Thread the household net duty uses (~24/turn). Measured use reads 0 when weaving
 # stalled last turn, so never plan with less than this.
 OTHER_THREAD_MIN = 24
+EXTRA_THREAD_MIN = 10    # thread use above the net duty by more than this = another consumer (ropewalk): fed from weaving
 MIN_CHANGE = 0.02        # ignore target changes smaller than this (x)
 EXPORTS = 0.0            # garments a turn sold abroad by ship routes (garment_exports(), set in main)
 
@@ -179,8 +180,14 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
         drain = min((have_g - GARMENT_KEEP_TURNS * outflow) / GARMENT_DRAIN_TURNS, GARMENT_DRAIN_MAX)
         want = max(want - drain, 0.3 * want)
     sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
+    # Oct 13 (Taylor: strive for profit): thread for consumers beyond the net duty (the ropewalk, 55/run)
+    # is taken out of WEAVING, never by ramping flax/retting/spinning. Upstream is sized for weaving +
+    # nets only. Rope earns ~18 a unit on thread vs ~1.5 a garment, and the Oct 13 ramp to feed rope
+    # ate the labour the banquet/park/camp needed.
+    fed_by_weaving = other_thread - OTHER_THREAD_MIN > EXTRA_THREAD_MIN
+    other_up = OTHER_THREAD_MIN if fed_by_weaving else other_thread
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
-    base["spin"] = (base["weave"] * C["weave"]["in"] + other_thread) / C["spin"]["out"]
+    base["spin"] = (base["weave"] * C["weave"]["in"] + other_up) / C["spin"]["out"]
     base["ret"] = base["spin"] * C["spin"]["in"] / C["ret"]["out"]
     tg = targets(base, other_thread)
 
@@ -194,8 +201,15 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
             return -min((have - tg[item]) / DRAIN_TURNS, BUFFERS[item]["drain"])
         return 0
     weave = max(0, min(s["weave"], (sew * C["sew"]["in"] + top("cloth")) / C["weave"]["out"]))
-    spin = max(0, min(s["spin"], (weave * C["weave"]["in"] + other_thread + top("thread")) / C["spin"]["out"]))
-    ret = max(0, min(s["ret"], (spin * C["spin"]["in"] + top("flax fibres")) / C["ret"]["out"]))
+    spin = max(0, min(s["spin"], (weave * C["weave"]["in"] + other_up + top("thread")) / C["spin"]["out"]))
+    if fed_by_weaving:
+        # weave only the thread spinning leaves after the other consumers (and the thread buffer's top-up)
+        weave = max(0, min(weave, (spin * C["spin"]["out"] - other_thread - top("thread")) / C["weave"]["in"]))
+        # sew only what weaving now makes plus a slice of the cloth pile above half its target,
+        # so sewing labour isn't bought for cloth that won't be there
+        cloth_slice = max(0.0, stocks.get("cloth", 0) - LOW_FRACTION * tg["cloth"]) / DRAIN_TURNS
+        sew = min(sew, (weave * C["weave"]["out"] + cloth_slice) / C["sew"]["in"])
+    ret =max(0, min(s["ret"], (spin * C["spin"]["in"] + top("flax fibres")) / C["ret"]["out"]))
     flax = min(s["flax"], ret * C["ret"]["in"] / C["flax"]["out"])
     # if plots cap a step upstream, the buffers cover the gap; the alert tells us
     t = {"sew": sew, "weave": weave, "spin": spin, "ret": ret, "flax": flax}
