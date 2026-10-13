@@ -1,21 +1,21 @@
 # v2 shadow report
 
-Turn 13246, 2026-10-13 07:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13246, 2026-10-13 07:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 23,309, prestige 2,587 (167 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 202 | 0 | 19 | 0 | 0 | min_holding 60, sell 58, sell @ 3.7 |
+| beer | 202 | 0 | 19 | 0 | 0 | min_holding 60, sell 59, sell @ 3.7 |
 | cured fish | 19 | 6 | 6 | 0 | 0 | stop 20, buy 7, buy @ 26 |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 26 | 6 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 2.5 |
-| garments | 426 | 0 | 2 | 0 | 0 | min_holding 30, sell 60, sell @ 22 |
+| garments | 426 | 0 | 2 | 0 | 0 | min_holding 30, sell 79, sell @ 22 |
 | grain | 130 | 33 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
-| nets | 48 | 0 | 0 | 0 | 0 | min_holding 40, sell 10, sell @ 36 |
+| nets | 48 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 38.4 |
 | porterage | 37 | 37 | 32 | 0 | 5 | buy 37, buy @ 0.8 |
 
 **0 risks, 2 waste, 5 tuning** where v2 would act differently from v1.
@@ -72,13 +72,14 @@ Labour metered per turn while a site can progress: labour 21
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 117401698 | 0 | - | - | 0 |
-| linen snake | 0.6 / 0.60 | 63 | 109102068 | 0.144 | - | - | 0 |
+| linen snake | 0.0 / 0.60 | 63 | 109102068 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
+- **linen snake** on Etallaen: nets sell 6 @ 42.0, timber sell 5 @ 11.3; crew 0.2; est +16 a turn
 - **Flax Wyrm** on Brebronn: nothing pays; crew 0.0; est +0 a turn
-- **linen snake** on Etallaen: nothing pays; crew 0.0; est +0 a turn; best orders clear only -27 a turn after crew: ship stays at 0
-- best towns now: Kirchwerp +158, Vauxvais +31, Neuborn +21
+- best towns now: Kirchwerp +158, Vauxvais +31, Hanstein +23, Neuborn +21, Etallaen +16
+- Kirchwerp would trade: beer sell 63 @ 4.72, timber sell 26 @ 14.7; crew 1.0
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -110,7 +111,7 @@ Labour metered per turn while a site can progress: labour 21
 | light armour | 1 @ 112, stop 1 |  | uses 0.2/turn (household upkeep), makes 0.0, holds 1 = 4.0 turns |
 | limestone |  | 5 @ min 24.6 |  |
 | meat | 7 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
-| nets |  | 6 @ min 38.4 |  |
+| nets |  | 10 @ min 38.4 | sell; ships offer 6 a turn abroad, so home sells 10 (was 6) |
 | porterage | 35 @ 0.8, stop - |  | uses 31.6/turn (observed), makes 0.0, holds 37 = 1.2 turns |
-| timber |  | 29 @ min 8.5 | makes 24.0, uses 0.0, holds 431 (keeps 350): sells the surplus + 5/turn of the excess |
+| timber |  | 24 @ min 8.5 | makes 24.0, uses 0.0, holds 431 (keeps 350): sells the surplus + 5/turn of the excess; ships offer 5 a turn abroad, so home sells 24 (was 29) |
 | tools | 9 @ 6.2, stop 68 |  | uses 8.4/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 23.6 turns |
