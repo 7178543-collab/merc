@@ -128,12 +128,20 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - So v2 now bids at the ceiling (planner, goals, builds). Bidding just over the lowest ask only under-fills deep needs
   (labour wanted 490, 430 offered near the ask). The ceiling is the real risk control.
 
-## Ship routes (Oct 13)
+## Ship routes (Oct 13, corrected after Taylor questioned the cost)
 - Whole map pulled (36 chunks, x 0-3039, y 640-3103, 5M sea tiles). `tools/sea_distances.py`: one Dijkstra (~20 s) ->
   `state/v2/sea_routes.json`, 92 of 101 towns reachable. Matches the game within ~1 move (Blanans 296.8 vs 297.2).
-- `v2/routes.py` ranks every town for one ship at world prices (public market data, refreshed every 6 h in the shadow run;
-  report section "Ship routes"). Conservative: only what each market takes now (10% depth), 5% slippage, crew ~266/turn at 0.5.
-- **Result at Oct 12 prices: no route pays.** Best (Blanans, garments out) grosses ~120/trip against ~1,600 crew. Even with 3x
-  the depth and half the crew cost it only breaks even. Taylor's parked ships are the right call; the report will say when
-  that changes.
+- **First model was wrong** (said "no route pays"): it assumed 150 moves/turn (the Linen Snake test only showed *at least*
+  150) and ~266 coin/turn crew, i.e. ~6 coin per unit shipped. Taylor: "you are calculating maximum price from ship".
+- **Real numbers (game client + Flax Wyrm's own route data)**: movement per turn = type moves x crew (snekkja 3,000 at crew
+  1.0; client `ze()`); route trips per turn = 3,000 x crew / (2 x distance) -> Blanans 5.03 = the route's `potential_trips`
+  5.033 and `capacity` 1,258 = 250 x 5.03. Running cost = recipe "snekkja 1" x crew: 50 labour + 1.6 cloth + 0.5 tar +
+  0.25 timber per turn at crew 1.0 (Flax Wyrm ran 0.953 of it for 122.5 coin; ~100 at Oct 13 prices). Per cargo slot that is
+  ~0.08-0.2 coin (Blanans `capacity_cost` 0.103). Cargo space is each product's `size` (garments 1, beer 2, bread 3, timber 15,
+  limestone 40), services (labour, porterage, lodging, protection, meat, fish, milk, ox power, donations) can't ship.
+  Product table saved to `v2/data/products.json`. Snekkja: capacity 250, moves 3000, range 800.
+- **So the limit is the markets, not the ship.** `v2/routes.py` sizes crew to the cargo (floor 0.23, as the game held the
+  Flax Wyrm), takes at most max(10% depth, 30% of a town's per-turn trade), 5% slippage. Oct 12 21:00 prices: Blanans about
+  +100 coin/turn (garments ~21/turn at ~25 vs 21.8 home), Rouhomme ~+75 (garments 68 at 23.6), Coburgbaum ~+150 but mostly
+  bread bought at home (shakier). Not modelled: fees, prices moving as we sell, the one-off trip to set a route up.
 - Phone app ship list = all 91 sea-reachable towns, by sea distance.

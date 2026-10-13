@@ -9,6 +9,8 @@ How a ship on a route really works (game client + Flax Wyrm's own numbers, Oct 1
   - movement per turn = type moves x crew level (snekkja: 3,000 moves at crew 1.0). A route round trip is 2 x the sea
     distance, so trips per turn = 3,000 x crew / (2 x moves). Flax Wyrm on Blanans (297 moves): 5.03 trips/turn, which is
     the route's own `potential_trips` 5.033 and `capacity` 1,258 = 250 x 5.03.
+  - cargo space is counted in each product's `size` (garments 1, beer 2, bread 3, timber 15, limestone 40: the same units
+    as storage), and services (labour, porterage, lodging, protection, meat, fish, milk, ...) can't be shipped.
   - running cost = the "snekkja 1" recipe x crew level: 50 labour + 1.6 cloth + 0.5 tar + 0.25 timber, ~128 coin per turn
     at crew 1.0 (Flax Wyrm ran 0.953 of it for 122.5 coin). Per unit carried that is ~0.10 coin on Blanans, the route's own
     `capacity_cost` 0.103. Shipping is cheap; what limits a route is how much each market will take per turn.
@@ -36,7 +38,16 @@ SHIP = {"type": "snekkja", "capacity": 250, "moves": 3000, "range": 800, "recipe
 MIN_CREW = 0.23
 TAKE_SHARE = 0.3
 SLIP = 0.05
-NOT_CARGO = {"labour", "porterage", "donations", "money", "none"}
+NOT_CARGO = {"labour", "porterage", "donations", "money", "none"}     # fallback if the product table is missing
+
+
+def _products():
+    """Game product table (v2/data/products.json, from the client): services can't be shipped, and cargo space is
+    counted in `size` per unit (garments 1, beer 2, bread 3, timber 15, limestone 40), the same units as storage."""
+    try:
+        return {p["name"]: p for p in json.load(open(os.path.join(HERE, "data", "products.json")))}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
 
 
 def _f(x):
@@ -93,6 +104,15 @@ def rank(snap, world, sea, home_name=None, top=10, cfg=None, recipes=None):
         surplus = max(0.0, _f(fl.get("production")) - use[k])
         spare[k] = surplus + max(0.0, _f(it.get("held")) - keep[k]) / 12.0      # per turn: new surplus + the pile over 12 turns
     cost1 = running_cost(snap, recipes)
+    prods = _products()
+
+    def size(item):
+        return float((prods.get(item) or {}).get("size") or 1)
+
+    def cargo(item):
+        if prods:
+            return (prods.get(item) or {}).get("type") == "commodity"
+        return item not in NOT_CARGO
     routes, skipped, out_of_range = [], 0, 0
     for tid, d in sea.items():
         if tid == home_id or not d.get("moves"):
@@ -105,11 +125,11 @@ def rank(snap, world, sea, home_name=None, top=10, cfg=None, recipes=None):
             skipped += 1
             continue
         trips_full = SHIP["moves"] / (2.0 * d["moves"])            # round trips per turn at crew 1.0
-        per_unit = cost1 / (SHIP["capacity"] * trips_full)          # coin per unit carried, one way loaded
+        per_space = cost1 / (SHIP["capacity"] * trips_full)         # coin per unit of cargo space, one way loaded
         there = {k: _mk(v) for k, v in (t.get("markets") or {}).items()}
         out_c, back_c = [], []
         for item, m in there.items():
-            if item in NOT_CARGO:
+            if not cargo(item):
                 continue
             h = home.get(item) or {}
             if m["bid"] > 0 and m["sell_room"] >= 1:
@@ -131,27 +151,30 @@ def rank(snap, world, sea, home_name=None, top=10, cfg=None, recipes=None):
         def pick(cands):
             rows = []
             for item, n, buy, sell in cands:
-                mg = sell - buy - per_unit
+                mg = sell - buy - per_space * size(item)
                 if mg > 0 and n >= 1:
-                    rows.append({"item": item, "units": int(n), "buy": round(buy, 2), "sell": round(sell, 2),
-                                 "margin": round(mg * int(n))})
+                    rows.append({"item": item, "units": int(n), "space": int(n) * size(item), "buy": round(buy, 2),
+                                 "sell": round(sell, 2), "margin": round(mg * int(n))})
             rows.sort(key=lambda r: -r["margin"])
             return rows
         out_l, back_l = pick(out_c), pick(back_c)
-        u_out, u_back = sum(r["units"] for r in out_l), sum(r["units"] for r in back_l)
-        crew = max(MIN_CREW, max(u_out, u_back) / (SHIP["capacity"] * trips_full)) if (out_l or back_l) else 0.0
+        s_out, s_back = sum(r["space"] for r in out_l), sum(r["space"] for r in back_l)
+        crew = max(MIN_CREW, max(s_out, s_back) / (SHIP["capacity"] * trips_full)) if (out_l or back_l) else 0.0
         if crew > 1:            # more than one ship can carry: scale the cargo down to one ship's worth
             f = 1.0 / crew
             for r in out_l + back_l:
                 r["units"] = int(r["units"] * f)
+                r["space"] = r["space"] * f
                 r["margin"] = round(r["margin"] * f)
             crew = 1.0
+        u_out, u_back = sum(r["units"] for r in out_l), sum(r["units"] for r in back_l)
         gross_ = sum(r["margin"] for r in out_l + back_l)
-        # margins already pay the per-unit shipping; the crew floor costs extra only where it carries more than needed
-        floor_extra = max(0.0, crew * cost1 - (u_out + u_back) * per_unit / 2.0) if crew else 0.0
+        # margins already pay for the space they use (each leg charged as if the other ran empty, so shipping is
+        # counted twice when both legs are loaded: conservative); the crew floor costs extra only past that
+        floor_extra = max(0.0, crew * cost1 - (s_out + s_back) * per_space) if crew else 0.0
         net = gross_ - floor_extra
         routes.append({"town": d["name"], "town_id": tid, "moves": d["moves"], "trips_per_turn_full": round(trips_full, 2),
-                       "cost_per_unit": round(per_unit, 3), "crew": round(crew, 2), "crew_cost": round(crew * cost1),
+                       "cost_per_unit": round(per_space, 3), "crew": round(crew, 2), "crew_cost": round(crew * cost1),
                        "out": out_l, "back": back_l, "units_out": u_out, "units_back": u_back,
                        "per_turn": round(net, 1)})
     routes.sort(key=lambda r: -r["per_turn"])
@@ -169,7 +192,7 @@ def report_lines(rr, n=5):
          "turn at full crew (crew is sized to the cargo, floor %.2f). Markets: up to %d%% of what each town trades a turn, "
          "%d%% slippage each way." % (rr["considered"], a["ship"], a["capacity"], a["moves_per_turn_full_crew"],
                                       a["running_cost_full_crew"], a["min_crew"], a["take_share"] * 100, a["slippage"] * 100), "",
-         "| Town | Moves | Ship cost/unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |",
+         "| Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |",
          "| --- | --- | --- | --- | --- | --- | --- |"]
     for r in rr["routes"][:n]:
         o = ", ".join("%s %d (%g->%g)" % (x["item"], x["units"], x["buy"], x["sell"]) for x in r["out"][:4]) or "-"
