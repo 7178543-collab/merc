@@ -375,11 +375,21 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 out.append("%s: sail home %s" % (sh.get("name"), "ok" if r.get("ok") else r.get("error")))
                 continue
             if str(sh.get("town")) == HOME_TOWN:
-                apply({"transport": sid, "operation_target": VOYAGE_CREW})
+                # movement points per turn = 3,000 x crew, effective at once, and every move this turn (the instant hop
+                # home included) spends them: Oct 13 a Brebronn trip (863) was refused with 794 left at crew 0.5
+                moves = float(v.get("moves") or 800)
+                apply({"transport": sid, "operation_target": round(min(1.0, max(VOYAGE_CREW, moves / 3000.0 + 0.4)), 2)})
                 r = apply({"travel": {"transport": sid, "to_town": tgt}, "confirm": True})
+                if not r.get("ok"):
+                    out.append("%s: sail to %s refused (%s); retry next turn" % (sh.get("name"), v.get("name"),
+                                                                                str(r.get("body") or r.get("error"))[:120]))
+                    continue
                 r2 = apply({"route": {"transport": sid, "start": True}, "confirm": True})
+                if r2.get("ok") and str((r2.get("route") or {}).get("remote_town")) != tgt:
+                    apply({"route": {"transport": sid, "stop": True}, "confirm": True})      # never keep a wrong route
+                    r2 = {"ok": False, "error": "route came up on the wrong town; stopped"}
                 v["step"] = "out"
-                out.append("%s: sail to %s %s, route %s" % (sh.get("name"), v.get("name"), "ok" if r.get("ok") else r.get("error"),
+                out.append("%s: sail to %s ok, route %s" % (sh.get("name"), v.get("name"),
                                                             "started" if r2.get("ok") else "not yet (%s)" % (r2.get("error") or r2.get("status"))))
                 continue
             if v["step"] == "out" and str(sh.get("town")) == tgt:
@@ -393,7 +403,7 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
         if not cand:
             continue
         c["voyage"] = {"target": str(cand["town_id"]), "name": cand["town"], "step": "home", "turn": None, "from_turn": turn,
-                       "expected": cand["per_turn"]}
+                       "expected": cand["per_turn"], "moves": cand.get("moves")}
         out.append("%s: heading for %s (est %+.0f a turn vs %+.0f now)" % (sh.get("name"), cand["town"], cand["per_turn"], cur))
         with open(log_path, "a") as f:
             f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": turn, "ship": sh.get("name"),

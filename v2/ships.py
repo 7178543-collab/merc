@@ -166,6 +166,6 @@ def best_towns(snap, world, sea, cfg, top=5, recipes=None, products=None):
         pl = plan_ship({"name": "?", "id": "?", "route_to": tid}, snap, world, sea, cfg, recipes, prods)
         if pl and pl["orders"] and pl["est_net"] > MIN_NET_PER_TURN:
             out.append({"town": d["name"], "town_id": tid, "per_turn": pl["est_net"], "crew": pl["crew"],
-                        "orders": pl["orders"]})
+                        "moves": d["moves"], "orders": pl["orders"]})
     out.sort(key=lambda r: -r["per_turn"])
     return out[:top]

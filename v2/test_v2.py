@@ -281,6 +281,8 @@ def test_ship_voyage_steps():
 
     def apply(e):
         calls.append(e)
+        if e.get("route", {}).get("start"):
+            return {"ok": True, "route": {"remote_town": "109102068"}}
         return {"ok": True}
     try:
         cfg = {"live": {"ship_modes": {"9": "auto"}}}
