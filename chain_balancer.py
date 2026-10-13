@@ -116,16 +116,11 @@ def send(method, path, body):
 
 
 def garment_exports():
-    """Garments a turn our ships' trade routes actually sold abroad last turn (v2 snapshot: the storehouse's route
-    operations, realized export), or half of what v2's ship plans offer if no route has sold yet. Route exports are NOT
-    in the storehouse's sale flow, so without this the pull model would size sewing as if exports didn't exist."""
-    def load(path):
-        try:
-            with open(path) as f:
-                return json.load(f)
-        except (OSError, ValueError):
-            return {}
-    # average over the last few game turns (v2 history: one line per run, routes trade in bursts as ships arrive)
+    """Garments a turn our ships' trade routes actually sold abroad, averaged over the last 12 game turns (v2 history
+    `exports`; turns with no record count as 0). Realized sales only: no fallback to what the ship plans offer.
+    Oct 13 lesson: counting offers and a 6-turn average of two lucky turns ramped the chain (flax 7.6 -> 11, sew 1.1 ->
+    2, labour ~470 -> ~940 bought a turn) into a garment market that trades ~65 a turn at ~22 everywhere; the bids that
+    made the first exports pay were one-off spikes. Cash fell ~2,600 over 4 turns before the balancer drained back."""
     per_turn = {}
     try:
         with open(os.path.join("state", "v2", "history.jsonl")) as f:
@@ -134,22 +129,16 @@ def garment_exports():
                     r = json.loads(line)
                 except ValueError:
                     continue
-                if r.get("turn") is not None and "exports" in r:
-                    per_turn[r["turn"]] = m.num((r.get("exports") or {}).get("garments"))
+                if r.get("turn") is not None:
+                    per_turn.setdefault(r["turn"], 0.0)
+                    if "exports" in r:
+                        per_turn[r["turn"]] = max(per_turn[r["turn"]], m.num((r.get("exports") or {}).get("garments")))
     except OSError:
         pass
-    recent = [per_turn[t] for t in sorted(per_turn)[-6:]]
-    if recent and sum(recent) > 0:
-        return sum(recent) / len(recent)   # v2 sells export-first, so these count in full
-    snap = load(os.path.join("state", "v2", "snapshot.json"))
-    sold = sum(m.num((((sh.get("route_flows") or {}).get("garments") or {}).get("realized") or {}).get("export"))
-               for sh in snap.get("ships") or [])
-    if sold > 0:
-        return sold
-    plan = load(os.path.join("state", "v2", "plan.json"))
-    offered = sum(m.num(((p_.get("orders") or {}).get("garments") or {}).get("sell_volume"))
-                  for p_ in ((plan.get("ship_plans") or {}).get("plans") or []))
-    return 0.25 * offered
+    if not per_turn:
+        return 0.0
+    last = max(per_turn)
+    return sum(per_turn.get(t, 0.0) for t in range(last - 11, last + 1)) / 12.0
 
 
 def garment_sales():
