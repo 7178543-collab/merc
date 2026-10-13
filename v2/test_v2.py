@@ -213,7 +213,7 @@ def test_ship_guard_pauses_an_idle_ship():
 def test_routes():
     import routes
     sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 300.0}, "3": {"name": "Far", "moves": 750.0},
-           "4": {"name": "TooFar", "moves": 900.0}}
+           "4": {"name": "TooFar", "moves": 1700.0}}
     mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
                                          "volume_ema_12": tr}
     world = [{"name": "Home", "markets": {"garments": mk(20, 21, 50, 50), "salt": mk(4, 5, 100, 100)}},
@@ -226,14 +226,14 @@ def test_routes():
     recipes = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
     snap["market"]["labour"] = {"price": 2.0}                                      # 100 coin a turn at full crew
     rr = routes.rank(snap, world, sea, recipes=recipes)
-    assert rr["assumptions"]["running_cost_full_crew"] == 100 and rr["out_of_range"] == 1   # 900 moves > the 800 range
+    assert rr["assumptions"]["running_cost_full_crew"] == 100 and rr["out_of_range"] == 1   # 1700 moves > twice the 800 range
     near = next(r for r in rr["routes"] if r["town"] == "Near")
     assert near["trips_per_turn_full"] == 5.0 and abs(near["cost_per_unit"] - 0.08) < 1e-9   # 3000/(2x300); 100/(250x5)
     out = {x["item"]: x for x in near["out"]}
     assert out["garments"]["units"] == 30 and out["garments"]["buy"] == 20         # 30% of their 100/turn; valued at the home bid
     back = {x["item"]: x for x in near["back"]}
     assert back["salt"]["units"] == 100                                            # capped by what home buyers take
-    assert near["crew"] == 0.23                                                    # 130 units need 0.1 crew: the floor applies
+    assert near["crew"] == 0.1                                                     # 100 units a leg / 1,250 a turn -> 0.1 (client 0.1 steps)
     far = next(r for r in rr["routes"] if r["town"] == "Far")
     assert far["cost_per_unit"] > near["cost_per_unit"] and far["per_turn"] < near["per_turn"]
     assert "Best" in "\n".join(routes.report_lines(rr))

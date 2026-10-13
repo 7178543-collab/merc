@@ -14,8 +14,9 @@ How a ship on a route really works (game client + Flax Wyrm's own numbers, Oct 1
   - running cost = the "snekkja 1" recipe x crew level: 50 labour + 1.6 cloth + 0.5 tar + 0.25 timber, ~128 coin per turn
     at crew 1.0 (Flax Wyrm ran 0.953 of it for 122.5 coin). Per unit carried that is ~0.10 coin on Blanans, the route's own
     `capacity_cost` 0.103. Shipping is cheap; what limits a route is how much each market will take per turn.
-  - crew is sized to the cargo: just enough trips to carry what the markets take, with a floor of MIN_CREW (the game held
-    the Flax Wyrm at 0.23; whether that is a real floor is unconfirmed, so it is charged).
+  - crew is sized to the cargo in steps of 0.1, as the client does. Range (snekkja 800): past it the extra distance counts
+    double, and past twice the range there is no route (client tripCount). A game turn is a month: the client's
+    "round trips per month" is per turn.
 Per turn, per item (conservative):
   - out: sold there at 95% of their best bid, up to max(units within 10% of that bid, TAKE_SHARE of what they trade per
     turn); our own stock is valued at the home bid (what it would fetch here), else bought at 105% of the home ask
@@ -35,7 +36,32 @@ SEA = os.path.join(ROOT, "state", "v2", "sea_routes.json")
 WORLD_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
 SHIP = {"type": "snekkja", "capacity": 250, "moves": 3000, "range": 800, "recipe": "snekkja 1"}   # game transport table
-MIN_CREW = 0.23
+MIN_CREW = 0.1          # the client sizes route crew in steps of 0.1 (ceil(cargo / journey capacity x 10) / 10)
+
+
+def trips_per_turn(moves, ship=SHIP):
+    """Round trips per turn at crew 1.0: the game client's tripCount (a turn is a game month). Past the type's range the
+    distance counts double for the extra stretch; beyond twice the range a route is impossible."""
+    n, rng = float(ship["moves"]), float(ship["range"])
+    if moves > 2 * rng:
+        return 0.0
+    if moves <= 0:
+        return n / 2
+    if moves < 100:
+        return n / 200
+    return n / (2 * (moves + max(moves - rng, 0.0)))
+
+
+def journey_capacity(moves, ship=SHIP):
+    """Cargo units per turn at crew 1.0 (client: floor(tripCount(ceil(moves)) x capacity)); Blanans 297.2 -> 1,258."""
+    return math.floor(trips_per_turn(math.ceil(moves), ship) * ship["capacity"])
+
+
+def world_from_compact(w):
+    """state/dump/world.json.gz ({town: {item: [bid, bid depth, ask, ask depth, traded]}}) -> marketdata-like list."""
+    return [{"name": town, "markets": {k: {"highest_bid": v[0], "bid_volume_10": v[1], "lowest_ask": v[2],
+                                             "ask_volume_10": v[3], "volume_ema_12": v[4]} for k, v in m.items()}}
+            for town, m in ((w or {}).get("towns") or {}).items()]
 TAKE_SHARE = 0.3
 SLIP = 0.05
 NOT_CARGO = {"labour", "porterage", "donations", "money", "none"}     # fallback if the product table is missing
@@ -117,15 +143,15 @@ def rank(snap, world, sea, home_name=None, top=10, cfg=None, recipes=None):
     for tid, d in sea.items():
         if tid == home_id or not d.get("moves"):
             continue
-        if d["moves"] > SHIP["range"]:
+        if not trips_per_turn(d["moves"]):
             out_of_range += 1
             continue
         t = by_name.get(d["name"])
         if not t:
             skipped += 1
             continue
-        trips_full = SHIP["moves"] / (2.0 * d["moves"])            # round trips per turn at crew 1.0
-        per_space = cost1 / (SHIP["capacity"] * trips_full)         # coin per unit of cargo space, one way loaded
+        trips_full = trips_per_turn(d["moves"])                     # round trips per turn at crew 1.0
+        per_space = cost1 / max(1, journey_capacity(d["moves"]))    # coin per unit of cargo space, one way loaded
         there = {k: _mk(v) for k, v in (t.get("markets") or {}).items()}
         out_c, back_c = [], []
         for item, m in there.items():
@@ -159,7 +185,8 @@ def rank(snap, world, sea, home_name=None, top=10, cfg=None, recipes=None):
             return rows
         out_l, back_l = pick(out_c), pick(back_c)
         s_out, s_back = sum(r["space"] for r in out_l), sum(r["space"] for r in back_l)
-        crew = max(MIN_CREW, max(s_out, s_back) / (SHIP["capacity"] * trips_full)) if (out_l or back_l) else 0.0
+        crew = max(MIN_CREW, math.ceil(10 * max(s_out, s_back) / max(1, journey_capacity(d["moves"]))) / 10.0) \
+            if (out_l or back_l) else 0.0
         if crew > 1:            # more than one ship can carry: scale the cargo down to one ship's worth
             f = 1.0 / crew
             for r in out_l + back_l:
