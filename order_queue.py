@@ -21,6 +21,8 @@ Entry kinds (a JSON list of these):
   expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
+  one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
+                    nearest free tile and expands after the next tick; skips while building or already waiting)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -604,6 +606,61 @@ def _apply_expand(e):
     return dict(ok=False, error="all attempts refused", refusals=errors, **info)
 
 
+_PENDING = []      # deferred steps added while this run is going (apply_queue keeps them when it rewrites the file)
+
+
+def _defer(entry, after=None):
+    """Park a step until after the next turn tick (default: the first :10 at least ~70 minutes away)."""
+    if after is None:
+        t = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=70)
+        after = t.replace(minute=10, second=0, microsecond=0).isoformat().replace("+00:00", "Z")
+    d = dict(after=after, entry=entry)
+    _PENDING.append(d)
+    cur = _load_deferred()
+    cur.append(d)
+    os.makedirs(os.path.dirname(DEFERRED), exist_ok=True)
+    with open(DEFERRED, "w") as f:
+        json.dump(cur, f, indent=1)
+    return after
+
+
+def _apply_plot(e):
+    """One more plot on a building, start to finish, no map click: {"plot": {"building": "<id>"}, "confirm": true}.
+    Uses land we already own if a free tile is in range (expands now); otherwise claims the nearest free tile now and
+    parks the expansion until after the next turn tick (a claim settles at the tick). Does nothing while the building
+    is already under construction or a plot step for it is already waiting. No confirm = dry run."""
+    bid = str(e["plot"]["building"])
+    try:
+        specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
+        bld = _get_json("/buildings/%s" % bid)
+        town = _get_json("/towns/%s" % bld["town_id"])
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
+    stage = (bld.get("construction") or {}).get("stage")
+    if stage not in (None, "", "NONE"):
+        return dict(ok=True, skipped="already under construction (stage %s)" % stage)
+    pend = [d for d in _load_deferred() if str(((d.get("entry") or {}).get("expand") or {}).get("building")) == bid]
+    if pend:
+        return dict(ok=True, skipped="a plot step is already waiting until %s" % pend[0].get("after"))
+    rng = float(((specs.get(bld.get("type")) or {}).get("construction") or {}).get("range") or 8)
+    cands = _expansion_candidates(bld, town, rng)
+    if not cands:
+        return dict(ok=False, error="no free tile in range")
+    c = cands[0]
+    step = {"expand": {"building": bid, "tiles": [c["tile"]]}, "confirm": True}
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, tile=c["tile"], ours=c["ours"], then="expand now" if c["ours"] else "claim now, expand after the tick")
+    if c["ours"]:
+        r = _apply_expand(step)
+        r["tile"] = c["tile"]
+        return r
+    cok, cerr = _claim_tile(bld["town_id"], c["tile"])
+    if not cok:
+        return dict(ok=False, tile=c["tile"], error=cerr)
+    after = _defer(step)
+    return dict(ok=True, tile=c["tile"], claimed=True, expand_after=after)
+
+
 def _apply_claim(e):
     """Claim unowned land: {"claim": {"town_id": "152202387", "tiles": ["1522.3:2388.5"]}, "confirm": true}.
     No confirm = dry run (lists tiles, owner and asking price from the live town data). Logs the game's reply verbatim."""
@@ -649,6 +706,8 @@ def apply_entry(e):
         return _apply_build(e)
     if e.get("expand"):
         return _apply_expand(e)
+    if e.get("plot"):
+        return _apply_plot(e)
     if e.get("claim"):
         return _apply_claim(e)
     if e.get("travel"):
@@ -795,6 +854,7 @@ def apply_queue(live):
     if q:
         with open(QUEUE, "w") as f:
             f.write("[]\n")
+    waiting += [d for d in _PENDING if d not in waiting]
     if due or waiting or _load_deferred():
         os.makedirs(os.path.dirname(DEFERRED), exist_ok=True)
         with open(DEFERRED, "w") as f:
