@@ -264,5 +264,5 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   22 floor for 44. Fixed: with no bid, ask 97% of the last clearing price. Now 71 @ 24.00 (bid 24.6), so only bids >= 24
   fill and the volume can't drag the price.
 - Park plot 12 at 20%. Labour filled in full (945 @ ~1.71) and 81 expired (~140 coin): v1's labour rule over-shot by one
-  turn; it trimmed itself to 936. Cured fish: home ask 26.40 over our 26.00 ceiling, bought 0 last turn (holds ~13, 2+
-  turns of banquets) -- morning question for Taylor.
+  turn; it trimmed itself to 936. Cured fish: home ask 26.40 over our 26.00 ceiling, bought 0 last turn (holds ~20, 3.5
+  turns of banquets; market price 24.8, so it likely refills) -- watch, not urgent.
