@@ -299,3 +299,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   engine for garments: there is no structural price gap. Their real value is the occasional spike while already in
   port, and goods with real gaps (flax fibres / thread / tools in the rank table) that we don't make spare of.
 - Failsafe trimmed labour 714 -> 629 (154 expired last turn, ~267 coin).
+- 09:30 **My mistake overnight, now undone.** Cash by turn: 13235 20,740 -> 13243 25,135 (about +400-550 a turn
+  with ~470 labour bought), then 13244-13248 down to 22,472. Cause: at 04:45 chain_balancer started counting route
+  exports (and, before any sold, a quarter of the plans' offers) as garment sales. It ramped flax 7.6 -> 9.7, retting
+  1.35 -> 1.72, spin 2.5 -> 3.25, sew 1.1 -> 1.4-2.0; labour bought jumped to 800-945 a turn (1,350-1,630 coin) with 80-170
+  expiring, for garments that sell at ~22 everywhere. Part of the cash went into stock (garments 407 -> 424, flax fibres
+  118 -> 138, cloth 115 -> 134), not all lost. The balancer's own drain had already pulled targets back to the 13243
+  levels (flax 7.65, ret 1.36, spin 2.5, weave 1.95, sew 1.1). Fixed for good: garment exports now count only realized
+  route sales averaged over 12 turns (2.3 a turn now), no fallback to plan offers.
