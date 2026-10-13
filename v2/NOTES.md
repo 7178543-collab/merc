@@ -256,3 +256,13 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Labour: last turn 413 short (bought 512 of 945 at <=2.00; the town's asks near 1.76 were ~216 deep). That stalled the
   logging camp, brewery, park upkeep and mansion banquet for one turn. 945 held now covers this turn's ~1,380 with the
   household's 450. Labour stays v1's; v2's shadow says 973 @ 2.20. Taylor's call in the morning.
+- 06:07 turn 13245: Linen Snake / Etallaen sold garments 6 at 33.20 (199), only 0.2 trips (crew 0.6 was set at 05:10,
+  mid-turn); ~-18 vs selling them at home after its 62 crew. This turn is the real test of crew 0.6 (~1.2 trips). Etallaen's
+  bid fell to ~30: v2 re-planned garments 24 @ 29.40 + nets 6 @ 43.80, est +69. Flax Wyrm stays at crew 0 (best other
+  town Hanbrücken +58, under the 60 voyage bar; cooldown to 13255).
+- Home garments: 10 sold at 25.80 (ask 25.20). But the 05:44 run, with the home bid gone for a moment, fell back to the
+  22 floor for 44. Fixed: with no bid, ask 97% of the last clearing price. Now 71 @ 24.00 (bid 24.6), so only bids >= 24
+  fill and the volume can't drag the price.
+- Park plot 12 at 20%. Labour filled in full (945 @ ~1.71) and 81 expired (~140 coin): v1's labour rule over-shot by one
+  turn; it trimmed itself to 936. Cured fish: home ask 26.40 over our 26.00 ceiling, bought 0 last turn (holds ~13, 2+
+  turns of banquets) -- morning question for Taylor.
