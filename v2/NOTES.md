@@ -151,3 +151,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   +100 coin/turn (garments ~21/turn at ~25 vs 21.8 home), Rouhomme ~+75 (garments 68 at 23.6), Coburgbaum ~+150 but mostly
   bread bought at home (shakier). Not modelled: fees, prices moving as we sell, the one-off trip to set a route up.
 - Phone app ship list = all 91 sea-reachable towns, by sea distance.
+
+## Check-in Oct 13 ~02:10 UTC (turn 13241)
+- v1 runs at 00:25, 01:02, 01:18 left all 8 v2-owned items exactly as v2 set them (live orders == last act.jsonl write).
+- The :25 v2 run fires late (01:44) but fires; act_history written each run. No suspensions (no suspended.json).
+- Park plot 11: progress 0 after 2 ticks at pace 100 -> no construction provider. Linked the storehouse at 02:08 (it now
+  projects limestone 5 + timber 4.2 a turn for it); `expand` links it automatically from now on. Re-check progress after the
+  03:00 tick.
+- All workflows green.
