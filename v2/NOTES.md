@@ -227,3 +227,5 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   ladder (home sells first, route beer hits min_holding 60).
 - Ship rows in the v2 report now read the game's export/import keys (they showed "-" before; the guard would have paused a
   trading ship after 3 turns). Guard counters reset.
+- 04:25 check (turn 13243): park plot 11 at 11%, upkeep 10/10. chain_balancer re-sized with the fixed flax constant (farm
+  7.58, retting 1.35, FILLING). Quarry made nothing (labour short 59 last turn); v1 raised the labour buy 467 -> 581 at 2.00.
