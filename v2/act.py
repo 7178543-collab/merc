@@ -175,7 +175,10 @@ def recent_manual(item, hours=2, path=QUEUE_DONE):
     for ln in lines:
         try:
             r = json.loads(ln)
-            if r.get("ok") and r.get("source", "queue") == "queue" and (r.get("entry") or {}).get("item") == item \
+            e = r.get("entry") or {}
+            if e.get("transport") or e.get("household"):
+                continue                    # a ship route's or the household's order for the item, not the storehouse's
+            if r.get("ok") and r.get("source", "queue") == "queue" and e.get("item") == item \
                     and datetime.datetime.fromisoformat(r["ts"]) >= cutoff:
                 return True
         except (ValueError, KeyError, TypeError):
