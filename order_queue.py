@@ -22,6 +22,7 @@ Entry kinds (a JSON list of these):
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
   bot v2 item       {"v2": {"suspend": "porterage"}} hands it back to v1 now; {"v2": {"resume": "porterage"}} gives it back to v2
+  trade route       {"route": {"transport": id, "start": true}, "confirm": true} / {"route": {"transport": id, "stop": true}, ...}
   world market      {"world": "all"} or {"world": ["Blanans"]}   (public market data, saved compact to state/dump/world.json.gz)
   construction link {"construction": {"building": "<id>", "set": {"provider_id": "<storehouse>"}}}   (PATCH its construction)
   construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
@@ -682,6 +683,39 @@ def _apply_world(e):
     return dict(ok=True, towns=len(out), saved="state/dump/world.json.gz")
 
 
+def _apply_route(e):
+    """Start or stop a ship's trade route (the client's own calls):
+      {"route": {"transport": "<id>", "start": true, "provider": "<storehouse>"}, "confirm": true}
+          PUT /transports/{id}/route {provider_id, journey_id: ""} -> a route on the ship's CURRENT journey (start it with the
+          ship docked at the far town after travelling there from home; the cargo must be empty)
+      {"route": {"transport": "<id>", "stop": true}, "confirm": true}   DELETE /transports/{id}/route (route config is lost)
+    No confirm = dry run (shows the ship's town, journey and cargo)."""
+    r = e["route"]
+    tid = str(r["transport"])
+    try:
+        t = _get_json("/transports/%s" % tid)
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s" % exn)
+    j = t.get("journey") or {}
+    cargo = {k: v.get("balance") for k, v in ((((t.get("cargo") or {}).get("inventory") or {}).get("account") or {}).get("assets") or {}).items()
+             if k != "money" and _same(v.get("balance"), 0) is False}
+    info = dict(town=t.get("town_id"), journey=[j.get("start_town_id"), j.get("end_town_id"), j.get("moves")],
+                has_route=bool(t.get("route")), cargo=cargo)
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, **info)
+    if r.get("stop"):
+        ok, status, resp = _req("DELETE", "/transports/%s/route" % tid, {})
+        after = bool(_get_json("/transports/%s" % tid).get("route"))
+        return dict(ok=bool(ok) and not after, status=status, reply=(resp or "")[:200], **info)
+    if r.get("start"):
+        body = {"provider_id": str(r.get("provider") or STORE), "journey_id": str(r.get("journey_id") or "")}
+        ok, status, resp = _req("PUT", "/transports/%s/route" % tid, body)
+        rt = _get_json("/transports/%s" % tid).get("route") or {}
+        return dict(ok=bool(ok) and bool(rt.get("id")), status=status, reply=(resp or "")[:200],
+                    route={k: rt.get(k) for k in ("local_town", "remote_town", "capacity", "moves", "potential_trips")}, **info)
+    return dict(ok=False, error="route entry needs start or stop")
+
+
 def _apply_construction(e):
     """{"construction": {"building": "<id>", "set": {"provider_id": "<storehouse id>"}}}: PATCH /buildings/{id}/construction
     (the client's own call for a construction's settings, e.g. {stage: "NONE"} to abort). Oct 13: an expansion started by API
@@ -827,6 +861,8 @@ def apply_entry(e):
         return _apply_v2(e)
     if e.get("world"):
         return _apply_world(e)
+    if isinstance(e.get("route"), dict):
+        return _apply_route(e)
     if isinstance(e.get("construction"), dict) and e["construction"].get("building"):
         return _apply_construction(e)
     if e.get("claim"):
