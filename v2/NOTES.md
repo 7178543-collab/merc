@@ -288,3 +288,14 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   Home garment sell cut to 30 @ 22 (export-first).
 - Route writes now clear old orders first (a raise was refused 409 "no capacity" while timber still reserved 270 units).
 - Park plot 12 at 36%. Labour: 96 expired again (~167 coin); v1 trims a little each turn (773 now).
+- 09:08 turn 13248: **both routes sold nothing** (Flax Wyrm / Clairlond garments 42 @ 27.80; Linen Snake / Kirchwerp beer
+  65 @ 5.05): -75 and -52 crew. Fresh world: Clairlond's best garment bid is 20.6 (3 units) -- the 28.4 we sailed for was
+  a one-off. Across ~90 towns garments trade at 21-25 (12-turn price EMA mostly 22-23.5); Etallaen's 33.8 was the same
+  kind of spike. Lesson: the best bid is not a price. Ship plans now price exports off min(best bid, 103% of the town's
+  12-turn price EMA); the queue's compact world keeps the EMA. With that, nothing pays anywhere right now and both ships
+  sit at crew 0 (no cost) on their routes.
+- Overnight ship ledger (route trades vs selling at home, minus crew): 13243 +177, 13244 ~+110, 13245 -18, 13246 -62,
+  13247 -36 (and Flax Wyrm's voyage ~-75), 13248 -127 => about **-30 net** for the night. The boats are not a profit
+  engine for garments: there is no structural price gap. Their real value is the occasional spike while already in
+  port, and goods with real gaps (flax fibres / thread / tools in the rank table) that we don't make spare of.
+- Failsafe trimmed labour 714 -> 629 (154 expired last turn, ~267 coin).
