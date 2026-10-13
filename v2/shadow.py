@@ -119,6 +119,17 @@ def report(p):
                 ", ".join("%s %.0f" % kv for kv in sh["sold"].items()) or "-",
                 ", ".join("%s %.0f" % kv for kv in sh["bought"].items()) or "-", sh["trade_value"]))
         L.append("")
+    sp = p.get("ship_plans") or {}
+    if sp.get("plans") or sp.get("best"):
+        L += ["## Ship plans (this turn's world prices)", ""]
+        for pl in sp.get("plans") or []:
+            o = ", ".join("%s %s %s @ %s" % (k, "sell" if "sell_volume" in v else "buy", v.get("sell_volume") or v.get("buy_volume"),
+                                              v.get("sell_price") or v.get("buy_price")) for k, v in pl["orders"].items()) or "nothing pays"
+            L.append("- **%s** on %s: %s; crew %.1f; est %+.0f a turn%s" % (pl["ship"], pl["town"], o, pl["crew"], pl["est_net"],
+                                                                         ("; " + "; ".join(pl["notes"])) if pl.get("notes") else ""))
+        if sp.get("best"):
+            L.append("- best towns now: " + ", ".join("%s %+.0f" % (r["town"], r["per_turn"]) for r in sp["best"][:5]))
+        L.append("")
     try:
         import routes
         L += routes.report_lines(p.get("routes"))
@@ -136,9 +147,11 @@ def report(p):
 
 
 def ship_routes(snap, out, replay):
-    """Ship routes ranked at world prices: refreshed every ROUTES_EVERY_H hours (one public download), else the last
-    result is carried. A replay uses --world FILE if given. Never fails the run."""
+    """World prices -> (route ranking, per-ship route plans). Fetched every run (ships need this turn's bids; one public
+    download). A replay uses --world FILE (marketdata list or the queue's compact world.json.gz) if given, else the last
+    ranking with no ship plans. Never fails the run."""
     import routes
+    import ships
     path = os.path.join(out, "routes.json")
     last = None
     try:
@@ -149,23 +162,32 @@ def ship_routes(snap, out, replay):
     try:
         if replay:
             if "--world" not in sys.argv:
-                return last
-            with open(sys.argv[sys.argv.index("--world") + 1]) as f:
-                world = json.load(f)
+                return last, None
+            wp = sys.argv[sys.argv.index("--world") + 1]
+            if wp.endswith(".gz"):
+                import gzip
+                world = routes.world_from_compact(json.load(gzip.open(wp, "rt")))
+            else:
+                with open(wp) as f:
+                    world = json.load(f)
         else:
-            if last and last.get("t"):
-                age = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(last["t"])
-                if age < datetime.timedelta(hours=ROUTES_EVERY_H):
-                    return last
             world = routes.fetch_world()
-        rr = routes.rank(snap, world, routes.load_sea(), cfg=planner.load_json("config.json"))
+        cfg = planner.load_json("config.json")
+        sea = routes.load_sea()
+        rr = routes.rank(snap, world, sea, cfg=cfg)
         rr["t"] = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
         with open(path, "w") as f:
             json.dump(rr, f, indent=1)
-        return rr
+        plans = []
+        for sh in snap.get("ships") or []:
+            pl = ships.plan_ship(sh, snap, world, sea, cfg)
+            if pl:
+                pl["diff"] = ships.route_diff(sh, pl)
+                plans.append(pl)
+        return rr, {"t": rr["t"], "plans": plans, "best": ships.best_towns(snap, world, sea, cfg)}
     except Exception as e:
         print("routes skipped: %s: %s" % (type(e).__name__, e))
-        return last
+        return last, None
 
 
 ROUTES_EVERY_H = 6
@@ -184,7 +206,7 @@ def main():
     replay = "--from" in sys.argv
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
     os.makedirs(out, exist_ok=True)
-    p["routes"] = ship_routes(snap, out, replay)
+    p["routes"], p["ship_plans"] = ship_routes(snap, out, replay)
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)

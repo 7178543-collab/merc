@@ -268,6 +268,54 @@ def suspend_check(plan, owned, st, results):
 
 
 SHIP_IDLE_TURNS = 3
+MAX_ROUTE_WRITES = 6
+
+
+def ship_auto(plan, cfg, snap, log_path, sst=None):
+    """Ships in config live.ship_modes with "auto": set their route orders and crew to v2's ship plan (v2/ships.py),
+    from this run's world prices. Returns a list of what was done."""
+    modes = (cfg.get("live") or {}).get("ship_modes") or {}
+    sp = (plan or {}).get("ship_plans") or {}
+    if not sp.get("plans"):
+        return []
+    try:
+        age = now() - datetime.datetime.fromisoformat(sp["t"])
+        if age > datetime.timedelta(hours=2):
+            return ["ship plans are %s old: no ship writes" % age]
+    except (KeyError, ValueError, TypeError):
+        return ["ship plans have no time: no ship writes"]
+    live = {str(s.get("id")): s for s in (snap or {}).get("ships") or []}
+    done = []
+    for pl in sp["plans"]:
+        sid = str(pl.get("id"))
+        if modes.get(sid) != "auto" or sid not in live:
+            continue
+        gp = ((sst or {}).get(sid) or {}).get("guard_paused_turn")
+        if gp is not None and (snap or {}).get("turn") is not None and (snap or {})["turn"] - gp < 6:
+            done.append("%s held at crew 0 by the ship guard since turn %s" % (pl.get("ship"), gp))
+            continue
+        writes = 0
+        for item, managers in (pl.get("diff") or {}).items():
+            if writes >= MAX_ROUTE_WRITES:
+                break
+            ok, status, body = api.write("PATCH", "/transports/%s/route/inventory/%s" % (sid, api.q(item)), {"managers": managers})
+            writes += 1
+            rec = {"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"), "ship": pl.get("ship"),
+                   "route_item": item, "to": managers, "ok": bool(ok), "status": status,
+                   "reply": None if ok else str(body)[:200]}
+            with open(log_path, "a") as f:
+                f.write(json.dumps(rec, default=str) + "\n")
+            done.append("%s %s -> %s" % (pl.get("ship"), item, "ok" if ok else "FAILED %s" % status))
+        cur = _n(live[sid].get("set_target"))
+        want = min(1.0, max(0.0, _n(pl.get("crew"))))
+        if abs(cur - want) >= 0.05:
+            ok, status, body = api.write("PUT", "/transports/%s/operation" % sid, {"operation_target": "%.3f" % want})
+            with open(log_path, "a") as f:
+                f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
+                                    "ship": pl.get("ship"), "crew": [cur, want], "est_net": pl.get("est_net"),
+                                    "ok": bool(ok), "status": status}, default=str) + "\n")
+            done.append("%s crew %.2f -> %.2f %s" % (pl.get("ship"), cur, want, "ok" if ok else "FAILED"))
+    return done
 
 
 def ship_guard(plan, ship_ids, st, turn, log_path):
@@ -292,6 +340,7 @@ def ship_guard(plan, ship_ids, st, turn, log_path):
                                     "ok": bool(ok), "status": status}, default=str) + "\n")
             out.append(sh.get("ship"))
             c["idle"] = 0
+            c["guard_paused_turn"] = turn
     return out
 
 
@@ -348,9 +397,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                                     "verified": verified, "status": status}, default=str) + "\n")
 
     st = _load(STATE, {})
-    paused_ships = []
+    paused_ships, ship_done = [], []
     if live_mode and ship_ids and not stand:
         paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
+        ship_done = ship_auto(plan or {}, cfg, snap, LOG, st["ships"])
     newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results) if live_mode else {}
     if newly:
         for item, why in newly.items():
@@ -375,6 +425,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         res["mode"], ", ".join(sorted(owned)) or "none", res["would_change"], sent,
         ("; STAND DOWN: " + stand) if stand else "", ("; suspended " + ", ".join(newly)) if newly else "")
         + (("; paused ships " + ", ".join(paused_ships)) if paused_ships else ""))
+    for d_ in ship_done:
+        print("  ship: " + d_)
     for r in rows:
         if r["owned"] and not r["same"]:
             print("  %s: %s%s" % (r["item"], "refused: " + "; ".join(r["refused"]) if r.get("refused") else

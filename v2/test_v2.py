@@ -210,6 +210,61 @@ def test_ship_guard_pauses_an_idle_ship():
         shutil.rmtree(d)
 
 
+def test_ship_auto_sets_route_and_crew():
+    d = tempfile.mkdtemp()
+    calls = []
+    real = api.write
+    api.write = lambda m, p, b: (calls.append((m, p, b)) or (True, 200, {}))
+    try:
+        t_ = act.now().isoformat()
+        plan = {"ship_plans": {"t": t_, "plans": [
+            {"ship": "linen snake", "id": "1948883264", "crew": 0.2, "est_net": 300,
+             "diff": {"garments": [{"sell_volume": 59, "sell_price": "28.0", "min_holding": 30}], "limestone": []}},
+            {"ship": "Flax Wyrm", "id": "845668271", "crew": 0.0, "diff": {"beer": []}}]}}
+        snap = {"turn": 10, "ships": [{"id": "1948883264", "set_target": 0.0}, {"id": "845668271", "set_target": 0.25}]}
+        cfg = {"live": {"ship_modes": {"1948883264": "auto"}}}                 # Flax Wyrm is not auto: untouched
+        done = act.ship_auto(plan, cfg, snap, os.path.join(d, "a.jsonl"), {})
+        assert [c[1] for c in calls] == ["/transports/1948883264/route/inventory/garments",
+                                         "/transports/1948883264/route/inventory/limestone", "/transports/1948883264/operation"]
+        assert calls[2][2] == {"operation_target": "0.200"} and len(done) == 3
+        calls.clear()                                                          # held by the guard: no writes
+        assert "guard" in act.ship_auto(plan, cfg, snap, os.path.join(d, "a.jsonl"), {"1948883264": {"guard_paused_turn": 8}})[0]
+        old = dict(plan["ship_plans"], t="2026-01-01T00:00:00+00:00")          # stale prices: no writes
+        act.ship_auto({"ship_plans": old}, cfg, snap, os.path.join(d, "a.jsonl"), {})
+        assert calls == []
+    finally:
+        api.write = real
+        shutil.rmtree(d)
+
+
+def test_ships_plan():
+    import ships
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Far", "moves": 774.0}}
+    mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
+                                         "volume_ema_12": tr}
+    world = [{"name": "Home", "markets": {"garments": mk(22.4, 23.2, 12, 1, 64), "cured fish": mk(24.6, 26, 5, 5, 30)}},
+             {"name": "Far", "markets": {"garments": mk(28.4, 0, 59, 0, 72), "cured fish": mk(0, 23, 0, 20, 10),
+                                         "cloth": mk(0, 5, 0, 50, 20)}}]
+    snap = {"home_town": "1", "market": {"labour": {"price": 2.0}}, "store": {"items": {
+        "garments": {"held": 448, "unit_cost": 20.1, "orders": [{"min_holding": 30}],
+                     "flow": {"production": 41, "consumption": 1.8, "sale": 49, "sale_value": 1078}},
+        "cured fish": {"held": 19, "orders": [], "flow": {"consumption": 5.5}},
+        "cloth": {"held": 80, "orders": [], "flow": {"production": 89, "consumption": 81}}}}}
+    cfg = {"chain": {"intermediates": ["cloth"]}, "never_drop": []}
+    rec = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
+    p = ships.plan_ship({"name": "s", "id": "9", "route_to": "2", "route_orders": {"limestone": [{"buy_volume": 30}]}},
+                        snap, world, sea, cfg, recipes=rec)
+    g = p["orders"]["garments"]
+    assert g["sell_volume"] == 59 and g["sell_price"] == "28.0" and g["min_holding"] == 30     # 98% of their 28.4 bid, grid-snapped
+    assert p["orders"]["cured fish"]["buy_volume"] == 5 and "cloth" not in p["orders"]       # we use it / we make cloth
+    assert p["crew"] == 0.2 and p["est_net"] > 250                                           # 64 units / 483 a turn -> 0.2
+    diff = ships.route_diff({"route_orders": {"limestone": [{"buy_volume": 30}]}}, p)
+    assert diff["limestone"] == [] and "garments" in diff
+    world[1]["markets"]["garments"] = mk(23.0, 0, 59, 0, 72)                                 # bid gone below home value + margin
+    p = ships.plan_ship({"name": "s", "id": "9", "route_to": "2"}, snap, world, sea, cfg, recipes=rec)
+    assert "garments" not in p["orders"]
+
+
 def test_routes():
     import routes
     sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 300.0}, "3": {"name": "Far", "moves": 750.0},
