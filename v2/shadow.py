@@ -216,11 +216,12 @@ def _route_exports(snap):
     return out
 
 
-def export_first(p):
-    """Goods our ships sell abroad pay more than at home (garments ~28-29 vs 22, Oct 13), and the routes only get what
-    the home sell orders leave. So v2's home sell volume = what it would sell anyway minus what the ship plans offer
-    abroad, never under HOME_SELL_MIN. Re-planned every run from this turn's prices."""
+def export_first(p, snap=None):
+    """When stock is short, the routes only get what the home sell orders leave, so home sells give way to the ship
+    plans' offers (never under HOME_SELL_MIN). When stock covers both (garments 400 held, beer 280), nothing is cut:
+    Oct 13 the cut left home garments at 30 and beer at 10 for two turns while the routes sold nothing."""
     sp = p.get("ship_plans") or {}
+    items = ((snap or {}).get("store") or {}).get("items") or {}
     ex = {}
     for pl in sp.get("plans") or []:
         for item, o in (pl.get("orders") or {}).items():
@@ -231,7 +232,15 @@ def export_first(p):
         if not s:
             continue
         before = int(s.get("sell_volume") or 0)
-        s["sell_volume"] = max(HOME_SELL_MIN, before - n)
+        it = items.get(item)
+        if it is not None:
+            keep = max([float(o.get("min_holding") or 0) for o in it.get("orders") or []] + [0.0])
+            room = float(it.get("held") or 0) - keep
+            if room >= before + n:
+                continue            # enough stock for home and abroad: no cut
+            s["sell_volume"] = max(HOME_SELL_MIN, min(before, int(room - n)))
+        else:
+            s["sell_volume"] = max(HOME_SELL_MIN, before - n)
         p["orders"][item]["why"] = "%s; ships offer %d a turn abroad, so home sells %d (was %d)" % (
             p["orders"][item].get("why") or "sell", n, s["sell_volume"], before)
 
@@ -250,7 +259,7 @@ def main():
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
     os.makedirs(out, exist_ok=True)
     p["routes"], p["ship_plans"] = ship_routes(snap, out, replay)
-    export_first(p)
+    export_first(p, snap)
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)

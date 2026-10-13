@@ -295,6 +295,14 @@ def test_export_first_home_sales():
     shadow.export_first(p)
     assert p["orders"]["garments"]["sell"]["sell_volume"] == 10        # 69 - 59 abroad
     assert p["orders"]["beer"]["sell"]["sell_volume"] == 10            # never under the home minimum
+    p = {"orders": {"garments": {"sell": {"sell_volume": 69}}},
+         "ship_plans": {"plans": [{"orders": {"garments": {"sell_volume": 42}}}]}}
+    snap = {"store": {"items": {"garments": {"held": 402, "orders": [{"min_holding": 30}]}}}}
+    shadow.export_first(p, snap)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 69        # 372 spare covers 69 + 42: no cut
+    snap["store"]["items"]["garments"]["held"] = 120
+    shadow.export_first(p, snap)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 48        # 90 spare - 42 abroad
 
 
 def test_ship_voyage_steps():
