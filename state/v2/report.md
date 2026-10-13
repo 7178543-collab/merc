@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13239, 2026-10-13 00:34. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, nets, porterage; v1 runs everything else.
+Turn 13239, 2026-10-13 00:36. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 
 ## Items v2 runs (last turn)
@@ -12,8 +12,9 @@ Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 | firewood | 51 | 6 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 12 | 6 | 6 | 0 | 0 | stop 24, buy 12, buy @ 2.5 |
 | grain | 122 | 33 | 32 | 0 | 0 | stop 130, buy 37, buy @ 3.7 |
-| nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 20, sell @ 36 |
-| porterage | 24 | 24 | 19 | 0 | 5 | buy 24, buy @ 0.6 |
+| meat | 6 | 6 | 6 | 0 | 0 | buy 6, buy @ 3.02 |
+| nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 36 |
+| porterage | 24 | 24 | 19 | 0 | 5 | buy 26, buy @ 0.8 |
 
 **2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
 
@@ -87,7 +88,7 @@ Labour metered per turn while a site can progress: labour 22
 | garments |  | 73 @ min 22.0 | makes 41.0, uses 1.8, holds 478 (keeps 30): sells the surplus + 34/turn of the excess |
 | grain | 37 @ 3.7, stop 130 |  | uses 32.5/turn (brewery 1), makes 0.0, holds 122 = 3.8 turns |
 | labour | 480 @ 2.2, stop - |  | uses 906.8/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 491 = 1.1 turns |
-| meat | 12 @ 2.4, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
+| meat | 12 @ 3.02, stop 24 |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 6 @ min 36.0 |  |
 | porterage | 26 @ 0.8, stop - |  | uses 23.4/turn (observed), makes 0.0, holds 24 = 1.0 turns |
 | timber |  | 29 @ min 8.5 | makes 24.0, uses 0.0, holds 429 (keeps 350): sells the surplus + 5/turn of the excess |
