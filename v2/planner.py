@@ -437,10 +437,13 @@ def plan(s, cfg=None, recipes=None, goals=None):
     ships = []
     for sh in s.get("ships") or []:
         rf = sh.get("route_flows") or {}
-        sold = {k: (v.get("realized") or {}).get("sale", 0) for k, v in rf.items() if (v.get("realized") or {}).get("sale")}
-        bought = {k: (v.get("realized") or {}).get("purchase", 0) for k, v in rf.items() if (v.get("realized") or {}).get("purchase")}
-        value = sum((v.get("realized") or {}).get("sale_value", 0) for v in rf.values()) - \
-            sum((v.get("realized") or {}).get("purchase_cost", 0) for v in rf.values())
+        # a route's realized flows (storehouse operations route/<ship>): export / export_value / export_cost / export_fare
+        # and import / import_value / import_cost / import_fare (Oct 13, turn 13243: garments 30, 882, 601.7, 3.06)
+        rz = {k: (v.get("realized") or {}) for k, v in rf.items()}
+        sold = {k: r.get("export") or r.get("sale") for k, r in rz.items() if r.get("export") or r.get("sale")}
+        bought = {k: r.get("import") or r.get("purchase") for k, r in rz.items() if r.get("import") or r.get("purchase")}
+        value = sum(r.get("export_value", 0) - r.get("export_cost", 0) - r.get("export_fare", 0) for r in rz.values()) + \
+            sum(r.get("import_value", 0) - r.get("import_cost", 0) - r.get("import_fare", 0) for r in rz.values())
         cost = sh.get("running_cost") or 0
         row = {"ship": sh.get("name"), "id": sh.get("id"), "crew_set": sh.get("set_target"), "crew_last": sh.get("production"),
                "cost": round(cost, 1), "route_to": sh.get("route_to"), "trips": sh.get("route_trips"),

@@ -265,6 +265,16 @@ def test_ships_plan():
     assert "garments" not in p["orders"]
 
 
+def test_ships_read_route_exports():
+    s = copy.deepcopy(SNAP)
+    s["ships"] = [{"id": "1", "name": "linen snake", "running_cost": 39.3, "production": 0.4, "set_target": 0.4,
+                   "route_to": "109102068", "route_flows": {"garments": {"projection": {}, "realized": {
+                       "export": 30, "export_value": 882, "export_cost": 601.658, "export_fare": 3.06}}}}]
+    sh = planner.plan(s, CFG, goals=[])["ships"][0]
+    assert sh["sold"] == {"garments": 30} and abs(sh["trade_value"] - 277.3) < 0.05
+    assert not any(f["item"] == "linen snake" for f in planner.plan(s, CFG, goals=[])["flags"])   # it traded: no waste flag
+
+
 def test_ship_voyage_steps():
     d = tempfile.mkdtemp()
     calls = []
