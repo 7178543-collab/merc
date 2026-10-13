@@ -129,6 +129,10 @@ def report(p):
                                                                          ("; " + "; ".join(pl["notes"])) if pl.get("notes") else ""))
         if sp.get("best"):
             L.append("- best towns now: " + ", ".join("%s %+.0f" % (r["town"], r["per_turn"]) for r in sp["best"][:5]))
+            b0 = sp["best"][0]
+            L.append("- %s would trade: %s; crew %.1f" % (b0["town"], ", ".join(
+                "%s %s %s @ %s" % (k, "sell" if "sell_volume" in v else "buy", v.get("sell_volume") or v.get("buy_volume"),
+                                   v.get("sell_price") or v.get("buy_price")) for k, v in (b0.get("orders") or {}).items()), b0["crew"]))
         L.append("")
     try:
         import routes
