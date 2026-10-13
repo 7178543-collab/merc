@@ -266,3 +266,15 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Park plot 12 at 20%. Labour filled in full (945 @ ~1.71) and 81 expired (~140 coin): v1's labour rule over-shot by one
   turn; it trimmed itself to 936. Cured fish: home ask 26.40 over our 26.00 ceiling, bought 0 last turn (holds ~20, 3.5
   turns of banquets; market price 24.8, so it likely refills) -- watch, not urgent.
+- 07:07 turn 13246: **profit last turn -762** (status): sales 1,335, buys 2,097 -- labour 936 bought and 173 expired
+  (~300 coin), garments 44 sold at home at 24.60 avg, Linen Snake sold nothing at Etallaen (bid fell under our 29.40).
+- **Crew fix reverted**: route `actual_trips` is reserved cargo / 250 (0.632 = 158 reserved; 0.144 = 36), not a port
+  schedule, and sales tracked price vs their bids, not crew (crew 0.1: 30 then 0; crew 0.6: 6 then 0). The one-round-
+  trip minimum cost ~50 coin a turn for nothing and made Etallaen look -27. Dropped: crew = cargo / capacity again.
+- **Over-full plans**: plan_ship capped crew at 1.0 but kept all the cargo, so Kirchwerp (beer 63 + timber 26 = 516 size
+  units vs 279 room) scored +158; really ~+36. Orders now fit the room, best gain per size unit first. Voyages re-check
+  the target at home (best free town now, or end the voyage at crew 0 if nothing pays).
+- Linen Snake voyage: v2 stopped Etallaen, sailed home (774 moves), crew 0.76, sailed to Kirchwerp (1,074), route
+  685482739510122816 (cap 278). Orders: timber 18 @ 14.70 + beer 4 @ 4.72, crew 1.0, est +36 (vs Etallaen +16, Vauxvais
+  +31). Garments no longer pay abroad: Etallaen's bid fell from 33.8 to under 29, and our home garment price slid
+  25.8 -> 22.0 as we sold 44-55 a turn into a ~65/turn market. Garments: 426 held, making ~58-70 a turn.
