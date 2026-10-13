@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13239, 2026-10-13 00:32. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain; v1 runs everything else.
+Turn 13239, 2026-10-13 00:34. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, nets, porterage; v1 runs everything else.
 Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 
 ## Items v2 runs (last turn)
@@ -11,9 +11,11 @@ Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 51 | 6 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 12 | 6 | 6 | 0 | 0 | stop 24, buy 12, buy @ 2.5 |
-| grain | 122 | 33 | 32 | 0 | 0 | stop 130, buy 41, buy @ 3.7 |
+| grain | 122 | 33 | 32 | 0 | 0 | stop 130, buy 37, buy @ 3.7 |
+| nets | 41 | 0 | 0 | 0 | 0 | min_holding 40, sell 20, sell @ 36 |
+| porterage | 24 | 24 | 19 | 0 | 5 | buy 24, buy @ 0.6 |
 
-**2 risks, 0 waste, 3 tuning** where v2 would act differently from v1.
+**2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -22,8 +24,6 @@ Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 
 ## Tuning
 
-- **cured fish**: home ask 26.40 is above our ceiling 26.00 and last turn bought 6 of ~6 needed: the buy can't fill -> v2: raise the ceiling or find another source
-- **limestone**: build materials for park 1 are in (153.0 held, 60 needed) but a buy is still live -> v2: switch the limestone buy off
 - **timber**: build materials for park 1 are in (429.0 held, 40 needed) but a buy is still live -> v2: switch the timber buy off
 
 ## Builds under construction
@@ -32,7 +32,7 @@ Cash 22,167, prestige 2,568 (148 free, +3.8/turn).
 
 | Material | Need | Held | Deficit | v2 action |
 | --- | --- | --- | --- | --- |
-| limestone | 60 | 153.0 | 0 | off: covered; switch v1's buy off |
+| limestone | 60 | 153.0 | 0 | off: covered |
 | timber | 40 | 429.0 | 0 | off: covered; switch v1's buy off |
 
 Labour metered per turn while a site can progress: labour 22
