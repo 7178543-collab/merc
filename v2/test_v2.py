@@ -192,23 +192,31 @@ def test_act_takes_off_an_unneeded_buy():
 
 def test_routes():
     import routes
-    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 150.0}, "3": {"name": "Far", "moves": 900.0}}
-    mk = lambda bid, ask, bv, av: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av}
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Near", "moves": 300.0}, "3": {"name": "Far", "moves": 750.0},
+           "4": {"name": "TooFar", "moves": 900.0}}
+    mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
+                                         "volume_ema_12": tr}
     world = [{"name": "Home", "markets": {"garments": mk(20, 21, 50, 50), "salt": mk(4, 5, 100, 100)}},
-             {"name": "Near", "markets": {"garments": mk(40, 0, 100, 0), "salt": mk(0, 1, 0, 300)}},
-             {"name": "Far", "markets": {"garments": mk(40, 0, 100, 0)}}]
-    snap = {"home_town": "1", "store": {"items": {"garments": {"held": 230, "orders": [{"min_holding": 30}], "flow": {}},
-                                                  "salt": {"held": 0, "orders": [], "flow": {}}}}}
-    rr = routes.rank(snap, world, sea)
-    near = rr["routes"][0]
-    assert near["town"] == "Near" and near["trip_turns"] == 4                      # 1 turn each way + a turn at each end
+             {"name": "Near", "markets": {"garments": mk(40, 0, 10, 0, 100), "salt": mk(0, 1, 0, 300)}},
+             {"name": "Far", "markets": {"garments": mk(40, 0, 10, 0, 100)}},
+             {"name": "TooFar", "markets": {"garments": mk(90, 0, 100, 0)}}]
+    snap = {"home_town": "1", "market": {}, "store": {"items": {
+        "garments": {"held": 270, "orders": [{"min_holding": 30}], "flow": {"production": 40, "consumption": 0}},
+        "salt": {"held": 0, "orders": [], "flow": {}}}}}
+    recipes = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
+    snap["market"]["labour"] = {"price": 2.0}                                      # 100 coin a turn at full crew
+    rr = routes.rank(snap, world, sea, recipes=recipes)
+    assert rr["assumptions"]["running_cost_full_crew"] == 100 and rr["out_of_range"] == 1   # 900 moves > the 800 range
+    near = next(r for r in rr["routes"] if r["town"] == "Near")
+    assert near["trips_per_turn_full"] == 5.0 and abs(near["cost_per_unit"] - 0.08) < 1e-9   # 3000/(2x300); 100/(250x5)
     out = {x["item"]: x for x in near["out"]}
-    assert out["garments"]["units"] == 100 and out["garments"]["buy"] == 20         # our spare stock, valued at the home bid, capped by their bids
+    assert out["garments"]["units"] == 30 and out["garments"]["buy"] == 20         # 30% of their 100/turn; valued at the home bid
     back = {x["item"]: x for x in near["back"]}
-    assert back["salt"]["units"] == 100                                             # capped by what home can take
-    assert near["gross"] == round(100 * (38 - 20) + 100 * (3.8 - 1.05)) and near["crew_cost"] == 4 * 266
-    assert rr["routes"][1]["town"] == "Far" and rr["routes"][1]["per_turn"] < near["per_turn"]
-    assert "Verdict" in "\n".join(routes.report_lines(rr))
+    assert back["salt"]["units"] == 100                                            # capped by what home buyers take
+    assert near["crew"] == 0.23                                                    # 130 units need 0.1 crew: the floor applies
+    far = next(r for r in rr["routes"] if r["town"] == "Far")
+    assert far["cost_per_unit"] > near["cost_per_unit"] and far["per_turn"] < near["per_turn"]
+    assert "Best" in "\n".join(routes.report_lines(rr))
 
 
 def test_orders_sane():
