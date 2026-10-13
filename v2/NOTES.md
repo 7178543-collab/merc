@@ -174,3 +174,18 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - **Test started 02:48**: Flax Wyrm on Blanans, garments only (sell 40 at min 25, keep 60 at home; firewood and thread
   exports removed), limestone import left (at max), crew 0.25 (~25 coin/turn). Read the Ships section after the 04:00 tick:
   garments sold at Blanans = the route works; nothing sold = v2 pauses it by ~06:00 and the route mechanics need more work.
+
+## Night log, Oct 12-13 (Taylor: "check every turn until 7am, get the boat bot working")
+- 03:05 UTC: world prices (queue `{"world": "all"}` -> state/dump/world.json.gz). Blanans has NO garment bids now (asks
+  21.4); the Oct 10 bid of 26.4 is gone, which is why the Flax Wyrm's 40 garments at 25 never sold. Garments are wanted at
+  Etallaen (bid 28.4 for 59, nobody selling, 774 moves), Friedwerp 27.6 (6), Essenbrucke 23.8 (26). Home bid 22.4.
+- Route mechanics (client code): trips per turn = 3000/(2 x (moves + max(moves-800,0))), none past 1600; capacity =
+  floor(trips x 250) per turn (a turn is a game month: the client's "round trips per month"). A route sells by posting asks
+  in the far town from the storehouse; it fills only against bids there. Bulky orders (limestone size 40, firewood 30)
+  reserve the capacity.
+- 03:04 Flax Wyrm: limestone import off (it reserved 1,200 of 1,258 capacity a turn). 03:08: test sales at Blanans:
+  timber 6 at 7.30 (their bid 7.45), beer 4 at 3.44 (bid 3.50). If these fill, the route mechanism is proven.
+- 03:08 Linen Snake: crew 0.5, travelling Grandgues -> home (150 tiles, arrives at the 04:00 tick). Plan: home ->
+  Etallaen (774 moves, 483 cargo/turn at crew 1), start the route, sell ~59 garments/turn at ~28 (v2 estimate +300/turn).
+- Built: v2/ships.py (route orders + crew from this turn's prices), act.py ship_auto (live.ship_modes "auto"), ship guard,
+  world prices fetched every v2 run, queue entries `route` (start/stop) and `world`. 20 tests.
