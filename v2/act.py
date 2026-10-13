@@ -360,8 +360,9 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 c["last_voyage_turn"] = turn
                 out.append("%s: route on %s running" % (sh.get("name"), v.get("name")))
                 continue
-            if v.get("turn") == turn:
-                continue                        # one step per turn: the ship moves at the tick
+            at_home = str(sh.get("town")) == HOME_TOWN and not sh.get("route_to")
+            if v.get("turn") == turn and not (at_home and v.get("step") == "home"):
+                continue                        # one step per turn (the ship moves at the tick); sailing home is instant
             v["turn"] = turn
             if sh.get("route_to"):
                 r = apply({"route": {"transport": sid, "stop": True}, "confirm": True})
