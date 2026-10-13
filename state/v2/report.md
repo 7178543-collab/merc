@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13243, 2026-10-13 04:13. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13243, 2026-10-13 04:15. Mode: handover. v2 runs: cured fish, donations, firewood, fish, grain, meat, nets, porterage; v1 runs everything else.
 Cash 25,187, prestige 2,583 (163 free, +4.2/turn).
 
 ## Items v2 runs (last turn)
