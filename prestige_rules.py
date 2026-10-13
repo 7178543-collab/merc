@@ -99,6 +99,9 @@ def tenants_rule():
 
 PARK = "152202388002004"
 PARK_PLOT = {"limestone": 60, "timber": 40}          # per plot (labour 260 is bought)
+# Oct 13: when a plot is ready, place it (order queue "plot": expand onto our land, or claim now and expand after the
+# tick) instead of asking Taylor for a map click. False = only flag it in needs_you, as before.
+AUTO_PLOT = False
 
 
 def park_ready_rule():
@@ -118,6 +121,18 @@ def park_ready_rule():
     ready = room and all(held[k] >= v for k, v in PARK_PLOT.items())
     say("park: %d plots, prestige pool %.1f/%.0f, limestone %.0f, timber %.0f -> %s" % (
         plots, used, cap, held["limestone"], held["timber"], "READY for another plot" if ready else ("no pool room" if not room else "waiting on materials")))
+    if ready and LIVE and AUTO_PLOT:
+        e = {"plot": {"building": PARK}, "confirm": True, "note": "park rule: pool %.1f/%.0f, limestone %.0f, timber %.0f" % (
+            used, cap, held["limestone"], held["timber"])}
+        try:
+            r = q.apply_entry(e)
+        except Exception as ex:
+            r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+        if not r.get("skipped"):
+            q.log(e, r, source="prestige_rules")
+        say("  park plot -> %s" % (r.get("skipped") or ("OK %s" % (r.get("tile") or "")) if r.get("ok") else "FAILED %s" % r.get("error")))
+        if r.get("ok"):
+            return
     if ready and LIVE and not os.path.exists(NEEDS_YOU):
         with open(NEEDS_YOU, "w") as f:
             json.dump({"what": "Add a park plot (park > expand on the map): pool %.1f/%.0f, limestone %.0f, timber %.0f on hand." % (used, cap, held["limestone"], held["timber"]),
