@@ -1,18 +1,18 @@
 # v2 shadow report
 
-Turn 13248, 2026-10-13 09:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
+Turn 13248, 2026-10-13 09:14. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, meat, nets, porterage; v1 runs everything else.
 Cash 22,472, prestige 2,595 (175 free, +4.1/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 269 | 0 | 19 | 0 | 0 | min_holding 60, sell 10, sell @ 3.7 |
+| beer | 269 | 0 | 19 | 0 | 0 | min_holding 60, sell 30, sell @ 3.7 |
 | cured fish | 19 | 6 | 6 | 0 | 0 | stop 20, buy 7, buy @ 26 |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 25 | 6 | 6 | 0 | 0 | stop 26, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 2.5 |
-| garments | 424 | 0 | 2 | 0 | 0 | min_holding 30, sell 29, sell @ 22 |
+| garments | 424 | 0 | 2 | 0 | 0 | min_holding 30, sell 68, sell @ 23.8 |
 | grain | 130 | 33 | 32 | 0 | 0 | stop 130, buy 33, buy @ 3.7 |
 | meat | 7 | 7 | 6 | 0 | 1 | stop 24, buy 7, buy @ 3.02 |
 | nets | 48 | 0 | 0 | 0 | 0 | min_holding 40, sell 6, sell @ 41.6 |
@@ -72,8 +72,8 @@ Labour metered per turn while a site can progress: labour 21
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.2 / 0.72 | 75 | 88002195 | 0.168 | - | - | 0 |
-| linen snake | 0.5 / 0.50 | 52 | 159601387 | 0.52 | - | - | 0 |
+| Flax Wyrm | 0.0 / 0.72 | 75 | 88002195 | 0 | - | - | 0 |
+| linen snake | 0.0 / 0.50 | 52 | 159601387 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
