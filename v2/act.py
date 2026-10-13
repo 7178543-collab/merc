@@ -325,6 +325,12 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
            "would_change": sum(1 for r in rows if not r["same"]),
            "rows": rows}
     _save(os.path.join(out, "act.json"), res)
+    if live_mode:       # one line per run: which items v2 would still change (handover candidates converge to "same")
+        with open(os.path.join(out, "act_history.jsonl"), "a") as f:
+            f.write(json.dumps({"t": res["t"], "turn": res["turn"], "owned": res["owned"], "stand_down": stand,
+                                "differs": sorted(r["item"] for r in rows if not r["same"]),
+                                "refused": {r["item"]: r["refused"] for r in rows if r.get("refused")},
+                                "sent": sorted(r["item"] for r in rows if r.get("sent"))}, default=str) + "\n")
     print("v2 act (%s): owned %s; %d items differ from live; %d sent%s%s" % (
         res["mode"], ", ".join(sorted(owned)) or "none", res["would_change"], sent,
         ("; STAND DOWN: " + stand) if stand else "", ("; suspended " + ", ".join(newly)) if newly else ""))
