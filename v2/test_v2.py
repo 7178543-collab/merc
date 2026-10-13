@@ -86,6 +86,8 @@ def test_act_guards():
     assert act.decide(SNAP, plan, cfg, {"grain"}, live_t, 2)[1].startswith("failsafe")          # BRAKE: v2 stands down
     rows, stand = act.decide(SNAP, plan, cfg, {"grain"}, live_t, 0, manual=lambda i: True)
     assert stand is None and any("by hand" in w for r in rows if r["item"] == "grain" for w in r["refused"])
+    rows = {r["item"]: r for r in act.decide(SNAP, plan, cfg, {"grain"}, live_t, 0, manual=lambda i: False, paused={"grain"})[0]}
+    assert any("paused by the failsafe" in w for w in rows["grain"]["refused"])           # brake-paused: never auto-restored
     bad = dict(plan, notes=["builds skipped: KeyError: x"])
     assert "skipped" in act.decide(SNAP, bad, cfg, {"grain"}, live_t, 0)[1]
 

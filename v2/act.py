@@ -14,7 +14,8 @@ How a write is built (merge, never a blind replace):
   - nothing else in the tiers changes; tiers left empty are dropped.
 
 Guards (any one refuses the item this run and says why):
-  - failsafe at BRAKE or STOP: v2 stands down entirely (the failsafe owns the brakes)
+  - failsafe at BRAKE or STOP: v2 stands down entirely (the failsafe owns the brakes); a buy the brake paused
+    (state/failsafe.json "paused") is never raised again by v2 -- Taylor restores those by hand
   - snapshot or plan unusable, or the planner skipped a module this run
   - buy price above the config ceiling (an owned buy item needs a ceiling), sell price below the floor
   - price move over 50% or volume move over 2x+10 against the live order in one run
@@ -217,7 +218,7 @@ def check(item, live, new, cfg, cash):
 
 
 # ---------------------------------------------------------------- one run
-def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_manual):
+def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_manual, paused=()):
     """Pure: what to send. live_tiers: {item: [tier, ...]} read just now. Returns (rows, standdown_reason)."""
     if failsafe_level >= 2:
         return [], "failsafe at level %d: v2 stands down" % failsafe_level
@@ -241,6 +242,10 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
             row["refused"] = check(item, live, new, cfg, snap.get("cash"))
             if is_owned and manual(item):
                 row["refused"].append("changed by hand through the order queue in the last 2 hours")
+            if item in paused and _n((_side(new, _has_buy, BUY_KEYS) or {}).get("buy_volume")) > \
+                    _n((_side(live, _has_buy, BUY_KEYS) or {}).get("buy_volume")):
+                # Taylor's failsafe rule: a buy the brake paused is never restored automatically, only by hand
+                row["refused"].append("paused by the failsafe brake (state/failsafe.json): restore it by hand")
         rows.append(row)
     return rows, None
 
@@ -271,7 +276,9 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     plan = _load(os.path.join(out, "plan.json"), None)
     sus = _load(SUSPENDED, {})
     owned = set(((cfg.get("live") or {}).get("items")) or []) - set(sus)
-    fs_level = int(_n(_load(failsafe, {}).get("level")))
+    fs = _load(failsafe, {})
+    fs_level = int(_n(fs.get("level")))
+    paused = set((fs.get("paused") or {}).keys())
     store = ((snap or {}).get("store") or {}).get("id")
 
     live_tiers = {}
@@ -286,7 +293,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     if not live_tiers:
         live_tiers = {k: v.get("orders") or [] for k, v in (((snap or {}).get("store") or {}).get("items") or {}).items()}
 
-    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level)
+    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
     results, sent = {}, 0
     if live_mode and owned and not stand:
         api.allow_writes()
