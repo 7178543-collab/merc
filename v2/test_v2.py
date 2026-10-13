@@ -278,6 +278,16 @@ def test_ships_read_route_exports():
     assert not any(f["item"] == "linen snake" for f in planner.plan(s, CFG, goals=[])["flags"])   # it traded: no waste flag
 
 
+def test_export_first_home_sales():
+    import shadow
+    p = {"orders": {"garments": {"sell": {"sell_volume": 69, "sell_price": "22.0"}}, "beer": {"sell": {"sell_volume": 12}}},
+         "ship_plans": {"plans": [{"orders": {"garments": {"sell_volume": 34}}}, {"orders": {"garments": {"sell_volume": 25},
+                                                                                         "beer": {"sell_volume": 56}}}]}}
+    shadow.export_first(p)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 10        # 69 - 59 abroad
+    assert p["orders"]["beer"]["sell"]["sell_volume"] == 10            # never under the home minimum
+
+
 def test_ship_voyage_steps():
     d = tempfile.mkdtemp()
     calls = []

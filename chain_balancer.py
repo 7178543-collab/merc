@@ -56,7 +56,7 @@ MODE = {
     "SALES_WINDOW": 12,             # was 24; Ops uses 12 — keep in step
     "SALES_MARGIN": 1.05,
     "HOUSEHOLD_GARMENTS": 1.8,
-    "EXPORT_GARMENTS": 0,           # Oct 12 (Taylor OK): Flax Wyrm parked at Blanans on crew 0, so no export demand; set back to 20 when it sails
+    "EXPORT_GARMENTS": 0,           # fixed extra; real route exports are read each run (garment_exports, Oct 13)
     "MARKET_DEPTH_MULT": 3,
 }
 
@@ -91,6 +91,7 @@ SALES_MARGIN = MODE['SALES_MARGIN']   # sew 5% over average sales (garment stock
 # stalled last turn, so never plan with less than this.
 OTHER_THREAD_MIN = 24
 MIN_CHANGE = 0.02        # ignore target changes smaller than this (x)
+EXPORTS = 0.0            # garments a turn sold abroad by ship routes (garment_exports(), set in main)
 
 
 def gh(*args):
@@ -112,6 +113,29 @@ def send(method, path, body):
         return False, "%s %s" % (e.code, e.read().decode()[:200])
     except urllib.error.URLError as e:
         return False, str(e.reason)
+
+
+def garment_exports():
+    """Garments a turn our ships' trade routes actually sold abroad last turn (v2 snapshot: the storehouse's route
+    operations, realized export), or half of what v2's ship plans offer if no route has sold yet. Route exports are NOT
+    in the storehouse's sale flow, so without this the pull model would size sewing as if exports didn't exist."""
+    def load(path):
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return {}
+    snap = load(os.path.join("state", "v2", "snapshot.json"))
+    sold = 0.0
+    for sh in snap.get("ships") or []:
+        r = (((sh.get("route_flows") or {}).get("garments") or {}).get("realized")) or {}
+        sold += m.num(r.get("export"))
+    if sold > 0:
+        return sold              # v2 sells export-first (home sales shrink as exports grow), so count them in full
+    plan = load(os.path.join("state", "v2", "plan.json"))
+    offered = sum(m.num(((p_.get("orders") or {}).get("garments") or {}).get("sell_volume"))
+                  for p_ in ((plan.get("ship_plans") or {}).get("plans") or []))
+    return 0.25 * offered
 
 
 def garment_sales():
@@ -144,11 +168,12 @@ def plan(sizes, other_thread, sales, stocks=None, mode="HOLD"):
     top-up per step while its stockpile is below target and mode is FILLING."""
     s, C = sizes, CHAIN
     stocks = stocks or {}
-    want = sales + MODE['HOUSEHOLD_GARMENTS'] + MODE.get('EXPORT_GARMENTS', 0) if sales else s["sew"] * C["sew"]["out"]
+    want = sales + MODE['HOUSEHOLD_GARMENTS'] + MODE.get('EXPORT_GARMENTS', 0) + EXPORTS if sales else s["sew"] * C["sew"]["out"]
     have_g = stocks.get("garments", 0)
-    if sales and have_g > GARMENT_KEEP_TURNS * sales:
+    outflow = (sales or 0) + EXPORTS
+    if sales and have_g > GARMENT_KEEP_TURNS * outflow:
         # glut drain for the finished good (Oct 12): sell the pile down instead of sewing on top of it
-        drain = min((have_g - GARMENT_KEEP_TURNS * sales) / GARMENT_DRAIN_TURNS, GARMENT_DRAIN_MAX)
+        drain = min((have_g - GARMENT_KEEP_TURNS * outflow) / GARMENT_DRAIN_TURNS, GARMENT_DRAIN_MAX)
         want = max(want - drain, 0.3 * want)
     sew = min(s["sew"], want * SALES_MARGIN / C["sew"]["out"])
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
@@ -263,6 +288,12 @@ def main():
     _biz = m.get("/businesses/%s" % (_pl.get("household") or {})["business_ids"][0]) or {}
     cash = m.num(((_biz.get("account") or {}).get("assets") or {}).get("money", {}).get("balance"))
     sales = garment_sales()
+    global EXPORTS
+    try:
+        EXPORTS = garment_exports()
+    except Exception:
+        EXPORTS = 0.0
+    print("garment exports by ship routes: %.1f a turn" % EXPORTS)
     # operating mode (SOS/STEADY/GROWTH) from cash + profit; last op from state file if present
     last_op = None
     if saved and isinstance(saved, dict):

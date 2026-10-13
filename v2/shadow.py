@@ -199,6 +199,27 @@ def ship_routes(snap, out, replay):
 
 
 ROUTES_EVERY_H = 6
+HOME_SELL_MIN = 10      # always keep a little on the home market, in case the ships' buyers vanish for a turn
+
+
+def export_first(p):
+    """Goods our ships sell abroad pay more than at home (garments ~28-29 vs 22, Oct 13), and the routes only get what
+    the home sell orders leave. So v2's home sell volume = what it would sell anyway minus what the ship plans offer
+    abroad, never under HOME_SELL_MIN. Re-planned every run from this turn's prices."""
+    sp = p.get("ship_plans") or {}
+    ex = {}
+    for pl in sp.get("plans") or []:
+        for item, o in (pl.get("orders") or {}).items():
+            if "sell_volume" in o:
+                ex[item] = ex.get(item, 0) + int(o["sell_volume"])
+    for item, n in ex.items():
+        s = (p.get("orders") or {}).get(item, {}).get("sell")
+        if not s:
+            continue
+        before = int(s.get("sell_volume") or 0)
+        s["sell_volume"] = max(HOME_SELL_MIN, before - n)
+        p["orders"][item]["why"] = "%s; ships offer %d a turn abroad, so home sells %d (was %d)" % (
+            p["orders"][item].get("why") or "sell", n, s["sell_volume"], before)
 
 
 def main():
@@ -215,6 +236,7 @@ def main():
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
     os.makedirs(out, exist_ok=True)
     p["routes"], p["ship_plans"] = ship_routes(snap, out, replay)
+    export_first(p)
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)
