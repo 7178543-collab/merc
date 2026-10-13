@@ -196,3 +196,5 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   So a route can be started from home right after ordering the journey out.
 - 03:18 v2 ship_auto (first live ship writes): Etallaen route = garments 56 at 29.40 (keep 30), beer 51 at 4.38 (keep 60),
   crew 0.5 -> 0.4. v2 estimate +386 a turn. First sales should show after the 04:00 tick.
+- 03:20 Park plot 11: provider link fixed it. After the 03:00 tick: progress 8%, time 2/12, delivered labour 30, limestone 5,
+  timber 4 from the storehouse.
