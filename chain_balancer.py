@@ -341,7 +341,7 @@ def main():
                     return
             except Exception:
                 pass
-            ms =[{kk: vv for kk, vv in x.items() if kk != "result"} for x in (holds.get(item) or {}).get("managers") or []]
+            ms = [{kk: vv for kk, vv in x.items() if kk != "result"} for x in (holds.get(item) or {}).get("managers") or []]
             if not ms or len(ms) <= idx:
                 return
             ms[idx][field] = max(0, round(m.num(ms[idx].get(field)) + delta))
