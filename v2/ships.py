@@ -107,6 +107,11 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                     space_in += vol * size(item)
     need = max(space_out, space_in)
     crew = max(routes.MIN_CREW, math.ceil(10.0 * need / cap) / 10.0) if orders else 0.0
+    # at least one round trip a turn: a route only trades when the ship is in port, so at crew 0.1 on Etallaen
+    # (0.19 trips a turn) it sold 30 garments one turn and nothing the next (Oct 13, turns 13243-13244)
+    trips_full = routes.trips_per_turn(d.get("moves") or 0)
+    if orders and trips_full:
+        crew = max(crew, math.ceil(10.0 / trips_full) / 10.0)
     crew = min(crew, 1.0)
     net = est - crew * cost1 + (space_out + space_in) * per_space   # est already paid per-unit shipping; charge crew once
     if orders and net < MIN_NET_PER_TURN:

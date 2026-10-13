@@ -125,13 +125,27 @@ def garment_exports():
                 return json.load(f)
         except (OSError, ValueError):
             return {}
+    # average over the last few game turns (v2 history: one line per run, routes trade in bursts as ships arrive)
+    per_turn = {}
+    try:
+        with open(os.path.join("state", "v2", "history.jsonl")) as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                if r.get("turn") is not None and "exports" in r:
+                    per_turn[r["turn"]] = m.num((r.get("exports") or {}).get("garments"))
+    except OSError:
+        pass
+    recent = [per_turn[t] for t in sorted(per_turn)[-6:]]
+    if recent and sum(recent) > 0:
+        return sum(recent) / len(recent)   # v2 sells export-first, so these count in full
     snap = load(os.path.join("state", "v2", "snapshot.json"))
-    sold = 0.0
-    for sh in snap.get("ships") or []:
-        r = (((sh.get("route_flows") or {}).get("garments") or {}).get("realized")) or {}
-        sold += m.num(r.get("export"))
+    sold = sum(m.num((((sh.get("route_flows") or {}).get("garments") or {}).get("realized") or {}).get("export"))
+               for sh in snap.get("ships") or [])
     if sold > 0:
-        return sold              # v2 sells export-first (home sales shrink as exports grow), so count them in full
+        return sold
     plan = load(os.path.join("state", "v2", "plan.json"))
     offered = sum(m.num(((p_.get("orders") or {}).get("garments") or {}).get("sell_volume"))
                   for p_ in ((plan.get("ship_plans") or {}).get("plans") or []))

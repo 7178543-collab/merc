@@ -202,6 +202,16 @@ ROUTES_EVERY_H = 6
 HOME_SELL_MIN = 10      # always keep a little on the home market, in case the ships' buyers vanish for a turn
 
 
+def _route_exports(snap):
+    out = {}
+    for sh in snap.get("ships") or []:
+        for item, f in (sh.get("route_flows") or {}).items():
+            n = ((f or {}).get("realized") or {}).get("export") or 0
+            if n:
+                out[item] = round(out.get(item, 0) + n, 1)
+    return out
+
+
 def export_first(p):
     """Goods our ships sell abroad pay more than at home (garments ~28-29 vs 22, Oct 13), and the routes only get what
     the home sell orders leave. So v2's home sell volume = what it would sell anyway minus what the ship plans offer
@@ -250,7 +260,9 @@ def main():
                 "top": [(f["severity"], f["item"], f["text"][:80]) for f in (p.get("flags") or [])[:5]],
                 "keys": ["%s:%s" % (f["severity"], f["item"]) for f in (p.get("flags") or [])],   # persistence = real, one-offs = noise
                 "builds": {st["building"]: st["progress"] for st in ((p.get("builds") or {}).get("sites") or [])},   # checks the progress model
-                "api": (snap.get("api") or {}).get("calls")}
+                "api": (snap.get("api") or {}).get("calls"),
+                # what the ships' routes really sold abroad last turn (chain_balancer averages this for sewing)
+                "exports": _route_exports(snap)}
         with open(os.path.join(OUT, "history.jsonl"), "a") as f:
             f.write(json.dumps(line, default=str) + "\n")
     c = p["counts"]

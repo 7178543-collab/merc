@@ -257,7 +257,7 @@ def test_ships_plan():
     g = p["orders"]["garments"]
     assert g["sell_volume"] == 59 and g["sell_price"] == "28.0" and g["min_holding"] == 30     # 98% of their 28.4 bid, grid-snapped
     assert p["orders"]["cured fish"]["buy_volume"] == 5 and "cloth" not in p["orders"]       # we use it / we make cloth
-    assert p["crew"] == 0.2 and p["est_net"] > 250                                           # 64 units / 483 a turn -> 0.2
+    assert p["crew"] == 0.6 and p["est_net"] > 200        # 64 units need 0.2, but one round trip a turn at 774 moves needs 0.6
     shared = ships.plan_ship({"name": "s2", "id": "8", "route_to": "2"}, snap, world, sea, cfg, recipes=rec,
                              taken={"garments": 60})
     assert shared["orders"]["garments"]["sell_volume"] == 14            # 74 spare a turn, 60 already on another route
