@@ -21,6 +21,7 @@ Entry kinds (a JSON list of these):
   expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
+  bot v2 item       {"v2": {"suspend": "porterage"}} hands it back to v1 now; {"v2": {"resume": "porterage"}} gives it back to v2
   construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
   one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
                     nearest free tile and expands after the next tick; skips while building or already waiting)
@@ -629,6 +630,29 @@ def _set_pace(bid, pace=100):
     return bool(ok) and _same(now, pace), status, (resp or "")[:160], now
 
 
+def _apply_v2(e):
+    """Hand an item back to v1, or back to v2 (phone app): {"v2": {"suspend": "porterage"}} / {"v2": {"resume": "porterage"}}.
+    Writes state/v2/suspended.json, the file every v1 writer and v2's actor read through v2_owned.py."""
+    path = os.path.join(HERE, "state", "v2", "suspended.json")
+    try:
+        with open(path) as f:
+            sus = json.load(f)
+    except (FileNotFoundError, ValueError):
+        sus = {}
+    c = e["v2"]
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    if c.get("suspend"):
+        sus[str(c["suspend"])] = {"since": now, "why": e.get("note") or "by hand"}
+    elif c.get("resume"):
+        sus.pop(str(c["resume"]), None)
+    else:
+        return dict(ok=False, error="v2 entry needs suspend or resume")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(sus, f, indent=1)
+    return dict(ok=True, suspended=sorted(sus))
+
+
 def _apply_pace(e):
     """{"pace": {"building": "<id>", "pace": 100}}: set a construction's delivery pace and verify."""
     ok, status, resp, now = _set_pace(str(e["pace"]["building"]), e["pace"].get("pace", 100))
@@ -752,6 +776,8 @@ def apply_entry(e):
         return _apply_plot(e)
     if e.get("pace"):
         return _apply_pace(e)
+    if e.get("v2"):
+        return _apply_v2(e)
     if e.get("claim"):
         return _apply_claim(e)
     if e.get("travel"):

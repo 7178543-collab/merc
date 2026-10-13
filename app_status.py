@@ -122,7 +122,9 @@ def build():
     if v2:
         s["v2"] = {"t": v2.get("t"), "turn": v2.get("turn"), "counts": v2.get("counts"),
                    "flags": [{k: f.get(k) for k in ("severity", "item", "text", "fix")} for f in (v2.get("flags") or [])[:12]],
-                   "sinks": (v2.get("sinks") or [])[:5]}
+                   "sinks": (v2.get("sinks") or [])[:5],
+                   "live_items": v2.get("live_items") or [],
+                   "suspended": sorted((_json("state/v2/suspended.json", {}) or {}).keys())}
 
     # live: every order tier + last turn's P&L from the storehouse flows
     w = _get("/buildings/%s" % STORE)
