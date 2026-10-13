@@ -150,6 +150,24 @@ def merge(live, buy, sell):
     return [t for t in ms if not _empty(t)]
 
 
+def step_volumes(live, new):
+    """Cap each side's volume at 2x+10 of the live one, so a big change walks there over a few runs instead of being
+    refused forever (Oct 13: garments 10 -> 55 and beer 10 -> 56 were refused every run and sat at 10).
+    Returns (new tiers, notes)."""
+    out, notes = [dict(t) for t in new], []
+    for has, key in ((_has_buy, "buy_volume"), (_has_sell, "sell_volume")):
+        lt = next((t for t in live if has(t)), None)
+        nt = next((t for t in out if has(t)), None)
+        if lt is None or nt is None:
+            continue
+        lv, nv = _n(lt.get(key)), _n(nt.get(key))
+        cap = int(2 * lv + 10)
+        if nv > cap:
+            nt[key] = cap
+            notes.append("%s %d -> %d stepped to %d (2x+10 a run)" % (key.split("_")[0], lv, nv, cap))
+    return out, notes
+
+
 def _side(tiers, has, keys):
     t = next((t for t in tiers if has(t)), None)
     return {k: t.get(k) for k in keys if t.get(k) is not None} if t else None
@@ -239,8 +257,10 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
         if buy is None and sell is None:
             continue
         live = live_tiers.get(item, [])
-        new = merge(live, buy, sell)
+        new, stepped = step_volumes(live, merge(live, buy, sell))
         row = {"item": item, "owned": is_owned, "live": live, "new": new, "same": _canon(new) == _canon(live)}
+        if stepped:
+            row["stepped"] = stepped
         if not row["same"]:
             row["refused"] = check(item, live, new, cfg, snap.get("cash"))
             if is_owned and manual(item):

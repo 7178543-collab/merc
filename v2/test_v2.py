@@ -92,6 +92,15 @@ def test_act_guards():
     assert "skipped" in act.decide(SNAP, bad, cfg, {"grain"}, live_t, 0)[1]
 
 
+def test_act_steps_big_volume_changes():
+    live = [{"min_holding": 30, "sell_volume": 10, "sell_price": "22"}]
+    new, notes = act.step_volumes(live, act.merge(live, None, {"sell_volume": 55, "sell_price": "22.0"}))
+    assert new[0]["sell_volume"] == 30 and new[0]["min_holding"] == 30 and notes, (new, notes)
+    assert not act.check("garments", live, new, CFG, 20000)
+    same, notes = act.step_volumes(live, act.merge(live, None, {"sell_volume": 25, "sell_price": "22.0"}))
+    assert same[0]["sell_volume"] == 25 and not notes
+
+
 def test_act_dry_run_never_writes():
     d, cfg = _act_dir(cfg_live=["grain"])
     try:
