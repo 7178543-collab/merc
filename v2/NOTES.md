@@ -198,3 +198,11 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   crew 0.5 -> 0.4. v2 estimate +386 a turn. First sales should show after the 04:00 tick.
 - 03:20 Park plot 11: provider link fixed it. After the 03:00 tick: progress 8%, time 2/12, delivered labour 30, limestone 5,
   timber 4 from the storehouse.
+- 03:24 Park upkeep: 10 plots built but `maintain 1` target was 9 (one plot gave no prestige). Set to 10; prestige_rules now
+  keeps the target at the built plot count.
+- 03:49 (Taylor OK 23:48): chain_balancer had grow flax at 18 plants/unit (real recipe: 16, 12 labour, no tools), so the farm
+  was sized 11% short and retting ran ~14 plants short a turn. Fixed the constant; farm 6.37 -> 7.15.
+- 03:51 Quarry on: OUR quarry is 149602389 (149802383 is Raoul de Orange's; the API refused it, 401). extract stone 1 at 0.4
+  = 44 labour -> 5.2 limestone a turn (~14 coin each vs ~21 bought), linked to the storehouse. It is remote (26.8 tiles):
+  ~8 extra porterage a turn by the size-x-distance rule (camp: 24 timber x 15 x 22.3 -> 12.6 porterage). The hand-queued
+  porterage raise was refused by the night guard (Taylor's rule); v2 sizes porterage from observed use next run.
