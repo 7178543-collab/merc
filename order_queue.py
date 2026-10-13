@@ -22,6 +22,7 @@ Entry kinds (a JSON list of these):
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
   bot v2 item       {"v2": {"suspend": "porterage"}} hands it back to v1 now; {"v2": {"resume": "porterage"}} gives it back to v2
+  construction link {"construction": {"building": "<id>", "set": {"provider_id": "<storehouse>"}}}   (PATCH its construction)
   construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
   one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
                     nearest free tile and expands after the next tick; skips while building or already waiting)
@@ -653,6 +654,24 @@ def _apply_v2(e):
     return dict(ok=True, suspended=sorted(sus))
 
 
+def _apply_construction(e):
+    """{"construction": {"building": "<id>", "set": {"provider_id": "<storehouse id>"}}}: PATCH /buildings/{id}/construction
+    (the client's own call for a construction's settings, e.g. {stage: "NONE"} to abort). Oct 13: an expansion started by API
+    has no provider, so nothing is delivered even at pace 100; linking the storehouse makes it draw materials from stock."""
+    c = e["construction"]
+    bid = str(c["building"])
+    body = dict(c.get("set") or {})
+    if not body:
+        return dict(ok=False, error="construction entry needs set")
+    ok, status, resp = _req("PATCH", "/buildings/%s/construction" % bid, body)
+    try:
+        now = _get_json("/buildings/%s" % bid).get("construction") or {}
+    except Exception:
+        now = {}
+    held = all(str(now.get(k)) == str(v) for k, v in body.items())
+    return dict(ok=bool(ok) and held, status=status, now={k: now.get(k) for k in body}, reply=(resp or "")[:200])
+
+
 def _apply_pace(e):
     """{"pace": {"building": "<id>", "pace": 100}}: set a construction's delivery pace and verify."""
     ok, status, resp, now = _set_pace(str(e["pace"]["building"]), e["pace"].get("pace", 100))
@@ -778,6 +797,8 @@ def apply_entry(e):
         return _apply_pace(e)
     if e.get("v2"):
         return _apply_v2(e)
+    if isinstance(e.get("construction"), dict) and e["construction"].get("building"):
+        return _apply_construction(e)
     if e.get("claim"):
         return _apply_claim(e)
     if e.get("travel"):
