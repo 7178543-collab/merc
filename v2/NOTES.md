@@ -307,3 +307,8 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   118 -> 138, cloth 115 -> 134), not all lost. The balancer's own drain had already pulled targets back to the 13243
   levels (flax 7.65, ret 1.36, spin 2.5, weave 1.95, sew 1.1). Fixed for good: garment exports now count only realized
   route sales averaged over 12 turns (2.3 a turn now), no fallback to plan offers.
+- 10:07 turn 13249: cash 22,637 (+165 over the turn). Both ships at crew 0 (nothing pays). Labour 220 expired (~381
+  coin): v1 bought 714 vs ~494 needed; now 600. Garments sold only 29 and beer 8 last turn because export-first had
+  cut home sells to 30 / 10 for ship plans that then sold nothing. Fixed: export-first only cuts home sells when stock
+  can't cover home + routes (garments 402 and beer 283 held cover both). Home now 70 garments / 65 beer.
+  Handoff doc Snapshot updated (Now table, Oct 13 lesson, v2 item).
