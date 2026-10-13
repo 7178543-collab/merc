@@ -233,8 +233,8 @@ def test_ship_auto_sets_route_and_crew():
         snap = {"turn": 10, "ships": [{"id": "1948883264", "set_target": 0.0}, {"id": "845668271", "set_target": 0.25}]}
         cfg = {"live": {"ship_modes": {"1948883264": "auto"}}}                 # Flax Wyrm is not auto: untouched
         done = act.ship_auto(plan, cfg, snap, os.path.join(d, "a.jsonl"), {})
-        assert [c[1] for c in calls] == ["/transports/1948883264/route/inventory/garments",
-                                         "/transports/1948883264/route/inventory/limestone", "/transports/1948883264/operation"]
+        assert [c[1] for c in calls] == ["/transports/1948883264/route/inventory/limestone",   # the clear goes first
+                                         "/transports/1948883264/route/inventory/garments", "/transports/1948883264/operation"]
         assert calls[2][2] == {"operation_target": "0.200"} and len(done) == 3
         calls.clear()                                                          # held by the guard: no writes
         assert "guard" in act.ship_auto(plan, cfg, snap, os.path.join(d, "a.jsonl"), {"1948883264": {"guard_paused_turn": 8}})[0]
