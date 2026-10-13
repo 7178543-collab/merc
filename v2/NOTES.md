@@ -112,10 +112,15 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   nothing used it); act takes it off for owned items only; never_drop items never get one.
 - **First live run, turn 13238 (Oct 12 23:56 UTC)**: donations, cured fish, fish, grain, firewood -- 5 PATCHes, all verified.
   Chosen because each is a single-tier household/brewery buy within a few units of v1's order, with a ceiling set.
-- **Not handed over yet, and why**: labour (v1 has 3 writers on it; shortfall and expiry in the same turn need study),
-  porterage (outage history; v2's peak sizing is better but wants a few more days), tools (v2 holds 8 turns, the failsafe's tool
-  guard holds ~25: a policy choice for Taylor), meat (ask often above the 2.40 ceiling; v1's live bid is 3.02 -- Taylor to pick
-  the ceiling), every sell (v2 now draws down excess stock, but beer/timber floors sit above the home bid: Taylor's floors).
+- **Verified**: v1's 00:25 run left all five untouched (live orders still v2's), and v2's 00:33 run re-sized grain 41 -> 37.
+- **Handover 2 (00:35 UTC)**: porterage (bids at the 0.80 ceiling, so a price tick above v1's 0.60 can't starve the outlying
+  buildings again; sized on the 24-turn peak; never_drop) and nets (first sell: 6/turn at the 36 floor, min_holding 40 kept).
+  **Handover 3 (00:36)**: meat, ceiling 2.40 -> 3.02 to match the live bid (home ask is often 2.44-2.70). All verified.
+- **Not handed over yet, and why**: labour (~800 coin/turn; v1 has 3 writers on it and the Oct 11 loss was labour: wants
+  Taylor's OK), tools (v2 holds 8 turns, the failsafe's tool guard holds ~25: Taylor's policy), garments/beer/timber sells
+  (garments interact with chain_balancer's pile drain; beer and timber floors vs live prices need Taylor's word), arms and
+  beer buys (no ceiling set).
+- Also: a buy the failsafe brake paused is never raised by v2 (restore by hand, Taylor's rule); v2 stands down at BRAKE/STOP.
 
 ## Finding: our bid is a limit, not the price we pay (Oct 12, turn 13237)
 - Bought at well under our bids: labour bid 2.00 paid 1.66 avg, fish 2.50/1.70, meat 3.02/2.28, tools 6.20/5.14, cured fish
