@@ -21,6 +21,7 @@ Entry kinds (a JSON list of these):
   expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
+  construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
   one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
                     nearest free tile and expands after the next tick; skips while building or already waiting)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
@@ -601,10 +602,37 @@ def _apply_expand(e):
             except Exception:
                 after = {}
             held = after.get("stage") == "EXPANSION" and set(tiles) <= set(after.get("domain") or [])
-            return dict(ok=held, status=status, tiles=tiles, stage=after.get("stage"),
+            pace = None
+            if held:        # a new construction sits at pace 0 (no deliveries): start it moving
+                pok, _, perr, pace = _set_pace(bid, ex.get("pace", 100))
+                if not pok:
+                    info["pace_error"] = perr
+            return dict(ok=held, status=status, tiles=tiles, stage=after.get("stage"), pace=pace,
                         error=None if held else "expansion not visible after PATCH", **info)
         errors.append("%s: %s" % (",".join(tiles), (resp or "")[:160].replace("\n", " ")))
     return dict(ok=False, error="all attempts refused", refusals=errors, **info)
+
+
+def _set_pace(bid, pace=100):
+    """Construction delivery pace (the game's slider: 0 / 25 / 50 / 100). A new construction starts at 0, which delivers
+    nothing, so the build never moves. 100 = the full materials over the build's own time (park plot: 12 turns), drawn
+    from the provider storehouse. PUT /buildings/{id}/construction/settings {..settings, pace} (the client's call)."""
+    try:
+        cur = (_get_json("/buildings/%s" % bid).get("construction") or {}).get("settings") or {}
+    except Exception:
+        cur = {}
+    ok, status, resp = _req("PUT", "/buildings/%s/construction/settings" % bid, dict(cur, pace=int(pace)))
+    try:
+        now = ((_get_json("/buildings/%s" % bid).get("construction") or {}).get("settings") or {}).get("pace")
+    except Exception:
+        now = None
+    return bool(ok) and _same(now, pace), status, (resp or "")[:160], now
+
+
+def _apply_pace(e):
+    """{"pace": {"building": "<id>", "pace": 100}}: set a construction's delivery pace and verify."""
+    ok, status, resp, now = _set_pace(str(e["pace"]["building"]), e["pace"].get("pace", 100))
+    return dict(ok=ok, status=status, pace_now=now, reply=None if ok else resp)
 
 
 _PENDING = []      # deferred steps added while this run is going (apply_queue keeps them when it rewrites the file)
@@ -722,6 +750,8 @@ def apply_entry(e):
         return _apply_expand(e)
     if e.get("plot"):
         return _apply_plot(e)
+    if e.get("pace"):
+        return _apply_pace(e)
     if e.get("claim"):
         return _apply_claim(e)
     if e.get("travel"):
