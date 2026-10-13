@@ -229,3 +229,12 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   trading ship after 3 turns). Guard counters reset.
 - 04:25 check (turn 13243): park plot 11 at 11%, upkeep 10/10. chain_balancer re-sized with the fixed flax constant (farm
   7.58, retting 1.35, FILLING). Quarry made nothing (labour short 59 last turn); v1 raised the labour buy 467 -> 581 at 2.00.
+- 04:45 (Taylor: "maximize, be the best we can be"): **export-first**. v2 now runs garments and beer: its home sell volume =
+  its usual volume minus what the ship plans offer abroad (min 10). Garments home 45+15 at 22/21.6 -> 10 at 22.00; beer
+  20 at 4.10 + 140 at 3.70 (and a stray buy 4 at 6.00) -> 10 at 3.70. chain_balancer now counts route exports as garment
+  sales (`garment_exports()`: last turn's realized route exports from the v2 snapshot, else a quarter of the plans'
+  offers), so sewing and the chain grow with exports instead of shrinking as home sales fall.
+- More ships? Not yet: the two use ~170 of ~900 cargo a turn; goods are the limit. A third slot costs only 10 prestige
+  (transports level 1; table 10/25/50/100...), but no snekkja is for sale near home (asks 2,680 at Deanfold/Angefont;
+  launching = POST /transports {type, owner_id, name, location, operation_target "0", autoset_inventory} from a ship
+  asset we own). Worth it once beer runs full and has buyers abroad: Taylor's call (~2.7k).
