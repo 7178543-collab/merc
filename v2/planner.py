@@ -236,7 +236,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
                 # of need, or stock is under the runway.
                 rw = (it.get("held", 0) / net) if net > 0 else 99
                 bought = fl.get("purchase", 0)
-                failing = (net > 0.01 and bought < 0.8 * net) or (hold and it.get("held", 0) < hold)
+                failing = (net > 0.01 and bought < 0.8 * net) or (hold and it.get("held", 0) < 0.5 * hold)
                 if failing:
                     flag("risk" if (item in never_drop and rw < 2) else "tune", item,
                          "home ask %.2f is above our ceiling %.2f and last turn bought %.0f of ~%.0f needed: the buy can't fill" % (

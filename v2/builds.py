@@ -114,7 +114,8 @@ def annotate(bp, orders, items):
     """Once the planner's own orders exist: which build buys v1 has live that nothing needs any more."""
     for item, e in bp["buys"].items():
         live = any(o.get("buy_price") or o.get("buy_volume") for o in (items.get(item) or {}).get("orders") or [])
-        wanted_elsewhere = bool((orders.get(item) or {}).get("buy"))
+        o = orders.get(item) or {}
+        wanted_elsewhere = bool(o.get("buy")) or "stockpile" in o     # a stockpile (limestone for plots) keeps its buy
         e["v1_buy_live"] = live
         if e["action"] == "off" and live and not wanted_elsewhere:
             e["switch_off"] = True               # materials are in: v1's standing buy can go
