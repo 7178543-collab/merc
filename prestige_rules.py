@@ -119,6 +119,19 @@ def park_ready_rule():
     held = {k: m.num((assets.get(k) or {}).get("balance")) for k in PARK_PLOT}
     room = used + 0.1 <= cap + 1e-9
     ready = room and all(held[k] >= v for k, v in PARK_PLOT.items())
+    # Taylor's park policy is "fully maintained": keep the maintain target at the number of built plots (Oct 13: the
+    # 10th plot was built but the target stayed at 9, so one plot gave no prestige)
+    built = int(m.num(park.get("size")))
+    prod = park.get("producer") or {}
+    if LIVE and built and prod.get("recipe") == "maintain 1" and m.num(prod.get("target")) < built:
+        e = {"building": PARK, "producer": {"recipe": "maintain 1", "target": built, "provider_id": q.STORE},
+             "note": "park rule: maintain all %d built plots (was %s)" % (built, prod.get("target"))}
+        try:
+            r = q.apply_entry(e)
+        except Exception as ex:
+            r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+        q.log(e, r, source="prestige_rules")
+        say("  park maintain %s -> %d: %s" % (prod.get("target"), built, "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
     say("park: %d plots, prestige pool %.1f/%.0f, limestone %.0f, timber %.0f -> %s" % (
         plots, used, cap, held["limestone"], held["timber"], "READY for another plot" if ready else ("no pool room" if not room else "waiting on materials")))
     if ready and LIVE and AUTO_PLOT:
