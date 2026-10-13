@@ -251,6 +251,13 @@ TIERS = [(100, "worker"), (700, "journeyman"), (3700, "master")]   # skill point
 PROMOTIONS = os.path.join(HERE, "state", "promotions.json")
 
 
+def _next_tier(pts, wid, cls, done):
+    ok_idx = [i for i, (_, name) in enumerate(TIERS) if (done.get("%s:%s:%s" % (wid, cls, name)) or {}).get("ok")]
+    above = TIERS[(max(ok_idx) + 1 if ok_idx else 0):]
+    crossed = [(thr, name) for thr, name in above if pts >= thr]
+    return crossed[-1] if crossed else (above[0] if above else None)
+
+
 def promote_rule():
     """Rule 3 (Oct 10): promotions are free and no-choice, so take them as soon as they come up
     (Taylor's standing rule). Each new tier is +1 management for that worker (up to +3) and a small
@@ -273,20 +280,30 @@ def promote_rule():
         if not skills:
             continue
         cls, pts = max(skills.items(), key=lambda kv: kv[1])
-        nxt = next(((thr, name) for thr, name in TIERS if pts < thr + 50), None)
+        # next tier = the highest one reached on points above the last promotion we made (Oct 13: the old
+        # "threshold to +50" window gave up for good once a worker passed it while the game still said not ready)
+        nxt = _next_tier(pts, wid, cls, done)
         say("worker %s %s: top %s %.1f%s" % (wid, w.get("name"), cls, pts,
             ", %s at %d (%.1f to go)" % (nxt[1], nxt[0], max(0, nxt[0] - pts)) if nxt else ""))
         if not nxt or nxt[1] == "master" or pts < nxt[0]:
             continue
         key = "%s:%s:%s" % (wid, cls, nxt[1])
-        if key in done:
+        rec = done.get(key) or {}
+        if rec and "not_ready" not in rec:
             continue
+        if rec.get("not_ready"):
+            import datetime as _dt
+            last = _dt.datetime.fromisoformat(rec["not_ready"])
+            if _dt.datetime.now(_dt.timezone.utc) - last < _dt.timedelta(hours=6):
+                continue        # the game said not ready: ask again every 6 hours, not every run
         if not LIVE:
             say("  would promote worker %s to %s %s" % (wid, cls, nxt[1]))
             continue
         ok, status, body = q._req("POST", "/households/%s/workers/%s/promote" % (hid, wid), {"class": cls})
         if not ok and "not ready" in (body or ""):
-            pass        # Oct 11: the game counts points slightly differently; just retry next run
+            import datetime as _dt     # Oct 11: the game counts points differently; retry in 6 hours
+            done[key] = {"not_ready": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"), "points": pts}
+            changed = True
         elif not ok and status is not None and status < 500:
             done[key] = {"ok": False, "status": status, "body": body[:160]}
             changed = True
