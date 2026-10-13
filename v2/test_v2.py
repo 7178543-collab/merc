@@ -327,8 +327,40 @@ def test_ship_voyage_steps():
         out = act.ship_voyages(plan, cfg, snap, sst, log, apply)            # route running: done
         assert "running" in out[0] and sst["9"]["voyage"] is None and calls == []
         assert act.ship_voyages(plan, cfg, dict(snap, turn=5), sst, log, apply) == []   # cooldown
+        # at home, the target is re-checked: a better free town wins, and nothing paying ends the voyage at crew 0
+        sst = {"9": {"voyage": {"target": "159601387", "name": "Kirchwerp", "step": "home", "turn": 7, "moves": 1072}}}
+        calls.clear()
+        home = {"turn": 7, "ships": [{"id": "9", "name": "s", "town": "152202387", "route_to": None}]}
+        out = act.ship_voyages(plan, cfg, home, sst, log, apply)
+        assert "re-targeted Kirchwerp -> Etallaen" in out[0] and calls[1]["travel"]["to_town"] == "109102068", (out, calls)
+        sst = {"9": {"voyage": {"target": "159601387", "name": "Kirchwerp", "step": "home", "turn": 7, "moves": 1072}}}
+        calls.clear()
+        out = act.ship_voyages(dict(plan, ship_plans=dict(plan["ship_plans"], best=[])), cfg, home, sst, log, apply)
+        assert "voyage ended" in out[0] and calls == [{"transport": "9", "operation_target": 0.0}] and sst["9"]["voyage"] is None
     finally:
         shutil.rmtree(d)
+
+
+def test_ships_fit_capacity():
+    import ships
+    # 1,072 moves -> 279 size units a turn at full crew: beer 63 (126) + timber 26 (390) can't both go
+    sea = {"1": {"name": "Home", "moves": 0}, "2": {"name": "Kirch", "moves": 1072.24}}
+    mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
+                                         "volume_ema_12": tr}
+    world = [{"name": "Home", "markets": {"beer": mk(0, 3.7, 0, 99, 160), "timber": mk(6.6, 7.0, 8, 4, 60)}},
+             {"name": "Kirch", "markets": {"beer": mk(4.82, 0, 63, 0, 210), "timber": mk(15.0, 0, 26, 0, 87)}}]
+    snap = {"home_town": "1", "market": {"labour": {"price": 1.74}}, "store": {"items": {
+        "beer": {"held": 202, "unit_cost": 2.98, "orders": [{"min_holding": 60}],
+                 "flow": {"production": 70, "consumption": 18.6, "sale": 36, "sale_value": 133.2}},
+        "timber": {"held": 422, "unit_cost": 6.53, "orders": [{"min_holding": 350}],
+                   "flow": {"production": 24, "consumption": 4.2, "sale": 20, "sale_value": 140}}}}}
+    rec = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}, {"amount": 1.6, "product": "cloth"}]}}
+    prods = {"beer": {"size": 2, "type": "commodity"}, "timber": {"size": 15, "type": "commodity"}}
+    p = ships.plan_ship({"name": "s", "id": "9", "route_to": "2"}, snap, world, sea, {}, recipes=rec, products=prods)
+    space = sum(o.get("sell_volume", 0) * prods[k]["size"] for k, o in p["orders"].items())
+    assert space <= p["capacity"] and p["crew"] <= 1.0, (p, space)
+    assert all("_gain" not in o for o in p["orders"].values())
+    assert p["est_net"] < 100, p
 
 
 def test_routes():

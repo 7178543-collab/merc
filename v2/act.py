@@ -397,6 +397,24 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 r = apply({"travel": {"transport": sid, "to_town": HOME_TOWN}, "confirm": True})
                 out.append("%s: sail home %s" % (sh.get("name"), "ok" if r.get("ok") else r.get("error")))
                 continue
+            if str(sh.get("town")) == HOME_TOWN and v.get("step") == "home":
+                # last look before sailing out: prices move, and a target picked on an over-full plan (Oct 13: Kirchwerp
+                # scored +158 on cargo twice the ship's room) may no longer be the best. Take this run's best free town,
+                # or end the voyage and wait at home at crew 0 if nothing pays.
+                now_best = next((b for b in best if str(b.get("town_id")) not in taken), None)
+                if not now_best:
+                    apply({"transport": sid, "operation_target": 0.0})
+                    c["voyage"] = None
+                    c["last_voyage_turn"] = turn
+                    out.append("%s: home; no town pays now, voyage ended, crew 0" % sh.get("name"))
+                    continue
+                if str(now_best["town_id"]) != tgt:
+                    out.append("%s: re-targeted %s -> %s (%+.0f a turn)" % (sh.get("name"), v.get("name"), now_best["town"],
+                                                                         now_best["per_turn"]))
+                    v.update({"target": str(now_best["town_id"]), "name": now_best["town"], "expected": now_best["per_turn"],
+                              "moves": now_best.get("moves")})
+                    tgt = v["target"]
+                taken.add(tgt)
             if str(sh.get("town")) == HOME_TOWN:
                 # movement points per turn = 3,000 x crew, effective at once, and every move this turn (the instant hop
                 # home included) spends them: Oct 13 a Brebronn trip (863) was refused with 794 left at crew 0.5

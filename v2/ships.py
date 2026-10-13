@@ -89,8 +89,10 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                 if price <= m["bid"] and price >= floor:
                     vol = int(min(spare, m["sell_room"]))
                     if vol >= 1:
-                        orders[item] = {"sell_volume": vol, "sell_price": str(price), "min_holding": int(math.ceil(keep))}
-                        est += vol * (price - home_val - ship_cost)
+                        gain = price - home_val - ship_cost
+                        orders[item] = {"sell_volume": vol, "sell_price": str(price), "min_holding": int(math.ceil(keep)),
+                                        "_gain": gain}
+                        est += vol * gain
                         space_out += vol * size(item)
                         continue
         # ---- import: something we use and don't make, cheaper there than our home ask after shipping
@@ -101,10 +103,36 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
             if price >= m["ask"]:
                 vol = int(min(use, m["buy_room"]))
                 if vol >= 1:
+                    gain = h["ask"] - m["ask"] - ship_cost
                     orders[item] = {"buy_volume": vol, "buy_price": str(price),
-                                    "max_holding": int(math.ceil(max(_f(it.get("held")), use * 4)))}
-                    est += vol * (h["ask"] - m["ask"] - ship_cost)
+                                    "max_holding": int(math.ceil(max(_f(it.get("held")), use * 4))), "_gain": gain}
+                    est += vol * gain
                     space_in += vol * size(item)
+    # a ship carries at most `cap` size units a turn each way at full crew: keep the orders that pay most per unit of
+    # space (Oct 13: Kirchwerp "beer 63 + timber 26" needed 516 units of a 279 cap; it was scored +158, really ~+35)
+    for side, key in (("out", "sell_volume"), ("in", "buy_volume")):
+        used = space_out if side == "out" else space_in
+        if used <= cap:
+            continue
+        mine = [(k, o) for k, o in orders.items() if key in o]
+        mine.sort(key=lambda ko: -ko[1]["_gain"] / size(ko[0]))
+        room = float(cap)
+        for k, o in mine:
+            fit = int(min(o[key], room // size(k)))
+            if fit < 1:
+                est -= o[key] * o["_gain"]
+                del orders[k]
+                continue
+            est -= (o[key] - fit) * o["_gain"]
+            o[key] = fit
+            room -= fit * size(k)
+        used = cap - room
+        if side == "out":
+            space_out = used
+        else:
+            space_in = used
+    for o in orders.values():
+        o.pop("_gain", None)
     need = max(space_out, space_in)
     crew = max(routes.MIN_CREW, math.ceil(10.0 * need / cap) / 10.0) if orders else 0.0
     # No "one round trip a turn" minimum: the route's actual_trips is just reserved cargo / 250 (Linen Snake 0.632 =
