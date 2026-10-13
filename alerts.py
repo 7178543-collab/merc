@@ -428,7 +428,7 @@ def main():
     try:
         nyu = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "needs_you.json")))
         if nyu.get("what"):
-            wanted["[merc] needs you: farmstead"] = nyu["what"]
+            wanted["[merc] needs you"] = nyu["what"]
     except (FileNotFoundError, ValueError):
         pass
     for f in data.get("flags", []):

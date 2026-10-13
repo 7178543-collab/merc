@@ -101,7 +101,7 @@ PARK = "152202388002004"
 PARK_PLOT = {"limestone": 60, "timber": 40}          # per plot (labour 260 is bought)
 # Oct 13: when a plot is ready, place it (order queue "plot": expand onto our land, or claim now and expand after the
 # tick) instead of asking Taylor for a map click. False = only flag it in needs_you, as before.
-AUTO_PLOT = False
+AUTO_PLOT = True
 
 
 def park_ready_rule():
