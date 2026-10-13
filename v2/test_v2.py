@@ -357,6 +357,61 @@ def test_ship_voyage_steps():
         shutil.rmtree(d)
 
 
+def test_ship_trade_mode():
+    import ships
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Far", "moves": 774.0}}
+    mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
+                                         "volume_ema_12": tr}
+    world = [{"name": "Home", "markets": {"tallow": mk(20, 24.8, 5, 10, 10), "medicine": mk(120, 140, 3, 1, 4),
+                                          "bread": mk(2.4, 2.44, 50, 200, 400), "salt": mk(1, 2, 5, 20, 20)}},
+             {"name": "Far", "markets": {"tallow": mk(31.6, 0, 5, 0, 6), "medicine": mk(0, 60, 0, 2, 3),
+                                         "bread": mk(3.4, 0, 137, 0, 400), "salt": mk(2.1, 0, 5, 0, 10)}}]
+    snap = {"home_town": "1", "cash": 20000, "market": {"labour": {"price": 2.0}}, "store": {"items": {
+        "bread": {"held": 60, "orders": [{"min_holding": 87, "sell_volume": 110, "sell_price": "2.24"}], "flow": {}}}}}
+    cfg = {"chain": {"intermediates": []}, "never_drop": [], "ship_trade": {"on": True}}
+    rec = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
+    ship = {"name": "s", "id": "9", "route_to": "2"}
+    p = ships.plan_ship(ship, snap, world, sea, cfg, recipes=rec)
+    o, h = p["orders"], p["home_orders"]
+    assert o["tallow"]["sell_volume"] == 5 and h["tallow"]["buy_volume"] == 5 and h["tallow"]["max_holding"] == 10, p
+    assert o["medicine"]["buy_volume"] == 2 and h["medicine"]["sell_volume"] == 2 and o["medicine"]["max_holding"] == 4, p
+    assert "bread" not in o                     # someone else's orders are on it: never traded
+    assert "salt" not in o                      # 2.1 there vs 2.04 home buy: under the 6% margin
+    assert all(not k.startswith("_") for t in list(o.values()) + list(h.values()) for k in t)
+    # no cash: no home buys to ship out, but an import still runs (it costs nothing at home)
+    p = ships.plan_ship(ship, dict(snap, cash=0), world, sea, cfg, recipes=rec)
+    assert "tallow" not in p["orders"] and "medicine" in p["orders"], p
+    # trade mode off: none of it
+    p = ships.plan_ship(ship, snap, world, sea, dict(cfg, ship_trade={"on": False}), recipes=rec)
+    assert not p["home_orders"] and "tallow" not in p["orders"]
+    # the actor: writes the home side, owns the good, and hands it back once it is off every route and none is held
+    d = tempfile.mkdtemp()
+    try:
+        calls = []
+        w = lambda path, body: calls.append((path, body)) or (True, 200, None)
+        plan = {"ship_plans": {"plans": [{"id": "9", "home_orders": {"tallow": {"buy_volume": 5, "buy_price": "25.4",
+                                                                                 "max_holding": 10}}}]}}
+        cfgl = {"live": {"ship_modes": {"9": "auto"}}}
+        st = {}
+        s2 = {"turn": 1, "store": {"items": {}}, "market": {}}
+        act.trade_home(plan, cfgl, s2, st, "S", {"bread": [{"sell_volume": 1}]}, os.path.join(d, "a.jsonl"), w)
+        assert calls[0][0].endswith("/tallow") and calls[0][1]["managers"][0]["buy_volume"] == 5 and calls[0][1]["capacity"] >= 10
+        assert "tallow" in st["trade_items"]
+        calls.clear()
+        plan2 = {"ship_plans": {"plans": [{"id": "9", "home_orders": {"bread": {"buy_volume": 5, "buy_price": "2.5"}}}]}}
+        s3 = {"turn": 2, "store": {"items": {"tallow": {"held": 4}}}, "market": {"tallow": {"bid": 20}}}
+        out = act.trade_home(plan2, cfgl, s3, st, "S", {"tallow": [{"buy_volume": 5}], "bread": [{"sell_volume": 1}]},
+                             os.path.join(d, "a.jsonl"), w)
+        assert any("bread: skipped" in x for x in out)                         # never takes over someone else's good
+        assert calls[0][1]["managers"][0]["sell_volume"] == 4 and "tallow" in st["trade_items"], calls  # sells the 4 left
+        calls.clear()
+        act.trade_home({"ship_plans": {"plans": []}}, cfgl, dict(s3, store={"items": {}}), st, "S",
+                       {"tallow": [{"sell_volume": 4}]}, os.path.join(d, "a.jsonl"), w)
+        assert calls[0][1] == {"managers": []} and "tallow" not in st["trade_items"]
+    finally:
+        shutil.rmtree(d)
+
+
 def test_two_ships_never_share_a_voyage_target():
     # Oct 13: Flax Wyrm and linen snake both picked Etallaen; the second must re-plan to the next free town
     d = tempfile.mkdtemp()

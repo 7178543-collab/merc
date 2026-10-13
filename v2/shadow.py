@@ -177,6 +177,11 @@ def ship_routes(snap, out, replay):
         else:
             world = routes.fetch_world()
         cfg = planner.load_json("config.json")
+        try:        # goods ship trade mode already runs (act.trade_home), so the planner keeps them in play
+            with open(os.path.join(out, "act_state.json")) as f:
+                cfg["_trade_owned"] = sorted((json.load(f).get("trade_items") or {}))
+        except (OSError, ValueError, AttributeError):
+            cfg["_trade_owned"] = []
         sea = routes.load_sea()
         rr = routes.rank(snap, world, sea, cfg=cfg)
         rr["t"] = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")

@@ -12,6 +12,7 @@ import os
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG = os.path.join(ROOT, "v2", "config.json")
 SUSPENDED = os.path.join(ROOT, "state", "v2", "suspended.json")
+ACT_STATE = os.path.join(ROOT, "state", "v2", "act_state.json")
 
 
 def _load(path, default):
@@ -26,7 +27,10 @@ def owned_items():
     cfg = _load(CONFIG, {})
     live = set(((cfg.get("live") or {}).get("items")) or [])
     sus = _load(SUSPENDED, {})
-    return live - set(sus if isinstance(sus, dict) else [])
+    # ship trade goods (v2/ships.py trade mode, Oct 13): their home orders are v2's alone
+    st = _load(ACT_STATE, {})
+    trade = set((st.get("trade_items") or {}) if isinstance(st, dict) else [])
+    return (live - set(sus if isinstance(sus, dict) else [])) | trade
 
 
 def owned(item):

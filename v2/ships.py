@@ -29,6 +29,13 @@ MIN_NET_PER_TURN = 15          # a route must clear this after crew, or the ship
 # route fare per cargo size unit (storehouse operations export_fare / units x size): Blanans 0.04, Etallaen 0.10,
 # Kirchwerp 0.19 (timber 13 x 15 = 195 size units paid 36.66, Oct 13). Not modelled per town yet: a middle value.
 FARE_PER_SIZE = 0.15
+# ---- trade mode (Oct 13, Taylor: "ship smaller amounts of more items, diversify"; config ship_trade.on): also carry
+# goods we neither make nor use when the spread pays: buy at home and sell there, or buy there and sell at home. Only
+# "clean" goods: no orders on them at home from anyone else and none held, so the home side (the buy that stocks an
+# export, or the sell that clears an import) is v2's alone (act.trade_home; v1 skips them via v2_owned). Every good is
+# capped by its market's room (30% of what trades there a turn), so the cargo spreads over many small lots by itself.
+TRADE_MARGIN_SHARE = 0.06      # stricter than own goods: two legs in two markets
+TRADE_SPEND_SHARE = 0.03       # home buys to ship out: at most this share of cash a turn, per ship
 
 
 def _f(x):
@@ -57,6 +64,8 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
     items = (snap.get("store") or {}).get("items") or {}
     inter = set((cfg.get("chain") or {}).get("intermediates") or [])
     never = set(cfg.get("never_drop") or [])
+    trade = bool((cfg.get("ship_trade") or {}).get("on"))
+    mine_t = set(cfg.get("_trade_owned") or [])       # goods trade mode already runs (shadow reads act_state)
     cap = routes.journey_capacity(d.get("moves") or 0)
     cost1 = routes.running_cost(snap, recipes)
     if not cap or not there:
@@ -70,6 +79,13 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
 
     def commodity(item):
         return (prods.get(item) or {}).get("type") == "commodity" if prods else item not in routes.NOT_CARGO
+
+    def tradeable(item, it, fl):
+        if item in inter or item in never or _f(fl.get("production")) > 0 or _f(fl.get("consumption")) > 0:
+            return False
+        if item in mine_t:
+            return True
+        return not it.get("orders") and _f(it.get("held")) < 1
 
     for item, m in there.items():
         if not commodity(item):
@@ -117,6 +133,34 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                                     "max_holding": int(math.ceil(max(_f(it.get("held")), use * 4))), "_gain": gain}
                     est += vol * gain
                     space_in += vol * size(item)
+                    continue
+        if not trade or not tradeable(item, it, fl):
+            continue
+        # ---- trade out: buy it at home, sell it there
+        if m["bid"] > 0 and h.get("ask") and h.get("buy_room", 0) >= 1:
+            hb = routes_snap(h["ask"] * 1.02, up=True)
+            ref = min(m["bid"], m["ema"] * EMA_CAP) if m.get("ema") else m["bid"]
+            price = routes_snap(ref * FILL_SHARE, up=True)
+            gain = price - hb - ship_cost - fare
+            vol = int(min(h["buy_room"], m["sell_room"]) - float((taken or {}).get(item, 0)))
+            if price <= m["bid"] and gain >= max(MIN_MARGIN_ABS, TRADE_MARGIN_SHARE * hb) and vol >= 1:
+                orders[item] = {"sell_volume": vol, "sell_price": str(price), "min_holding": 0, "_gain": gain,
+                                "_cost": hb, "_home": {"buy_volume": vol, "buy_price": str(hb), "max_holding": 2 * vol}}
+                est += vol * gain
+                space_out += vol * size(item)
+                continue
+        # ---- trade back: buy it there, sell it at home just under their bid
+        if m["ask"] > 0 and m["buy_room"] >= 1 and h.get("bid") and h.get("sell_room", 0) >= 1:
+            price = routes_snap(m["ask"] * 1.02, up=True)
+            href = min(h["bid"], h["ema"] * EMA_CAP) if h.get("ema") else h["bid"]     # a home bid spike won't last
+            hs = routes_snap(href * FILL_SHARE, up=True)
+            gain = hs - price - ship_cost - fare
+            vol = int(min(m["buy_room"], h["sell_room"]))
+            if hs <= h["bid"] and gain >= max(MIN_MARGIN_ABS, TRADE_MARGIN_SHARE * hs) and vol >= 1:
+                orders[item] = {"buy_volume": vol, "buy_price": str(price), "max_holding": 2 * vol, "_gain": gain,
+                                "_home": {"sell_volume": vol, "sell_price": str(hs), "min_holding": 0}}
+                est += vol * gain
+                space_in += vol * size(item)
     # a ship carries at most `cap` size units a turn each way at full crew: keep the orders that pay most per unit of
     # space (Oct 13: Kirchwerp "beer 63 + timber 26" needed 516 units of a 279 cap; it was scored +158, really ~+35)
     for side, key in (("out", "sell_volume"), ("in", "buy_volume")):
@@ -140,6 +184,29 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
             space_out = used
         else:
             space_in = used
+    # trade mode: cap the home buys that stock exports (worst coin-for-coin first), then the home side follows the
+    # route volumes left after fitting
+    outs = sorted([(k, o) for k, o in orders.items() if "_home" in o and "sell_volume" in o],
+                  key=lambda ko: ko[1]["_gain"] / max(0.01, ko[1]["_cost"]))
+    spend = sum(o["sell_volume"] * o["_cost"] for _, o in outs)
+    for k, o in outs:
+        if spend <= TRADE_SPEND_SHARE * _f(snap.get("cash")):
+            break
+        spend -= o["sell_volume"] * o["_cost"]
+        est -= o["sell_volume"] * o["_gain"]
+        space_out -= o["sell_volume"] * size(k)
+        del orders[k]
+    home_orders = {}
+    for k, o in orders.items():
+        hside = o.pop("_home", None)
+        o.pop("_cost", None)
+        if hside:
+            if "sell_volume" in o:
+                hside.update(buy_volume=o["sell_volume"], max_holding=2 * o["sell_volume"])
+            else:
+                hside["sell_volume"] = o["buy_volume"]
+                o["max_holding"] = 2 * o["buy_volume"]
+            home_orders[k] = hside
     for o in orders.values():
         o.pop("_gain", None)
     need = max(space_out, space_in)
@@ -151,9 +218,9 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
     net = est - crew * cost1 + (space_out + space_in) * per_space   # est already paid per-unit shipping; charge crew once
     if orders and net < MIN_NET_PER_TURN:
         notes.append("best orders clear only %.0f a turn after crew: ship stays at 0" % net)
-        orders, crew = {}, 0.0
+        orders, crew, home_orders = {}, 0.0, {}
     return {"ship": ship.get("name"), "id": ship.get("id"), "town": d.get("name"), "town_id": town_id,
-            "orders": orders, "crew": crew, "est_net": round(net if orders else 0.0, 1), "capacity": cap,
+            "orders": orders, "home_orders": home_orders, "crew": crew, "est_net": round(net if orders else 0.0, 1), "capacity": cap,
             "space": [round(space_out), round(space_in)], "notes": notes}
 
 

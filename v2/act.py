@@ -343,6 +343,90 @@ def ship_auto(plan, cfg, snap, log_path, sst=None):
     return done
 
 
+MAX_TRADE_WRITES = 6
+
+
+def trade_home(plan, cfg, snap, st, store, live_tiers, log_path, write=None):
+    """Home-side orders for ship trade goods (v2/ships.py trade mode): the buy that stocks an export, or the sell that
+    clears an import. v2 owns these goods (act_state trade_items; v1 skips them via v2_owned). A good that drops off
+    every route: its buy stops at once, stock left over is offered at home just under the bid, and once none is held
+    the orders are cleared and the good is handed back. Never touches a good someone else has orders on."""
+    write = write or (lambda path, body: api.write("PATCH", path, body))
+    modes = (cfg.get("live") or {}).get("ship_modes") or {}
+    turn = (snap or {}).get("turn")
+    want = {}
+    for pl in ((plan or {}).get("ship_plans") or {}).get("plans") or []:
+        if modes.get(str(pl.get("id"))) != "auto":
+            continue
+        for item, t in (pl.get("home_orders") or {}).items():
+            if item in want:            # two ships on one good: add the volumes
+                for k in ("buy_volume", "sell_volume", "max_holding"):
+                    if k in t:
+                        want[item][k] = want[item].get(k, 0) + t[k]
+            else:
+                want[item] = dict(t)
+    mine = st.setdefault("trade_items", {})
+    items = ((snap or {}).get("store") or {}).get("items") or {}
+    market = (snap or {}).get("market") or {}
+    done, n = [], [0]
+
+    def put(item, managers, capacity=None):
+        body = {"managers": managers}
+        if capacity is not None:
+            body["capacity"] = int(capacity)
+        ok, status, reply = write("/buildings/%s/storage/inventory/%s" % (store, api.q(item)), body)
+        n[0] += 1
+        with open(log_path, "a") as f:
+            f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": turn, "trade_item": item,
+                                "to": body, "ok": bool(ok), "status": status,
+                                "reply": None if ok else str(reply)[:200]}, default=str) + "\n")
+        return bool(ok)
+
+    for item, t in sorted(want.items()):
+        if n[0] >= MAX_TRADE_WRITES:
+            break
+        live = [x for x in (live_tiers.get(item) or []) if x]
+        if live and item not in mine:
+            done.append("trade %s: skipped, other orders are on it" % item)
+            continue
+        if _canon(live) == _canon([t]):
+            mine.setdefault(item, {"since": turn})
+            continue
+        it = items.get(item) or {}
+        capn = max(_n(it.get("capacity")), _n(it.get("held")) + _n(t.get("max_holding")) + 2 * _n(t.get("sell_volume")), 10)
+        ok = put(item, [t], capn)
+        if ok:
+            mine.setdefault(item, {"since": turn})
+        done.append("trade %s -> %s %s" % (item, t, "ok" if ok else "FAILED"))
+    for item in sorted(set(mine) - set(want)):
+        if n[0] >= MAX_TRADE_WRITES:
+            break
+        held = _n((items.get(item) or {}).get("held"))
+        live = [x for x in (live_tiers.get(item) or []) if x]
+        if held >= 1:
+            bid = _n((market.get(item) or {}).get("bid"))
+            if bid > 0 and (not live or any(_n(x.get("buy_volume")) for x in live)):
+                tier = [{"sell_volume": int(held), "sell_price": str(_snap_up(bid * 0.98)), "min_holding": 0}]
+                if _canon(live) != _canon(tier):
+                    put(item, tier)
+                    done.append("trade %s: off route, selling the %d left at home" % (item, held))
+            elif any(_n(x.get("buy_volume")) for x in live):
+                put(item, [])
+                done.append("trade %s: off route, buy stopped (no home bid for the %d left)" % (item, held))
+            continue
+        if live:
+            put(item, [])
+        del mine[item]
+        done.append("trade %s: off every route, handed back" % item)
+    return done
+
+
+def _snap_up(p):
+    sys.path.insert(0, HERE)
+    import ships
+    return ships.routes_snap(p, up=True)
+
+
 VOYAGE_CREW = 0.5
 VOYAGE_MIN_GAIN = 60           # a better town must promise this much a turn more before a ship sails
 VOYAGE_COOLDOWN = 12           # turns between voyages per ship
@@ -559,6 +643,11 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     if live_mode and ship_ids and not stand:
         paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
         ship_done = ship_auto(plan or {}, cfg, snap, LOG, st["ships"])
+        if (cfg.get("ship_trade") or {}).get("on") and store:
+            try:
+                ship_done += trade_home(plan or {}, cfg, snap, st, store, live_tiers, LOG)
+            except Exception as e:  # trade goods must never stop the rest
+                ship_done.append("trade orders failed: %s: %s" % (type(e).__name__, e))
         try:
             ship_done += ship_voyages(plan or {}, cfg, snap, st["ships"], LOG)
         except Exception as e:      # a voyage step must never stop the store orders
