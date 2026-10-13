@@ -214,3 +214,16 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
 - Quarry first turn: limited by labour (shortfall 39 of 44), 0.57 limestone made; porterage short 2.9 (stranded). Labour
   is v1's: its labour rule tops up on shortfall next run. Flax farm 7.15 -> retting projects its full 114 plants.
 - 04:05 Flax Wyrm -> v2 auto: v2 clears the Blanans test orders and, with Etallaen taken, sails it to the best other town.
+- 04:04-04:22 **v2 moves ships on its own.** Flax Wyrm -> auto: v2 cleared the Blanans test orders, chose Vauxvais, stopped
+  the Blanans route, hopped home, sailed out and started the Vauxvais route (04:08). Then found its own estimate there was
+  only +11 (routes.rank counted trades the ship plan never makes: buy-at-home-to-export and imports for resale). Fixed:
+  `ships.best_towns` scores every town with plan_ship itself. Re-chose Brebronn (+163: garments 25 at 28.0, beer 56 at 4.80).
+- Movement points: 3,000 x crew per turn, effective at once, spent by every move this turn including the instant hop home.
+  The Brebronn trip (863) was refused with 794 left (409 "not enough movement points"); a route still got created on the
+  home->home journey. Fixed by hand (crew 0.65, sail, route 504236454250536879, capacity 404/turn) and in code: voyage crew
+  = max(0.5, moves/3000 + 0.4), no route start after a refused trip, a route on the wrong town is stopped at once.
+- Since 04:22 both ships run on v2 plans: Linen Snake / Etallaen garments 34 at 28.60, crew 0.1 (est +204); Flax Wyrm /
+  Brebronn garments 25 at 28.00 + beer 56 at 4.80, crew 0.4 (est +163). Beer exports will mostly wait behind the home beer
+  ladder (home sells first, route beer hits min_holding 60).
+- Ship rows in the v2 report now read the game's export/import keys (they showed "-" before; the guard would have paused a
+  trading ship after 3 turns). Guard counters reset.
