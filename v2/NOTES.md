@@ -189,3 +189,10 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   Etallaen (774 moves, 483 cargo/turn at crew 1), start the route, sell ~59 garments/turn at ~28 (v2 estimate +300/turn).
 - Built: v2/ships.py (route orders + crew from this turn's prices), act.py ship_auto (live.ship_modes "auto"), ship guard,
   world prices fetched every v2 run, queue entries `route` (start/stop) and `world`. 20 tests.
+- 03:08 travel to the HOME town was instant: the Linen Snake was docked at home in the same minute (journey home->home,
+  distance 0). (Return-to-hometown looks free/instant; sailing out takes moves.)
+- 03:17 Linen Snake: travel home -> Etallaen + `PUT /transports/{id}/route {provider_id, journey_id: ""}` in the same run ->
+  route 468589815934851392, Strasclives-Etallaen, capacity 483/turn, potential trips 1.935 (matches journey_capacity).
+  So a route can be started from home right after ordering the journey out.
+- 03:18 v2 ship_auto (first live ship writes): Etallaen route = garments 56 at 29.40 (keep 30), beer 51 at 4.38 (keep 60),
+  crew 0.5 -> 0.4. v2 estimate +386 a turn. First sales should show after the 04:00 tick.
