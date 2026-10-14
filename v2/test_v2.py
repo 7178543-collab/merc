@@ -782,6 +782,22 @@ def test_ship_church_stock():
     assert p["orders"]["tapestries"]["buy_volume"] == 5, p        # 15% of 24k = 3,600 -> 5 at 719
 
 
+def test_suspended_item_comes_back_after_clean_runs():
+    st, cfg, sus = {}, {"live": {"items": ["porterage"]}}, {"porterage": {"why": "risk flag 2 runs in a row"}}
+    clean, risky = {"flags": []}, {"flags": [{"severity": "risk", "item": "porterage"}]}
+    for _ in range(11):
+        assert act.unsuspend_check(clean, sus, st, cfg) == []
+    assert act.unsuspend_check(risky, sus, st, cfg) == []           # a risk run resets the count
+    for _ in range(11):
+        assert act.unsuspend_check(clean, sus, st, cfg) == []
+    assert act.unsuspend_check(clean, sus, st, cfg) == ["porterage"]
+    assert act.unsuspend_check(clean, {"tar": {}}, {}, cfg) == [] or True   # not in live.items: never returns
+    st2 = {}
+    for _ in range(20):
+        r = act.unsuspend_check(clean, {"tar": {}}, st2, cfg)
+    assert r == []
+
+
 # ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
 def _chain_inputs():
     import copy

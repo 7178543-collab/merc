@@ -202,7 +202,10 @@ def plan(s, cfg=None, recipes=None, goals=None):
                     projected += (pj.get("consumption", 0) or 0) + (pj.get("shortfall", 0) or 0)
         observed_raw = observed
         observed = max(observed, projected)
-        peak = max(hist.get(item) or [0])
+        # bursty inputs (porterage) are covered to their recent peak, but only the last few turns: a 24-turn peak from
+        # before the chain was cut kept porterage at 37 a turn against ~25 used, 12 expiring every turn (Oct 14)
+        win = int(cfg.get("bursty_window", 6)) if item in bursty else 24
+        peak = max((hist.get(item) or [0])[-win:])
         planned = use.get(item, 0)
         own = make.get(item, 0)
         if item == "labour":

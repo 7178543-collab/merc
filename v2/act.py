@@ -273,6 +273,25 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
     return rows, None
 
 
+UNSUSPEND_AFTER = 12
+
+
+def unsuspend_check(plan, sus, st, cfg):
+    """A suspended item goes back to v2 after UNSUSPEND_AFTER runs in a row with no risk flag on it (Oct 14: porterage
+    was suspended on Oct 13 after two risk runs and never came back; v1 never trims porterage, so the 37 buy v2 had
+    set sat for ~40 turns against ~25 used, ~12 expiring every turn). Only items still in config live.items return."""
+    risky = {f["item"] for f in plan.get("flags") or [] if f["severity"] == "risk"}
+    live = set(((cfg.get("live") or {}).get("items")) or [])
+    back = []
+    for item in list(sus):
+        c = st.setdefault(item, {"risk": 0, "fail": 0})
+        c["clean"] = 0 if item in risky else c.get("clean", 0) + 1
+        if c["clean"] >= UNSUSPEND_AFTER and item in live:
+            c["clean"], c["risk"], c["fail"] = 0, 0, 0
+            back.append(item)
+    return back
+
+
 def suspend_check(plan, owned, st, results):
     """Count consecutive risk runs / failed writes per owned item; returns {item: reason} to suspend."""
     risky = {f["item"] for f in plan.get("flags") or [] if f["severity"] == "risk"}
@@ -770,9 +789,15 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         except Exception as e:      # a voyage step must never stop the store orders
             ship_done.append("voyages failed: %s: %s" % (type(e).__name__, e))
     newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results) if live_mode else {}
-    if newly:
+    back = unsuspend_check(plan or {}, sus, st.setdefault("counters", {}), cfg) if live_mode else []
+    if newly or back:
         for item, why in newly.items():
             sus[item] = {"since": now().isoformat(timespec="seconds"), "why": why}
+        for item in back:
+            with open(LOG, "a") as f:
+                f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
+                                    "item": item, "unsuspended": sus[item]}, default=str) + "\n")
+            sus.pop(item, None)
         _save(SUSPENDED, sus)
     if live_mode:
         st["last"] = now().isoformat(timespec="seconds")
