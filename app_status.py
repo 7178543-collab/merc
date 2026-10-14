@@ -71,6 +71,18 @@ def _n(x):
         return 0.0
 
 
+def _diagnose_alerts(max_age_h=3):
+    """bot v2's self-diagnosis findings (v2/diagnose.py, written each :25 run), first in the app's alert list."""
+    d = _json("state/v2/diagnose.json") or {}
+    try:
+        age = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(d["t"])
+        if age > datetime.timedelta(hours=max_age_h):
+            return []
+    except (KeyError, ValueError, TypeError):
+        return []
+    return ["DIAGNOSE " + a for a in (d.get("alerts") or [])][:6]
+
+
 def build():
     rows = _history()
     last = rows[-1] if rows else {}
@@ -89,7 +101,7 @@ def build():
         "prestige": last.get("prestige"), "prestige_free": last.get("prestige_free"),
         "prestige_rate": last.get("prestige_rate"),
         "season_end": SEASON_END,
-        "alerts": last.get("alerts") or [],
+        "alerts": _diagnose_alerts() + (last.get("alerts") or []),
         "needs_you": (_json("state/needs_you.json") or {}).get("what"),
         "buildings": last.get("bld") or [],
         "ships": last.get("ships") or [],

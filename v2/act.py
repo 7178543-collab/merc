@@ -613,8 +613,16 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         live_tiers = {k: v.get("orders") or [] for k, v in (((snap or {}).get("store") or {}).get("items") or {}).items()}
 
     rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
+    # an owned item diagnose acted on in the last 2 turns is left as diagnose set it (no tug of war with the plan)
+    dturn = (_load(os.path.join(out, "diagnose_state.json"), {}) or {}).get("last_action") or {}
+    for r in rows:
+        t_ = dturn.get(r["item"])
+        if r["owned"] and not r["same"] and t_ is not None and (snap or {}).get("turn") is not None \
+                and (snap or {})["turn"] - t_ < 2:
+            r.setdefault("refused", []).append("diagnose fixed it at turn %s: held for 2 turns" % t_)
     results, sent = {}, 0
     ship_ids = set(((cfg.get("live") or {}).get("ships")) or [])
+    diag_on = bool((cfg.get("diagnose") or {}).get("on")) and bool(snap) and not (snap or {}).get("errors")
     if live_mode and not stand and (owned or ship_ids):
         api.allow_writes()
     if live_mode and owned and not stand:
@@ -637,6 +645,26 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                 f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
                                     "item": r["item"], "from": r["live"], "to": r["new"], "ok": bool(ok),
                                     "verified": verified, "status": status}, default=str) + "\n")
+
+    diag = []
+    if diag_on:
+        # self-diagnosis (v2/diagnose.py): after the store rows, never allowed to break the run
+        try:
+            import diagnose
+            dtiers = live_tiers
+            if live_mode and sent and store:      # act just wrote some orders: diagnose works on what the game holds now
+                b = api.get("/buildings/%s" % store) or {}
+                holds = (((b.get("storage") or {}).get("inventory") or {}).get("holdings")) or {}
+                if holds:
+                    dtiers = {k: [{kk: vv for kk, vv in t.items() if kk != "result"} for t in (h or {}).get("managers") or [] if t]
+                              for k, h in holds.items()}
+            # at a stand-down (failsafe BRAKE/STOP) v2 owns nothing: every fix goes through the queue, reduce-only
+            dctx = diagnose.context(snap, cfg, dtiers, set() if stand else owned, fs, act_state=_load(STATE, {}),
+                                    manual=recent_manual)
+            dfind, _ = diagnose.run(snap, cfg, dctx, live=live_mode, out_dir=out, log_path=LOG)
+            diag = diagnose.alert_lines(dfind)
+        except Exception as e:
+            diag = ["diagnose failed: %s: %s" % (type(e).__name__, e)]
 
     st = _load(STATE, {})
     paused_ships, ship_done = [], []
@@ -678,6 +706,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         + (("; paused ships " + ", ".join(paused_ships)) if paused_ships else ""))
     for d_ in ship_done:
         print("  ship: " + d_)
+    for d_ in diag:
+        print("  diagnose: " + d_)
     for r in rows:
         if r["owned"] and not r["same"]:
             print("  %s: %s%s" % (r["item"], "refused: " + "; ".join(r["refused"]) if r.get("refused") else

@@ -6,6 +6,7 @@ Also guards the one rule that matters: shadow mode never writes to the game.
 """
 import ast
 import copy
+import datetime
 import glob
 import json
 import os
@@ -52,6 +53,7 @@ def _act_dir(cfg_live=(), failsafe_level=0, snap=None):
     json.dump({"level": failsafe_level}, open(os.path.join(d, "failsafe.json"), "w"))
     cfg = copy.deepcopy(CFG)
     cfg["live"] = {"items": list(cfg_live)}
+    cfg["diagnose"] = {"on": False}         # diagnose has its own tests (it would reach the order queue here)
     return d, cfg
 
 
@@ -587,6 +589,168 @@ def test_planner_survives_thin_snapshots():
                  dict(SNAP, market={}), dict(SNAP, buildings=[]), dict(SNAP, household={})):
         p = planner.plan(snap, CFG, goals=[])
         assert isinstance(p["flags"], list) and "skipped" not in " ".join(p["notes"]), p["notes"]
+
+
+# ---------------------------------------------------------------- self-diagnosis (v2/diagnose.py), the Oct 13 cases
+import diagnose   # noqa: E402
+
+STORE_ID = "152202386005001"
+
+
+def _dsnap(**kw):
+    s = {"t": "2026-10-13T20:00:00+00:00", "turn": 13252, "cash": 20000.0, "errors": [],
+         "household": {"rate": 4.1, "impacts": {}}, "sustenance": {},
+         "buildings": [], "operations": {}, "market": {}, "history_use": {},
+         "store": {"id": STORE_ID, "items": {}}}
+    s.update(kw)
+    return s
+
+
+def _dctx(snap, fs_level=0, quiet=False, owned=(), paused=None, state=None):
+    tiers = {k: copy.deepcopy(v.get("orders") or []) for k, v in snap["store"]["items"].items()}
+    return {"live_tiers": tiers, "owned": set(owned), "trade": set(), "paused": paused or {}, "fs_level": fs_level,
+            "quiet": quiet, "rates": [], "recipes": diagnose.load_data("recipes.json"),
+            "sustenance": diagnose.load_data("sustenance.json"), "state": state if state is not None else {}}
+
+
+def _candles_dry():
+    # Oct 13, turn 13252: candle slot dry, our bid 70 under the home ask 80.50
+    return _dsnap(sustenance={"candles": 1.5},
+                  store={"id": STORE_ID, "items": {"candles": {"held": 1.0, "capacity": 70.0, "flow": {},
+                         "orders": [{"max_holding": 66, "buy_volume": 3, "buy_price": "70"}]}}},
+                  market={"candles": {"ask": 80.5, "bid": 76.5}})
+
+
+def _quarry_blocked():
+    # Oct 13: quarry "limestone space" while a limestone buy (max_holding 153 = capacity) refilled the bin
+    return dict(buildings=[{"id": "149602389", "type": "quarry", "name": "quarry 1", "recipe": "extract stone 1",
+                            "target": 0.4, "production": 0.0, "limitation": "limestone space", "construction": None}],
+                operations={"producer/149602389": {"recipe": "extract stone 1", "target": 0.4, "volume": 0.0,
+                                                   "limitation": "limestone space"}},
+                items={"limestone": {"held": 153.0, "capacity": 153.0, "flow": {},
+                                     "orders": [{"max_holding": 153, "buy_volume": 15, "buy_price": "26"}]}})
+
+
+def test_diagnose_r1_candles_dry():
+    s = _candles_dry()
+    finds, acts = diagnose.diagnose(s, CFG, _dctx(s))
+    a = next(a for a in acts if a["rule"] == "R1" and a["item"] == "candles")
+    assert a["via"] == "queue" and a["raise_"]                                   # a v1 item: through the queue
+    assert a["entry"]["set"]["buy_price"] == "82", a["entry"]                    # ask 80.50 +1.5%, snapped up
+    assert 82 <= 60 * 3 / 1.5                                                    # inside the coin-per-prestige cap
+    assert a["entry"]["set"]["buy_volume"] * 82 <= 0.05 * 20000
+    # live: applied through the queue handler, logged in act.jsonl
+    d = tempfile.mkdtemp()
+    try:
+        got = []
+        diagnose.run(s, CFG, _dctx(s), live=True, out_dir=d, apply_queue=lambda e: (got.append(e) or {"ok": True}))
+        assert got and got[0]["item"] == "candles"
+        rows = [json.loads(x) for x in open(os.path.join(d, "act.jsonl"))]
+        assert any(r.get("diagnose") == "R1" and r.get("item") == "candles" and r.get("ok") for r in rows), rows
+        assert any(r.get("diagnose") == "run" for r in rows)
+        assert "Self-diagnosis" in "\n".join(diagnose.report_lines(json.load(open(os.path.join(d, "diagnose.json")))["findings"]))
+        # one action per item per 2 turns
+        _, again = diagnose.run(s, CFG, _dctx(s, state=json.load(open(os.path.join(d, "diagnose_state.json")))),
+                                live=False, out_dir=d)
+        assert not [a for a in again if a.get("item") == "candles"]
+    finally:
+        shutil.rmtree(d)
+    # the light armour slot paused by the failsafe: un-paused at level 0 only
+    s = _dsnap(sustenance={"light armour": 0.2},
+               store={"id": STORE_ID, "items": {"light armour": {"held": 0.0, "capacity": 10.0, "flow": {},
+                                                                 "orders": [{"max_holding": 10, "buy_price": "112"}]}}},
+               market={"light armour": {"ask": 80.5}})
+    paused = {"light armour": [{"max_holding": 10, "buy_volume": 2, "buy_price": "112"}]}
+    _, acts = diagnose.diagnose(s, CFG, _dctx(s, paused=paused))
+    a = acts[0]
+    assert a.get("unpause") and a["entry"]["set"]["buy_volume"] == 2 and a["entry"]["set"]["buy_price"] == "82"
+    f, acts = diagnose.diagnose(s, CFG, _dctx(s, paused=paused, fs_level=1))
+    assert not acts and "level" in f[0].get("held_back", "")
+
+
+def test_diagnose_r2_space_blocked():
+    q = _quarry_blocked()
+    s = _dsnap(buildings=q["buildings"], operations=q["operations"], store={"id": STORE_ID, "items": q["items"]})
+    _, acts = diagnose.diagnose(s, CFG, _dctx(s))
+    a = next(a for a in acts if a["rule"] == "R2")
+    assert not a["raise_"] and a["entry"]["set"] == {"max_holding": 137}, a       # 153 - 3 turns x 5.2
+    # buy already stopping lower: a finding only
+    s["store"]["items"]["limestone"]["orders"] = [{"max_holding": 100, "buy_volume": 15, "buy_price": "26"}]
+    f, acts = diagnose.diagnose(s, CFG, _dctx(s))
+    assert not acts and "sell order or more capacity" in f[0]["finding"]
+
+
+def test_diagnose_r3_idle_ropewalk():
+    s = _dsnap(buildings=[{"id": "152202388001000", "type": "ropewalk", "name": "ropewalk 1", "recipe": None,
+                           "target": 0.0, "production": 0.0, "limitation": None, "construction": None}])
+    st = {}
+    _, acts = diagnose.diagnose(s, CFG, _dctx(s, state=st))
+    assert not acts                                                              # 1 turn idle: not yet
+    s["turn"] += 1
+    _, acts = diagnose.diagnose(s, CFG, _dctx(s, state=st))
+    e = acts[0]["entry"]
+    assert e["building"] == "152202388001000" and e["producer"] == {"recipe": "make rope 2", "target": 0.5, "provider_id": STORE_ID}
+    s["buildings"][0]["type"] = "tannery"                                        # no planned recipe: a finding for Taylor
+    f, acts = diagnose.diagnose(s, CFG, _dctx(s, state=st))
+    assert not acts and "Taylor" in f[0]["finding"]
+
+
+def test_diagnose_r4_banquet_starved():
+    s = _dsnap(buildings=[
+        {"id": "152002388", "type": "mansion", "name": "mansion 1", "recipe": "hold banquet 1 (fish)", "target": 1.0, "construction": None},
+        {"id": "152202388000004", "type": "sewing shop", "name": "sewing shop 1", "recipe": "sew garments 2", "target": 0.75, "construction": None},
+        {"id": "152202388001005", "type": "weavery", "name": "weavery 1", "recipe": "weave cloth 2", "target": 1.0, "construction": None}],
+        operations={"producer/152002388": {"recipe": "hold banquet 1 (fish)", "target": 1.0, "volume": 0.0, "limitation": "labour"}},
+        store={"id": STORE_ID, "items": {"labour": {"held": 300.0, "flow": {}, "orders": [{"buy_volume": 400, "buy_price": "2.2"}]}}})
+    _, acts = diagnose.diagnose(s, CFG, _dctx(s, quiet=True))                    # reduce-only works at night too
+    by = {a["entry"]["building"]: a["entry"]["producer"]["target"] for a in acts if a["rule"] == "R4"}
+    assert 0.5625 - 1e-3 <= by["152202388000004"] < 0.75                       # sew first, at most -25%
+    assert 0.75 <= by["152202388001005"] < 1.0                                  # then weave for the rest
+    assert all(not a["raise_"] for a in acts) and not any(a.get("item") == "labour" for a in acts)
+
+
+def test_diagnose_quiet_hours_reduce_only():
+    s = _candles_dry()
+    q = _quarry_blocked()
+    s["buildings"], s["operations"] = q["buildings"], q["operations"]
+    s["store"]["items"].update(q["items"])
+    for ctx in (_dctx(s, quiet=True), _dctx(s, fs_level=1)):
+        f, acts = diagnose.diagnose(s, CFG, ctx)
+        assert [a["rule"] for a in acts] == ["R2"] and not any(a["raise_"] for a in acts), acts
+        assert "reduce-only" in next(x for x in f if x["rule"] == "R1")["held_back"]
+    assert diagnose.quiet_now(datetime.datetime(2026, 10, 14, 4, 0, tzinfo=datetime.timezone.utc))      # 00:00 Toronto
+    assert not diagnose.quiet_now(datetime.datetime(2026, 10, 14, 16, 0, tzinfo=datetime.timezone.utc))
+
+
+def test_diagnose_r5_and_owned_items():
+    # a running building's input whose bid sat under the ask 3 turns and under-filled: raised under its ceiling
+    s = _dsnap(buildings=[{"id": "1", "type": "brewery", "name": "brewery 1", "recipe": "brew beer 1", "target": 0.4, "construction": None}],
+               store={"id": STORE_ID, "items": {"grain": {"held": 10.0, "flow": {"consumption": 26.0, "purchase": 5.0},
+                                                          "orders": [{"buy_volume": 26, "buy_price": "3"}]}}},
+               market={"grain": {"ask": 3.3}})
+    st = {"under_ask": {"grain": {"turns": [13250, 13251]}}}
+    f, acts = diagnose.diagnose(s, CFG, _dctx(s, state=st, owned=["grain"]))
+    a = next(a for a in acts if a["rule"] == "R5")
+    assert a["via"] == "direct" and a["managers"][0]["buy_price"] == "3.36" and a["managers"][0]["buy_volume"] == 26
+    assert diagnose.snap_up(80.5 * 1.015) == 82.0 and diagnose.snap_up(3.3 * 1.015) == 3.36
+
+
+def test_act_runs_diagnose_safely():
+    d, cfg = _act_dir(cfg_live=[])
+    try:
+        cfg["diagnose"] = {"on": True}
+        before = api.calls["write"]
+        act.main(argv=["act.py"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+        assert os.path.exists(os.path.join(d, "diagnose_dry.json")) and api.calls["write"] == before
+        real = diagnose.diagnose
+        diagnose.diagnose = lambda *a, **k: 1 / 0                                # a crash never breaks the run
+        try:
+            res = act.main(argv=["act.py"], out=d, cfg=cfg, failsafe=os.path.join(d, "failsafe.json"))
+            assert res["mode"] == "dry"
+        finally:
+            diagnose.diagnose = real
+    finally:
+        shutil.rmtree(d)
 
 
 if __name__ == "__main__":

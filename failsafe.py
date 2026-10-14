@@ -218,6 +218,16 @@ def main():
         say("tool guard crashed: %s: %s" % (type(ex).__name__, ex))
 
     paused = st.get("paused") or {}
+    if lvl == 0:
+        # bot v2's self-diagnosis (v2/diagnose.py R1) restored these at level 0 with a fresh bid: no longer paused
+        try:
+            unp = (json.load(open(os.path.join(HERE, "state", "v2", "diagnose_state.json"))).get("unpaused")) or {}
+        except (OSError, ValueError):
+            unp = {}
+        for item in list(paused):
+            if item in unp and str(unp[item]) >= str(st.get("since") or ""):     # restored after the last brake ended
+                say("paused %s restored by v2 diagnose at %s: dropped from paused" % (item, unp[item]))
+                paused.pop(item)
     if lvl >= 2:
         items = BRAKE_ITEMS + (STOP_ITEMS if lvl >= 3 else [])
         for item in items:

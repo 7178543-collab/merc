@@ -314,3 +314,23 @@ Season 8 is the testbed for season 9. Anything proven here goes into v2. Keep en
   Handoff doc Snapshot updated (Now table, Oct 13 lesson, v2 item).
 - 10:51 morning report sent (cash 23,424 at 23:14 Toronto -> 22,686; boats ~-30 net; decisions: labour to v2, garment
   chain size, no third ship, no brewery increase). Handoff Snapshot updated. Night shift ends.
+
+## Self-diagnosis rules (Oct 14, Taylor: yes)
+- Why: the Oct 13 human check found four quiet problems the bot never noticed (candle + light armour slots dry, quarry
+  blocked by "limestone space", ropewalk idle after construction, textile ramp starving banquet/camp/quarry/ropewalk).
+- `v2/diagnose.py`, called by `v2/act.py` after the store rows (try/except: it can't break the run). Rules R1-R5 in its
+  docstring. Prestige slot goods come from the game's sustenance table (`v2/data/sustenance.json`, extracted from the
+  client bundle by `tools/extract_gamedata.py`; candles 1.5/turn = +3, light armour 0.2 = +0.5, ...; the 8 groups sum to
+  the 7.9 "sustenance" prestige impact) plus inputs of running prestige recipes (banquet).
+- A dry slot eats nothing, so it drops out of last turn's consumption: the snapshot now keeps the household's slot list
+  (`sustenance_slots`) and the prestige impacts (`household.impacts`).
+- Writes: v2-owned items directly (merge, re-read, verify; act then leaves that item alone 2 turns); v1 items through
+  `order_queue.apply_entry` + its spend/night guard + log (source `v2-diagnose`, so v1's 2-hour manual window protects
+  the fix). R2 (lower a max_holding) also goes this way: it only ever reduces. Ship trade goods: findings only.
+- Un-pausing a failsafe-paused slot (level 0 only) is recorded in `state/v2/diagnose_state.json` `unpaused`; the failsafe
+  drops that item from `paused` on its next level-0 run.
+- Replay over the Oct 13-14 snapshots (fs 0, daytime): light armour un-pause @82 from turn 13251, candles 12 @81.5-82 as
+  soon as an ask appeared (13256), prestige drop 4.1 -> 0.6 named "dry slot: candles, light armour", ropewalk started
+  13252, limestone max_holding 153 -> 137 at 13255, sew/weave cut when banquet/camp/quarry/ropewalk projected 0.
+- First live check (turn 13276, failsafe WATCH = reduce-only): one finding, quarry blocked by limestone space with the bin
+  full (153/153) and the buy already stopping at 100 -> needs a sell order or more capacity (nothing uses limestone now).

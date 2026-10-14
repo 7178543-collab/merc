@@ -53,11 +53,22 @@ def main():
     for b in objects(txt, r'\{"type":"[^"]+","(?:requires|supports_boost|prestige|capacity|tenants|construction)'):
         if "type" in b and ("construction" in b or "requires" in b):
             buildings.setdefault(b["type"], b)
+    # household sustenance slots: category, size, penalty, products with volume per turn and prestige score
+    # (Oct 14: v2/diagnose.py reads which goods feed a prestige slot from here, not from a hardcoded list)
+    sustenance = []
+    i = txt.find('"t":[{"category":"basic food"')
+    if i >= 0:
+        dec = json.JSONDecoder()
+        try:
+            sustenance, _ = dec.raw_decode(txt[i + 4:])
+        except ValueError:
+            sustenance = []
     os.makedirs(OUT, exist_ok=True)
-    for name, data in (("recipes.json", recipes), ("buildings.json", buildings)):
+    outs = [("recipes.json", recipes), ("buildings.json", buildings)] + ([("sustenance.json", sustenance)] if sustenance else [])
+    for name, data in outs:
         with open(os.path.join(OUT, name), "w") as f:
             json.dump(data, f, indent=0, sort_keys=True)
-    print("recipes %d, buildings %d -> %s" % (len(recipes), len(buildings), OUT))
+    print("recipes %d, buildings %d, sustenance groups %d -> %s" % (len(recipes), len(buildings), len(sustenance), OUT))
 
 
 if __name__ == "__main__":

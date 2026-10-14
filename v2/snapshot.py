@@ -69,6 +69,7 @@ def take():
     s["household"] = {
         "prestige": n(hh.get("prestige")), "free": n(hh.get("prestige")) - n(pb.get("allocated")),
         "rate": sum(n(x.get("impact")) for x in (hh.get("prestige_impacts") or [])),
+        "impacts": {str(x.get("factor")): n(x.get("impact")) for x in (hh.get("prestige_impacts") or [])},
         "legacy": n(hh.get("legacy")),
         "levels": {k[:-6]: int(n(v)) for k, v in pb.items() if k.endswith("_level")},
         "caps": {k: n(v) for k, v in (hh.get("caps") or {}).items()},
@@ -79,6 +80,8 @@ def take():
     s["household_duty"] = {"recipe": p.get("recipe"), "target": n(p.get("target"))}
     sus = ((hh.get("sustenance") or {}).get("inventory") or {}).get("previous_flows") or {}
     s["sustenance"] = {k: n(v.get("consumption")) for k, v in sus.items()}
+    # the goods set in the household's slots, consumed or not (an empty slot eats nothing, so "sustenance" drops it)
+    s["sustenance_slots"] = sorted((((hh.get("sustenance") or {}).get("inventory") or {}).get("holdings") or {}).keys())
 
     s["buildings"], store_id = [], None
     for bb in biz.get("buildings") or []:
