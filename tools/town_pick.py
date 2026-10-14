@@ -5,7 +5,8 @@ Ranks every town using only what exists before anyone trades, so it works on tur
 
   Gates (a town that fails one is listed but not picked)
     mainland     the town's landmass (connected land on the sea grid) holds at least MAINLAND_MIN towns
-    no rival     no other household runs RIVAL_MAX or more textile buildings in town (flax farm .. sewing shop)
+    no rival     no other household runs RIVAL_MAX or more textile buildings in town (flax farm .. sewing shop);
+                 on turn 1 nobody has built yet, so this gate matters at the ~48-turn re-check
     room         at least FREE_MIN unowned domain tiles to build on
 
   Score (higher is better; each part is shown in the report so the weights can be argued with)
@@ -37,7 +38,7 @@ REPORT = os.path.join(ROOT, "state", "town_pick.md")
 
 MAINLAND_MIN = 4       # towns on one landmass for it to count as mainland
 NEAR = 200             # tiles: a neighbour for the cluster score
-RIVAL_MAX = 6          # textile buildings one other household may run in town before it counts as a rival
+RIVAL_MAX = 3          # textile buildings (not plots) one other household runs in town = a rival (a full chain is 5)
 FREE_MIN = 40          # unowned domain tiles needed to build a chain
 TEXTILE = ("flax farm", "retting pit", "spinnery", "weavery", "sewing shop")
 OUR_HOUSEHOLD_OWNER = None   # set to our owner id to leave our own buildings out of the rival count (not needed on turn 1)
@@ -52,7 +53,7 @@ def collect(get):
         tid = str(t.get("id"))
         d = get("/towns/%s" % tid) or {}
         dom = d.get("domain") or {}
-        owners, structs = {}, {}
+        owners, structs, seen = {}, {}, set()
         free = resource = 0
         for tile in dom.values():
             o = tile.get("owner_id")
@@ -60,8 +61,10 @@ def collect(get):
                 free += 1
             if tile.get("resource"):
                 resource += 1
-            st = (tile.get("structure") or {}).get("type")
-            if st and o:
+            sd = tile.get("structure") or {}
+            st, sid = sd.get("type"), sd.get("id")
+            if st and o and sid not in seen:        # a building spans one tile per plot: count each building once
+                seen.add(sid)
                 structs[st] = structs.get(st, 0) + 1
                 if st in TEXTILE:
                     owners[str(o)] = owners.get(str(o), 0) + 1
