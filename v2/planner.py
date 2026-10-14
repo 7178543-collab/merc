@@ -212,6 +212,20 @@ def plan(s, cfg=None, recipes=None, goals=None):
             net = max(0.0, demand - own)
             want = math.ceil(net * (1 + (cfg.get("labour", {}).get("buffer_share", 0.05) if item == "labour" else 0.10)))
             hold = None
+            if item == "labour":
+                # Oct 14 (labour handed to v2): the failsafe's expiry guard, carried over because the failsafe
+                # leaves v2's items alone below BRAKE. If bought labour expired last turn, buy only what was really
+                # used (+ a small buffer) for one turn; the next run sizes back up to the buildings' plan.
+                lw = cfg.get("labour", {})
+                exp_l = fl.get("expiration", 0) or 0
+                if exp_l > lw.get("waste_max", 30):
+                    # labour metered to a build site that just became ready is new demand, not waste: keep it
+                    drip_l = ((bp or {}).get("drip") or {}).get("labour", 0)
+                    used_net = max(0.0, observed - own) + lw.get("waste_buffer", 10) + drip_l
+                    if used_net < want:
+                        notes.append("labour expiry guard: %.0f bought labour expired last turn, buy %d (not %d) this turn" % (
+                            exp_l, math.ceil(used_net), want))
+                        want = math.ceil(used_net)
         else:
             demand = max(planned, observed)
             net = max(0.0, demand - own)
