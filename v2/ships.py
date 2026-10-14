@@ -87,7 +87,32 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
             return True
         return not it.get("orders") and _f(it.get("held")) < 1
 
+    # ---- church stock (Oct 14, Taylor: improve the setup): church asks for tapestries and windows are our cheapest
+    # prestige (~24-29 coin a point vs ~55-60 for the banquet or a park plot) but nobody sells them at home, so the
+    # offers sat as WAIT. With config ship_church.on, a ship buys them where they are sold, up to `keep`, so
+    # contracts.py can fill the next ask on sight (Taylor's rule stands: sign only what stock fills now). Valued at
+    # value_per_prestige a point so the voyage planner sails for them; capped by cash and a spend share a turn.
+    sc = cfg.get("ship_church") or {}
+    church = (sc.get("goods") or {}) if sc.get("on") and _f(snap.get("cash")) >= _f(sc.get("min_cash") or 20000) else {}
+    church_budget = _f(sc.get("spend_share") or 0.15) * _f(snap.get("cash"))
     for item, m in there.items():
+        cg = church.get(item)
+        if cg and m["ask"] > 0 and m["buy_room"] >= 1:
+            it = items.get(item) or {}
+            want = _f(cg.get("keep")) - _f(it.get("held")) - float((taken or {}).get(item, 0))
+            price = routes_snap(min(m["ask"] * 1.02, _f(cg.get("max_price"))), up=False)
+            if want >= 1 and price >= m["ask"]:
+                vol = int(min(want, m["buy_room"], church_budget // price if price else 0))
+                gain = _f(cg.get("prestige_per_unit")) * _f(sc.get("value_per_prestige") or 57) - price \
+                    - per_space * size(item) - FARE_PER_SIZE * size(item)
+                if vol >= 1 and gain > 0:
+                    orders[item] = {"buy_volume": vol, "buy_price": str(price), "max_holding": int(_f(cg.get("keep"))),
+                                    "_gain": gain}
+                    est += vol * gain
+                    space_in += vol * size(item)
+                    church_budget -= vol * price
+                    notes.append("church stock: %s %d @ %s (keep %d for the church)" % (item, vol, price, int(_f(cg.get("keep")))))
+            continue
         if not commodity(item):
             continue
         it = items.get(item) or {}

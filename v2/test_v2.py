@@ -754,6 +754,34 @@ def test_act_runs_diagnose_safely():
 
 
 
+def test_ship_church_stock():
+    import ships
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Far", "moves": 774.0}}
+    mk = lambda bid, ask, bv, av, tr=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv, "ask_volume_10": av,
+                                         "volume_ema_12": tr}
+    world = [{"name": "Home", "markets": {}},
+             {"name": "Far", "markets": {"tapestries": mk(650, 705, 2, 9, 3), "windows": mk(0, 900, 0, 4, 1)}}]
+    snap = {"home_town": "1", "cash": 30000, "market": {"labour": {"price": 2.0}},
+            "store": {"items": {"tapestries": {"held": 2, "orders": [], "flow": {}}}}}
+    sc = {"on": True, "min_cash": 20000, "spend_share": 0.15, "value_per_prestige": 57,
+          "goods": {"tapestries": {"keep": 7, "max_price": 760, "prestige_per_unit": 25},
+                    "windows": {"keep": 6, "max_price": 790, "prestige_per_unit": 25}}}
+    cfg = {"chain": {"intermediates": []}, "never_drop": [], "ship_church": sc}
+    rec = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
+    ship = {"name": "s", "id": "9", "route_to": "2"}
+    p = ships.plan_ship(ship, snap, world, sea, cfg, recipes=rec)
+    o = p["orders"]
+    assert o["tapestries"]["buy_volume"] == 5 and o["tapestries"]["max_holding"] == 7, p      # keep 7, hold 2
+    assert "windows" not in o, p                                                             # 900 over the 790 cap
+    assert not p["home_orders"] and p["crew"] > 0 and p["est_net"] > 0, p
+    p = ships.plan_ship(ship, dict(snap, cash=10000), world, sea, cfg, recipes=rec)
+    assert "tapestries" not in p["orders"], p                                                # under min_cash
+    p = ships.plan_ship(ship, snap, world, sea, dict(cfg, ship_church=dict(sc, on=False)), recipes=rec)
+    assert "tapestries" not in p["orders"], p                                                # off
+    p = ships.plan_ship(ship, dict(snap, cash=24000), world, sea, cfg, recipes=rec)
+    assert p["orders"]["tapestries"]["buy_volume"] == 5, p        # 15% of 24k = 3,600 -> 5 at 719
+
+
 # ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
 def _chain_inputs():
     import copy

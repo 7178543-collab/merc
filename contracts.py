@@ -53,7 +53,8 @@ RESERVE = {"limestone": 60,    # Oct 10 (Taylor): park plots first (60 each); Oc
 # can be auto-filled the moment it appears (target = largest ask seen + RESERVE).
 #   furniture 120-125 (+75) | limestone 40 (+50) | candles 50-55 (+100-125) | jewellery 40-45 (+100-125)
 #   windows 6 (+150-175, Calange ~1/turn) | tapestries 6-7 (+150-175, Rouhomme): these two need a ship
-CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45}
+CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45,
+                "tapestries": 7, "windows": 6}    # Oct 14: ships stock these when v2 config ship_church.on
 MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
