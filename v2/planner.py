@@ -217,6 +217,15 @@ def plan(s, cfg=None, recipes=None, goals=None):
             # when there is no projection; never less than last turn's real use
             if item == "labour":
                 demand = projected if projected > 0 else max(observed_raw, planned)
+                # Oct 14: the projection runs ~60 over what the buildings really draw (projected 687 vs 627 used), so
+                # bought labour expired every turn. shadow.py measures that gap over recent runs without a shortfall
+                # (s["labour_bias"], the median) and the buy is sized to projection minus it, never under last
+                # turn's real use. A building that starts up shows as a shortfall, which drops it out of the median.
+                bias = max(0.0, float(s.get("labour_bias") or 0))
+                if projected > 0 and bias:
+                    demand = max(observed_raw, projected - bias)
+                    notes.append("labour: projection runs %.0f over real use lately; planning %.0f, not %.0f" % (
+                        bias, demand, projected))
             else:
                 demand = max(observed, peak if item in bursty else 0)
             net = max(0.0, demand - own)
@@ -231,7 +240,10 @@ def plan(s, cfg=None, recipes=None, goals=None):
                 if exp_l > lw.get("waste_max", 30):
                     # labour metered to a build site that just became ready is new demand, not waste: keep it
                     drip_l = ((bp or {}).get("drip") or {}).get("labour", 0)
-                    used_net = max(0.0, observed - own) + lw.get("waste_buffer", 10) + drip_l
+                    # what was REALLY used (consumption + shortfall), not the projection: the projection is what
+                    # over-bought in the first place (Oct 14: projected 687 vs 627 used, ~60 expiring every turn,
+                    # because the guard used max(observed, projected) and so never cut anything)
+                    used_net = max(0.0, observed_raw - own) + lw.get("waste_buffer", 10) + drip_l
                     if used_net < want:
                         notes.append("labour expiry guard: %.0f bought labour expired last turn, buy %d (not %d) this turn" % (
                             exp_l, math.ceil(used_net), want))

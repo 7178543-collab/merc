@@ -250,6 +250,39 @@ def export_first(p, snap=None):
             p["orders"][item].get("why") or "sell", n, s["sell_volume"], before)
 
 
+def labour_numbers(snap):
+    """(labour the operations project for next turn, labour really used last turn, last turn's shortfall)."""
+    proj = 0.0
+    for k, op in (snap.get("operations") or {}).items():
+        if k.startswith(("producer/", "construction/", "transport/", "knight/")):
+            pj = (((op.get("flows") or {}).get("labour") or {}).get("projection") or {})
+            proj += (pj.get("consumption", 0) or 0) + (pj.get("shortfall", 0) or 0)
+    fl = ((((snap.get("store") or {}).get("items") or {}).get("labour") or {}).get("flow")) or {}
+    short = fl.get("shortfall", 0) or 0
+    return round(proj, 1), round((fl.get("consumption", 0) or 0) + short, 1), round(short, 1)
+
+
+def labour_bias(path, runs=8, need=3, cap=150.0):
+    """Median of (projected - really used) over the last runs with no labour shortfall (state/v2/history.jsonl)."""
+    gaps = []
+    try:
+        with open(path) as f:
+            lines = f.readlines()[-runs:]
+    except OSError:
+        return 0.0
+    for line in lines:
+        try:
+            lab = json.loads(line).get("labour") or {}
+        except ValueError:
+            continue
+        if lab.get("proj") and lab.get("short", 0) <= 1:
+            gaps.append(lab["proj"] - lab.get("used", 0))
+    if len(gaps) < need:
+        return 0.0
+    gaps.sort()
+    return max(0.0, min(cap, gaps[len(gaps) // 2]))
+
+
 def main():
     if "--from" in sys.argv:
         with open(sys.argv[sys.argv.index("--from") + 1]) as f:
@@ -259,6 +292,7 @@ def main():
             print("v2 shadow: no credentials")
             return
         snap = snapshot.take()
+    snap["labour_bias"] = labour_bias(os.path.join(OUT, "history.jsonl"))
     p = planner.plan(snap)
     replay = "--from" in sys.argv
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
@@ -299,7 +333,9 @@ def main():
                 "builds": {st["building"]: st["progress"] for st in ((p.get("builds") or {}).get("sites") or [])},   # checks the progress model
                 "api": (snap.get("api") or {}).get("calls"),
                 # what the ships' routes really sold abroad last turn (chain_balancer averages this for sewing)
-                "exports": _route_exports(snap)}
+                "exports": _route_exports(snap),
+                # projected vs really used labour (labour_bias trims the buy by the median gap)
+                "labour": dict(zip(("proj", "used", "short"), labour_numbers(snap)))}
         with open(os.path.join(OUT, "history.jsonl"), "a") as f:
             f.write(json.dumps(line, default=str) + "\n")
     c = p["counts"]

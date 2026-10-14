@@ -798,6 +798,23 @@ def test_suspended_item_comes_back_after_clean_runs():
     assert r == []
 
 
+def test_labour_bias_from_history():
+    import shadow
+    d = tempfile.mkdtemp()
+    try:
+        h = os.path.join(d, "h.jsonl")
+        rows = [{"labour": {"proj": 687, "used": 627, "short": 0}}, {"labour": {"proj": 700, "used": 500, "short": 40}},
+                {"labour": {"proj": 690, "used": 640, "short": 0}}, {"counts": {}}]
+        with open(h, "w") as f:
+            f.write("\n".join(json.dumps(r) for r in rows) + "\n")
+        assert shadow.labour_bias(h) == 0.0                 # only 2 clean runs: not enough to trust
+        with open(h, "a") as f:
+            f.write(json.dumps({"labour": {"proj": 680, "used": 610, "short": 0}}) + "\n")
+        assert shadow.labour_bias(h) == 60                  # median of 60, 50, 70; the shortfall run is left out
+    finally:
+        shutil.rmtree(d)
+
+
 # ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
 def _chain_inputs():
     import copy
