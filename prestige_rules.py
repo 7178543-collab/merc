@@ -18,7 +18,8 @@ Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on
 
 Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automatic.
 Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, then recruit + net duty.
-Rule 5, park plots (Oct 10): see park_ready_rule(); flags Taylor when a plot fits and materials are in.
+Rule 5, park plots (Oct 10): see park_ready_rule(); places a plot itself when it fits and materials are in.
+Rule 6, quarry speed by cash (Oct 14): see quarry_rule(); 1x above 18k cash while park plots still fit, 0.4x under 15k.
 
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -108,6 +109,56 @@ PARK_PLOT = {"limestone": 60, "timber": 40}          # per plot (labour 260 is b
 # Oct 13: when a plot is ready, place it (order queue "plot": expand onto our land, or claim now and expand after the
 # tick) instead of asking Taylor for a map click. False = only flag it in needs_you, as before.
 AUTO_PLOT = True
+
+
+QUARRY = "149602389"
+QUARRY_FAST, QUARRY_SLOW = 1.0, 0.4
+QUARRY_FAST_CASH, QUARRY_SLOW_CASH = 18000, 15000
+LIMESTONE_RESERVE = 120      # contracts.py keeps this for church limestone asks
+
+
+def quarry_rule(cash):
+    """Rule 6 (Oct 14, Taylor: turn cash into prestige once profit holds). Banquet tiers 2-3 fail the supply check at
+    home (hop beer trades ~5/turn vs 15 needed, wine ~16 vs 15), so the cash goes to park plots instead: limestone is
+    their wall (60 a plot) and our quarry runs at 0.4x (5.2/turn, one plot every ~12 turns). With cash over 18k and
+    plots still fitting in the prestige pool, the quarry runs at 1x (13/turn, one plot every ~5 turns); under 15k, or
+    once limestone covers the plots that still fit plus the church reserve, back to 0.4x. In between: keep.
+    Same labour per limestone either way (110 a run), so this only brings the plots, and their prestige, forward."""
+    b = m.get("/buildings/%s" % QUARRY) or {}
+    prod = b.get("producer") or {}
+    if not prod.get("recipe"):
+        say("quarry: no recipe set, rule skipped")
+        return
+    cur = m.num(prod.get("target"))
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    cap = m.num(((m.get("/households/%s" % hid) or {}).get("caps") or {}).get("prestige_management"))
+    park = m.get("/buildings/%s" % PARK) or {}
+    plots = m.num(park.get("size")) + m.num((park.get("construction") or {}).get("size"))
+    room = max(0, int((cap - (2 + 0.1 * plots)) / 0.1 + 1e-6))
+    store = m.get("/buildings/%s" % q.STORE) or {}
+    assets = ((((store.get("storage") or {}).get("inventory") or {}).get("account") or {}).get("assets")) or {}
+    held = m.num((assets.get("limestone") or {}).get("balance"))
+    need = room * PARK_PLOT["limestone"] + LIMESTONE_RESERVE
+    if cash > QUARRY_FAST_CASH and held < need:
+        want, why = QUARRY_FAST, "cash %.0f over %d, %d plot(s) still fit, limestone %.0f of %.0f" % (cash, QUARRY_FAST_CASH, room, held, need)
+    elif cash < QUARRY_SLOW_CASH or held >= need:
+        want, why = QUARRY_SLOW, ("cash %.0f under %d" % (cash, QUARRY_SLOW_CASH)) if cash < QUARRY_SLOW_CASH else \
+            "limestone %.0f covers the %d plot(s) that fit + reserve" % (held, room)
+        want = min(want, cur) if cur > 0 else want      # never raises a quarry someone set lower by hand
+    else:
+        want, why = cur, "in between (cash %.0f): keep" % cash
+    say("quarry: %.2fx -> %.2fx (%s)" % (cur, want, why))
+    if abs(want - cur) < 0.01 or not LIVE:
+        return
+    e = {"building": QUARRY, "producer": {"recipe": prod.get("recipe"), "target": want, "provider_id": q.STORE},
+         "note": "quarry rule: " + why}
+    try:
+        r = q.apply_entry(e)
+    except Exception as ex:
+        r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+    q.log(e, r, source="prestige_rules")
+    say("  quarry -> %s" % ("OK" if r.get("ok") else "FAILED %s" % r.get("error")))
 
 
 def park_ready_rule():
@@ -418,6 +469,10 @@ def main():
         park_ready_rule()
     except Exception as ex:
         say("park rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        quarry_rule(cash)
+    except Exception as ex:
+        say("quarry rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         apprentice_rule()
     except Exception as ex:
