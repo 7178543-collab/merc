@@ -193,11 +193,14 @@ def plan(s, cfg=None, recipes=None, goals=None):
         # Porterage Oct 13: three farms project 24.3 and the quarry 8.7 = 33, while last turn's use + peak said 23-26,
         # so the quarry got the 1.7 left over and ran at 20%.
         projected = 0.0
-        if item != "labour":
+        if True:   # noqa: SIM108 (kept as a block)
+            # labour too (Oct 14): the projection leaves out a building that can't run (quarry blocked by "limestone
+            # space" projected 0 but its 44 labour was bought at the set rate and expired: 152 expired at turn 13276)
             for k, op in (s.get("operations") or {}).items():
-                if k.startswith(("producer/", "construction/")):
+                if k.startswith(("producer/", "construction/")) or (item == "labour" and k.startswith(("transport/", "knight/"))):
                     pj = (((op.get("flows") or {}).get(item) or {}).get("projection") or {})
                     projected += (pj.get("consumption", 0) or 0) + (pj.get("shortfall", 0) or 0)
+        observed_raw = observed
         observed = max(observed, projected)
         peak = max(hist.get(item) or [0])
         planned = use.get(item, 0)
@@ -206,9 +209,13 @@ def plan(s, cfg=None, recipes=None, goals=None):
             own = max(own, fl.get("production", 0))
         if item in perishable:
             # bought to need, never stockpiled: last turn's real demand, bursts covered by the recent peak
-            # labour: what the buildings will use at their set rates, or last turn's real demand
-            # (construction, ship crews); porterage: bursty, so the recent peak
-            demand = max(observed, planned if item == "labour" else 0, peak if item in bursty else 0)
+            # porterage: bursty, so the recent peak
+            # labour: what the running operations project for next turn (consumption + shortfall), or the set-rate plan
+            # when there is no projection; never less than last turn's real use
+            if item == "labour":
+                demand = projected if projected > 0 else max(observed_raw, planned)
+            else:
+                demand = max(observed, peak if item in bursty else 0)
             net = max(0.0, demand - own)
             want = math.ceil(net * (1 + (cfg.get("labour", {}).get("buffer_share", 0.05) if item == "labour" else 0.10)))
             hold = None

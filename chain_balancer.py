@@ -52,7 +52,7 @@ MODE = {
     "FILL_CASH_MIN": 8000,          # STEADY: stockpile top-ups only above this cash
     "OWN_LABOUR": 300,              # SOS: run only what our own labour covers
     "CONSTRUCTION_PACE_STEADY": 25,
-    "STOCK_TURNS_CHAIN": 4,
+    "STOCK_TURNS_CHAIN": 2,        # Oct 14 (Taylor: cut the piles, cash falling): was 4
     "SALES_WINDOW": 12,             # was 24; Ops uses 12 — keep in step
     "SALES_MARGIN": 1.05,
     "HOUSEHOLD_GARMENTS": 1.8,
@@ -77,7 +77,7 @@ BUFFERS = {
     "thread":      {"fill": 15, "drain": 30},
     "cloth":       {"fill": 10, "drain": 40},
 }
-DRAIN_OVER = 1.5         # drain a buffer once it is over 1.5x its target
+DRAIN_OVER = 1.2         # drain a buffer once it is over 1.2x its target (Oct 14: was 1.5)
 DRAIN_TURNS = 12         # spread the excess over this many turns
 GARMENT_KEEP_TURNS = 2    # finished garments: keep ~2 turns of sales on hand (Oct 12: 557 held vs ~65/turn sold)
 GARMENT_DRAIN_TURNS = 20  # spread the excess over this many turns by sewing less than we sell
