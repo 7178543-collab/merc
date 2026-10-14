@@ -13,6 +13,7 @@ Entry kinds (a JSON list of these):
   contract approval {"contract": "<id>", "confirm": true}           (phone app; contracts.py fills it only if stock covers it now)
   note for Claude   {"message": "..."}                              (phone app; appended to state/notes_for_claude.md)
   donate building   {"donate": "<building id>", "confirm": true}   (permanent; Taylor's say-so only)
+  town test         {"town_pick": {}}   (read-only; Season 9 turn-1 town ranking -> state/town_pick.md)
   read-only dump    {"dump": "/scoreboard/main"}   (GET, saved to state/dump/api/<path>.json)
   sea map (read-only) {"seamap": {"x0": 1312, "y0": 2208, "x1": 1535, "y1": 2399}}  (GET map sections, saved as one compact
                     sea/land grid in state/seamap/; used by tools/seapath.py)
@@ -230,6 +231,35 @@ def _apply_dump(e):
     with open(os.path.join(out, name + ".json"), "w") as f:
         json.dump(data, f)
     return dict(ok=data is not None, saved="state/dump/api/%s.json" % name, size=len(json.dumps(data)))
+
+
+def _apply_town_pick(e):
+    """Read-only: the Season 9 turn-1 town test (tools/town_pick.py). GETs /towns and /towns/{id} for every town,
+    writes the compact state/town_pick_data.json and the ranking in state/town_pick.md."""
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(HERE, "tools"))
+    import town_pick
+
+    def get(path):
+        req = urllib.request.Request("https://play.mercatorio.io/api" + path, method="GET",
+                                     headers={"X-Merc-User": m.USER, "Authorization": "Bearer " + m.TOKEN,
+                                              "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                raw = r.read()
+                if raw[:2] == b"\x1f\x8b":
+                    import gzip
+                    raw = gzip.decompress(raw)
+                return json.loads(raw.decode())
+        except Exception:
+            return None
+    rows = town_pick.collect(get)
+    if not rows:
+        return dict(ok=False, error="GET /towns returned nothing")
+    with open(town_pick.DATA, "w") as f:
+        json.dump(rows, f, separators=(",", ":"))
+    ranked, _ = town_pick.run(rows, check=bool((e.get("town_pick") or {}).get("check", True)))
+    return dict(ok=True, towns=len(rows), top=[r["name"] for r in ranked[:5]], saved="state/town_pick.md")
 
 
 def _apply_donate(e):
@@ -846,6 +876,8 @@ def apply_entry(e):
         return _apply_donate(e)
     if e.get("dump"):
         return _apply_dump(e)
+    if "town_pick" in e:
+        return _apply_town_pick(e)
     if e.get("seamap"):
         return _apply_seamap(e)
     if e.get("probe_write"):
