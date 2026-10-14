@@ -60,6 +60,29 @@ def get(path):
     if RAW:
         keys = list(data.keys()) if isinstance(data, dict) else "list[%d]" % len(data)
         print("[raw] %s -> %s" % (path, keys))
+    return _prestige_compat(data)
+
+
+def _prestige_compat(data):
+    """Game update (Oct 14 2026, ~turn 13277): /households/{id} moved prestige, legacy, ascent and
+    prestige_impacts under prestige_board (impacts now current_impacts / previous_impacts).
+    Copy them back to the old top-level keys so every reader keeps working."""
+    if isinstance(data, list):
+        for x in data:
+            _prestige_compat(x)
+    elif isinstance(data, dict):
+        pb = data.get("prestige_board")
+        if isinstance(pb, dict):
+            imp = pb.get("current_impacts") or pb.get("previous_impacts") or pb.get("prestige_impacts") or []
+            pb.setdefault("prestige_impacts", imp)
+            for k in ("prestige", "legacy", "ascent"):
+                if data.get(k) is None and pb.get(k) is not None:
+                    data[k] = pb[k]
+            if not data.get("prestige_impacts"):
+                data["prestige_impacts"] = imp
+        for v in data.values():
+            if isinstance(v, (dict, list)):
+                _prestige_compat(v)
     return data
 
 
