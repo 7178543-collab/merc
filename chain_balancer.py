@@ -90,6 +90,8 @@ SALES_MARGIN = MODE['SALES_MARGIN']   # sew 5% over average sales (garment stock
 # Thread the household net duty uses (~24/turn). Measured use reads 0 when weaving
 # stalled last turn, so never plan with less than this.
 OTHER_THREAD_MIN = 24
+ROPEWALK = "152202388001000"   # ropewalk building (make rope 2)
+ROPE_THREAD = 55          # thread per ropewalk run
 EXTRA_THREAD_MIN = 10    # thread use above the net duty by more than this = another consumer (ropewalk): fed from weaving
 MIN_CHANGE = 0.02        # ignore target changes smaller than this (x)
 EXPORTS = 0.0            # garments a turn sold abroad by ship routes (garment_exports(), set in main)
@@ -285,6 +287,15 @@ def main():
     holds = inv.get("holdings") or {}
     # thread used by anything other than the weavery (household net duty)
     other_thread = max(OTHER_THREAD_MIN, m.num((flows.get("thread") or {}).get("consumption")) - cur["weave"] * CHAIN["weave"]["in"])
+    # Oct 14: count the ropewalk's PLANNED thread draw (target x 55), not just what it used last turn.
+    # When labour starved the ropewalk to 0, measured use fell to the net duty, fed_by_weaving switched
+    # off, weave/sew went back up and ate the labour rope needed: a loop (night checks Oct 14).
+    try:
+        rw = (m.get("/buildings/%s" % ROPEWALK) or {}).get("producer") or {}
+        if "rope" in str(rw.get("recipe") or ""):
+            other_thread = max(other_thread, OTHER_THREAD_MIN + m.num(rw.get("target")) * ROPE_THREAD)
+    except (Exception, SystemExit) as e:
+        print("ropewalk read failed (%s); using measured thread use" % e)
 
     try:
         with open(STATE) as f:
