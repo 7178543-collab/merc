@@ -265,6 +265,20 @@ def main():
     os.makedirs(out, exist_ok=True)
     p["routes"], p["ship_plans"] = ship_routes(snap, out, replay)
     export_first(p, snap)
+    try:        # chain sizing (v2/chain.py): planned every run, applied by act.py when live.chain is on
+        import chain as chain_mod
+        cst = {}
+        try:
+            with open(os.path.join(out, "chain_state.json")) as f:
+                cst = json.load(f)
+        except (OSError, ValueError):
+            pass
+        sales, exports = chain_mod.history_garments(((planner.load_json("config.json").get("chain") or {}).get("sales_window")) or 12)
+        drip = (((p.get("builds") or {}).get("drip")) or {}).get("labour", 0)
+        p["chain"] = chain_mod.plan_chain(snap, planner.load_json("config.json"), planner.load_json("data/recipes.json"),
+                                          last_mode=cst.get("mode"), sales=sales, exports=exports, drip=drip)
+    except Exception as e:
+        p["chain"] = {"ok": False, "why": "chain plan failed: %s: %s" % (type(e).__name__, e)}
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)
@@ -273,6 +287,11 @@ def main():
     p["_items"] = {k: v for k, v in ((snap.get("store") or {}).get("items") or {}).items() if k in (p.get("live_items") or [])}
     with open(os.path.join(out, "report.md"), "w") as f:
         f.write(report(p))
+        try:
+            import chain as chain_mod
+            f.write("\n" + "\n".join(chain_mod.report_lines(p.get("chain"))) + "\n")
+        except Exception:
+            pass
     if not replay:      # a replay is not a new run: it must not add a line to the history
         line = {"t": p.get("t"), "turn": p.get("turn"), "cash": p.get("cash"), "counts": p.get("counts"),
                 "top": [(f["severity"], f["item"], f["text"][:80]) for f in (p.get("flags") or [])[:5]],

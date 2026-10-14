@@ -753,6 +753,86 @@ def test_act_runs_diagnose_safely():
         shutil.rmtree(d)
 
 
+
+# ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
+def _chain_inputs():
+    import copy
+    import chain
+    snap = _load_fixture("snapshot_2026-10-14.json")
+    rec = json.load(open(os.path.join(HERE, "data", "recipes.json")))
+    cfg = copy.deepcopy(json.load(open(os.path.join(HERE, "config.json"))))
+    return chain, snap, rec, cfg
+
+
+def _load_fixture(name):
+    with open(os.path.join(HERE, "fixtures", name)) as f:
+        return json.load(f)
+
+
+def test_chain_plan_matches_live_targets():
+    # Oct 14 22:00 UTC: v1's balancer had just set these; the v2 port must plan the same chain from the same state
+    chain, snap, rec, cfg = _chain_inputs()
+    pc = chain.plan_chain(snap, cfg, rec, last_mode="FULL", sales=32.1, exports=0.0, drip=19)
+    assert pc["ok"] and pc["mode"] == "FULL", pc
+    for k in chain.STEPS:
+        assert abs(pc["targets"][k] - pc["current"][k]) <= 0.011, (k, pc["targets"], pc["current"])
+    assert pc["thread"]["fed_by_weaving"] and pc["thread"]["other"] == 79.0, pc["thread"]
+    assert pc["labour"]["chain"] < pc["labour"]["allowance"], pc["labour"]
+
+
+def test_chain_labour_budget_cuts_sewing_first_keeps_rope_thread():
+    chain, snap, rec, cfg = _chain_inputs()
+    for i in ("thread", "cloth", "flax fibres", "garments"):
+        snap["store"]["items"][i]["held"] = 0
+    cfg["chain"]["labour_buy_max"] = 10 ** 6
+    free = chain.plan_chain(snap, cfg, rec, last_mode="FILLING", sales=120, exports=0.0)
+    cfg["chain"]["labour_buy_max"] = 250
+    pc = chain.plan_chain(snap, cfg, rec, last_mode="FILLING", sales=120, exports=0.0)
+    lab = pc["labour"]
+    assert free["labour"]["chain"] > 400 and lab["chain"] <= lab["allowance"] + 1, (free["labour"], lab)
+    assert pc["notes"] and "cut to" in pc["notes"][0], pc["notes"]
+    assert pc["targets"]["sew"] < free["targets"]["sew"], (pc["targets"], free["targets"])
+    # spinning keeps at least the thread the ropewalk + net duty draw (79/turn at 50 a run)
+    assert pc["targets"]["spin"] >= 79 / 50.0 - 0.01, pc["targets"]
+    # a budget too small even for that: sewing/weaving go to 0, spinning stops at the rope + nets floor
+    cfg["chain"]["labour_buy_max"] = 60
+    pc = chain.plan_chain(snap, cfg, rec, last_mode="FILLING", sales=120, exports=0.0)
+    assert pc["targets"]["sew"] == 0 and pc["targets"]["weave"] == 0, pc["targets"]
+    assert abs(pc["targets"]["spin"] - 79 / 50.0) <= 0.01, pc["targets"]
+
+
+def test_chain_found_by_type_not_id():
+    chain, snap, rec, cfg = _chain_inputs()
+    for n, b in enumerate(snap["buildings"]):
+        b["id"] = "9%05d" % n                     # a new season: every id is different
+    pc = chain.plan_chain(snap, cfg, rec, last_mode="FULL", sales=32.1)
+    assert pc["ok"] and pc["buildings"]["sew"]["id"].startswith("9"), pc
+
+
+def test_chain_moves_rules():
+    import act
+    chain, snap, rec, cfg = _chain_inputs()
+    pc = chain.plan_chain(snap, cfg, rec, last_mode="FULL", sales=32.1)
+    pc["targets"]["sew"] = 0.9
+    pc["moves"] = [("sew", 0.21, 0.9), ("weave", 0.12, 0.05)]
+    pc["drift"] = ["sew"]
+    plan = {"chain": pc}
+    cfg["live"]["chain"] = False
+    assert act.chain_moves(plan, cfg, snap, 0, {}, {})[0] == []
+    cfg["live"]["chain"] = True
+    mv, why = act.chain_moves(plan, cfg, snap, 0, {}, {"mode": "FULL", "sizes": {k: v["size"] for k, v in pc["buildings"].items()}})
+    assert [m["step"] for m in mv] == ["sew", "weave"] and "drift" in why, (mv, why)
+    mv, _ = act.chain_moves(plan, cfg, snap, 2, {}, {})
+    assert [m["step"] for m in mv] == ["weave"], mv          # failsafe stand-down: reduce only
+    mv, _ = act.chain_moves(plan, cfg, snap, 0, {"sewing shop 1": snap["turn"]}, {})
+    assert [m["step"] for m in mv] == ["weave"], mv          # diagnose touched sewing this turn: held
+    stopped = json.loads(json.dumps(snap))
+    next(b for b in stopped["buildings"] if b["type"] == "weavery")["recipe"] = None
+    assert act.chain_moves(plan, cfg, stopped, 0, {}, {})[0] == []
+    d = act.chain_labour_delta(plan, snap, rec, [{"id": pc["buildings"]["sew"]["id"], "recipe": "sew garments 2",
+                                                  "from": 0.21, "to": 0.9}])
+    assert abs(d - 0.69 * 155) < 0.01, d
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

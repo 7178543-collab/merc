@@ -29,7 +29,8 @@
       "2026-10-13 04:05 UTC: route sales proven (Flax Wyrm sold timber 6 at 7.50 and beer 4 at 3.80 at Blanans; Linen Snake sold 30 garments at 29.40 at Etallaen, ~+180 net its first turn). Flax Wyrm -> auto too (v2 moves it to the best town nobody serves).",
       "2026-10-13 04:50 UTC (Taylor: maximize): + garments, beer. Export-first: v2's home sell volume = its usual volume minus what the ship plans offer abroad (min 10); chain_balancer counts route exports as sales (garment_exports).",
       "2026-10-14 11:2x UTC: + labour (Taylor: yes). Overnight v2 planned ~700 while v1 sat at 370-580 after a failsafe trim and starved banquet, ropewalk, quarry and camp for ~5 turns. v2 sizes the buy from the buildings' set rates (+5%) at the 2.20 ceiling; the failsafe's expiry guard now lives in v2's planner (labour.waste_max 30 / waste_buffer 10). At BRAKE/STOP the failsafe takes labour back as usual.",
-      "2026-10-14 14:3x UTC (Taylor: do it all, cash falling): linen snake off auto (crew 0, docked); it cost ~55-75 a turn with no route trades. Flax Wyrm stays auto."
+      "2026-10-14 14:3x UTC (Taylor: do it all, cash falling): linen snake off auto (crew 0, docked); it cost ~55-75 a turn with no route trades. Flax Wyrm stays auto.",
+      "2026-10-14 22:xx UTC (Taylor: improve the setup, chain sizing into v2 first): + chain. v2/chain.py sets the textile chain's targets (port of chain_balancer, identical on 72 test states with the budget off) with a labour budget: everything else is funded first, the chain gets own leftover + 350 bought. chain_balancer.py stands aside (v2_owned.chain_owned). Off = live.chain false."
     ],
     "ships": [
       "845668271",
@@ -38,7 +39,8 @@
     "_ships_about": "ships v2 watches (live.ships): one that costs crew for 3 turns in a row while its route trades nothing is paused (crew 0). ship_modes {id: 'auto'}: v2 also sets that ship's route orders and crew every run from this turn's world prices (v2/ships.py).",
     "ship_modes": {
       "845668271": "auto"
-    }
+    },
+    "chain": true
   },
   "season_end": "2026-11-30T11:00:00+00:00",
   "cash": {
@@ -117,7 +119,9 @@
       "thread",
       "cloth"
     ],
-    "buffer_turns": 2
+    "buffer_turns": 2,
+    "labour_buy_max": 350,
+    "_about_budget": "v2/chain.py: the chain may lean on this much bought labour a turn after everything else (banquet, park, quarry, ropewalk, camp, brewery, household duty, build sites) is funded; over it, sewing and weaving are cut first"
   },
   "stockpiles": {
     "_about": "held on purpose (church contracts, prestige builds, gear slots); target units",

@@ -586,6 +586,60 @@ def ship_guard(plan, ship_ids, st, turn, log_path):
     return out
 
 
+def enable_writes():
+    """The one place v2 turns API writes on (only ever reached behind --live)."""
+    api.allow_writes()
+
+
+# ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
+def chain_moves(plan, cfg, snap, fs_level, dturn, cstate):
+    """Pure: which chain targets to write this run. Returns (moves, why). A move is
+    {step, id, name, recipe, from, to}. Writes only when cfg live.chain is on, the plan is usable, and a target drifted
+    past the threshold, the buffer mode flipped or a plot count changed (the balancer's rule, so manual tweaks inside
+    the threshold are left alone). Reduce-only at failsafe level >= 2. A building diagnose changed in the last 2
+    turns is held, and nothing moves while any chain building is stopped."""
+    pc = (plan or {}).get("chain") or {}
+    if not ((cfg.get("live") or {}).get("chain")):
+        return [], "live.chain is off (plan only)"
+    if not pc.get("ok"):
+        return [], "no usable chain plan: %s" % pc.get("why")
+    if not snap or snap.get("errors"):
+        return [], "snapshot unusable"
+    blds = {str(b.get("id")): b for b in snap.get("buildings") or []}
+    if any(not (blds.get(v["id"]) or {}).get("recipe") for v in pc["buildings"].values()):
+        return [], "a chain building is stopped: not resizing"
+    sizes = {k: v["size"] for k, v in pc["buildings"].items()}
+    changed = cstate.get("sizes") not in (None, sizes)
+    flipped = cstate.get("mode") != pc.get("mode")
+    if not (pc.get("drift") or changed or flipped):
+        return [], "targets within the drift threshold of plan"
+    moves = []
+    for step, cur, new in pc.get("moves") or []:
+        b = pc["buildings"][step]
+        t_ = dturn.get(b["name"]) if b["name"] in dturn else dturn.get(b["id"])
+        if t_ is not None and snap.get("turn") is not None and snap["turn"] - t_ < 2:
+            continue
+        if fs_level >= 2 and new > cur:
+            continue
+        moves.append({"step": step, "id": b["id"], "name": b["name"], "recipe": blds[b["id"]].get("recipe"),
+                      "from": cur, "to": new})
+    why = "; ".join(x for x in ("drift " + ", ".join(pc["drift"]) if pc.get("drift") else "",
+                                "mode %s -> %s" % (cstate.get("mode"), pc.get("mode")) if flipped else "",
+                                "plots changed" if changed else "") if x)
+    return moves, why
+
+
+def chain_labour_delta(plan, snap, recipes, done):
+    """Labour a turn the applied chain moves add (+) or free (-), from the buildings' recipes."""
+    by_id = {str(b.get("id")): b for b in (snap or {}).get("buildings") or []}
+    d = 0.0
+    for m_ in done:
+        r = recipes.get(m_.get("recipe") or (by_id.get(m_["id"]) or {}).get("recipe") or "") or {}
+        per = sum(_n(i["amount"]) for i in r.get("inputs") or [] if i.get("product") == "labour")
+        d += (m_["to"] - m_["from"]) * per
+    return d
+
+
 def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     argv = sys.argv if argv is None else argv
     live_mode = "--live" in argv
@@ -612,9 +666,44 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     if not live_tiers:
         live_tiers = {k: v.get("orders") or [] for k, v in (((snap or {}).get("store") or {}).get("items") or {}).items()}
 
-    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
     # an owned item diagnose acted on in the last 2 turns is left as diagnose set it (no tug of war with the plan)
     dturn = (_load(os.path.join(out, "diagnose_state.json"), {}) or {}).get("last_action") or {}
+
+    # chain sizing first, so the labour buy below is sized for the chain targets this run sets
+    chain_done, chain_why = [], None
+    try:
+        cstate = _load(os.path.join(out, "chain_state.json"), {})
+        cmoves, chain_why = chain_moves(plan, cfg, snap, fs_level, dturn, cstate)
+        if live_mode and cmoves:
+            enable_writes()
+            for m_ in cmoves:
+                ok, status, body = api.write("PUT", "/buildings/%s/producer" % m_["id"],
+                                             {"target": "%.3f" % m_["to"], "autoset_buying": False,
+                                              "autoset_selling": False, "allow_overprod": False})
+                m_.update(ok=bool(ok), status=status)
+                if ok:
+                    chain_done.append(m_)
+                with open(LOG, "a") as f:
+                    f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
+                                        "chain": m_["step"], "building": m_["name"], "from": m_["from"], "to": m_["to"],
+                                        "why": chain_why, "ok": bool(ok), "status": status,
+                                        "reply": None if ok else str(body)[:200]}, default=str) + "\n")
+        pc = (plan or {}).get("chain") or {}
+        if live_mode and pc.get("ok") and (cfg.get("live") or {}).get("chain"):
+            _save(os.path.join(out, "chain_state.json"), {"mode": pc.get("mode"), "turn": (snap or {}).get("turn"),
+                  "sizes": {k: v["size"] for k, v in pc["buildings"].items()}})
+        if chain_done and "labour" in owned:
+            recipes = _load(os.path.join(HERE, "data", "recipes.json"), {})
+            d_lab = chain_labour_delta(plan, snap, recipes, chain_done)
+            lo = ((plan.get("orders") or {}).get("labour") or {}).get("buy")
+            if lo and abs(d_lab) >= 1:
+                lo["buy_volume"] = max(0, int(round(_n(lo.get("buy_volume")) + d_lab)))
+                plan["orders"]["labour"]["why"] = (plan["orders"]["labour"].get("why") or "") + \
+                    "; chain resized this run: labour %+d" % round(d_lab)
+    except Exception as e:      # the chain step must never stop the store orders
+        chain_why = "chain step failed: %s: %s" % (type(e).__name__, e)
+
+    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
     for r in rows:
         t_ = dturn.get(r["item"])
         if r["owned"] and not r["same"] and t_ is not None and (snap or {}).get("turn") is not None \
@@ -624,7 +713,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     ship_ids = set(((cfg.get("live") or {}).get("ships")) or [])
     diag_on = bool((cfg.get("diagnose") or {}).get("on")) and bool(snap) and not (snap or {}).get("errors")
     if live_mode and not stand and (owned or ship_ids):
-        api.allow_writes()
+        enable_writes()
     if live_mode and owned and not stand:
         for r in rows:
             if not r["owned"] or r["same"] or r.get("refused"):
@@ -692,6 +781,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     res = {"t": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"), "mode": "live" if live_mode else "dry",
            "owned": sorted(owned), "suspended": sus, "stand_down": stand, "failsafe_level": fs_level,
            "would_change": sum(1 for r in rows if not r["same"]),
+           "chain": {"why": chain_why, "done": chain_done},
            "rows": rows}
     _save(os.path.join(out, "act.json"), res)
     if live_mode:       # one line per run: which items v2 would still change (handover candidates converge to "same")
@@ -704,6 +794,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         res["mode"], ", ".join(sorted(owned)) or "none", res["would_change"], sent,
         ("; STAND DOWN: " + stand) if stand else "", ("; suspended " + ", ".join(newly)) if newly else "")
         + (("; paused ships " + ", ".join(paused_ships)) if paused_ships else ""))
+    for m_ in chain_done:
+        print("  chain: %s %.2f -> %.2f (%s)" % (m_["name"], m_["from"], m_["to"], chain_why))
+    if chain_why and not chain_done:
+        print("  chain: no change (%s)" % chain_why)
     for d_ in ship_done:
         print("  ship: " + d_)
     for d_ in diag:

@@ -276,6 +276,13 @@ def buffer_mode(stocks, last_mode, tg, cash, op_mode="STEADY"):
 
 
 def main():
+    try:
+        import v2_owned
+        if v2_owned.chain_owned():
+            print("chain sizing is v2's (v2/config.json live.chain; v2/chain.py): balancer stands aside")
+            return
+    except Exception as e:
+        print("v2 chain check failed (%s): balancer runs as before" % e)
     blds = {k: m.get("/buildings/%s" % v["id"]) for k, v in CHAIN.items()}
     sizes = {k: int(m.num(b.get("size"))) for k, b in blds.items()}
     cur = {k: m.num((b.get("producer") or {}).get("target")) for k, b in blds.items()}

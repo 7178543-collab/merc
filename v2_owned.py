@@ -35,3 +35,11 @@ def owned_items():
 
 def owned(item):
     return item in owned_items()
+
+
+def chain_owned():
+    """True when bot v2 sets the textile chain's production targets (v2/config.json live.chain, not suspended as
+    "chain"). chain_balancer.py stands aside then."""
+    cfg = _load(CONFIG, {})
+    sus = _load(SUSPENDED, {})
+    return bool((cfg.get("live") or {}).get("chain")) and "chain" not in (sus if isinstance(sus, dict) else {})
