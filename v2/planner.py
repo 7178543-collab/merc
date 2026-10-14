@@ -211,25 +211,26 @@ def plan(s, cfg=None, recipes=None, goals=None):
         if item == "labour":
             own = max(own, fl.get("production", 0))
         if item in perishable:
-            # bought to need, never stockpiled: last turn's real demand, bursts covered by the recent peak
-            # porterage: bursty, so the recent peak
-            # labour: what the running operations project for next turn (consumption + shortfall), or the set-rate plan
-            # when there is no projection; never less than last turn's real use
+            # Perishables (labour, porterage, fish, meat) expire at the end of the turn, so they are bought to the
+            # need exactly, with no buffer (Taylor, Oct 14: "they should never be over bought"; a 10% buffer bought 8
+            # fish and 8 meat for 7 used, porterage 37 for ~25, labour ~60 over). The need is what the operations
+            # project for next turn (consumption + shortfall: fish, meat and porterage projected 7, 7 and 24.5
+            # against 7, 7 and 24.3 used); without a projection, last turn's real use (consumption + shortfall).
+            # If use rises, the game shows a shortfall and the next run buys it.
+            demand = projected if projected > 0 else max(observed_raw, planned if item == "labour" else 0)
             if item == "labour":
-                demand = projected if projected > 0 else max(observed_raw, planned)
-                # Oct 14: the projection runs ~60 over what the buildings really draw (projected 687 vs 627 used), so
-                # bought labour expired every turn. shadow.py measures that gap over recent runs without a shortfall
-                # (s["labour_bias"], the median) and the buy is sized to projection minus it, never under last
-                # turn's real use. A building that starts up shows as a shortfall, which drops it out of the median.
+                # the labour projection runs ~60 over what the buildings really draw (projected 687 vs 627 used):
+                # shadow.py measures that gap over recent runs without a shortfall (s["labour_bias"], the median)
+                # and the buy is projection minus it, never under last turn's real use
                 bias = max(0.0, float(s.get("labour_bias") or 0))
                 if projected > 0 and bias:
                     demand = max(observed_raw, projected - bias)
                     notes.append("labour: projection runs %.0f over real use lately; planning %.0f, not %.0f" % (
                         bias, demand, projected))
-            else:
-                demand = max(observed, peak if item in bursty else 0)
             net = max(0.0, demand - own)
-            want = math.ceil(net * (1 + (cfg.get("labour", {}).get("buffer_share", 0.05) if item == "labour" else 0.10)))
+            # whole units: round to the nearest for labour and porterage (a fraction short is noise), up for the
+            # household's food, since a sustenance slot that runs short pays nothing that turn
+            want = int(math.floor(net + 0.5)) if item in ("labour", "porterage") else math.ceil(net - 1e-6)
             hold = None
             if item == "labour":
                 # Oct 14 (labour handed to v2): the failsafe's expiry guard, carried over because the failsafe
@@ -243,7 +244,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
                     # what was REALLY used (consumption + shortfall), not the projection: the projection is what
                     # over-bought in the first place (Oct 14: projected 687 vs 627 used, ~60 expiring every turn,
                     # because the guard used max(observed, projected) and so never cut anything)
-                    used_net = max(0.0, observed_raw - own) + lw.get("waste_buffer", 10) + drip_l
+                    used_net = max(0.0, observed_raw - own) + lw.get("waste_buffer", 0) + drip_l
                     if used_net < want:
                         notes.append("labour expiry guard: %.0f bought labour expired last turn, buy %d (not %d) this turn" % (
                             exp_l, math.ceil(used_net), want))
