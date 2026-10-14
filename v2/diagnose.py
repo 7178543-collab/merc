@@ -24,6 +24,8 @@ Rules (each: detect -> propose -> apply within caps -> log + report):
   R5 buy not filling     a buy whose bid sat under the home ask 3+ turns, under-filled last turn, with < 3 turns of
                          use held -> a finding; auto-raise only for an input of a running building, under its config
                          buy ceiling and 5% of cash. Labour is never raised.
+  R6 data sanity         household prestige read 0 while prestige is allocated, legacy 0, no prestige impacts, or cash
+                         0 with goods held -> a finding only (an API shape change blinded every reader on Oct 14).
 Guards: failsafe level > 0 or quiet hours (23:00-07:00 Toronto) -> reduce-only; never prestige spends, contracts,
 sell/donate/demolish, or the token; ship trade goods are never touched; v2-owned items are written directly (merge
 into the live tiers, re-read, verify), v1 items only through the order queue's handler + spend guard + log
@@ -463,6 +465,25 @@ def diagnose(snap, cfg, ctx):
             continue
         store_fix(f, item, i, {"buy_price": price_str(bid)}, "buy price %s -> %s (ask %s, ceiling %s)" % (
             tier.get("buy_price"), price_str(bid), ask, ceil_), True)
+
+    # R6 data sanity: the game API changed shape once (Oct 14, turn 13277: prestige moved under prestige_board) and
+    # every reader saw prestige 0 for 6 turns without an alert. Flag impossible reads; finding only, no action.
+    hh = snap.get("household") or {}
+    if hh:
+        pr, free, leg = _n(hh.get("prestige")), _n(hh.get("free")), _n(hh.get("legacy"))
+        bad = []
+        if pr <= 0 and free < 0:
+            bad.append("prestige %g with %g allocated" % (pr, pr - free))
+        if leg <= 0 and pr - free > 0:
+            bad.append("legacy %g" % leg)
+        if not hh.get("impacts"):
+            bad.append("no prestige impacts")
+        if bad:
+            note("R6 data sanity", "household", "building",
+                 "household read looks broken (%s): the game API may have changed shape; prestige rules are blind "
+                 "until v2/snapshot.py / merc_status4.get read it again" % ", ".join(bad))
+    if cash <= 0 and items:
+        note("R6 data sanity", "cash", "item", "cash read %g while the storehouse holds goods: business read broken?" % cash)
 
     acts = actions[:MAX_ACTIONS]
     for a in actions[MAX_ACTIONS:]:
