@@ -40,6 +40,12 @@ MANSION = "152002388"
 RECIPE = "hold banquet 1 (fish)"
 FISH = "cured fish"
 FISH_ORDER = {"buy_volume": 6, "buy_price": "26.0", "max_holding": 20}   # 24.60 stopped filling Oct 10
+# Oct 14 (Taylor left it to Claude): cured fish had no home sellers, so the banquet falls back to the
+# meat version (same +4.2, 35 labour, 15 beer, 6 cured meat). Fish first (cheaper), meat when fish is short.
+MEAT_RECIPE = "hold banquet 1 (meat)"
+MEAT = "cured meat"
+MEAT_ORDER = {"buy_volume": 6, "buy_price": "29", "max_holding": 10}     # storage cap 10; ask ~27.8 Oct 14
+FISH_RUN, MEAT_RUN = 5.5, 6
 ON_CASH, OFF_CASH, PROFIT_TURNS, GUARD_TURNS = 15000, 10000, 24, 12
 TENANTS_MAX_LEVEL = 11
 NEEDS_YOU = os.path.join(HERE, "state", "needs_you.json")
@@ -348,8 +354,22 @@ def main():
     say("mansion producer: recipe=%s target=%s provider=%s limited=%s last_op=%s" % (
         full.get("recipe"), full.get("target"), full.get("provider_id"), full.get("limited"),
         json.dumps(full.get("previous_operation"))[:200]))
-    running = (prod.get("recipe") == RECIPE and m.num(prod.get("target")) > 0
+    running = (prod.get("recipe") in (RECIPE, MEAT_RECIPE) and m.num(prod.get("target")) > 0
                and str(prod.get("provider_id")) == q.STORE)
+    store = m.get("/buildings/%s" % q.STORE) or {}
+    assets = ((((store.get("storage") or {}).get("inventory") or {}).get("account") or {}).get("assets")) or {}
+    fish_held = m.num((assets.get(FISH) or {}).get("balance"))
+    meat_held = m.num((assets.get(MEAT) or {}).get("balance"))
+    # recipe pick: fish when a run's worth is held, else meat when it is, else stay on what's set.
+    # Once on meat, stay there until fish is back with two runs held (no hourly flip-flop).
+    if prod.get("recipe") == MEAT_RECIPE and meat_held >= MEAT_RUN and fish_held < 2 * FISH_RUN:
+        recipe = MEAT_RECIPE
+    elif fish_held >= FISH_RUN:
+        recipe = RECIPE
+    elif meat_held >= MEAT_RUN:
+        recipe = MEAT_RECIPE
+    else:
+        recipe = prod.get("recipe") if prod.get("recipe") in (RECIPE, MEAT_RECIPE) else RECIPE
 
     try:
         with open(os.path.join(HERE, "state", "overrides.json")) as f:
@@ -367,20 +387,28 @@ def main():
 
     fish_mgrs = q._store_managers(q.STORE, FISH)
     fish_on = any(m.num(mg.get("buy_volume")) > 0 for mg in fish_mgrs)
-    say("prestige_rules: banquet %s -> want %s (%s); fish buy %s" % (
-        "on" if running else "off", "on" if want_on else "off", why, "on" if fish_on else "off"))
+    meat_mgrs = q._store_managers(q.STORE, MEAT)
+    meat_on = any(m.num(mg.get("buy_volume")) > 0 for mg in meat_mgrs)
+    say("prestige_rules: banquet %s -> want %s (%s); fish buy %s, meat buy %s; held fish %.1f meat %.1f -> %s" % (
+        "on" if running else "off", "on" if want_on else "off", why, "on" if fish_on else "off",
+        "on" if meat_on else "off", fish_held, meat_held, recipe))
 
     todo = []
     if want_on:
         if not fish_on:
             todo.append({"item": FISH, "tier": 0, "set": FISH_ORDER, "note": "banquet rule: " + why})
-        if not running:
-            todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 1, "provider_id": q.STORE}, "note": "banquet rule: " + why})
+        if not meat_on:
+            todo.append({"item": MEAT, "tier": 0, "set": MEAT_ORDER, "note": "banquet rule (meat fallback): " + why})
+        if not running or prod.get("recipe") != recipe:
+            todo.append({"building": MANSION, "producer": {"recipe": recipe, "target": 1, "provider_id": q.STORE},
+                         "note": "banquet rule: %s; recipe %s (fish %.1f, meat %.1f held)" % (why, recipe, fish_held, meat_held)})
     else:
         if running:
-            todo.append({"building": MANSION, "producer": {"recipe": RECIPE, "target": 0}, "note": "banquet rule: " + why})
+            todo.append({"building": MANSION, "producer": {"recipe": prod.get("recipe"), "target": 0}, "note": "banquet rule: " + why})
         if fish_on:
             todo.append({"item": FISH, "tier": 0, "set": {"buy_volume": 0}, "note": "banquet rule: " + why})
+        if meat_on:
+            todo.append({"item": MEAT, "tier": 0, "set": {"buy_volume": 0}, "note": "banquet rule: " + why})
 
     try:
         tenants_rule()
