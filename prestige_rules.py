@@ -140,7 +140,14 @@ def quarry_rule(cash):
     assets = ((((store.get("storage") or {}).get("inventory") or {}).get("account") or {}).get("assets")) or {}
     held = m.num((assets.get("limestone") or {}).get("balance"))
     need = room * PARK_PLOT["limestone"] + LIMESTONE_RESERVE
-    if cash > QUARRY_FAST_CASH and held < need:
+    try:
+        with open(os.path.join(HERE, "state", "overrides.json")) as f:
+            qov = (json.load(f) or {}).get("quarry", "auto")
+    except (OSError, ValueError):
+        qov = "auto"
+    if qov == "slow":
+        want, why = QUARRY_SLOW, "Taylor's switch from the app: quarry slow"
+    elif cash > QUARRY_FAST_CASH and held < need:
         want, why = QUARRY_FAST, "cash %.0f over %d, %d plot(s) still fit, limestone %.0f of %.0f" % (cash, QUARRY_FAST_CASH, room, held, need)
     elif cash < QUARRY_SLOW_CASH or held >= need:
         want, why = QUARRY_SLOW, ("cash %.0f under %d" % (cash, QUARRY_SLOW_CASH)) if cash < QUARRY_SLOW_CASH else \

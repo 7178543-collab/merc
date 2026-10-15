@@ -309,7 +309,8 @@ def _apply_override(e):
             cur = json.load(f)
     except (FileNotFoundError, ValueError):
         cur = {}
-    allowed = {"banquet": {"auto", "on", "off"}}
+    allowed = {"banquet": {"auto", "on", "off"}, "chain": {"v2", "v1"}, "ship_trade": {"on", "off"},
+               "church_imports": {"on", "off"}, "quarry": {"auto", "slow"}}
     for k, v in (e.get("override") or {}).items():
         if k not in allowed or v not in allowed[k]:
             return dict(ok=False, error="override %s=%s not allowed" % (k, v))

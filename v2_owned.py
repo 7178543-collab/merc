@@ -42,4 +42,6 @@ def chain_owned():
     "chain"). chain_balancer.py stands aside then."""
     cfg = _load(CONFIG, {})
     sus = _load(SUSPENDED, {})
-    return bool((cfg.get("live") or {}).get("chain")) and "chain" not in (sus if isinstance(sus, dict) else {})
+    ov = (_load(os.path.join(ROOT, "state", "overrides.json"), {}) or {}).get("chain")
+    live = (ov == "v2") if ov in ("v2", "v1") else bool((cfg.get("live") or {}).get("chain"))
+    return live and "chain" not in (sus if isinstance(sus, dict) else {})

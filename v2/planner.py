@@ -17,7 +17,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def load_json(name):
     with open(os.path.join(HERE, name)) as f:
-        return json.load(f)
+        d = json.load(f)
+    if name == "config.json":       # the phone app's switches (state/overrides.json) on top
+        try:
+            import overrides
+            overrides.apply(d)
+        except Exception:
+            pass
+    return d
 
 
 def snap_price(p, up):

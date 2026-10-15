@@ -663,7 +663,13 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     argv = sys.argv if argv is None else argv
     live_mode = "--live" in argv
     STATE, SUSPENDED, LOG = (os.path.join(out, n) for n in ("act_state.json", "suspended.json", "act.jsonl"))
-    cfg = cfg if cfg is not None else _load(os.path.join(HERE, "config.json"), {})
+    if cfg is None:
+        cfg = _load(os.path.join(HERE, "config.json"), {})
+        try:                         # the phone app's switches (state/overrides.json) on top
+            import overrides
+            overrides.apply(cfg)
+        except Exception:
+            pass
     snap = _load(os.path.join(out, "snapshot.json"), None)
     plan = _load(os.path.join(out, "plan.json"), None)
     sus = _load(SUSPENDED, {})
