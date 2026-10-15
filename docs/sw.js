@@ -1,5 +1,5 @@
 // Merc app service worker: caches the app shell so it opens instantly; game data always comes from the network.
-const SHELL = "merc-shell-v7";
+const SHELL = "merc-shell-v8";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {

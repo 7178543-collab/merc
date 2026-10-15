@@ -381,6 +381,12 @@ function renderAct() {
   const free = Number(s.prestige_free || 0);
   h += '<div class="card"><h2>Spend prestige</h2><p class="mute">Permanent. ' + num(free, 0) + " free now. The price is sent exactly: if the game wants another, nothing is spent.</p>";
   const wants = s.prestige_wants || [];
+  // an older status file has no options yet: keep the manual dropdown usable
+  const popts = (s.prestige_options && s.prestige_options.length) ? s.prestige_options :
+    [["prestige_management", "Prestige management"], ["apprentices", "Apprentice slot"], ["management", "Regular management"], ["tenants", "Tenants"],
+     ["luxuries", "Luxury slot"], ["scale_luxuries", "Luxury boost"], ["transports", "Transport slot"], ["cargo_slots", "Cargo slot"], ["contracts", "Contract slots"]]
+      .map((x) => ({track: x[0], label: x[1]}));
+  if (!(s.prestige_options && s.prestige_options.length)) h += '<p class="mute">Prices load with the next status update (pull ↻).</p>';
   (s.prestige_options || []).forEach((o) => {
     const queued = wants.indexOf(o.track) >= 0;
     let btns = "";
@@ -393,7 +399,7 @@ function renderAct() {
       (queued ? " · bot buys it once affordable" : "") + '</div></div><div class="r pbtns">' + btns + "</div></div>";
   });
   h += '<details><summary class="mute">Other amount</summary><label for="p-track">On</label><select id="p-track">' +
-    (s.prestige_options || []).map((o) => '<option value="' + esc(o.track) + '">' + esc(o.label) + "</option>").join("") +
+    popts.map((o) => '<option value="' + esc(o.track) + '">' + esc(o.label) + "</option>").join("") +
     '</select><label for="p-cost">Cost (prestige)</label><input id="p-cost" inputmode="numeric" placeholder="e.g. 250"><button class="btn" id="p-go">Spend</button></details></div>';
   // 5 contracts live on Overview
   h += '<div class="card"><h2>Contracts</h2><p class="mute">Fill buttons sit on each offer under Overview. They only go through if our stock covers the offer right now.</p></div>';
