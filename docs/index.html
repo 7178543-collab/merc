@@ -45,6 +45,7 @@ th{color:var(--mute);font-weight:600}
 .chip.pick{border:0;color:var(--ink);font:inherit;font-size:13px;padding:7px 12px;margin:0}
 .btn[disabled]{opacity:.5}
 .row .r .btn{margin-top:0;white-space:nowrap}
+.row .pbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 .list li{margin:3px 0}
 .list{margin:0;padding-left:18px}
 label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
@@ -379,11 +380,17 @@ function renderAct() {
   // 5 prestige: one row per track with the next level's price; unknown prices get a free price check
   const free = Number(s.prestige_free || 0);
   h += '<div class="card"><h2>Spend prestige</h2><p class="mute">Permanent. ' + num(free, 0) + " free now. The price is sent exactly: if the game wants another, nothing is spent.</p>";
+  const wants = s.prestige_wants || [];
   (s.prestige_options || []).forEach((o) => {
-    const btn = o.cost == null ? '<button class="btn alt" data-pcheck="' + esc(o.track) + '">Check price</button>'
-      : '<button class="btn' + (o.affordable ? "" : " alt") + '" data-pbuy="' + esc(o.track) + '" data-cost="' + o.cost + '"' + (o.affordable ? "" : " disabled") + ">" + num(o.cost) + "</button>";
+    const queued = wants.indexOf(o.track) >= 0;
+    let btns = "";
+    if (o.cost == null) btns += '<button class="btn alt" data-pcheck="' + esc(o.track) + '">Check price</button>';
+    else if (o.affordable) btns += '<button class="btn" data-pbuy="' + esc(o.track) + '" data-cost="' + o.cost + '">Buy now · ' + num(o.cost) + "</button>";
+    btns += queued ? '<button class="btn alt" data-pwant="' + esc(o.track) + '" data-cancel="1">Queued ✓ (cancel)</button>'
+                   : (o.affordable || o.cost == null ? "" : '<button class="btn" data-pwant="' + esc(o.track) + '" data-level="' + o.level + '" data-cost="' + o.cost + '">Buy when affordable</button>');
     h += '<div class="row"><div class="l"><b>' + esc(o.label) + "</b> · level " + o.level + " → " + (o.level + 1) + '<div class="mute">' + esc(o.gives) +
-      (o.cost != null && !o.affordable ? " · need " + num(o.cost - free, 0) + " more" : "") + '</div></div><div class="r">' + btn + "</div></div>";
+      (o.cost != null ? " · " + num(o.cost) + " prestige" + (o.affordable ? "" : ", need " + num(o.cost - free, 0) + " more") : " · price not known yet: Check price first") +
+      (queued ? " · bot buys it once affordable" : "") + '</div></div><div class="r pbtns">' + btns + "</div></div>";
   });
   h += '<details><summary class="mute">Other amount</summary><label for="p-track">On</label><select id="p-track">' +
     (s.prestige_options || []).map((o) => '<option value="' + esc(o.track) + '">' + esc(o.label) + "</option>").join("") +
@@ -435,6 +442,13 @@ function renderAct() {
   document.querySelectorAll("[data-pbuy]").forEach((b) => b.onclick = () => {
     const tr = b.dataset.pbuy, cost = Number(b.dataset.cost);
     if (confirm("Spend " + cost + " prestige on " + tr.replace("_", " ") + "? This is permanent.")) queue([{prestige: tr, cost: cost, max_cost: cost, confirm: true, note: "app: spend " + cost + " on " + tr}], "spend " + cost + " on " + tr);
+  });
+  document.querySelectorAll("[data-pwant]").forEach((b) => b.onclick = () => {
+    const tr = b.dataset.pwant, label = tr.replace("_", " ");
+    if (b.dataset.cancel) { queue([{prestige_want: {track: tr, cancel: true}, note: "app: cancel buy-when-affordable " + tr}], "cancel " + label); return; }
+    const cost = b.dataset.cost ? Number(b.dataset.cost) : null;
+    const msg = "Buy " + label + " level " + (Number(b.dataset.level) + 1) + " for " + cost + " prestige as soon as free prestige covers it? Permanent once bought.";
+    if (confirm(msg)) queue([{prestige_want: {track: tr, max_cost: cost, level: Number(b.dataset.level)}, note: "app: buy when affordable " + tr}], "buy " + label + " when affordable");
   });
   document.querySelectorAll("[data-pcheck]").forEach((b) => b.onclick = () => {
     const tr = b.dataset.pcheck;

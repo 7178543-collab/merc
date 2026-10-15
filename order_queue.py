@@ -233,6 +233,33 @@ def _apply_dump(e):
     return dict(ok=data is not None, saved="state/dump/api/%s.json" % name, size=len(json.dumps(data)))
 
 
+PRESTIGE_TRACKS = {"tenants", "management", "transports", "prestige_management", "cargo_slots", "apprentices",
+                   "luxuries", "scale_luxuries", "contracts"}
+
+
+def _apply_prestige_want(e):
+    """Phone app "Buy when affordable": add or cancel a prestige track in state/prestige_wants.json. prestige_rules'
+    wants_rule buys it at the exact price as soon as free prestige covers it (never above max_cost)."""
+    w = e["prestige_want"] or {}
+    track = str(w.get("track") or "")
+    if track not in PRESTIGE_TRACKS:
+        return dict(ok=False, error="unknown prestige track %r" % track)
+    path = os.path.join(HERE, "state", "prestige_wants.json")
+    try:
+        with open(path) as f:
+            wants = json.load(f) or []
+    except (FileNotFoundError, ValueError):
+        wants = []
+    wants = [x for x in wants if x.get("track") != track]
+    if not w.get("cancel"):
+        wants.append({"track": track, "max_cost": int(w["max_cost"]) if w.get("max_cost") else None,
+                      "level": w.get("level"),
+                      "since": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes")})
+    with open(path, "w") as f:
+        json.dump(wants, f, indent=1)
+    return dict(ok=True, wants=[x["track"] for x in wants])
+
+
 def _apply_town_pick(e):
     """Read-only: the Season 9 turn-1 town test (tools/town_pick.py). GETs /towns and /towns/{id} for every town,
     writes the compact state/town_pick_data.json and the ranking in state/town_pick.md."""
@@ -877,6 +904,8 @@ def apply_entry(e):
         return _apply_donate(e)
     if e.get("dump"):
         return _apply_dump(e)
+    if "prestige_want" in e:
+        return _apply_prestige_want(e)
     if "town_pick" in e:
         return _apply_town_pick(e)
     if e.get("seamap"):

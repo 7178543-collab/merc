@@ -20,6 +20,7 @@ Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automati
 Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, then recruit + net duty.
 Rule 5, park plots (Oct 10): see park_ready_rule(); places a plot itself when it fits and materials are in.
 Rule 6, quarry speed by cash (Oct 14): see quarry_rule(); 1x above 18k cash while park plots still fit, 0.4x under 15k.
+Rule 7, buy when affordable (Oct 14): see wants_rule(); prestige buys Taylor queued from the app, bought at the exact price.
 
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -335,6 +336,110 @@ def _next_tier(pts, wid, cls, done):
     return crossed[-1] if crossed else (above[0] if above else None)
 
 
+WANTS = os.path.join(HERE, "state", "prestige_wants.json")
+
+
+def learned_price(track, level):
+    """The game's own price for track's next level, from a refused offer in the queue log ("expected N"), if it was
+    asked at this level. None when unknown."""
+    import re
+    price = None
+    try:
+        lines = open(os.path.join(HERE, "state", "order_queue_done.jsonl")).read().splitlines()[-600:]
+    except OSError:
+        return None
+    for line in lines:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        e = d.get("entry") or {}
+        if e.get("prestige") != track:
+            continue
+        mm = re.search(r"expected (\d+)", str(d.get("body") or d.get("error") or ""))
+        if mm and (d.get("before") is None or int(m.num(d.get("before"))) == level):
+            price = int(mm.group(1))
+        elif d.get("ok"):
+            price = None
+    return price
+
+
+def known_price(track, level):
+    if track == "prestige_management" and level + 1 < len(PM_COSTS):
+        return PM_COSTS[level + 1]
+    if track == "apprentices" and level < len(APPRENTICE_COSTS):
+        return APPRENTICE_COSTS[level]
+    return None
+
+
+def wants_rule():
+    """Rule 7 (Oct 14, Taylor: "buy when affordable" from the phone app). state/prestige_wants.json holds the tracks
+    Taylor queued, oldest first: {track, max_cost, since, level}. Each run buys the first one whose price free prestige
+    covers (one buy a run), at the game's exact price and never above max_cost; then it leaves the list. A track whose
+    price is unknown gets one free price check (a 1-prestige offer the game refuses, naming the price)."""
+    try:
+        with open(WANTS) as f:
+            wants = json.load(f) or []
+    except (OSError, ValueError):
+        return
+    if not wants:
+        return
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    hh = m.get("/households/%s" % hid) or {}
+    pb = hh.get("prestige_board") or {}
+    free = m.num(hh.get("prestige")) - m.num(pb.get("allocated"))
+    keep = []
+    bought = False
+    for w in wants:
+        track = w.get("track")
+        lv = int(m.num(pb.get(track + "_level")))
+        if w.get("level") is not None and lv > int(w["level"]):
+            say("wants: %s already at level %d (wanted %d -> %d): done" % (track, lv, w["level"], w["level"] + 1))
+            continue
+        price = learned_price(track, lv) or known_price(track, lv)
+        cap = int(m.num(w.get("max_cost"))) if w.get("max_cost") else None
+        if price is None:
+            say("wants: %s level %d -> %d: price unknown, checking (nothing is spent)" % (track, lv, lv + 1))
+            if LIVE:
+                e = {"prestige": track, "cost": 1, "max_cost": 1, "confirm": True, "note": "wants rule: price check " + track}
+                try:
+                    r = q.apply_entry(e)
+                except Exception as ex:
+                    r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+                q.log(e, r, source="prestige_rules")
+            keep.append(w)
+            continue
+        if cap is None:
+            say("wants: %s has no price cap (the app always sends one): kept, not bought" % track)
+            keep.append(w)
+            continue
+        if price > cap:
+            say("wants: %s costs %d, over the %d you set: kept, not bought" % (track, price, cap))
+            keep.append(w)
+            continue
+        if bought or free < price:
+            say("wants: %s level %d -> %d costs %d, free %.0f: waiting" % (track, lv, lv + 1, price, free))
+            keep.append(w)
+            continue
+        if not LIVE:
+            say("wants: would buy %s for %d" % (track, price))
+            keep.append(w)
+            continue
+        ok, after, info = allocate(hid, track, price, min(free, cap or free))
+        q.log({"prestige": track, "cost": price, "note": "wants rule (Taylor, from the app)"},
+              {"ok": ok, "after": after, "info": info}, source="prestige_rules")
+        say("wants: bought %s level %d for %d -> %s" % (track, after, price, "OK" if ok else "FAILED %s" % info))
+        if ok:
+            bought = True
+            free -= price
+        else:
+            keep.append(w)
+    if LIVE:
+        with open(WANTS, "w") as f:
+            json.dump(keep, f, indent=1)
+
+
 def promote_rule():
     """Rule 3 (Oct 10): promotions are free and no-choice, so take them as soon as they come up
     (Taylor's standing rule). Each new tier is +1 management for that worker (up to +3) and a small
@@ -480,6 +585,10 @@ def main():
         quarry_rule(cash)
     except Exception as ex:
         say("quarry rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        wants_rule()
+    except Exception as ex:
+        say("wants rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         apprentice_rule()
     except Exception as ex:

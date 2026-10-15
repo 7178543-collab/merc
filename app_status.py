@@ -272,6 +272,7 @@ def build():
     s["chain"] = _chain(v2, _json("v2/config.json") or {})
     s["switches"] = _switches(s["overrides"], _json("v2/config.json") or {})
     s["prestige_options"] = _prestige_options(snap, _n(s.get("prestige_free")))
+    s["prestige_wants"] = [w.get("track") for w in (_json("state/prestige_wants.json", []) or []) if isinstance(w, dict)]
     if v2:
         s["v2"] = {"t": v2.get("t"), "turn": v2.get("turn"), "counts": v2.get("counts"),
                    "flags": [{k: f.get(k) for k in ("severity", "item", "text", "fix")} for f in (v2.get("flags") or [])[:12]],
