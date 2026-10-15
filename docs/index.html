@@ -197,10 +197,48 @@ function render() {
   h += tile("Prestige income", '<span class="' + cls(s.prestige_rate) + '">' + signed(s.prestige_rate, 1) + "</span>/turn", days != null ? "season ends in " + days.toFixed(1) + " days" : "");
   h += "</div>";
 
+  // Attention: only what needs a decision (app_status.py triages the alerts; expected states go below, folded)
   const warn = [];
   if (s.needs_you) warn.push("<b>Needs you:</b> " + esc(s.needs_you));
-  (s.alerts || []).forEach((a) => warn.push(esc(a)));
-  if (warn.length) h += '<div class="card banner"><h2>Attention</h2><ul class="list">' + warn.map((w) => "<li>" + w + "</li>").join("") + "</ul></div>";
+  (s.attention || (s.expected ? [] : s.alerts) || []).forEach((a) => warn.push(esc(a)));
+  h += warn.length ? '<div class="card banner"><h2>Attention</h2><ul class="list">' + warn.map((w) => "<li>" + w + "</li>").join("") + "</ul></div>"
+                   : '<div class="card"><h2>Attention</h2><div class="pos">Nothing needs you.</div></div>';
+
+  // Wasted last turn: anything that expired, at what we paid for it
+  if (s.waste) {
+    const wc = Number(s.waste_coin || 0);
+    h += '<div class="card"><h2>Wasted last turn</h2>';
+    if (!s.waste.length) h += '<div class="pos">Nothing expired.</div>';
+    else {
+      h += '<div class="' + (wc >= 10 ? "neg" : "mute") + '"><b>' + num(wc, 0) + " coin</b> expired" + (s.waste_turn ? " (turn " + esc(s.waste_turn) + ")" : "") + "</div>";
+      h += "<table><tr><th>Item</th><th>Expired</th><th>Coin</th></tr>";
+      s.waste.forEach((r) => { h += "<tr><td>" + esc(r.item) + "</td><td>" + num(r.expired, 1) + "</td><td>" + num(r.coin, 1) + "</td></tr>"; });
+      h += "</table>";
+    }
+    h += "</div>";
+  }
+
+  // Textile chain: v2's targets, what the plan makes, and the labour budget
+  if (s.chain) {
+    const c = s.chain, L = c.labour || {};
+    h += '<div class="card"><h2>Textile chain · ' + (c.live ? "v2 runs it" : "v2 plan only") + "</h2>";
+    h += '<div class="mute">' + esc(c.mode) + " · plan " + num(c.garments, 1) + " garments/turn · sold " + num(c.sales, 1) + "/turn</div>";
+    h += '<div class="mute">Labour: own ' + num(L.own) + " · everything else " + num(L.others) + " · chain may use " + num(L.allowance) + " · chain plan " + num(L.chain) + "</div>";
+    h += "<table><tr><th>Step</th><th>Now</th><th>Plan</th><th>Pile</th></tr>";
+    const pile = {ret: "flax fibres", spin: "thread", weave: "cloth"};
+    ["flax", "ret", "spin", "weave", "sew"].forEach((k) => {
+      const b = (c.buffers || {})[pile[k]];
+      h += "<tr><td>" + k + "</td><td>" + num((c.current || {})[k], 2) + "</td><td>" + num((c.targets || {})[k], 2) + "</td><td>" + (b ? num(b.held) + " / " + num(b.target) : "–") + "</td></tr>";
+    });
+    h += "</table>";
+    (c.notes || []).forEach((n) => { h += '<div class="mute">' + esc(n) + "</div>"; });
+    h += "</div>";
+  }
+
+  if ((s.expected || []).length) {
+    h += '<div class="card"><details><summary class="mute">Expected, no action (' + s.expected.length + ")</summary><ul class=\"list\">" +
+      s.expected.map((e) => "<li>" + esc(e.text) + ' <span class="mute">— ' + esc(e.why) + "</span></li>").join("") + "</ul></details></div>";
+  }
 
   // rules: workers / park / prestige plan lines
   const keyRules = (s.rules || []).filter((l) => /^(worker|park|apprentices|tenants|prestige_rules|\s+prestige management|\s+apprentice)/.test(l));

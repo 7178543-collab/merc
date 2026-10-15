@@ -83,6 +83,71 @@ def _diagnose_alerts(max_age_h=3):
     return ["DIAGNOSE " + a for a in (d.get("alerts") or [])][:6]
 
 
+CHAIN_GOODS = ("flax plants", "flax fibres", "thread", "cloth")
+
+
+def _triage(alerts, rows, plan, snap):
+    """Split alerts into (attention, expected). Attention = needs a decision; expected = a known state the bots are
+    already handling (Oct 14, Taylor: the list showed six alerts and none needed him)."""
+    chain = (plan or {}).get("chain") or {}
+    bufs = chain.get("buffers") or {}
+    mansion = next((b for b in (snap or {}).get("buildings") or [] if b.get("type") == "mansion"), {}) or {}
+    recipe = str(mansion.get("recipe") or "")
+    sold = {}
+    for r in rows[-6:]:
+        for k, v in (r.get("items") or {}).items():
+            sold.setdefault(k, {})[r.get("turn")] = _n((v + [0] * 4)[3])
+    att, exp = [], []
+    for a in alerts:
+        low = a.lower()
+        why = None
+        if a.startswith("DIAGNOSE") or "stop" in low and "failsafe" in low or "brake" in low:
+            why = None
+        elif low.startswith("failsafe watch"):
+            why = "cash under 15k: the failsafe is watching, nothing paused"
+        elif "running out" in low and ("cured fish" in low and "(meat)" in recipe or "cured meat" in low and "(fish)" in recipe):
+            why = "the banquet runs on the other recipe"
+        elif low.endswith(": no_order"):
+            item = a.split(":")[0].strip()
+            b = bufs.get(item)
+            if item in CHAIN_GOODS and (b is None or _n(b.get("held")) >= _n(b.get("target"))):
+                why = "chain pile above target: v2 makes less until it drains"
+        elif low.endswith(": not selling"):
+            item = a.split(":")[0].strip()
+            last3 = [v for t, v in sorted((sold.get(item) or {}).items())][-3:]
+            if any(x > 0 for x in last3):
+                why = "sold in the last 3 turns: a one-turn gap"
+        elif low.endswith(": expiring"):
+            why = "shown in Wasted last turn"
+        if why:
+            exp.append({"text": a, "why": why})
+        else:
+            att.append(a)
+    return att, exp
+
+
+def _waste(snap):
+    """What expired last turn and what it cost (expired x what we paid a unit), biggest first."""
+    out = []
+    for k, it in (((snap or {}).get("store") or {}).get("items") or {}).items():
+        fl = it.get("flow") or {}
+        e = _n(fl.get("expiration"))
+        if e <= 0.05:
+            continue
+        unit = (_n(fl.get("purchase_cost")) / _n(fl.get("purchase"))) if _n(fl.get("purchase")) else _n(it.get("unit_cost"))
+        out.append({"item": k, "expired": round(e, 1), "coin": round(e * unit, 1)})
+    return sorted(out, key=lambda r: -r["coin"])
+
+
+def _chain(plan, cfg):
+    c = (plan or {}).get("chain") or {}
+    if not c.get("ok"):
+        return None
+    return {"live": bool(((cfg or {}).get("live") or {}).get("chain")), "mode": c.get("mode"),
+            "targets": c.get("targets"), "current": c.get("current"), "garments": c.get("garments_per_turn"),
+            "sales": c.get("sales"), "labour": c.get("labour"), "buffers": c.get("buffers"), "notes": c.get("notes")}
+
+
 def build():
     rows = _history()
     last = rows[-1] if rows else {}
@@ -131,6 +196,12 @@ def build():
     s["contracts"] = [{k: c.get(k) for k in ("id", "item", "volume", "kind", "bonus", "price", "held", "verdict", "why", "fill")}
                       for c in (_json("state/contracts_scored.json", []) or [])]
     v2 = _json("state/v2/plan.json") or {}
+    snap = _json("state/v2/snapshot.json") or {}
+    s["attention"], s["expected"] = _triage(s["alerts"], rows, v2, snap)
+    s["waste"] = _waste(snap)
+    s["waste_coin"] = round(sum(r["coin"] for r in s["waste"]), 1)
+    s["waste_turn"] = snap.get("turn")
+    s["chain"] = _chain(v2, _json("v2/config.json") or {})
     if v2:
         s["v2"] = {"t": v2.get("t"), "turn": v2.get("turn"), "counts": v2.get("counts"),
                    "flags": [{k: f.get(k) for k in ("severity", "item", "text", "fix")} for f in (v2.get("flags") or [])[:12]],
