@@ -1,22 +1,22 @@
 # v2 shadow report
 
-Turn 13296, 2026-10-15 09:01. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13296, 2026-10-15 09:58. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,279, prestige 3,068 (398 free, +3.0/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 233 | 0 | 19 | 0 | 0 | min_holding 60, sell 49, sell @ 3.94 |
+| beer | 233 | 0 | 19 | 0 | 0 | min_holding 60, sell 48, sell @ 3.96 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 24 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 52 | 0 | 2 | 0 | 0 | min_holding 30, sell 3, sell @ 22 |
 | grain | 103 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
-| labour | 89 | 145 | 531 | 0 | 64 | buy 89, buy @ 2.2 |
-| meat | 7 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 3.02 |
-| nets | 49 | 0 | 0 | 0 | 0 | min_holding 15, sell 8, sell @ 42.6 |
+| labour | 89 | 145 | 531 | 0 | 64 | buy 74, buy @ 2.2 |
+| meat | 7 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
+| nets | 49 | 0 | 0 | 0 | 0 | min_holding 15, sell 8, sell @ 40.8 |
 | porterage | 23 | 23 | 23 | 0 | 0 | buy 23, buy @ 0.8 |
 
 **0 risks, 2 waste, 3 tuning** where v2 would act differently from v1.
@@ -45,7 +45,7 @@ Labour metered per turn while a site can progress: labour 19
 
 ## Notes
 
-- labour: projection runs 48 over real use lately; planning 531, not 579
+- labour: projection runs 48 over real use lately; planning 531, not 563
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -74,15 +74,15 @@ Labour metered per turn while a site can progress: labour 19
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.2 / 0.20 | 19 | 181601373 | 0.164 | - | - | 0 |
+| Flax Wyrm | 0.0 / 0.20 | 19 | 181601373 | 0 | - | - | 0 |
 | linen snake | 0.0 / 0.03 | 3 | 141901647 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
-- **Flax Wyrm** on Gottweiler: cured meat buy 6 @ 21.4, salt buy 5 @ 4.12; crew 0.1; est +19 a turn
-- **linen snake** on Heilegg: nothing pays; crew 0.0; est +0 a turn; best orders clear only 11 a turn after crew: ship stays at 0
-- best towns now: Hofkirchen +112, Birkeningen +45, Etallaen +40, Kirchwerp +33, Amsdermund +30
-- Hofkirchen would trade: acid buy 1 @ 159, axes buy 3 @ 17.4, cured meat buy 6 @ 22.8, grindstones buy 1 @ 222, lead bars sell 7 @ 12.9; crew 0.2
+- **Flax Wyrm** on Gottweiler: cured meat buy 6 @ 21.4, grindstones buy 1 @ 226, hop beer buy 1 @ 7.65; crew 0.2; est +70 a turn
+- **linen snake** on Heilegg: nothing pays; crew 0.0; est +0 a turn; best orders clear only -4 a turn after crew: ship stays at 0
+- best towns now: Hofkirchen +76, Gottweiler +70, Kirchwerp +70, Calange +41, Etallaen +30
+- Hofkirchen would trade: axes buy 2 @ 17.4, cheese buy 22 @ 6.2, cured meat buy 6 @ 22.8, grindstones buy 1 @ 232, hop beer buy 1 @ 8.0, salt sell 8 @ 4.88; crew 0.3
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -90,13 +90,13 @@ Labour metered per turn while a site can progress: labour 19
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Hofkirchen | 991 | 0.30 | 1.00 (96/turn) | bread 75 (2.27->4.37), beer 25 (4.06->5.37), flax plants 7 (1.83->3.89), lead bars 3 (11.45->12.44) | grindstones 0 (226.8->286.9), cheese 22 (6.35->7.46), acid 0 (162.75->180.5), cured meat 3 (23.52->25.4) | +187 |
-| Birkeningen | 1006 | 0.31 | 0.20 (19/turn) | tackles 1 (164.85->243.2), light armour 1 (77.7->82.17), charcoal 2 (2.18->4.94), tiles 1 (4.72->9.26) | cloth 7 (7.93->8.6), axes 1 (18.79->19.19), resin 1 (1.89->2.62) | +83 |
-| Amsdermund | 1111 | 0.36 | 0.70 (67/turn) | furniture 12 (13.33->18.52), garments 3 (21.2->26.03), beer 51 (4.06->4.84), grain 8 (2.26->3.31) | cured meat 6 (23.1->25.4), acid 1 (177.45->180.5), cloth 7 (7.77->8.6), cheese 24 (7.09->7.46) | +82 |
-| Magdeach | 667 | 0.17 | 0.60 (58/turn) | timber 19 (6.04->9.17), lead bars 7 (11.45->12.44), tools 13 (4.7->5.18), varnish 1 (18.17->20.52) | cheese 29 (6.51->7.46), cured meat 6 (23.73->25.4), flax fibres 3 (6.14->6.75) | +55 |
-| Hanstein | 380 | 0.10 | 0.30 (29/turn) | timber 10 (6.04->9.97), tools 16 (4.7->5.08), furniture 6 (13.33->13.87), charcoal 2 (2.18->3.17) | flax fibres 14 (5.83->6.75), cloth 7 (7.98->8.6), beer 19 (3.78->4.08), scythes 1 (27.09->28.88) | +49 |
+| Hofkirchen | 991 | 0.30 | 1.00 (96/turn) | bread 71 (2.29->4.58), beer 24 (4.08->5.46), flax fibres 2 (6.1->10.16), salt 3 (3.93->5.56) | grindstones 0 (237.3->286.9), cheese 10 (6.35->7.46), cured meat 2 (23.52->25), axes 0 (17.85->20.33) | +174 |
+| Hanstein | 380 | 0.10 | 0.30 (29/turn) | timber 10 (6.5->10.07), tools 9 (4.8->5.13), salt 5 (3.93->4.24), wrought iron 1 (12.5->13.21) | thread 74 (4.85->5.4), cheese 22 (6.46->7.46), axes 2 (19.43->20.33), scythes 1 (27.51->29.07) | +82 |
+| Rouhomme | 368 | 0.09 | 0.50 (48/turn) | bread 151 (2.29->2.94), rope 1 (81->85.5), thread 9 (4.66->5.22), charcoal 2 (2.18->3.84) | jewellery 2 (78.75->81.22), axes 2 (19.32->20.33), cloth 7 (7.88->8.3), mouldboards 1 (43.26->43.89) | +79 |
+| Gottweiler | 1135 | 0.38 | 0.30 (29/turn) | - | grindstones 1 (231->286.9), cured meat 6 (22.05->25), cheese 22 (6.62->7.46), cloth 7 (7.77->8.3) | +69 |
+| Kirchwerp | 1072 | 0.35 | 1.00 (96/turn) | timber 17 (6.5->14.25), salt 3 (3.93->4.75), grain 3 (2.26->3.34), nails 0 (5.35->6.13) | cheese 9 (6.2->7.46), canvas 0 (27.51->32.87), jewellery 0 (78.75->81.22), acid 0 (178.5->180.5) | +61 |
 
-**Best:** Hofkirchen at about +187 coin a turn.
+**Best:** Hofkirchen at about +174 coin a turn.
 
 ## v2 orders
 
@@ -114,7 +114,7 @@ Labour metered per turn while a site can progress: labour 19
 | limestone |  | 5 @ min 20.4 |  |
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 7 = 1.2 turns |
 | nets |  | 8 @ min 40.8 | makes 6.0, uses 0.0, holds 49 (keeps 15): sells the surplus + 2/turn of the excess |
-| porterage | 23 @ 0.8, stop - |  | uses 23.1/turn (observed), makes 0.0, holds 23 = 1.0 turns |
+| porterage | 23 @ 0.8, stop - |  | uses 22.9/turn (observed), makes 0.0, holds 23 = 1.0 turns |
 | rope |  | 6 @ min 79.0 | makes 4.5, uses 0.0, holds 20 (keeps 0): sells the surplus + 1/turn of the excess |
 | tar | 2 @ 11.0, stop 5 |  | uses 1.1/turn (ropewalk 1), makes 0.0, holds 5 = 4.1 turns |
 | timber |  | 44 @ min 8.5 | makes 24.0, uses 0.0, holds 617 (keeps 350): sells the surplus + 20/turn of the excess |
@@ -122,18 +122,18 @@ Labour metered per turn while a site can progress: labour 19
 
 ## Chain sizing
 
-Mode FULL, garments sold 8.9/turn (+0.0 exported); plan makes 2.9 garments a turn.
-Labour: own 450, everything else 485, chain may buy 350 -> chain allowance 350, chain plan 94 (-7 vs now).
+Mode FULL, garments sold 7.7/turn (+0.0 exported); plan makes 2.9 garments a turn.
+Labour: own 450, everything else 485, chain may buy 350 -> chain allowance 350, chain plan 196 (+103 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 1.68 | 1.52 |
-| ret | 3 | 0.30 | 0.27 |
-| spin | 4 | 0.83 | 0.77 |
+| flax | 11 | 1.52 | 4.07 |
+| ret | 3 | 0.27 | 0.72 |
+| spin | 4 | 0.77 | 1.58 |
 | weave | 3 | 0.00 | 0.00 |
 | sew | 2 | 0.09 | 0.07 |
 
-Buffers: flax fibres 72/29, thread 161/195, cloth 85/37
+Buffers: flax fibres 72/54, thread 161/189, cloth 85/31
 - thread beyond the household duty (55 a turn) is fed from weaving
 
 ## Self-diagnosis
