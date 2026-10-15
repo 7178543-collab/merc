@@ -169,9 +169,16 @@ def size(C, stocks, sales, exports, other_th, duty_th, mode, p):
         want = max(want - drain, 0.3 * want)
     sew = min(caps["sew"], want * p["sales_margin"] / C["sew"]["out"])
     fed_by_weaving = other_th - duty_th > p["extra_thread_min"]
-    other_up = duty_th if fed_by_weaving else other_th
+
+    def thread_up(weave_runs):
+        # Oct 15 fix: weaving can only hand the ropewalk the thread it would itself have drawn. Whatever it can't
+        # cover (all of it while cloth drains and weaving sits at 0) has to come from spinning, or the ropewalk and
+        # the net duty starve (Oct 15 night: spin 0.77 made ~40 thread vs 79 used, thread 456 -> 161 in 9 turns).
+        if not fed_by_weaving:
+            return other_th
+        return max(duty_th, other_th - weave_runs * C["weave"]["in"])
     base = {"sew": sew, "weave": sew * C["sew"]["in"] / C["weave"]["out"]}
-    base["spin"] = (base["weave"] * C["weave"]["in"] + other_up) / C["spin"]["out"]
+    base["spin"] = (base["weave"] * C["weave"]["in"] + thread_up(base["weave"])) / C["spin"]["out"]
     tg = buffer_targets(C, base, other_th, p["buffer_turns"])
 
     def top(item):
@@ -182,7 +189,7 @@ def size(C, stocks, sales, exports, other_th, duty_th, mode, p):
             return -min((have - tg[item]) / p["drain_turns"], BUFFERS[item]["drain"])
         return 0
     weave = max(0, min(caps["weave"], (sew * C["sew"]["in"] + top("cloth")) / C["weave"]["out"]))
-    spin = max(0, min(caps["spin"], (weave * C["weave"]["in"] + other_up + top("thread")) / C["spin"]["out"]))
+    spin = max(0, min(caps["spin"], (weave * C["weave"]["in"] + thread_up(weave) + top("thread")) / C["spin"]["out"]))
     if fed_by_weaving:
         weave = max(0, min(weave, (spin * C["spin"]["out"] - other_th - top("thread")) / C["weave"]["in"]))
         cloth_slice = max(0.0, stocks.get("cloth", 0) - p["low_fraction"] * tg["cloth"]) / p["drain_turns"]
