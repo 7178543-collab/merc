@@ -128,6 +128,7 @@ def avg_use(item, turns=12):
 INPUTS = {"tools": "logging camp + retting + builds", "grain": "brewery", "firewood": "farmstead/households",
           "fish": "sustenance", "meat": "sustenance", "cured fish": "banquet", "porterage": "ship/sales"}
 INPUT_LOW_TURNS = 3
+PERISHABLE = {"fish", "meat", "porterage"}     # expire at turn end: bought to need, so a runway in turns means nothing
 
 
 def input_runway(st):
@@ -146,6 +147,14 @@ def input_runway(st):
             continue
         turns = held / use
         bought = m.num((flows.get(item) or {}).get("purchase"))
+        if item in PERISHABLE:
+            # bought to the turn's need and never held (Oct 14: exact buying; ~0 held is normal). Low only when the buy
+            # really fell short last turn: a shortfall, or a purchase under what was used.
+            fl = flows.get(item) or {}
+            used, short = m.num(fl.get("consumption")), m.num(fl.get("shortfall"))
+            if short <= 0.5 and bought >= used - 1:
+                continue
+            turns = 0.0
         if turns < INPUT_LOW_TURNS and bought < use:
             mgrs = q._store_managers(q.STORE, item)
             bid = max([m.num(mg.get("buy_price")) for mg in mgrs if m.num(mg.get("buy_volume"))] or [0])
