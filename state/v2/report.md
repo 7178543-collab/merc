@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13306, 2026-10-15 19:06. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13306, 2026-10-15 19:55. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 9,757, prestige 3,111 (441 free, -1.0/turn).
 
 ## Items v2 runs (last turn)
@@ -14,7 +14,7 @@ Cash 9,757, prestige 3,111 (441 free, -1.0/turn).
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 35 | 0 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 22 |
 | grain | 103 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
-| labour | 210 | 210 | 612 | 0 | 48 | buy 210, buy @ 2 |
+| labour | 210 | 210 | 612 | 0 | 48 | buy 173, buy @ 2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 46 | 0 | 0 | 0 | 0 | min_holding 15, sell 8, sell @ 39.6 |
 | porterage | 26 | 26 | 15 | 0 | 11 | buy 26, buy @ 0.8 |
@@ -120,7 +120,7 @@ Labour metered per turn while a site can progress: labour 22
 
 ## Chain sizing
 
-Mode FULL, garments sold 3.1/turn (+0.0 exported); plan makes 0.4 garments a turn.
+Mode FULL, garments sold 2.9/turn (+0.0 exported); plan makes 0.4 garments a turn.
 Labour: own 450, everything else 468, chain may buy 350 -> chain allowance 350, chain plan 168 (+4 vs now).
 
 | Step | Plots | Now | Plan |
@@ -131,7 +131,7 @@ Labour: own 450, everything else 468, chain may buy 350 -> chain allowance 350, 
 | weave | 3 | 0.00 | 0.00 |
 | sew | 2 | 0.02 | 0.01 |
 
-Buffers: flax fibres 63/54, thread 287/172, cloth 20/14
+Buffers: flax fibres 63/54, thread 287/171, cloth 20/13
 - thread beyond the household duty (55 a turn) is fed from weaving
 
 ## Self-diagnosis
