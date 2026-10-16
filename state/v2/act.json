@@ -1,6 +1,6 @@
 {
- "t": "2026-10-15T23:48:19+00:00",
- "turn": 13310,
+ "t": "2026-10-16T01:04:58+00:00",
+ "turn": 13312,
  "mode": "live",
  "owned": [
   "beer",
@@ -12,22 +12,23 @@
   "grain",
   "labour",
   "meat",
-  "nets"
+  "nets",
+  "porterage"
  ],
  "suspended": {},
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 10,
+ "would_change": 11,
  "chain": {
-  "why": "drift flax",
+  "why": "drift flax, ret, spin, weave, sew; mode FULL -> HOLD",
   "done": [
    {
     "step": "flax",
     "id": "151602400",
     "name": "flax farm 1",
     "recipe": "grow flax 1",
-    "from": 3.44,
-    "to": 3.26,
+    "from": 3.26,
+    "to": 5.56,
     "ok": true,
     "status": 200
    },
@@ -36,8 +37,8 @@
     "id": "151802398",
     "name": "retting pit 1",
     "recipe": "retting 2",
-    "from": 0.61,
-    "to": 0.58,
+    "from": 0.58,
+    "to": 0.99,
     "ok": true,
     "status": 200
    },
@@ -46,8 +47,28 @@
     "id": "152202388002007",
     "name": "spinnery 1",
     "recipe": "spin thread 1",
-    "from": 1.26,
-    "to": 1.19,
+    "from": 1.19,
+    "to": 2.04,
+    "ok": true,
+    "status": 200
+   },
+   {
+    "step": "weave",
+    "id": "152202388001005",
+    "name": "weavery 1",
+    "recipe": "weave cloth 2",
+    "from": 0.0,
+    "to": 0.84,
+    "ok": true,
+    "status": 200
+   },
+   {
+    "step": "sew",
+    "id": "152202388000004",
+    "name": "sewing shop 1",
+    "recipe": "sew garments 2",
+    "from": 0.02,
+    "to": 0.53,
     "ok": true,
     "status": 200
    }
@@ -59,20 +80,21 @@
    "owned": false,
    "live": [
     {
+     "max_holding": 4,
+     "buy_volume": 1,
      "buy_price": "31.2"
     }
    ],
    "new": [
     {
-     "buy_price": "30.4",
+     "max_holding": 2,
      "buy_volume": 1,
-     "max_holding": 1
+     "buy_price": "25.8"
     }
    ],
    "same": false,
    "refused": [
-    "no buy ceiling in config for arms",
-    "paused by the failsafe brake (state/failsafe.json): restore it by hand"
+    "no buy ceiling in config for arms"
    ]
   },
   {
@@ -81,14 +103,14 @@
    "live": [
     {
      "min_holding": 60,
-     "sell_volume": 75,
+     "sell_volume": 77,
      "sell_price": "3.7"
     }
    ],
    "new": [
     {
      "min_holding": 60,
-     "sell_volume": 77,
+     "sell_volume": 51,
      "sell_price": "3.7"
     }
    ],
@@ -99,26 +121,6 @@
    "status": 200,
    "verified": true,
    "reply": null
-  },
-  {
-   "item": "candles",
-   "owned": false,
-   "live": [
-    {
-     "buy_price": "82"
-    }
-   ],
-   "new": [
-    {
-     "buy_price": "70.0",
-     "buy_volume": 1,
-     "max_holding": 2
-    }
-   ],
-   "same": false,
-   "refused": [
-    "paused by the failsafe brake (state/failsafe.json): restore it by hand"
-   ]
   },
   {
    "item": "donations",
@@ -151,12 +153,18 @@
    ],
    "new": [
     {
-     "max_holding": 24,
-     "buy_volume": 7,
+     "max_holding": 18,
+     "buy_volume": 5,
      "buy_price": "2.4"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "fish",
@@ -189,29 +197,38 @@
    ],
    "new": [
     {
-     "max_holding": 104,
-     "buy_volume": 27,
+     "max_holding": 52,
+     "buy_volume": 13,
      "buy_price": "3.7"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "labour",
    "owned": true,
    "live": [
     {
-     "buy_volume": 43,
+     "buy_volume": 80,
      "buy_price": "2.2"
     }
    ],
    "new": [
     {
-     "buy_volume": 80,
+     "buy_volume": 170,
      "buy_price": "2.2"
     }
    ],
    "same": false,
+   "stepped": [
+    "buy 80 -> 244 stepped to 170 (2x+10 a run)"
+   ],
    "refused": [],
    "sent": true,
    "ok": true,
@@ -237,7 +254,7 @@
     },
     {
      "sell_volume": 5,
-     "sell_price": "17.5"
+     "sell_price": "17.4"
     }
    ],
    "same": false,
@@ -268,15 +285,15 @@
    "live": [
     {
      "min_holding": 15,
-     "sell_volume": 9,
-     "sell_price": "38.2"
+     "sell_volume": 8,
+     "sell_price": "38.6"
     }
    ],
    "new": [
     {
      "min_holding": 15,
      "sell_volume": 8,
-     "sell_price": "38.6"
+     "sell_price": "36.6"
     }
    ],
    "same": false,
@@ -289,7 +306,7 @@
   },
   {
    "item": "porterage",
-   "owned": false,
+   "owned": true,
    "live": [
     {
      "buy_volume": 26,
@@ -298,12 +315,17 @@
    ],
    "new": [
     {
-     "buy_volume": 17,
+     "buy_volume": 14,
      "buy_price": "1.1"
     }
    ],
    "same": false,
-   "refused": []
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "tar",
@@ -313,6 +335,8 @@
      "buy_price": "9.6"
     },
     {
+     "max_holding": 10,
+     "buy_volume": 2,
      "buy_price": "10.5"
     }
    ],
@@ -344,7 +368,7 @@
    "new": [
     {
      "min_holding": 350,
-     "sell_volume": 50,
+     "sell_volume": 41,
      "sell_price": "8.5"
     },
     {
@@ -352,9 +376,6 @@
     }
    ],
    "same": false,
-   "stepped": [
-    "sell 20 -> 51 stepped to 50 (2x+10 a run)"
-   ],
    "refused": []
   },
   {
@@ -374,8 +395,8 @@
    ],
    "new": [
     {
-     "max_holding": 50,
-     "buy_volume": 7,
+     "max_holding": 30,
+     "buy_volume": 4,
      "buy_price": "6.2"
     }
    ],
