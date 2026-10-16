@@ -505,6 +505,11 @@ def promote_rule():
         elif ok:
             done[key] = {"ok": True, "status": status}
             changed = True
+            # Oct 15 (Taylor): the 2nd apprentice was bought and assigned on Oct 13 but net duty stayed at 2.0 (max was
+            # 2.6) for ~55 turns. A promotion raises the duty cap again, so ask for the new max right away.
+            with open(NEEDS_YOU, "w") as f:
+                json.dump({"what": "%s is now %s %s: raise household net duty to the new max (household > production)." % (
+                    w.get("name"), cls, nxt[1]), "since_turn": None}, f)
         q.log({"promote": wid, "class": cls, "tier": nxt[1], "note": "promotion rule"},
               dict(ok=ok, status=status, body=body[:200]), source="prestige_rules")
         say("  promote worker %s to %s %s -> %s" % (wid, cls, nxt[1], "OK" if ok else "FAILED %s %s" % (status, body[:150])))
