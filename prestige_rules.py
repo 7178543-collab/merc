@@ -150,6 +150,11 @@ def quarry_rule(cash):
         qov = "auto"
     if qov == "slow":
         want, why = QUARRY_SLOW, "Taylor's switch from the app: quarry slow"
+    elif cash < AUTO_PLOT_MIN_CASH and held >= LIMESTONE_RESERVE:
+        # Oct 15 recovery: no new plots under 20k cash, so limestone only backs church asks; 44 labour a turn for a
+        # pile nobody draws is waste (the home market trades ~2 a turn). Restarts at 0.4x when it is needed again.
+        want, why = 0, "recovery: no new park plots under %d cash, limestone %.0f covers the church reserve" % (
+            AUTO_PLOT_MIN_CASH, held)
     elif cash > QUARRY_FAST_CASH and held < need:
         want, why = QUARRY_FAST, "cash %.0f over %d, %d plot(s) still fit, limestone %.0f of %.0f" % (cash, QUARRY_FAST_CASH, room, held, need)
     elif cash < QUARRY_SLOW_CASH or held >= need:
