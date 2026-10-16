@@ -150,12 +150,19 @@ def merge(live, buy, sell):
     return [t for t in ms if not _empty(t)]
 
 
-def step_volumes(live, new):
+FAST_BUYS = {"labour", "porterage"}   # Oct 15: perishables bought to the turn's need are not stepped. The expiry guard cut
+# labour 170 -> 22 in one run, then the 2x+10 step let it back up only 22 -> 54 -> 118: the ropewalk, quarry, camp and
+# brewery stood idle and the park ran at 84% (labour shortfall 162) while the buy crawled back.
+
+
+def step_volumes(live, new, item=None):
     """Cap each side's volume at 2x+10 of the live one, so a big change walks there over a few runs instead of being
     refused forever (Oct 13: garments 10 -> 55 and beer 10 -> 56 were refused every run and sat at 10).
     Returns (new tiers, notes)."""
     out, notes = [dict(t) for t in new], []
     for has, key in ((_has_buy, "buy_volume"), (_has_sell, "sell_volume")):
+        if key == "buy_volume" and item in FAST_BUYS:
+            continue
         lt = next((t for t in live if has(t)), None)
         nt = next((t for t in out if has(t)), None)
         if lt is None or nt is None:
@@ -220,7 +227,7 @@ def check(item, live, new, cfg, cash):
         if lb and _n(lb.get("buy_price")) and p and abs(p - _n(lb["buy_price"])) / _n(lb["buy_price"]) > MAX_PRICE_MOVE:
             why.append("buy price %.2f -> %.2f is over a %d%% move" % (_n(lb["buy_price"]), p, MAX_PRICE_MOVE * 100))
         lv, nv = _n((lb or {}).get("buy_volume")), _n(nb.get("buy_volume"))
-        if nv > 2 * lv + 10:
+        if nv > 2 * lv + 10 and item not in FAST_BUYS:
             why.append("buy volume %d -> %d is over 2x+10 in one run" % (lv, nv))
         if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0):
             why.append("cash %.0f under the reserve: no buy raises" % cash)
@@ -257,7 +264,7 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
         if buy is None and sell is None:
             continue
         live = live_tiers.get(item, [])
-        new, stepped = step_volumes(live, merge(live, buy, sell))
+        new, stepped = step_volumes(live, merge(live, buy, sell), item)
         row = {"item": item, "owned": is_owned, "live": live, "new": new, "same": _canon(new) == _canon(live)}
         if stepped:
             row["stepped"] = stepped
