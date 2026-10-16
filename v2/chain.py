@@ -30,6 +30,10 @@ GOODS = {"flax": (None, "flax plants"), "ret": ("flax plants", "flax fibres"), "
 BUFFERS = {"flax fibres": {"fill": 5, "drain": 10}, "thread": {"fill": 15, "drain": 30}, "cloth": {"fill": 10, "drain": 40}}
 
 DEFAULTS = {
+    "garment_sales_floor": 30,  # Oct 15: size sewing for at least this many sales a turn. Sizing on our OWN last sales was
+                                # circular: v2 offered only the surplus, sales fell to what was offered, the chain made less,
+                                # and garments sold went 62 -> 2 a turn (Oct 14-15) while home still trades ~51 a turn
+    "church_fill_turns": 4,     # Oct 15: an open church garments ask is built up to over this many turns
     "buffer_turns": 2,          # stockpile between steps, in turns of the next step's use (Oct 14: was 4)
     "drain_over": 1.2,          # drain a buffer once it is over 1.2x its target
     "drain_turns": 12,          # spread the excess over this many turns
@@ -161,13 +165,17 @@ def buffer_targets(C, t, other_th, turns):
 def size(C, stocks, sales, exports, other_th, duty_th, mode, p):
     """balancer's pull model on the chain's current plot counts: targets {step: x} and buffer targets."""
     caps = {k: C[k]["size"] for k in STEPS}
-    want = sales + p["household_garments"] + exports if sales else caps["sew"] * C["sew"]["out"]
+    demand = max(sales, p.get("garment_sales_floor", 0)) if sales is not None else None
+    want = demand + p["household_garments"] + exports if demand else caps["sew"] * C["sew"]["out"]
     have_g = stocks.get("garments", 0)
     outflow = (sales or 0) + exports
-    if sales and have_g > p["garment_keep_turns"] * outflow:
+    gfloor = p.get("garment_floor", 0)          # an open church garments ask (plan_chain reads it)
+    if gfloor and have_g < gfloor:
+        want += (gfloor - have_g) / p.get("church_fill_turns", 4)
+    elif sales and have_g > p["garment_keep_turns"] * outflow:
         drain = min((have_g - p["garment_keep_turns"] * outflow) / p["garment_drain_turns"], p["garment_drain_max"])
         want = max(want - drain, 0.3 * want)
-    sew = min(caps["sew"], want * p["sales_margin"] / C["sew"]["out"])
+    sew = min(caps["sew"], want * p["sales_margin"] / C["sew"]["out"], p.get("sew_cap", float("inf")))
     fed_by_weaving = other_th - duty_th > p["extra_thread_min"]
 
     def thread_up(weave_runs):
@@ -238,10 +246,23 @@ def buffer_mode(stocks, last_mode, tg, cash, p):
     return last_mode
 
 
+def church_garment_floor(path=None):
+    """Oct 15: garments to hold for an open church garments ask (volume + 5), from contracts.py's scoring; 0 if none."""
+    path = path or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state", "contracts_scored.json")
+    try:
+        rows = json.load(open(path))
+    except (OSError, ValueError):
+        return 0
+    asks = [_n(r.get("volume")) for r in rows or [] if r.get("kind") == "church" and r.get("item") == "garments"
+            and r.get("verdict") in ("WAIT", "OK", "GOOD")]
+    return max(asks) + 5 if asks else 0
+
+
 def plan_chain(snap, cfg=None, recipes=None, last_mode=None, sales=None, exports=0.0, drip=0.0):
     """The chain's targets for this turn. Returns a dict: targets, current, moves, labour, buffers, mode, notes."""
     p = dict(DEFAULTS)
     p.update({k: v for k, v in ((cfg or {}).get("chain") or {}).items() if k in DEFAULTS})
+    p["garment_floor"] = church_garment_floor()
     C = find_chain(snap, recipes)
     missing = [k for k in STEPS if k not in C or not C[k]["labour"] or not C[k]["out"]]
     if missing:
@@ -260,7 +281,25 @@ def plan_chain(snap, cfg=None, recipes=None, last_mode=None, sales=None, exports
     allowance = max(0.0, own - others) + buy_max
     # the labour cut never takes spinning under what the ropewalk and the net duty draw (both earn more per thread
     # than garments); it never raises spinning either
+    # Oct 15: over budget -> lower SEWING and re-derive the whole chain from it (search on a sewing cap), so weaving,
+    # spinning, retting and flax shrink with it. fit_labour alone cut sewing/weaving but left the upstream sized for
+    # the uncut chain: spin 2.5 / flax 7.7 feeding 5 garments a turn while 400 thread sat in store.
+    lab = lambda x: sum(x[k] * C[k]["labour"] for k in STEPS)
+    search_note = None
+    if lab(t) > allowance + 1e-6:
+        need0 = lab(t)
+        lo, hi = 0.0, t["sew"]
+        for _ in range(30):
+            mid = (lo + hi) / 2
+            if lab(size(C, stocks, sales, exports, other_th, duty_th, mode, dict(p, sew_cap=mid))[0]) <= allowance:
+                lo = mid
+            else:
+                hi = mid
+        t, tg, fed = size(C, stocks, sales, exports, other_th, duty_th, mode, dict(p, sew_cap=lo))
+        search_note = "chain plan needed %.0f labour, budget left %.0f: cut to %.0f (sewing capped at %.2f)" % (
+            need0, allowance, lab(t), lo)
     t, cut = fit_labour(C, t, allowance, other_th)
+    cut = cut or search_note
     t = {k: round(v, 2) for k, v in t.items()}
     cur = {k: C[k]["target"] for k in STEPS}
     moves = [(k, cur[k], t[k]) for k in STEPS if abs(t[k] - cur[k]) >= p["min_change"]]

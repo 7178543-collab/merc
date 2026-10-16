@@ -41,7 +41,8 @@ STATE = os.path.join(HERE, "state", "failsafe.json")
 
 BURN_TURNS = 12
 WATCH_BURN, BRAKE_BURN = 5000, 9000
-WATCH_CASH, BRAKE_CASH, STOP_CASH = 15000, 10000, 6000
+WATCH_CASH, BRAKE_CASH, STOP_CASH = 15000, 8000, 6000   # Oct 15: brake 10k -> 8k. At 10k it flapped with cash sitting
+# at ~10k: each trip stood v2 down (labour went unmanaged, 146 expired in a turn) and paused the gear slots
 LABOUR_WASTE, LABOUR_BUFFER = 30, 10
 LABOUR_PRICE_CAP = "2.00"
 # tool guard (Oct 11: tools ran dry at 5am, camp + retting stopped, their labour expired)

@@ -110,6 +110,8 @@ PARK_PLOT = {"limestone": 60, "timber": 40}          # per plot (labour 260 is b
 # Oct 13: when a plot is ready, place it (order queue "plot": expand onto our land, or claim now and expand after the
 # tick) instead of asking Taylor for a map click. False = only flag it in needs_you, as before.
 AUTO_PLOT = True
+AUTO_PLOT_MIN_CASH = 20000   # Oct 15 (Taylor: get back on track): each plot is ~1.9k (60 limestone, 40 timber, 260 labour)
+                             # plus 15 labour a turn for good; no new plots while cash is under this
 
 
 QUARRY = "149602389"
@@ -169,7 +171,7 @@ def quarry_rule(cash):
     say("  quarry -> %s" % ("OK" if r.get("ok") else "FAILED %s" % r.get("error")))
 
 
-def park_ready_rule():
+def park_ready_rule(cash=None):
     """Rule 5 (Oct 10): tell Taylor when another park plot is ready to place. Prestige pool use is
     mansion 1 + park (1 + 0.1 per plot); a plot fits when that stays within caps.prestige_management.
     Placing a plot is a map pick, so this only writes needs_you (the status email shows it)."""
@@ -199,6 +201,9 @@ def park_ready_rule():
         say("  park maintain %s -> %d: %s" % (prod.get("target"), built, "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
     say("park: %d plots, prestige pool %.1f/%.0f, limestone %.0f, timber %.0f -> %s" % (
         plots, used, cap, held["limestone"], held["timber"], "READY for another plot" if ready else ("no pool room" if not room else "waiting on materials")))
+    if ready and cash is not None and cash < AUTO_PLOT_MIN_CASH:
+        say("  park plot held: cash %.0f under %d (recovery)" % (cash, AUTO_PLOT_MIN_CASH))
+        return
     if ready and LIVE and AUTO_PLOT:
         e = {"plot": {"building": PARK}, "confirm": True, "note": "park rule: pool %.1f/%.0f, limestone %.0f, timber %.0f" % (
             used, cap, held["limestone"], held["timber"])}
@@ -578,7 +583,7 @@ def main():
     except Exception as ex:
         say("tenants rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
-        park_ready_rule()
+        park_ready_rule(cash)
     except Exception as ex:
         say("park rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:

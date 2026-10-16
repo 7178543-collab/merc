@@ -55,6 +55,7 @@ RESERVE = {"limestone": 60,    # Oct 10 (Taylor): park plots first (60 each); Oc
 #   windows 6 (+150-175, Calange ~1/turn) | tapestries 6-7 (+150-175, Rouhomme): these two need a ship
 CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45,
                 "tapestries": 7, "windows": 6}    # Oct 14: ships stock these when v2 config ship_church.on
+KEEP_AFTER_FILL = {"garments": 30}   # Oct 15: garments min_holding is raised to the ask while we build up for it
 MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
@@ -265,6 +266,13 @@ def auto_fill(scored):
                    remaining=remaining),
               source="contracts")
         print("contracts: auto-fill %s %s for +%s prestige -> %s" % (r["volume"], r["item"], r["bonus"], "OK" if good else "FAILED %s %s" % (status, resp[:150])))
+        if good and r["item"] in KEEP_AFTER_FILL:
+            e = {"item": r["item"], "tier": 0, "set": {"min_holding": KEEP_AFTER_FILL[r["item"]]},
+                 "note": "church %s ask filled: sell reserve back to normal" % r["item"]}
+            try:
+                q.log(e, q.apply_entry(e), source="contracts")
+            except Exception as ex:
+                print("contracts: reserve reset failed: %s" % ex)
         done.append(dict(r, filled=bool(good)))
     return done
 

@@ -833,6 +833,8 @@ def _load_fixture(name):
 def test_chain_plan_matches_live_targets():
     # Oct 14 22:00 UTC: v1's balancer had just set these; the v2 port must plan the same chain from the same state
     chain, snap, rec, cfg = _chain_inputs()
+    # the Oct 14 settings (Oct 15 recovery config changed both: HOLD under 20k cash, rope thread spun directly)
+    cfg["chain"].update({"extra_thread_min": 10, "fill_cash_min": 8000})
     pc = chain.plan_chain(snap, cfg, rec, last_mode="FULL", sales=32.1, exports=0.0, drip=19)
     assert pc["ok"] and pc["mode"] == "FULL", pc
     for k in chain.STEPS:
