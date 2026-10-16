@@ -50,8 +50,10 @@ TOOLS_LOW_TURNS, TOOLS_OK_TURNS = 3, 8   # slow the camp under 3 turns of use, r
 TOOLS_ORDER = {"buy_volume": 31, "buy_price": "6.20", "max_holding": 200}   # ~25 turns of normal use          # brake level: labour bid cap (market ~1.80)
 
 # switched off at BRAKE: one-off build materials and stockpiles, never the production chain
+# Oct 15: tar dropped from the brake. It is the ropewalk's input, not a discretionary buy: the Oct 15 17:10 UTC brake
+# paused it, the ropewalk stopped, thread piled 216 -> 402 and the chain's bought labour expired (146 in one turn).
 BRAKE_ITEMS = ["wheels", "timber", "furniture", "candles", "jewellery", "light armour", "arms",
-               "tiles", "nails", "bricks", "tar"]
+               "tiles", "nails", "bricks"]
 STOP_ITEMS = ["limestone", "cured fish"]
 
 
