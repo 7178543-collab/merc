@@ -1,6 +1,6 @@
 {
- "t": "2026-10-16T02:57:31+00:00",
- "turn": 13313,
+ "t": "2026-10-16T03:16:02+00:00",
+ "turn": 13314,
  "mode": "live",
  "owned": [
   "beer",
@@ -15,30 +15,25 @@
   "nets",
   "porterage"
  ],
- "suspended": {},
+ "suspended": {
+  "labour": {
+   "since": "2026-10-16T03:16:02+00:00",
+   "why": "risk flag 2 runs in a row"
+  }
+ },
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 11,
+ "would_change": 10,
  "chain": {
-  "why": "drift flax",
+  "why": "drift weave",
   "done": [
    {
     "step": "flax",
     "id": "151602400",
     "name": "flax farm 1",
     "recipe": "grow flax 1",
-    "from": 5.56,
-    "to": 5.69,
-    "ok": true,
-    "status": 200
-   },
-   {
-    "step": "ret",
-    "id": "151802398",
-    "name": "retting pit 1",
-    "recipe": "retting 2",
-    "from": 0.99,
-    "to": 1.01,
+    "from": 5.69,
+    "to": 5.61,
     "ok": true,
     "status": 200
    },
@@ -47,8 +42,28 @@
     "id": "152202388002007",
     "name": "spinnery 1",
     "recipe": "spin thread 1",
-    "from": 2.04,
-    "to": 2.08,
+    "from": 2.08,
+    "to": 2.05,
+    "ok": true,
+    "status": 200
+   },
+   {
+    "step": "weave",
+    "id": "152202388001005",
+    "name": "weavery 1",
+    "recipe": "weave cloth 2",
+    "from": 0.63,
+    "to": 0.74,
+    "ok": true,
+    "status": 200
+   },
+   {
+    "step": "sew",
+    "id": "152202388000004",
+    "name": "sewing shop 1",
+    "recipe": "sew garments 2",
+    "from": 0.398,
+    "to": 0.46,
     "ok": true,
     "status": 200
    }
@@ -56,41 +71,19 @@
  },
  "rows": [
   {
-   "item": "arms",
-   "owned": false,
-   "live": [
-    {
-     "max_holding": 4,
-     "buy_volume": 1,
-     "buy_price": "31.2"
-    }
-   ],
-   "new": [
-    {
-     "max_holding": 1,
-     "buy_volume": 1,
-     "buy_price": "28.2"
-    }
-   ],
-   "same": false,
-   "refused": [
-    "no buy ceiling in config for arms"
-   ]
-  },
-  {
    "item": "beer",
    "owned": true,
    "live": [
     {
      "min_holding": 60,
-     "sell_volume": 51,
+     "sell_volume": 48,
      "sell_price": "3.7"
     }
    ],
    "new": [
     {
      "min_holding": 60,
-     "sell_volume": 48,
+     "sell_volume": 46,
      "sell_price": "3.7"
     }
    ],
@@ -177,9 +170,12 @@
     }
    ],
    "same": false,
-   "refused": [
-    "changed by hand through the order queue in the last 2 hours"
-   ]
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "grain",
@@ -205,20 +201,17 @@
    "owned": true,
    "live": [
     {
-     "buy_volume": 22,
+     "buy_volume": 54,
      "buy_price": "2.2"
     }
    ],
    "new": [
     {
-     "buy_volume": 54,
+     "buy_volume": 284,
      "buy_price": "2.2"
     }
    ],
    "same": false,
-   "stepped": [
-    "buy 22 -> 269 stepped to 54 (2x+10 a run)"
-   ],
    "refused": [],
    "sent": true,
    "ok": true,
@@ -275,15 +268,15 @@
    "live": [
     {
      "min_holding": 15,
-     "sell_volume": 8,
-     "sell_price": "36.6"
+     "sell_volume": 11,
+     "sell_price": "40.4"
     }
    ],
    "new": [
     {
      "min_holding": 15,
      "sell_volume": 11,
-     "sell_price": "40.4"
+     "sell_price": "39.8"
     }
    ],
    "same": false,
@@ -299,13 +292,13 @@
    "owned": true,
    "live": [
     {
-     "buy_volume": 6,
+     "buy_volume": 21,
      "buy_price": "1.1"
     }
    ],
    "new": [
     {
-     "buy_volume": 21,
+     "buy_volume": 6,
      "buy_price": "1.1"
     }
    ],
@@ -329,7 +322,7 @@
    "new": [
     {
      "sell_volume": 4,
-     "sell_price": "79.0"
+     "sell_price": "74.0"
     }
    ],
    "same": false,
@@ -356,9 +349,7 @@
     }
    ],
    "same": false,
-   "refused": [
-    "paused by the failsafe brake (state/failsafe.json): restore it by hand"
-   ]
+   "refused": []
   },
   {
    "item": "timber",
@@ -403,7 +394,7 @@
    ],
    "new": [
     {
-     "max_holding": 36,
+     "max_holding": 37,
      "buy_volume": 5,
      "buy_price": "6.2"
     }
