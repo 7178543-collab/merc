@@ -97,11 +97,19 @@ def _triage(alerts, rows, plan, snap):
     for r in rows[-6:]:
         for k, v in (r.get("items") or {}).items():
             sold.setdefault(k, {})[r.get("turn")] = _n((v + [0] * 4)[3])
+    cash = _n((chain.get("cash") if chain.get("cash") is not None else (snap or {}).get("cash")))
     att, exp = [], []
     for a in alerts:
         low = a.lower()
         why = None
-        if a.startswith("DIAGNOSE") or "stop" in low and "failsafe" in low or "brake" in low:
+        # Oct 16 (Taylor: loose ends): recovery-mode states the rules already handle are not decisions
+        if a.startswith("DIAGNOSE R1") and "paused by the failsafe" in low:
+            why = "the failsafe paused this buy under 15k cash; diagnose restarts it once cash is back over 15k"
+        elif a.startswith("DIAGNOSE R3") and "(mansion)" in low and 0 < cash < 15000:
+            why = "banquet off by the cash rule; it comes back on by itself over 15k"
+        elif a.startswith("DIAGNOSE R3") and "(quarry)" in low and 0 < cash < 20000:
+            why = "quarry held at 0 in recovery (under 20k cash, limestone covers the church reserve)"
+        elif a.startswith("DIAGNOSE") or "stop" in low and "failsafe" in low or "brake" in low:
             why = None
         elif low.startswith("failsafe watch"):
             why = "cash under 15k: the failsafe is watching, nothing paused"
@@ -112,6 +120,8 @@ def _triage(alerts, rows, plan, snap):
             b = bufs.get(item)
             if item in CHAIN_GOODS and (b is None or _n(b.get("held")) >= _n(b.get("target"))):
                 why = "chain pile above target: v2 makes less until it drains"
+            elif item in CHAIN_GOODS and chain.get("mode") == "HOLD":
+                why = "made in-house, no buy needed; the chain holds (no pile top-ups) under 20k cash"
         elif low.endswith(": not selling"):
             item = a.split(":")[0].strip()
             last3 = [v for t, v in sorted((sold.get(item) or {}).items())][-3:]
