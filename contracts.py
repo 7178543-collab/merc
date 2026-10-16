@@ -56,7 +56,8 @@ RESERVE = {"limestone": 60,    # Oct 10 (Taylor): park plots first (60 each); Oc
 CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45,
                 "tapestries": 7, "windows": 6}    # Oct 14: ships stock these when v2 config ship_church.on
 KEEP_AFTER_FILL = {"garments": 30}   # Oct 15: garments min_holding is raised to the ask while we build up for it
-BUY_OFF_AFTER_FILL = {"furniture"}   # Oct 16 (Taylor): recovery, no church restock after the fill (tier 0 = the buy); restore by hand over 20k
+BUY_AFTER_FILL = {"furniture": {"buy_volume": 2, "max_holding": 20}}   # Oct 16 (Taylor): recovery, no church restock after the fill;
+#   keep only the household upkeep buy (furniture is a sustenance slot, ~1.4/turn; tier 0 = the buy). Restore readiness by hand over 20k
 MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
@@ -274,9 +275,9 @@ def auto_fill(scored):
                 q.log(e, q.apply_entry(e), source="contracts")
             except Exception as ex:
                 print("contracts: reserve reset failed: %s" % ex)
-        if good and r["item"] in BUY_OFF_AFTER_FILL:
-            e = {"item": r["item"], "tier": 0, "set": {"buy_volume": 0},
-                 "note": "church %s ask filled: readiness buy off (Taylor Oct 16, recovery; restore over 20k cash)" % r["item"]}
+        if good and r["item"] in BUY_AFTER_FILL:
+            e = {"item": r["item"], "tier": 0, "set": BUY_AFTER_FILL[r["item"]],
+                 "note": "church %s ask filled: readiness buy back to household upkeep only (Taylor Oct 16, recovery; restore over 20k cash)" % r["item"]}
             try:
                 q.log(e, q.apply_entry(e), source="contracts")
             except Exception as ex:
