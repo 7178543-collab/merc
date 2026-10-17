@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13342, 2026-10-17 07:05. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13342, 2026-10-17 07:53. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 
 ## Items v2 runs (last turn)
@@ -14,9 +14,9 @@ Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 14, sell @ 22 |
 | grain | 51 | 13 | 13 | 0 | 0 | stop 52, buy 14, buy @ 3.7 |
-| labour | 271 | 271 | 721 | 0 | 0 | buy 271, buy @ 2.2 |
+| labour | 271 | 271 | 721 | 0 | 0 | buy 274, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 33 | 0 | 0 | 0 | 0 | min_holding 15, sell 10, sell @ 34.6 |
+| nets | 33 | 0 | 0 | 0 | 0 | min_holding 15, sell 10, sell @ 35.6 |
 | porterage | 11 | 11 | 11 | 0 | 0 | buy 11, buy @ 1.1 |
 
 **1 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
@@ -27,12 +27,12 @@ Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 
 ## Tuning
 
-- **flax fibres**: flax fibres buffer thin: 1.5 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 76
-- **flax plants**: flax plants buffer thin: 1.9 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 198
+- **flax fibres**: flax fibres buffer thin: 1.5 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 78
+- **flax plants**: flax plants buffer thin: 1.9 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 201
 
 ## Notes
 
-- labour: projection runs 74 over real use lately; planning 721, not 794
+- labour: projection runs 74 over real use lately; planning 723, not 797
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -66,10 +66,10 @@ Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 
 ## Ship plans (this turn's world prices)
 
-- **Flax Wyrm** on Brunnham: nothing pays; crew 0.0; est +0 a turn; best orders clear only 5 a turn after crew: ship stays at 0
-- **linen snake** on Heilegg: nothing pays; crew 0.0; est +0 a turn; best orders clear only -2 a turn after crew: ship stays at 0
-- best towns now: Karlmoor +60, Orlesailles +18
-- Karlmoor would trade: candles buy 1 @ 72.5, nets sell 9 @ 43.0; crew 0.1
+- **Flax Wyrm** on Brunnham: nothing pays; crew 0.0; est +0 a turn; best orders clear only 2 a turn after crew: ship stays at 0
+- **linen snake** on Heilegg: nothing pays; crew 0.0; est +0 a turn; best orders clear only 5 a turn after crew: ship stays at 0
+- best towns now: Karlmoor +64, Orlesailles +20, Hofkirchen +16
+- Karlmoor would trade: candles buy 1 @ 74.5, nets sell 9 @ 44.2; crew 0.1
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -77,13 +77,13 @@ Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Karlmoor | 787 | 0.21 | 0.10 (10/turn) | nets 9 (36->45.41), garments 13 (19.5->21.47), tools 15 (4.5->5.98), fleece 1 (6.2->7.31) | candles 1 (75.08->81), pasties 1 (5.46->11.97) | +136 |
-| Fontaux | 411 | 0.11 | 0.20 (20/turn) | garments 13 (19.5->20.9), gears 1 (88.2->92.15), tools 15 (4.5->4.73), lead bars 8 (11.87->12.06) | spinning wheels 1 (216.3->243.2), flax plants 13 (0.88->1.79), thread 65 (5.46->5.7), candles 1 (77.7->81) | +72 |
-| Neuborn | 780 | 0.20 | 0.70 (69/turn) | garments 13 (19.5->22.42), timber 18 (6.35->9.88), nets 1 (36->42.56), tools 16 (4.5->4.99) | cured meat 6 (22.05->23.2), candles 1 (78.23->81), cheese 23 (5.51->5.79), flax plants 5 (1.28->1.79) | +67 |
-| Friedwerp | 684 | 0.18 | 0.20 (20/turn) | beer 18 (2.92->4.31), garments 13 (19.5->21.09), tools 16 (4.5->5.37), tiles 1 (2.92->5.46) | thread 9 (4.58->5.7), candles 1 (76.65->81), pies 1 (16.48->19.38), wax 1 (21.42->23.75) | +63 |
-| Caillechâtel | 488 | 0.13 | 0.10 (10/turn) | beer 18 (2.92->5.79), nets 5 (36->37.24), fleece 1 (6.2->7.41) | rope 1 (72.98->75.52), thread 31 (5.51->5.7), casks 1 (5.67->6.41), cured meat 1 (22.68->23.2) | +57 |
+| Karlmoor | 787 | 0.21 | 0.10 (10/turn) | nets 9 (36.6->47.97), garments 13 (19.5->21.28), fleece 2 (6.25->7.31), resin 1 (2.37->3.08) | candles 1 (77.17->81.5) | +123 |
+| Fontaux | 411 | 0.11 | 0.40 (39/turn) | ploughs 1 (95.55->123.5), garments 13 (19.5->20.9), beer 18 (2.92->3.65), limestone 1 (12.92->19.95) | spinning wheels 1 (216.3->243.2), candles 1 (74.55->81.5), flax plants 11 (0.83->1.58), grain 13 (2.9->3.38) | +100 |
+| Rouhomme | 368 | 0.10 | 0.30 (29/turn) | soap 2 (76.65->94.05), beer 18 (2.92->3.65), garments 13 (19.5->20.33), thread 10 (5.05->6.08) | flax fibres 1 (5.72->6.7), lead ore 1 (3.61->5.37), tools 3 (4.91->5.05) | +76 |
+| Calange | 218 | 0.06 | 0.10 (10/turn) | beer 18 (2.92->5.08), rope 1 (79.5->87.4), garments 13 (19.5->19.95), cloth 5 (7.3->7.93) | grain 13 (2.73->3.38), flax fibres 4 (5.88->6.7) | +66 |
+| Caillechâtel | 488 | 0.13 | 0.10 (10/turn) | beer 18 (2.92->6.13), nets 4 (36.6->37.24), fleece 1 (6.25->7.41) | flax plants 23 (1.31->1.58) | +56 |
 
-**Best:** Karlmoor at about +136 coin a turn.
+**Best:** Karlmoor at about +123 coin a turn.
 
 ## v2 orders
 
@@ -97,26 +97,26 @@ Cash 13,532, prestige 3,256 (586 free, +3.0/turn).
 | fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
 | garments |  | 14 @ min 22.0 |  |
 | grain | 14 @ 3.7, stop 52 |  | uses 13.0/turn (brewery 1), makes 0.0, holds 51 = 3.9 turns |
-| labour | 271 @ 2.2, stop - |  | uses 721.0/turn (brewery 1, flax farm 1, household), makes 450.0, holds 271 = 1.0 turns |
+| labour | 273 @ 2.2, stop - |  | uses 723.0/turn (brewery 1, flax farm 1, household), makes 450.0, holds 271 = 1.0 turns |
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 10 @ min 35.6 |  |
-| porterage | 11 @ 1.1, stop - |  | uses 11.0/turn (observed), makes 0.0, holds 11 = 1.0 turns |
+| porterage | 11 @ 1.1, stop - |  | uses 11.1/turn (observed), makes 0.0, holds 11 = 1.0 turns |
 | rope |  | 7 @ min 77.5 | makes 4.5, uses 0.0, holds 36 (keeps 0): sells the surplus + 3/turn of the excess |
 | tar | 2 @ 11.0, stop 5 |  | uses 1.0/turn (ropewalk 1), makes 0.0, holds 9 = 9.2 turns |
 | timber |  | 28 @ min 6.7 | makes 8.4, uses 0.0, holds 589 (keeps 350): sells the surplus + 19/turn of the excess |
-| tools | 4 @ 6.2, stop 32 |  | uses 4.0/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 50.4 turns |
+| tools | 4 @ 6.2, stop 32 |  | uses 4.0/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 49.9 turns |
 
 ## Chain sizing
 
-Mode HOLD, garments sold 17.5/turn (+0.0 exported); plan makes 16.8 garments a turn.
-Labour: own 450, everything else 411, chain may buy 350 -> chain allowance 389, chain plan 390 (+3 vs now).
+Mode HOLD, garments sold 17.0/turn (+0.0 exported); plan makes 16.8 garments a turn.
+Labour: own 450, everything else 411, chain may buy 350 -> chain allowance 389, chain plan 390 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 6.18 | 6.30 |
-| ret | 3 | 1.10 | 1.12 |
-| spin | 4 | 2.26 | 2.31 |
-| weave | 3 | 0.69 | 0.66 |
+| flax | 11 | 6.30 | 6.30 |
+| ret | 3 | 1.12 | 1.12 |
+| spin | 4 | 2.31 | 2.31 |
+| weave | 3 | 0.66 | 0.66 |
 | sew | 2 | 0.39 | 0.41 |
 
 Buffers: flax fibres 58/84, thread 349/248, cloth 21/66
