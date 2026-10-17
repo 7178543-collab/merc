@@ -1,31 +1,45 @@
 {
- "t": "2026-10-17T01:06:54+00:00",
+ "t": "2026-10-17T01:55:05+00:00",
  "turn": 13336,
  "mode": "live",
- "reduce_only": true,
+ "reduce_only": false,
  "findings": [
   {
    "rule": "R1",
    "item": "candles",
    "finding": "candles slot dry: 0.0 held, 1.5 a turn (luxury slot (+3 prestige)); our buy paused by the failsafe, home ask 81.0",
-   "held_back": "paused by the failsafe at level 1: un-pause only at level 0"
-  },
-  {
-   "rule": "R3",
-   "building": "mansion 1",
-   "finding": "mansion 1 (mansion) finished but idle 6 turns (hold banquet 1 (meat) at 0); no planned recipe for a mansion: Taylor's call",
-   "building_id": "152002388"
+   "action": "un-pause and buy 3 @ 82.5 (ask 81.0, cap 120.0)",
+   "raise_": true,
+   "via": "queue",
+   "entry": {
+    "item": "candles",
+    "tier": 0,
+    "set": {
+     "buy_volume": 3,
+     "buy_price": "82.5"
+    },
+    "note": "v2 diagnose R1: un-pause and buy 3 @ 82.5 (ask 81.0, cap 120.0)",
+    "building": "152202386005001"
+   },
+   "unpause": true,
+   "ok": true,
+   "error": null
   },
   {
    "rule": "R3",
    "building": "quarry 1",
    "finding": "quarry 1 (quarry) finished but idle 6 turns (extract stone 1 at 0); no planned recipe for a quarry: Taylor's call",
    "building_id": "149602389"
+  },
+  {
+   "rule": "R4",
+   "building": "ropewalk 1",
+   "finding": "ropewalk 1 projected 0: short of labour (~28 needed); labour itself is not raised here"
   }
  ],
  "alerts": [
-  "R1: candles slot dry: 0.0 held, 1.5 a turn (luxury slot (+3 prestige)); our buy paused by the failsafe, home ask 81.0",
-  "R3: mansion 1 (mansion) finished but idle 6 turns (hold banquet 1 (meat) at 0); no planned recipe for a mansion: Taylor's call",
-  "R3: quarry 1 (quarry) finished but idle 6 turns (extract stone 1 at 0); no planned recipe for a quarry: Taylor's call"
+  "R1: candles slot dry: 0.0 held, 1.5 a turn (luxury slot (+3 prestige)); our buy paused by the failsafe, home ask 81.0 -> un-pause and buy 3 @ 82.5 (ask 81.0, cap 120.0) ok",
+  "R3: quarry 1 (quarry) finished but idle 6 turns (extract stone 1 at 0); no planned recipe for a quarry: Taylor's call",
+  "R4: ropewalk 1 projected 0: short of labour (~28 needed); labour itself is not raised here"
  ]
 }
