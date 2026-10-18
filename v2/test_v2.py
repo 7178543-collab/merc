@@ -944,6 +944,19 @@ def test_chain_labour_budget_cuts_sewing_first_keeps_rope_thread():
     assert abs(pc["targets"]["spin"] - 79 / 50.0) <= 0.01, pc["targets"]
 
 
+def test_chain_garment_floor_off_over_a_pile():
+    chain, snap, rec, cfg = _chain_inputs()
+    cfg["chain"]["labour_buy_max"] = 10 ** 6
+    snap["store"]["items"]["garments"]["held"] = 20
+    small = chain.plan_chain(snap, cfg, rec, last_mode="HOLD", sales=7, exports=0.0)["targets"]["sew"]
+    snap["store"]["items"]["garments"]["held"] = 380
+    pile = chain.plan_chain(snap, cfg, rec, last_mode="HOLD", sales=7, exports=0.0)["targets"]["sew"]
+    # a small pile: sewing sized on the 30/turn floor (Oct 15 anti-spiral); a 380 pile: on real sales, and drained
+    assert small * 41 > 25 and pile * 41 < 8, (small, pile)
+    none = chain.plan_chain(snap, cfg, rec, last_mode="HOLD", sales=0, exports=0.0)["targets"]["sew"]
+    assert none * 41 < 3, none                 # nothing selling + a pile: only the household's ~1.8, never full capacity
+
+
 def test_chain_found_by_type_not_id():
     chain, snap, rec, cfg = _chain_inputs()
     for n, b in enumerate(snap["buildings"]):

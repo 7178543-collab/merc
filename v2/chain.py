@@ -33,6 +33,7 @@ DEFAULTS = {
     "garment_sales_floor": 30,  # Oct 15: size sewing for at least this many sales a turn. Sizing on our OWN last sales was
                                 # circular: v2 offered only the surplus, sales fell to what was offered, the chain made less,
                                 # and garments sold went 62 -> 2 a turn (Oct 14-15) while home still trades ~51 a turn
+    "garment_floor_pile_turns": 4,  # Oct 18: the floor is off while garments held > this x the floor (a pile to sell)
     "church_fill_turns": 4,     # Oct 15: an open church garments ask is built up to over this many turns
     "buffer_turns": 2,          # stockpile between steps, in turns of the next step's use (Oct 14: was 4)
     "drain_over": 1.2,          # drain a buffer once it is over 1.2x its target
@@ -165,9 +166,15 @@ def buffer_targets(C, t, other_th, turns):
 def size(C, stocks, sales, exports, other_th, duty_th, mode, p):
     """balancer's pull model on the chain's current plot counts: targets {step: x} and buffer targets."""
     caps = {k: C[k]["size"] for k in STEPS}
-    demand = max(sales, p.get("garment_sales_floor", 0)) if sales is not None else None
-    want = demand + p["household_garments"] + exports if demand else caps["sew"] * C["sew"]["out"]
     have_g = stocks.get("garments", 0)
+    floor = p.get("garment_sales_floor", 0)
+    # Oct 18: the floor guards against the Oct 14 sell/make spiral, not against selling down a pile. With ~380 garments
+    # held it kept sewing ~19 a turn into a market taking ~20: the pile never shrank and ~6k of finished goods sat
+    # while bought labour made more. Over garment_floor_pile_turns x the floor held, size on real sales only.
+    if floor and have_g > p.get("garment_floor_pile_turns", 4) * floor:
+        floor = 0
+    demand = max(sales, floor) if sales is not None else None
+    want = demand + p["household_garments"] + exports if demand is not None else caps["sew"] * C["sew"]["out"]
     outflow = (sales or 0) + exports
     gfloor = p.get("garment_floor", 0)          # an open church garments ask (plan_chain reads it)
     if gfloor and have_g < gfloor:
