@@ -862,6 +862,30 @@ def test_ship_pinned_voyage():
         shutil.rmtree(d)
 
 
+def test_spare_labour():
+    sys.path.insert(0, os.path.dirname(HERE))
+    import spare_labour as sl
+    row = lambda t, made, used: {"turn": t, "items": {"labour": [0, made, used, 0, 0, max(0, made - used), 0]}}
+    rows = [row(1, 450, 457), row(2, 450, 423), row(3, 450, 422), row(4, 450, 411)]
+    assert sl.spare_from_history(rows, {}) == 27                          # smallest of the last 3 turns
+    assert sl.spare_from_history(rows[:2], {}) is None                    # not enough data
+    # the rule's own extra is added back, so using the spare doesn't read as "no spare" next turn (no flapping)
+    used = [row(5, 450, 440), row(6, 450, 441), row(7, 450, 439)]
+    assert sl.spare_from_history(rows + used, {"5": 30, "6": 30, "7": 30}) == 39
+    a = sl.allocate(39, lime_held=121, lime_cap=153, timber_held=350)
+    assert a["quarry"] == 0.25 and a["camp"] == sl.CAMP_BASE and a["labour"] <= 29, a     # (39-10)/110 -> 0.25 quarry
+    a = sl.allocate(39, lime_held=145, lime_cap=153, timber_held=350)                   # limestone bin nearly full
+    assert a["quarry"] == 0 and a["camp"] == sl.CAMP_BASE + 9.0 and a["labour"] <= 29, a  # (39-10)/3.1 -> +9.0 camp
+    a = sl.allocate(39, lime_held=145, lime_cap=153, timber_held=700)
+    assert a["quarry"] == 0 and a["camp"] == sl.CAMP_BASE and a["labour"] == 0, a         # timber at its stop too
+    a = sl.allocate(400, lime_held=0, lime_cap=153, timber_held=0, quarry_floor=0.4)
+    assert a["quarry"] == 1.0 and a["camp"] == sl.CAMP_MAX, a                             # both capped
+    a = sl.allocate(5, lime_held=0, lime_cap=153, timber_held=0)
+    assert a["labour"] == 0 and a["quarry"] == 0 and a["camp"] == sl.CAMP_BASE, a        # under the margin: nothing
+    a = sl.allocate(60, lime_held=153, lime_cap=153, timber_held=0, camp_slowed=True)
+    assert a["camp"] == sl.CAMP_BASE and a["labour"] == 0, a                              # tool guard holds the camp
+
+
 def test_suspended_item_comes_back_after_clean_runs():
     st, cfg, sus = {}, {"live": {"items": ["porterage"]}}, {"porterage": {"why": "risk flag 2 runs in a row"}}
     clean, risky = {"flags": []}, {"flags": [{"severity": "risk", "item": "porterage"}]}

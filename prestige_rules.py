@@ -28,6 +28,7 @@ and logged to state/order_queue_done.jsonl (source "prestige_rules").
     python prestige_rules.py          # dry run: prints the decision
     python prestige_rules.py --live   # applies it
 """
+import datetime
 import glob
 import json
 import os
@@ -120,7 +121,7 @@ QUARRY_FAST_CASH, QUARRY_SLOW_CASH = 18000, 15000
 LIMESTONE_RESERVE = 120      # contracts.py keeps this for church limestone asks
 
 
-def quarry_rule(cash):
+def quarry_rule(cash, spare=None):
     """Rule 6 (Oct 14, Taylor: turn cash into prestige once profit holds). Banquet tiers 2-3 fail the supply check at
     home (hop beer trades ~5/turn vs 15 needed, wine ~16 vs 15), so the cash goes to park plots instead: limestone is
     their wall (60 a plot) and our quarry runs at 0.4x (5.2/turn, one plot every ~12 turns). With cash over 18k and
@@ -163,6 +164,11 @@ def quarry_rule(cash):
         want = min(want, cur) if cur > 0 else want      # never raises a quarry someone set lower by hand
     else:
         want, why = cur, "in between (cash %.0f): keep" % cash
+    if spare is not None and qov != "slow":
+        # Rule 7 (Oct 18): spare own labour runs the quarry on top of what this rule wants (see spare_labour_rule)
+        alloc = spare(want)
+        if alloc and alloc["quarry"] > want:
+            want, why = alloc["quarry"], "%s; %s" % (why, alloc["why"])
     say("quarry: %.2fx -> %.2fx (%s)" % (cur, want, why))
     if abs(want - cur) < 0.01 or not LIVE:
         return
@@ -174,6 +180,84 @@ def quarry_rule(cash):
         r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
     q.log(e, r, source="prestige_rules")
     say("  quarry -> %s" % ("OK" if r.get("ok") else "FAILED %s" % r.get("error")))
+
+
+CAMP = "151402406"
+CAMP_RECIPE = "split timber 2"
+SPARE_STATE = os.path.join(HERE, "state", "spare_labour.json")
+
+
+def _turn_rows():
+    """One history line per game turn (the last of each), oldest first."""
+    by_turn = {}
+    for path in sorted(glob.glob(os.path.join(HERE, "history", "merc-*.jsonl")))[-2:]:
+        for line in open(path):
+            try:
+                d = json.loads(line)
+            except ValueError:
+                continue
+            if d.get("turn") is not None and d.get("items"):
+                by_turn[d["turn"]] = d
+    return [by_turn[t] for t in sorted(by_turn)]
+
+
+def spare_labour_rule():
+    """Rule 7 (Oct 18, Taylor: "why aren't we making and using maxing free labor"). Own labour nothing draws expires;
+    put it on limestone (quarry) then timber (logging camp) instead. Sized on real use (spare_labour.py), so it never
+    buys labour, and it backs off by itself when the chain needs the labour. Returns a function quarry_rule calls with
+    the quarry rate it wants anyway; that call also sets the camp. At failsafe BRAKE/STOP: no spare (back to base)."""
+    import spare_labour as sl
+    try:
+        st = json.load(open(SPARE_STATE))
+    except (OSError, ValueError):
+        st = {}
+    extra = st.get("extra_by_turn") or {}
+    rows = _turn_rows()
+    spare = sl.spare_from_history(rows, extra)
+    try:
+        fs = json.load(open(os.path.join(HERE, "state", "failsafe.json")))
+    except (OSError, ValueError):
+        fs = {}
+    if int(m.num(fs.get("level"))) >= 2:
+        spare = 0.0
+    store = m.get("/buildings/%s" % q.STORE) or {}
+    inv = (store.get("storage") or {}).get("inventory") or {}
+    assets = ((inv.get("account") or {}).get("assets")) or {}
+    lime = assets.get("limestone") or {}
+    lime_held, lime_cap = m.num(lime.get("balance")), m.num(lime.get("capacity"))
+    timber_held = m.num((assets.get("timber") or {}).get("balance"))
+    turn = rows[-1]["turn"] if rows else None
+
+    def apply(quarry_floor):
+        if spare is None:
+            say("spare labour: not enough history yet")
+            return None
+        a = sl.allocate(spare, lime_held, lime_cap, timber_held, quarry_floor=quarry_floor,
+                        camp_slowed=bool(fs.get("camp_slowed")))
+        say("spare labour: %s -> quarry %.2f, camp %.1f (%.0f labour)" % (a["why"], a["quarry"], a["camp"], a["labour"]))
+        prod = q.read_producer(CAMP)
+        cur = m.num(prod.get("target"))
+        if prod.get("recipe") == CAMP_RECIPE and not fs.get("camp_slowed") and abs(a["camp"] - cur) >= 0.5 \
+                and cur <= sl.CAMP_MAX + 1e-6:
+            e = {"building": CAMP, "producer": {"recipe": CAMP_RECIPE, "target": a["camp"], "provider_id": q.STORE},
+                 "note": "spare labour rule: camp %g -> %g (%s)" % (cur, a["camp"], a["why"])}
+            if LIVE:
+                try:
+                    r = q.apply_entry(e)
+                except Exception as ex:
+                    r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+                q.log(e, r, source="prestige_rules")
+                say("  camp -> %s" % ("OK" if r.get("ok") else "FAILED %s" % r.get("error")))
+            else:
+                say("  would send:", json.dumps(e))
+        if LIVE and turn is not None:
+            extra[str(turn + 1)] = a["labour"]          # applies from the next tick, i.e. next turn's history row
+            keep = sorted(extra, key=lambda k: int(k))[-12:]
+            with open(SPARE_STATE, "w") as f:
+                json.dump({"t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                           "spare": spare, "alloc": a, "extra_by_turn": {k: extra[k] for k in keep}}, f, indent=1)
+        return a
+    return apply
 
 
 def park_ready_rule(cash=None):
@@ -597,7 +681,12 @@ def main():
     except Exception as ex:
         say("park rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
-        quarry_rule(cash)
+        try:
+            spare = spare_labour_rule()
+        except Exception as ex:
+            spare = None
+            say("spare labour rule crashed: %s: %s" % (type(ex).__name__, ex))
+        quarry_rule(cash, spare)
     except Exception as ex:
         say("quarry rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
