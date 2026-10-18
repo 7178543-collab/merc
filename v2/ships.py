@@ -93,25 +93,40 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
     # contracts.py can fill the next ask on sight (Taylor's rule stands: sign only what stock fills now). Valued at
     # value_per_prestige a point so the voyage planner sails for them; capped by cash and a spend share a turn.
     sc = cfg.get("ship_church") or {}
-    church = (sc.get("goods") or {}) if sc.get("on") and _f(snap.get("cash")) >= _f(sc.get("min_cash") or 20000) else {}
-    church_budget = _f(sc.get("spend_share") or 0.15) * _f(snap.get("cash"))
+    # ---- stock goods (Oct 18, Taylor: get on track): config ship_stock, same shape as ship_church but its own switch,
+    # cash floor and budget. For prestige goods nobody sells at home: furniture (church furniture asks + the household
+    # slot), candles (the 3-prestige luxury slot), pasties (basic food 1.3 vs bread 0.3). prestige_per_unit is what one
+    # unit is worth in prestige (plus any coin it saves, converted at value_per_prestige).
+    ss = cfg.get("ship_stock") or {}
+    cash = _f(snap.get("cash"))
+    wanted, budget = {}, {}
+    if sc.get("on") and cash >= _f(sc.get("min_cash") or 20000):
+        budget["church"] = _f(sc.get("spend_share") or 0.15) * cash
+        for k, g in (sc.get("goods") or {}).items():
+            wanted[k] = (g, "church", _f(sc.get("value_per_prestige") or 57))
+    if ss.get("on") and cash >= _f(ss.get("min_cash") or 3000):
+        budget["stock"] = _f(ss.get("spend_share") or 0.08) * cash
+        for k, g in (ss.get("goods") or {}).items():
+            wanted.setdefault(k, (g, "stock", _f(ss.get("value_per_prestige") or 45)))
     for item, m in there.items():
-        cg = church.get(item)
-        if cg and m["ask"] > 0 and m["buy_room"] >= 1:
+        wg = wanted.get(item)
+        if wg and m["ask"] > 0 and m["buy_room"] >= 1:
+            cg, grp, vpp = wg
             it = items.get(item) or {}
             want = _f(cg.get("keep")) - _f(it.get("held")) - float((taken or {}).get(item, 0))
             price = routes_snap(min(m["ask"] * 1.02, _f(cg.get("max_price"))), up=False)
             if want >= 1 and price >= m["ask"]:
-                vol = int(min(want, m["buy_room"], church_budget // price if price else 0))
-                gain = _f(cg.get("prestige_per_unit")) * _f(sc.get("value_per_prestige") or 57) - price \
+                vol = int(min(want, m["buy_room"], budget[grp] // price if price else 0))
+                gain = _f(cg.get("prestige_per_unit")) * vpp - price \
                     - per_space * size(item) - FARE_PER_SIZE * size(item)
                 if vol >= 1 and gain > 0:
                     orders[item] = {"buy_volume": vol, "buy_price": str(price), "max_holding": int(_f(cg.get("keep"))),
                                     "_gain": gain}
                     est += vol * gain
                     space_in += vol * size(item)
-                    church_budget -= vol * price
-                    notes.append("church stock: %s %d @ %s (keep %d for the church)" % (item, vol, price, int(_f(cg.get("keep")))))
+                    budget[grp] -= vol * price
+                    notes.append("%s: %s %d @ %s (keep %d)" % ("church stock" if grp == "church" else "stock", item, vol, price,
+                                                                  int(_f(cg.get("keep")))))
             continue
         if not commodity(item):
             continue
@@ -147,13 +162,16 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
                         continue
         # ---- import: something we use and don't make, cheaper there than our home ask after shipping
         use = _f(fl.get("consumption"))
-        if m["ask"] > 0 and use >= 1 and h.get("ask") and not made and item not in inter:
-            ceiling = h["ask"] - ship_cost - fare - max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * h["ask"])
+        # no seller at home (furniture, candles on Oct 18): what we'd otherwise pay is unknown, so value it at 110% of
+        # the home 12-turn average price; without even that, skip it
+        h_ask = h.get("ask") or (1.10 * h["ema"] if h.get("ema") else 0.0)
+        if m["ask"] > 0 and use >= 1 and h_ask and not made and item not in inter:
+            ceiling = h_ask - ship_cost - fare - max(MIN_MARGIN_ABS, MIN_MARGIN_SHARE * h_ask)
             price = routes_snap(min(m["ask"] * 1.02, ceiling), up=False)
             if price >= m["ask"]:
                 vol = int(min(use, m["buy_room"]))
                 if vol >= 1:
-                    gain = h["ask"] - m["ask"] - ship_cost - fare
+                    gain = h_ask - m["ask"] - ship_cost - fare
                     orders[item] = {"buy_volume": vol, "buy_price": str(price),
                                     "max_holding": int(math.ceil(max(_f(it.get("held")), use * 4))), "_gain": gain}
                     est += vol * gain

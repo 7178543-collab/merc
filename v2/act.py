@@ -469,6 +469,15 @@ def _queue_apply(entry):
     return r
 
 
+def _sea_town(town_id):
+    """{name, moves} for a town from state/v2/sea_routes.json (sea moves from our dock), {} if unknown."""
+    try:
+        import routes
+        return json.load(open(routes.SEA)).get(str(town_id)) or {}
+    except (OSError, ValueError, ImportError):
+        return {}
+
+
 def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
     """Move an auto ship to a better town, one step per run (a ship moves at the turn tick):
       route that no longer pays (or no route) + a town promising VOYAGE_MIN_GAIN more -> stop the route, sail home;
@@ -477,11 +486,14 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
     State per ship in act_state ships[id].voyage. At most one voyage per VOYAGE_COOLDOWN turns per ship."""
     apply = apply or _queue_apply
     modes = (cfg.get("live") or {}).get("ship_modes") or {}
+    # Oct 18 (Taylor: get on track): a pinned ship (live.ship_pins {ship id: town id}) sails to its town and stays on
+    # that route; v2 still sets its orders and crew there (ship_auto), but never picks another town for it.
+    pins = {str(k): str(v) for k, v in ((cfg.get("live") or {}).get("ship_pins") or {}).items()}
     sp = (plan or {}).get("ship_plans") or {}
     turn = (snap or {}).get("turn") or 0
     plans = {str(p_.get("id")): p_ for p_ in sp.get("plans") or []}
     best = sp.get("best") or []
-    taken = {str(s.get("route_to")) for s in (snap or {}).get("ships") or [] if s.get("route_to")}
+    taken = {str(s.get("route_to")) for s in (snap or {}).get("ships") or [] if s.get("route_to")} | set(pins.values())
     # Oct 13: reserve every in-progress voyage's target up front so two ships never head for the same town
     # (Flax Wyrm and linen snake both picked Etallaen an hour apart; the second would undercut the first's sales)
     voy_targets = {}
@@ -502,6 +514,17 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
             continue
         c = sst.setdefault(sid, {})
         v = c.get("voyage")
+        pin = pins.get(sid)
+        if pin:
+            if v and str(v.get("target")) != pin:
+                v = c["voyage"] = None          # a voyage planned before the pin: drop it
+            if not v:
+                if str(sh.get("route_to")) == pin:
+                    continue                    # on its route: ship_auto runs the orders
+                d = _sea_town(pin)
+                v = c["voyage"] = {"target": pin, "name": d.get("name") or pin, "step": "home", "turn": None,
+                                   "from_turn": turn, "expected": None, "moves": d.get("moves"), "pinned": True}
+                out.append("%s: pinned to %s, heading there" % (sh.get("name"), v["name"]))
         if v:
             tgt = v["target"]
             if str(sh.get("route_to")) == tgt:
@@ -523,7 +546,7 @@ def ship_voyages(plan, cfg, snap, sst, log_path, apply=None):
                 r = apply({"travel": {"transport": sid, "to_town": HOME_TOWN}, "confirm": True})
                 out.append("%s: sail home %s" % (sh.get("name"), "ok" if r.get("ok") else r.get("error")))
                 continue
-            if str(sh.get("town")) == HOME_TOWN and v.get("step") == "home":
+            if str(sh.get("town")) == HOME_TOWN and v.get("step") == "home" and not pin:
                 # last look before sailing out: prices move, and a target picked on an over-full plan (Oct 13: Kirchwerp
                 # scored +158 on cargo twice the ship's room) may no longer be the best. Take this run's best free town,
                 # or end the voyage and wait at home at crew 0 if nothing pays.

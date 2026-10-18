@@ -782,6 +782,86 @@ def test_ship_church_stock():
     assert p["orders"]["tapestries"]["buy_volume"] == 5, p        # 15% of 24k = 3,600 -> 5 at 719
 
 
+def test_ship_stock_goods():
+    import ships
+    sea = {"1": {"name": "Home", "moves": 0.0}, "2": {"name": "Far", "moves": 368.0}}
+    mk = lambda bid, ask, bv, av, tr=0, ema=0: {"highest_bid": bid, "lowest_ask": ask, "bid_volume_10": bv,
+                                                "ask_volume_10": av, "volume_ema_12": tr, "price_ema_12": ema}
+    world = [{"name": "Home", "markets": {"candles": mk(72.5, 0, 4, 0, 6, 66.5), "furniture": mk(12, 0, 10, 0, 48, 12.1)}},
+             {"name": "Far", "markets": {"furniture": mk(0, 13.7, 0, 8, 40), "candles": mk(0, 74, 0, 10, 6),
+                                         "pasties": mk(0, 15.2, 0, 8, 10)}}]
+    snap = {"home_town": "1", "cash": 5500, "market": {"labour": {"price": 2.0}},
+            "store": {"items": {"furniture": {"held": 2, "orders": [], "flow": {"consumption": 1.4}},
+                                "candles": {"held": 16, "orders": [], "flow": {"consumption": 1.5}}}}}
+    ss = {"on": True, "min_cash": 4500, "spend_share": 0.08, "value_per_prestige": 45,
+          "goods": {"furniture": {"keep": 140, "max_price": 14.6, "prestige_per_unit": 0.6},
+                    "candles": {"keep": 12, "max_price": 78, "prestige_per_unit": 2.0},
+                    "pasties": {"keep": 14, "max_price": 16.4, "prestige_per_unit": 0.43}}}
+    cfg = {"chain": {"intermediates": []}, "never_drop": [], "ship_stock": ss}
+    rec = {"snekkja 1": {"inputs": [{"amount": 50, "product": "labour"}]}}
+    ship = {"name": "s", "id": "9", "route_to": "2"}
+    p = ships.plan_ship(ship, snap, world, sea, cfg, recipes=rec)
+    o = p["orders"]
+    # 8% of 5,500 = 440 a turn for stock: furniture 12 at 13.9 (what Far sells a turn: 30% of 40 traded), pasties 8 (its
+    # 8 on offer) out of the 273 left; candles held 16 > keep 12: none
+    assert o["furniture"]["buy_volume"] == 12 and o["furniture"]["max_holding"] == 140, p
+    assert o["pasties"]["buy_volume"] == 8 and "candles" not in o, p
+    assert "stock: furniture 12 @ 13.9 (keep 140)" in p["notes"], p
+    p = ships.plan_ship(ship, dict(snap, cash=2000 / 0.08), world, sea, cfg, recipes=rec)
+    assert p["orders"]["pasties"]["buy_volume"] == 8, p          # a bigger budget: room, not cash, is the limit
+    assert p["crew"] > 0 and p["est_net"] > 0, p
+    p = ships.plan_ship(ship, dict(snap, cash=4000), world, sea, cfg, recipes=rec)
+    assert "furniture" not in p["orders"], p                     # under the stock min_cash
+    # off: furniture falls back to the plain import rule. No home seller, so it is priced off 110% of the home average
+    # (12.1 -> 13.3): Far's 13.7 is dearer, so no import; candles (home avg 66.5 -> 73.2) at 74: also no
+    p = ships.plan_ship(ship, snap, world, sea, dict(cfg, ship_stock=dict(ss, on=False)), recipes=rec)
+    assert not p["orders"], p
+    cheap = [world[0], {"name": "Far", "markets": {"furniture": mk(0, 11.2, 0, 9, 36)}}]
+    p = ships.plan_ship(ship, snap, cheap, sea, dict(cfg, ship_stock=dict(ss, on=False)), recipes=rec)
+    # use 1.4 a turn, priced off the home average: planned (1 furniture = 4 space units), but alone it can't pay the crew
+    assert p["space"] == [0, 4] and "clear only" in p["notes"][-1], p
+
+
+def test_ship_pinned_voyage():
+    d = tempfile.mkdtemp()
+    calls = []
+
+    def apply(e):
+        calls.append(e)
+        if e.get("route", {}).get("start"):
+            return {"ok": True, "route": {"remote_town": "120102307"}}
+        return {"ok": True}
+    try:
+        cfg = {"live": {"ship_modes": {"9": "auto"}, "ship_pins": {"9": "120102307"}}}
+        plan = {"ship_plans": {"plans": [{"id": "9", "est_net": 0.0}],
+                               "best": [{"town": "Etallaen", "town_id": "109102068", "per_turn": 300}]}}
+        sst, log = {}, os.path.join(d, "a.jsonl")
+        snap = {"turn": 1, "ships": [{"id": "9", "name": "s", "town": "64601365", "route_to": "64601365"}]}
+        out = act.ship_voyages(plan, cfg, snap, sst, log, apply)           # pinned: stop the old route, sail home now
+        assert "pinned to" in out[0] and calls[0]["route"]["stop"] and calls[-1]["travel"]["to_town"] == "152202387", (out, calls)
+        calls.clear()
+        home = {"turn": 2, "ships": [{"id": "9", "name": "s", "town": "152202387", "route_to": None}]}
+        out = act.ship_voyages(plan, cfg, home, sst, log, apply)           # home: sails to the pin, not the "best" town
+        assert calls[1]["travel"]["to_town"] == "120102307" and calls[2]["route"]["start"], (out, calls)
+        assert not any("re-targeted" in x for x in out), out
+        calls.clear()
+        there = {"turn": 3, "ships": [{"id": "9", "name": "s", "town": "120102307", "route_to": "120102307"}]}
+        act.ship_voyages(plan, cfg, there, sst, log, apply)
+        assert act.ship_voyages(plan, cfg, dict(there, turn=40), sst, log, apply) == [] and calls == []   # stays put
+        # an old voyage to another town is dropped for the pin
+        sst = {"9": {"voyage": {"target": "109102068", "name": "Etallaen", "step": "home", "turn": 1}}}
+        out = act.ship_voyages(plan, cfg, dict(snap, turn=5), sst, log, apply)
+        assert sst["9"]["voyage"]["target"] == "120102307", (out, sst)
+        # another auto ship never picks the pinned town
+        cfg2 = {"live": {"ship_modes": {"9": "auto", "8": "auto"}, "ship_pins": {"9": "120102307"}}}
+        plan2 = {"ship_plans": {"plans": [{"id": "8", "est_net": 0.0, "orders": {}}],
+                                "best": [{"town": "Rouhomme", "town_id": "120102307", "per_turn": 300}]}}
+        snap2 = {"turn": 9, "ships": [{"id": "8", "name": "t", "town": "152202387", "route_to": None}]}
+        assert act.ship_voyages(plan2, cfg2, snap2, {}, log, apply) == []
+    finally:
+        shutil.rmtree(d)
+
+
 def test_suspended_item_comes_back_after_clean_runs():
     st, cfg, sus = {}, {"live": {"items": ["porterage"]}}, {"porterage": {"why": "risk flag 2 runs in a row"}}
     clean, risky = {"flags": []}, {"flags": [{"severity": "risk", "item": "porterage"}]}

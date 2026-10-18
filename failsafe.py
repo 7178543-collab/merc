@@ -41,8 +41,12 @@ STATE = os.path.join(HERE, "state", "failsafe.json")
 
 BURN_TURNS = 12
 WATCH_BURN, BRAKE_BURN = 5000, 9000
-WATCH_CASH, BRAKE_CASH, STOP_CASH = 15000, 8000, 6000   # Oct 15: brake 10k -> 8k. At 10k it flapped with cash sitting
-# at ~10k: each trip stood v2 down (labour went unmanaged, 146 expired in a turn) and paused the gear slots
+WATCH_CASH, BRAKE_CASH, STOP_CASH = 15000, 4000, 2500   # Oct 15: brake 10k -> 8k. At 10k it flapped with cash sitting
+# at ~10k: each trip stood v2 down (labour went unmanaged, 146 expired in a turn) and paused the gear slots.
+# Oct 18 (Taylor: get on track): brake 8k -> 4k, stop 6k -> 2.5k. Cash sat at ~5.5k in STOP all day with trading back
+# in profit (+270-317 a turn): v2 stood down, so nothing reprices, no ship sails, and the household slots ran dry.
+# A turn's outflows (labour ~230, taxes 226, household ~120) are ~600, so 2.5k is ~4 turns with no sales at all.
+# The burn brake (9k over 12 turns) still catches a fast drain at any cash level.
 LABOUR_WASTE, LABOUR_BUFFER = 30, 10
 LABOUR_PRICE_CAP = "2.00"
 # tool guard (Oct 11: tools ran dry at 5am, camp + retting stopped, their labour expired)
@@ -53,8 +57,10 @@ TOOLS_ORDER = {"buy_volume": 31, "buy_price": "6.20", "max_holding": 200}   # ~2
 # switched off at BRAKE: one-off build materials and stockpiles, never the production chain
 # Oct 15: tar dropped from the brake. It is the ropewalk's input, not a discretionary buy: the Oct 15 17:10 UTC brake
 # paused it, the ropewalk stopped, thread piled 216 -> 402 and the chain's bought labour expired (146 in one turn).
-BRAKE_ITEMS = ["wheels", "timber", "furniture", "candles", "jewellery", "light armour", "arms",
-               "tiles", "nails", "bricks"]
+# Oct 18: furniture, candles, light armour and arms dropped from the brake. They feed household sustenance slots
+# (prestige every turn: candles alone 3/turn), small and capped buys, not stockpiles; pausing them cost ~4 prestige a
+# turn to save ~150 coin. jewellery stays (church stockpile).
+BRAKE_ITEMS = ["wheels", "timber", "jewellery", "tiles", "nails", "bricks"]
 STOP_ITEMS = ["limestone", "cured fish"]
 
 
