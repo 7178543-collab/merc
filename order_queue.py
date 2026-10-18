@@ -7,6 +7,7 @@ Entry kinds (a JSON list of these):
   building producer {"building": "<id>", "producer": {"recipe": "hold banquet 1 (fish)", "target": 1}}
   ship operation    {"transport": "<ship id>", "operation_target": 0}   (0 pauses it in place)
   household slot    {"household": "21623", "item": "light armour", "set": {"buy_volume": 1, "buy_price": "90", "max_holding": 2}}
+                    swap a product: {"household": "21623", "item": "pasties", "replace": "bread"} (old one removed first)
   prestige spend    {"prestige": "prestige_management", "cost": 100, "confirm": true, "max_cost": 300}   (permanent; Taylor's go-ahead only;
                     retries once at the game's stated cost if free prestige and max_cost allow)
   rules override    {"override": {"banquet": "auto"|"on"|"off"}}    (phone app)
@@ -193,9 +194,20 @@ def _apply_household_slot(e):
     hid, item = str(e["household"]), e["item"]
     path = "/households/%s/sustenance/inventory/%s" % (hid, urllib.parse.quote(item, safe=""))
 
-    def holding():
+    def holding(name=item):
         h = m.get("/households/%s" % hid) or {}
-        return (((h.get("sustenance") or {}).get("inventory") or {}).get("holdings") or {}).get(item)
+        return (((h.get("sustenance") or {}).get("inventory") or {}).get("holdings") or {}).get(name)
+    old = e.get("replace")
+    if old:
+        # swap a slot's product (Oct 18): {"household": id, "item": "pasties", "replace": "bread"} = the game client's own
+        # replace: DELETE the old product's holding, then PATCH the new one (game client mt(): deleteResource + patchResource)
+        if holding(old) is None:
+            return dict(ok=False, error="%s is not a slot product now: nothing to replace" % old)
+        ok, status, resp = _req("DELETE", "/households/%s/sustenance/inventory/%s" % (hid, urllib.parse.quote(old, safe="")), {})
+        if not ok:
+            return dict(ok=False, status=status, body=resp, step="delete %s" % old)
+        if holding(old) is not None:
+            return dict(ok=False, status=status, error="%s still a slot product after delete" % old)
     before = holding()
     body = {}
     if e.get("set"):
