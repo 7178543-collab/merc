@@ -1,3 +1,4 @@
+- 2026-10-18T19:10Z: hourly: cash 5.9k (+302), WATCH, Linen Snake Grandgues route running (furniture 21 + pasties 2 in), Flax Wyrm route started at Rouhomme 18:54 (crew 0.52), furniture 70/140, pasties 4 (bread slot kept), slots stocked, rope 56 held (ask 79.0 = bid), labour expired 68 last turn (v2 already cut the labour buy to 0), workflows green, no fixes.
 - 2026-10-18T18:12Z: hourly: cash 5.4k (-26), WATCH, Linen Snake Grandgues route running (furniture 21 in), Flax Wyrm back home at 17:47 en route to Rouhomme (v2 voyage, no fix), furniture 31/140, pasties 1, slots stocked; fix: rope ask 79.5 -> 79.0 to meet the home bid (ropewalk blocked 60/60), ok.
 ## Done
 - 2026-10-18T18:10Z: Taylor: KEEP the quarry ("we might need the limestone"). Not a donation candidate; don't raise it again. Open call left: Tenants L12 (450) + 5 farmstead plots.
