@@ -1,6 +1,6 @@
 {
- "t": "2026-10-19T17:54:32+00:00",
- "turn": 13400,
+ "t": "2026-10-19T19:08:23+00:00",
+ "turn": 13402,
  "mode": "live",
  "owned": [
   "beer",
@@ -10,22 +10,20 @@
   "fish",
   "garments",
   "grain",
+  "labour",
   "meat",
-  "nets"
+  "nets",
+  "porterage"
  ],
  "suspended": {
   "porterage": {
-   "since": "2026-10-18T18:54:57+00:00",
-   "why": "risk flag 2 runs in a row"
-  },
-  "labour": {
-   "since": "2026-10-19T17:00:51+00:00",
-   "why": "write failed 2 runs in a row"
+   "since": "2026-10-19T19:08:23+00:00",
+   "why": "risk flag 3 runs in a row"
   }
  },
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 6,
+ "would_change": 7,
  "chain": {
   "why": "targets within the drift threshold of plan",
   "done": []
@@ -44,11 +42,17 @@
    "new": [
     {
      "min_holding": 60,
-     "sell_volume": 39,
-     "sell_price": "3.54"
+     "sell_volume": 43,
+     "sell_price": "3.38"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "candles",
@@ -148,7 +152,7 @@
   },
   {
    "item": "labour",
-   "owned": false,
+   "owned": true,
    "live": [
     {
      "buy_price": "2.2"
@@ -157,11 +161,16 @@
    "new": [
     {
      "buy_price": "2.2",
-     "buy_volume": 0
+     "buy_volume": 60
     }
    ],
    "same": false,
-   "refused": []
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "meat",
@@ -215,7 +224,7 @@
     {
      "max_holding": 12,
      "buy_volume": 3,
-     "buy_price": "15.3"
+     "buy_price": "19.5"
     }
    ],
    "same": false,
@@ -225,21 +234,23 @@
   },
   {
    "item": "porterage",
-   "owned": false,
+   "owned": true,
    "live": [
-    {
-     "buy_volume": 7,
-     "buy_price": "1.1"
-    }
-   ],
-   "new": [
     {
      "buy_volume": 37,
      "buy_price": "1.1"
     }
    ],
+   "new": [
+    {
+     "buy_volume": 14,
+     "buy_price": "1.1"
+    }
+   ],
    "same": false,
-   "refused": []
+   "refused": [
+    "changed by hand through the order queue in the last 2 hours"
+   ]
   },
   {
    "item": "rope",
@@ -253,7 +264,7 @@
    "new": [
     {
      "sell_volume": 4,
-     "sell_price": "75.0"
+     "sell_price": "74.5"
     }
    ],
    "same": false,
@@ -276,8 +287,8 @@
    ],
    "new": [
     {
-     "max_holding": 22,
-     "buy_volume": 3,
+     "max_holding": 45,
+     "buy_volume": 6,
      "buy_price": "6.2"
     }
    ],
