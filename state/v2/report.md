@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13394, 2026-10-19 11:59. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 5,771, prestige 3,382 (712 free, -0.8/turn).
+Turn 13396, 2026-10-19 13:12. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 6,568, prestige 3,380 (710 free, -0.8/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 238 | 0 | 4 | 0 | 0 | min_holding 60, sell 38, sell @ 3.54 |
+| beer | 207 | 0 | 4 | 0 | 0 | min_holding 60, sell 38, sell @ 3.54 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 18 | 4 | 4 | 0 | 0 | stop 18, buy 5, buy @ 2.4 |
@@ -16,7 +16,7 @@ Cash 5,771, prestige 3,382 (712 free, -0.8/turn).
 | grain | 51 | 13 | 13 | 0 | 0 | stop 52, buy 14, buy @ 3.7 |
 | labour | 0 | 0 | 419 | 0 | 31 | buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 23 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34.6 |
+| nets | 21 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34.6 |
 | porterage | 7 | 7 | 7 | 30 | 0 | buy 7, buy @ 1.1 |
 
 **2 risks, 0 waste, 0 tuning** where v2 would act differently from v1.
@@ -28,11 +28,11 @@ Cash 5,771, prestige 3,382 (712 free, -0.8/turn).
 
 ## Notes
 
-- labour: projection runs 134 over real use lately; planning 424, not 559
+- labour: projection runs 136 over real use lately; planning 423, not 559
 
 ## Prestige spending, cheapest coin per prestige first
 
-1007 turns left: prestige gained now converts 99.4% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+1005 turns left: prestige gained now converts 99.4% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 11 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -40,32 +40,32 @@ Cash 5,771, prestige 3,382 (712 free, -0.8/turn).
 
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
-| maintain 1 | park | 0.5 | 46.2 | 46.2 | running |
-| hold feast 2 | townhouse | 2.6 | 53.0 | 55.7 | needs a townhouse (build cost 6,904); thin at home: wine |
-| hold prayer 2 | chapel | 13 | 53.1 | 55.7 | needs a chapel (build cost 31,958); thin at home: furniture |
-| hold sermon 2 (candles) | church | 31 | 53.0 | 55.8 | needs a church (build cost 80,446); thin at home: candles, furniture |
-| hold banquet 2 (fish) | mansion | 6.8 | 56.3 | 56.3 | thin at home: wine, cured fish |
-| hold banquet 2 (meat) | mansion | 6.8 | 56.4 | 56.4 | thin at home: wine |
-| hold sermon 2 | church | 24 | 53.7 | 57.4 | needs a church (build cost 80,446); thin at home: furniture |
-| jousting 1 | arena | 170 | 57.6 | 57.7 | needs a arena (build cost 24,968); thin at home: protection, light armour, arms; needs weaponry skill |
-| hold banquet 1 (fish) | mansion | 4.2 | 57.8 | 57.8 | thin at home: cured fish |
-| hold banquet 3 (fish) | mansion | 7.6 | 57.8 | 57.8 | thin at home: cured fish |
-| hold banquet 3 (meat) | mansion | 7.6 | 57.9 | 57.9 |  |
-| hold banquet 1 (meat) | mansion | 4.2 | 58.8 | 58.8 |  |
+| maintain 1 | park | 0.5 | 45.9 | 45.9 | running |
+| hold banquet 2 (fish) | mansion | 6.8 | 54.5 | 54.5 | thin at home: wine, cured fish |
+| hold banquet 2 (meat) | mansion | 6.8 | 54.7 | 54.7 | thin at home: wine |
+| hold prayer 2 | chapel | 13 | 52.7 | 55.3 | needs a chapel (build cost 31,684); thin at home: furniture |
+| hold banquet 2 (pies) | mansion | 7 | 55.5 | 55.5 | thin at home: pasties, wine |
+| hold feast 2 | townhouse | 2.6 | 52.9 | 55.6 | needs a townhouse (build cost 6,836); thin at home: wine |
+| hold banquet 3 (fish) | mansion | 7.6 | 56.2 | 56.2 | thin at home: cured fish |
+| hold banquet 3 (meat) | mansion | 7.6 | 56.3 | 56.3 |  |
+| hold banquet 3 (pies) | mansion | 8 | 56.5 | 56.5 | thin at home: pasties |
+| hold sermon 2 (candles) | church | 31 | 54.3 | 57.2 | needs a church (build cost 80,446); thin at home: jewellery, candles, furniture |
+| hold sermon 2 | church | 24 | 53.6 | 57.3 | needs a church (build cost 80,446); thin at home: jewellery, furniture |
+| hold banquet 1 (fish) | mansion | 4.2 | 57.4 | 57.4 | thin at home: cured fish |
 
 ## Ships (last turn, real)
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.10 | 9 | 120102307 | 0.312 | beer 39 | furniture 1 | 22 |
+| Flax Wyrm | 0.1 / 0.10 | 9 | 120102307 | 0.312 | beer 39 | furniture 1 | 15 |
 | linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
-- **linen snake** on Grandgues: furniture buy 2 @ 14.2; crew 0.1; est +15 a turn; stock: furniture 2 @ 14.2 (keep 140)
-- **Flax Wyrm** on Rouhomme: nothing pays; crew 0.0; est +0 a turn; best orders clear only 9 a turn after crew: ship stays at 0
-- best towns now: Disscester +62, Karlmoor +54, Chatgnan +49, Briclives +44, Heilegg +37
-- Disscester would trade: furniture buy 2 @ 14.1, garments sell 14 @ 22.8, rope sell 1 @ 84.5; crew 0.1
+- **Flax Wyrm** on Rouhomme: furniture buy 8 @ 14.2; crew 0.1; est +88 a turn; stock: furniture 8 @ 14.2 (keep 145)
+- **linen snake** on Grandgues: furniture buy 8 @ 14.2; crew 0.1; est +88 a turn; stock: furniture 8 @ 14.2 (keep 145)
+- best towns now: Karlmoor +136, Toqueque +124, Caillechâtel +123, Chatgnan +121, Briclives +118
+- Karlmoor would trade: furniture buy 8 @ 13.2, nets sell 6 @ 42.6; crew 0.1
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -73,47 +73,47 @@ Cash 5,771, prestige 3,382 (712 free, -0.8/turn).
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Hanstein | 380 | 0.10 | 0.30 (28/turn) | cheese 19 (5.35->5.84), timber 10 (6.2->8.07), beer 38 (2.77->3), fleece 1 (5.17->5.89) | thread 64 (4.64->5.55), flax fibres 14 (5.35->6.95), bellows 1 (256.2->275.5), pasties 2 (13.65->18.8) | +128 |
-| Rouhomme | 368 | 0.09 | 0.80 (75/turn) | bread 150 (2.07->2.83), beer 38 (2.77->3.42), cheese 14 (5.35->6.08), timber 11 (6.2->7.98) | pasties 2 (14.6->18.8), lead bars 10 (12.08->12.82), flax fibres 2 (5.57->6.95), tiles 1 (3.76->5.42) | +125 |
-| Vauxvais | 204 | 0.05 | 0.30 (28/turn) | bread 150 (2.07->2.66), tools 16 (4.12->4.69), beer 38 (2.77->2.96), cheese 5 (5.35->5.84) | flax fibres 12 (5.57->6.95), thread 17 (4.83->5.55), pasties 2 (14.6->18.8), tiles 2 (3.36->5.42) | +119 |
-| Fontaux | 411 | 0.10 | 0.30 (28/turn) | casks 9 (5.51->9.5), cheese 15 (5.35->6.93), nails 1 (6.41->8.12), timber 11 (6.2->7.93) | bellows 1 (252->275.5), flax fibres 7 (5.83->6.95), thread 64 (5.35->5.55), hides 1 (9.71->12.44) | +101 |
-| Hofkirchen | 991 | 0.29 | 0.30 (28/turn) | seeds 7 (1.98->4.27), tools 16 (4.12->4.62), tallow 1 (21.84->24.51) | bellows 1 (243.6->275.5), flax fibres 14 (5.51->6.95), pasties 2 (13.65->18.8), medicine 1 (122.85->125.4) | +71 |
+| Brunnham | 1281 | 0.44 | 0.30 (28/turn) | grindstones 1 (443.1->536.75), nets 3 (35.6->39.9), tools 16 (4.1->4.73) | bellows 1 (264.6->285), candles 1 (69.3->79.5), salt 9 (4.24->5.56) | +129 |
+| Rouhomme | 368 | 0.09 | 0.70 (65/turn) | bread 149 (2.06->2.74), timber 11 (6.2->8.84), cheese 14 (5.35->5.61), tar 2 (10.08->11.4) | bellows 1 (254.1->285), candles 1 (72.45->79.5), lead bars 10 (12.08->12.82), flax fibres 3 (5.57->6.65) | +127 |
+| Vauxvais | 204 | 0.05 | 0.40 (37/turn) | bread 149 (2.06->2.66), beer 36 (2.75->3.02), tools 16 (4.1->4.5), cheese 5 (5.35->6.46) | flax fibres 10 (5.57->6.65), thread 9 (5.06->5.55), salt 4 (4.83->5.56), candles 1 (77.7->79.5) | +102 |
+| Chatgnan | 728 | 0.18 | 0.20 (19/turn) | beer 36 (2.75->3.97), flax fibres 4 (4.5->6.6), varnish 2 (17.64->19.38), rope 1 (76.5->79.33) | bellows 1 (249.9->285), thread 16 (4.45->5.55), slaked lime 1 (6.51->7.65), yarn 3 (3.97->4.26) | +96 |
+| Hofkirchen | 991 | 0.29 | 0.20 (19/turn) | tools 16 (4.1->4.45), wax 4 (22.47->22.8) | plate armour 1 (1470->1501), bellows 1 (268.8->285), flax fibres 14 (5.41->6.65), salt 9 (4.22->5.56) | +78 |
 
-**Best:** Hanstein at about +128 coin a turn.
+**Best:** Brunnham at about +129 coin a turn.
 
 ## v2 orders
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| beer |  | 37 @ min 3.54 | makes 28.0, uses 4.2, holds 238 (keeps 60): sells the surplus + 13/turn of the excess |
+| beer |  | 34 @ min 3.54 | makes 28.0, uses 4.2, holds 207 (keeps 60): sells the surplus + 10/turn of the excess |
 | candles | 2 @ 70.0, stop 6 |  | uses 1.5/turn (household upkeep), makes 0.0, holds 12 = 7.7 turns |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
-| firewood | 5 @ 2.4, stop 18 |  | uses 4.4/turn (brewery 1, household upkeep), makes 0.0, holds 18 = 4.0 turns |
+| firewood | 5 @ 2.4, stop 18 |  | uses 4.4/turn (brewery 1, household upkeep), makes 0.0, holds 18 = 4.1 turns |
 | fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
 | garments |  | 14 @ min 20.8 | makes 3.3, uses 2.1, holds 187 (keeps 30): sells the surplus + 13/turn of the excess |
 | grain | 14 @ 3.7, stop 52 |  | uses 13.0/turn (brewery 1), makes 0.0, holds 51 = 3.9 turns |
-| labour | 0 @ 2.2, stop - |  | uses 424.3/turn (brewery 1, flax farm 1, household), makes 450.0, holds 0 |
+| labour | 0 @ 2.2, stop - |  | uses 423.1/turn (brewery 1, flax farm 1, household), makes 450.0, holds 0 |
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 9 @ min 34.6 |  |
-| pasties | 3 @ 19.7, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 14 = 4.9 turns |
+| pasties | 3 @ 15.3, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 13 = 4.7 turns |
 | porterage | 37 @ 1.1, stop - |  | uses 36.9/turn (observed), makes 0.0, holds 7 = 0.2 turns |
-| rope |  | 6 @ min 74.5 | makes 2.2, uses 0.0, holds 48 (keeps 0): sells the surplus + 4/turn of the excess |
-| tools | 3 @ 6.2, stop 22 |  | uses 2.6/turn (retting pit 1), makes 0.0, holds 199 = 75.9 turns |
+| rope |  | 5 @ min 74.5 | makes 2.2, uses 0.0, holds 41 (keeps 0): sells the surplus + 3/turn of the excess |
+| tools | 3 @ 6.2, stop 22 |  | uses 2.6/turn (retting pit 1), makes 0.0, holds 199 = 75.8 turns |
 
 ## Chain sizing
 
 Mode HOLD, garments sold 9.2/turn (+0.0 exported); plan makes 3.3 garments a turn.
-Labour: own 450, everything else 512, chain may buy 350 -> chain allowance 350, chain plan 129 (+2 vs now).
+Labour: own 450, everything else 512, chain may buy 350 -> chain allowance 350, chain plan 138 (+10 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 2.40 | 2.35 |
-| ret | 3 | 0.43 | 0.42 |
-| spin | 4 | 0.88 | 0.91 |
+| flax | 11 | 2.40 | 2.55 |
+| ret | 3 | 0.43 | 0.45 |
+| spin | 4 | 0.88 | 0.98 |
 | weave | 3 | 0.12 | 0.13 |
 | sew | 2 | 0.08 | 0.08 |
 
-Buffers: flax fibres 57/48, thread 433/140, cloth 18/13
+Buffers: flax fibres 58/48, thread 392/141, cloth 17/14
 
 ## Self-diagnosis
 
