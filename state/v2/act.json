@@ -1,6 +1,6 @@
 {
- "t": "2026-10-20T13:13:39+00:00",
- "turn": 13420,
+ "t": "2026-10-20T14:04:58+00:00",
+ "turn": 13421,
  "mode": "live",
  "owned": [
   "beer",
@@ -10,7 +10,6 @@
   "fish",
   "garments",
   "grain",
-  "labour",
   "meat",
   "nets",
   "porterage"
@@ -19,74 +18,49 @@
   "labour": {
    "since": "2026-10-20T13:13:39+00:00",
    "why": "write failed 2 runs in a row"
+  },
+  "porterage": {
+   "since": "2026-10-20T14:04:58+00:00",
+   "why": "risk flag 2 runs in a row"
   }
  },
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 10,
+ "would_change": 9,
  "chain": {
-  "why": "drift flax, spin, weave, sew",
-  "done": [
-   {
-    "step": "flax",
-    "id": "151602400",
-    "name": "flax farm 1",
-    "recipe": "grow flax 1",
-    "from": 5.56,
-    "to": 5.04,
-    "ok": true,
-    "status": 200
-   },
-   {
-    "step": "ret",
-    "id": "151802398",
-    "name": "retting pit 1",
-    "recipe": "retting 2",
-    "from": 0.99,
-    "to": 0.9,
-    "ok": true,
-    "status": 200
-   },
-   {
-    "step": "spin",
-    "id": "152202388002007",
-    "name": "spinnery 1",
-    "recipe": "spin thread 1",
-    "from": 2.03,
-    "to": 1.84,
-    "ok": true,
-    "status": 200
-   },
-   {
-    "step": "weave",
-    "id": "152202388001005",
-    "name": "weavery 1",
-    "recipe": "weave cloth 2",
-    "from": 0.03,
-    "to": 0.89,
-    "ok": true,
-    "status": 200
-   },
-   {
-    "step": "sew",
-    "id": "152202388000004",
-    "name": "sewing shop 1",
-    "recipe": "sew garments 2",
-    "from": 0.034,
-    "to": 0.55,
-    "ok": true,
-    "status": 200
-   }
-  ]
+  "why": "targets within the drift threshold of plan",
+  "done": []
  },
  "rows": [
+  {
+   "item": "arms",
+   "owned": false,
+   "live": [
+    {
+     "max_holding": 4,
+     "buy_volume": 1,
+     "buy_price": "31.2"
+    }
+   ],
+   "new": [
+    {
+     "max_holding": 2,
+     "buy_volume": 1,
+     "buy_price": "26.2"
+    }
+   ],
+   "same": false,
+   "refused": [
+    "no buy ceiling in config for arms"
+   ]
+  },
   {
    "item": "beer",
    "owned": true,
    "live": [
     {
      "min_holding": 60,
-     "sell_volume": 55,
+     "sell_volume": 52,
      "sell_price": "3.4"
     }
    ],
@@ -94,7 +68,7 @@
     {
      "min_holding": 60,
      "sell_volume": 52,
-     "sell_price": "3.4"
+     "sell_price": "3.38"
     }
    ],
    "same": false,
@@ -130,7 +104,7 @@
    "live": [
     {
      "max_holding": 24,
-     "buy_volume": 10,
+     "buy_volume": 7,
      "buy_price": "2.4"
     }
    ],
@@ -141,13 +115,7 @@
      "buy_price": "2.4"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "fish",
@@ -174,18 +142,21 @@
    "live": [
     {
      "min_holding": 30,
-     "sell_volume": 30,
+     "sell_volume": 7,
      "sell_price": "20"
     }
    ],
    "new": [
     {
      "min_holding": 30,
-     "sell_volume": 7,
+     "sell_volume": 24,
      "sell_price": "20.0"
     }
    ],
    "same": false,
+   "stepped": [
+    "sell 7 -> 26 stepped to 24 (2x+10 a run)"
+   ],
    "refused": [],
    "sent": true,
    "ok": true,
@@ -199,7 +170,7 @@
    "live": [
     {
      "max_holding": 104,
-     "buy_volume": 38,
+     "buy_volume": 27,
      "buy_price": "3.7"
     }
    ],
@@ -210,33 +181,25 @@
      "buy_price": "3.7"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "labour",
-   "owned": true,
+   "owned": false,
    "live": [
     {
-     "buy_volume": 52,
+     "buy_volume": 81,
      "buy_price": "2.2"
     }
    ],
    "new": [
     {
-     "buy_volume": 242,
+     "buy_volume": 280,
      "buy_price": "2.2"
     }
    ],
    "same": false,
-   "refused": [
-    "changed by hand through the order queue in the last 2 hours"
-   ]
+   "refused": []
   },
   {
    "item": "meat",
@@ -289,8 +252,8 @@
    "new": [
     {
      "max_holding": 12,
-     "buy_volume": 4,
-     "buy_price": "20.0"
+     "buy_volume": 3,
+     "buy_price": "17.1"
     }
    ],
    "same": false,
@@ -303,13 +266,13 @@
    "owned": true,
    "live": [
     {
-     "buy_volume": 4,
+     "buy_volume": 10,
      "buy_price": "1.1"
     }
    ],
    "new": [
     {
-     "buy_volume": 10,
+     "buy_volume": 5,
      "buy_price": "1.1"
     }
    ],
@@ -333,7 +296,7 @@
    "new": [
     {
      "sell_volume": 3,
-     "sell_price": "73.5"
+     "sell_price": "74.5"
     }
    ],
    "same": false,
@@ -355,7 +318,7 @@
    "new": [
     {
      "min_holding": 350,
-     "sell_volume": 11,
+     "sell_volume": 9,
      "sell_price": "6.5"
     },
     {
@@ -382,7 +345,7 @@
    ],
    "new": [
     {
-     "max_holding": 32,
+     "max_holding": 31,
      "buy_volume": 4,
      "buy_price": "6.2"
     }
