@@ -777,6 +777,20 @@ def test_diagnose_r7_stale_ask_and_market_sanity():
     assert any(x["rule"] == "R6 data sanity" and x.get("item") == "market" for x in f4)
 
 
+def test_endgame_switch():
+    import datetime as dt
+    import endgame
+    utc = dt.timezone.utc
+    cfg = {"endgame": {"on": True, "start": "2026-11-10T00:00:00Z", "season_end": "2026-11-30T11:00:00Z"}}
+    before, during, after = (dt.datetime(2026, 11, 1, tzinfo=utc), dt.datetime(2026, 11, 20, tzinfo=utc),
+                             dt.datetime(2026, 12, 1, tzinfo=utc))
+    assert not endgame.active(before, cfg) and endgame.active(during, cfg) and not endgame.active(after, cfg)
+    assert not endgame.active(during, {"endgame": {"on": False}}) and not endgame.active(during, {})   # off unless on
+    assert endgame.floor("plot_min_cash", 20000, during, cfg) == 5000 and endgame.floor("plot_min_cash", 20000, before, cfg) == 20000
+    assert endgame.turns_left(during, cfg) == 251 and round(endgame.legacy_share(240), 2) == 0.70
+    assert round(endgame.legacy_share(985), 2) == 0.99 and round(endgame.legacy_share(24), 2) == 0.11
+
+
 def test_act_runs_diagnose_safely():
     d, cfg = _act_dir(cfg_live=[])
     try:

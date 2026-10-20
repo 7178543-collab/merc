@@ -922,7 +922,10 @@ def _apply_site(e):
         return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
     if typ not in specs:
         return dict(ok=False, error="unknown building type %r" % typ)
-    pend = [d for d in _load_deferred() if str(((d.get("entry") or {}).get("site") or {}).get("type")) == typ]
+    now = datetime.datetime.now(datetime.timezone.utc)
+    # only steps still waiting count: a due deferred site step is still in the file while it runs (it would skip itself)
+    pend = [d for d in _load_deferred() if str(((d.get("entry") or {}).get("site") or {}).get("type")) == typ
+            and _utc(d.get("after")) > now and not e.get("site", {}).get("tile")]
     if pend:
         return dict(ok=True, skipped="a %s site step is already waiting until %s" % (typ, pend[0].get("after")))
     materials = ((specs[typ].get("construction") or {}).get("materials"))
@@ -941,18 +944,17 @@ def _apply_site(e):
         cok, cerr = _claim_tile(anchor["town_id"], tile)
         if not cok:
             return dict(ok=False, tile=tile, error=cerr)
-        try:
-            town = _town(anchor["town_id"])
-        except Exception:
-            town = {}
-        if _tile_owner(town, tile) != OWNER_ID:
-            after = _defer({"site": dict(s, tile=tile), "confirm": True})
-            return dict(ok=True, tile=tile, claimed=True, build_after=after)
+        # Oct 20: right after the purchase the tile reads as ours, but POST /buildings refuses it ("must own the land
+        # ... owned by 0") until the turn tick settles it (a plot expansion doesn't mind). Always build after the tick.
+        after = _defer({"site": dict(s, tile=tile), "confirm": True})
+        return dict(ok=True, tile=tile, claimed=True, build_after=after)
     cx, sx, cy, sy = _parse_loc(tile)
     r = _apply_build({"build": {"type": typ, "town_id": str(anchor["town_id"]), "location": "%d:%d" % (cx, cy),
                                 "sublocation": {"x": sx, "y": sy}}, "confirm": True})
     if not r.get("ok"):
         r["tile"] = tile
+        if "must own the land" in str(r.get("body") or "") and not s.get("_retried"):
+            r["build_after"] = _defer({"site": dict(s, tile=tile, _retried=True), "confirm": True})
         return r
     bid = r.get("building_id")
     link = _apply_construction({"construction": {"building": bid, "set": {"provider_id": STORE}}})

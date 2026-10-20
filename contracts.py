@@ -38,6 +38,7 @@ import json
 import os
 import urllib.request
 
+import endgame
 import merc_status4 as m
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -280,7 +281,7 @@ def auto_fill(scored):
                 q.log(e, q.apply_entry(e), source="contracts")
             except Exception as ex:
                 print("contracts: reserve reset failed: %s" % ex)
-        if good and r["item"] in BUY_AFTER_FILL:
+        if good and r["item"] in BUY_AFTER_FILL and not endgame.active():   # endgame: keep stocking for the next ask
             e = {"item": r["item"], "tier": 0, "set": BUY_AFTER_FILL[r["item"]],
                  "note": "church %s ask filled: readiness buy back to household upkeep only (Taylor Oct 16, recovery; restore over 20k cash)" % r["item"]}
             try:

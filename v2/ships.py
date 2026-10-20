@@ -17,6 +17,10 @@ Rules (conservative):
   - imports: only goods we use, when their ask + shipping + margin is under our home ask. Volume: our use per turn.
   - crew: ceil(cargo space / journey capacity, 0.1 steps), floor 0.1; no profitable order -> crew 0.
 """
+import os as _os
+import sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))   # repo root (endgame.py)
+import endgame
 import math
 
 import routes
@@ -100,7 +104,8 @@ def plan_ship(ship, snap, world, sea, cfg, recipes=None, products=None, taken=No
     ss = cfg.get("ship_stock") or {}
     cash = _f(snap.get("cash"))
     wanted, budget = {}, {}
-    if sc.get("on") and cash >= _f(sc.get("min_cash") or 20000):
+    # endgame (Taylor Oct 20): ships also stock church goods (windows, tapestries: the cheapest prestige) from its start
+    if (sc.get("on") or endgame.active(cfg=cfg)) and cash >= _f(endgame.floor("church_min_cash", sc.get("min_cash") or 20000, cfg=cfg)):
         budget["church"] = _f(sc.get("spend_share") or 0.15) * cash
         for k, g in (sc.get("goods") or {}).items():
             wanted[k] = (g, "church", _f(sc.get("value_per_prestige") or 57))

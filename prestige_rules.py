@@ -34,6 +34,7 @@ import json
 import os
 import sys
 
+import endgame
 import merc_status4 as m
 import order_queue as q
 
@@ -151,13 +152,13 @@ def quarry_rule(cash, spare=None):
         qov = "auto"
     if qov == "slow":
         want, why = QUARRY_SLOW, "Taylor's switch from the app: quarry slow"
-    elif cash < AUTO_PLOT_MIN_CASH:
+    elif cash < endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH):
         # Oct 15 recovery: no new plots under 20k cash, so limestone only backs church asks; 44 labour a turn for a
         # pile nobody draws is waste (the home market trades ~2 a turn). Oct 20 (Taylor's one-off park plot takes 60):
         # under 20k the quarry never runs on bought labour, even under the church reserve; spare own labour (Rule 7,
         # below) refills it. Restarts at 0.4x on bought labour once cash is over 20k.
         want, why = 0, "recovery: no bought labour for the quarry under %d cash (limestone %.0f, reserve %d)" % (
-            AUTO_PLOT_MIN_CASH, held, LIMESTONE_RESERVE)
+            endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH), held, LIMESTONE_RESERVE)
     elif cash > QUARRY_FAST_CASH and held < need:
         want, why = QUARRY_FAST, "cash %.0f over %d, %d plot(s) still fit, limestone %.0f of %.0f" % (cash, QUARRY_FAST_CASH, room, held, need)
     elif cash < QUARRY_SLOW_CASH or held >= need:
@@ -292,8 +293,9 @@ def park_ready_rule(cash=None):
         say("  park maintain %s -> %d: %s" % (prod.get("target"), built, "OK" if r.get("ok") else "FAILED %s" % r.get("error")))
     say("park: %d plots, prestige pool %.1f/%.0f, limestone %.0f, timber %.0f -> %s" % (
         plots, used, cap, held["limestone"], held["timber"], "READY for another plot" if ready else ("no pool room" if not room else "waiting on materials")))
-    if ready and cash is not None and cash < AUTO_PLOT_MIN_CASH:
-        say("  park plot held: cash %.0f under %d (recovery)" % (cash, AUTO_PLOT_MIN_CASH))
+    if ready and cash is not None and cash < endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH):
+        say("  park plot held: cash %.0f under %d (%s)" % (cash, endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH),
+                                                          "endgame" if endgame.active() else "recovery"))
         return
     if ready and LIVE and AUTO_PLOT:
         e = {"plot": {"building": PARK}, "confirm": True, "note": "park rule: pool %.1f/%.0f, limestone %.0f, timber %.0f" % (
@@ -642,10 +644,12 @@ def main():
         ov = "auto"
     if ov in ("on", "off"):
         want_on, why = ov == "on", "Taylor's override from the app: banquet %s" % ov
-    elif cash < OFF_CASH:
-        want_on, why = False, "cash %.0f under %d" % (cash, OFF_CASH)
-    elif cash > ON_CASH:
-        want_on, why = True, "cash %.0f over %d (profit %+.0f over %d turns, %+.0f over %d)" % (cash, ON_CASH, profit, n, recent, rn)
+    elif cash < endgame.floor("banquet_off_cash", OFF_CASH):
+        want_on, why = False, "cash %.0f under %d%s" % (cash, endgame.floor("banquet_off_cash", OFF_CASH),
+                                                        " (endgame)" if endgame.active() else "")
+    elif cash > endgame.floor("banquet_on_cash", ON_CASH):
+        want_on, why = True, "cash %.0f over %d%s (profit %+.0f over %d turns, %+.0f over %d)" % (
+            cash, endgame.floor("banquet_on_cash", ON_CASH), " (endgame)" if endgame.active() else "", profit, n, recent, rn)
     else:
         want_on, why = running, "in between (cash %.0f, profit %+.0f over %d turns): keep as is" % (cash, profit, n)
 

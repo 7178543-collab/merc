@@ -8,6 +8,10 @@ One pass, one model of the whole business:
   flags   = anything that will stall, waste or lose money, ranked
 Returns a plan dict; never touches the game (shadow.py writes it to files).
 """
+import os as _os
+import sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))   # repo root (endgame.py)
+import endgame
 import json
 import math
 import os
@@ -395,7 +399,8 @@ def plan(s, cfg=None, recipes=None, goals=None):
         surplus = max(0.0, surplus)
         excess = max(0.0, it.get("held", 0) - keep - surplus)
         # per-item override (Oct 20, Taylor: clear the garment pile faster): config sell_drawdown_turns_item {item: n}
-        draw = excess / float((cfg.get("sell_drawdown_turns_item") or {}).get(item) or cfg.get("sell_drawdown_turns", 12))
+        draw = excess / float((cfg.get("sell_drawdown_turns_item") or {}).get(item)
+                             or endgame.floor("sell_drawdown_turns", cfg.get("sell_drawdown_turns", 12), cfg=cfg))
         # price: a sale clears at the market, so a low limit with a big volume drags the clearing price down for every
         # unit (Oct 12: garments asked 22 for 60 and got 22.3 each, with home bids at ~25.8 for ~41). With a live bid,
         # ask a little under it (97%) and let what it can't take wait for the ships; never under the cost floor.
