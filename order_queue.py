@@ -30,6 +30,9 @@ Entry kinds (a JSON list of these):
   construction pace {"pace": {"building": "<id>", "pace": 100}}   (0/25/50/100; a new construction starts at 0 = no deliveries)
   one more plot     {"plot": {"building": "<id>"}, "confirm": true}   (no map click: expands onto land we own, or claims the
                     nearest free tile and expands after the next tick; skips while building or already waiting)
+  new building      {"site": {"type": "net maker"}, "confirm": true}   (no map click: a free town-centre tile nearest the
+                    storehouse, bought if nobody owns it, then the site, storehouse link and pace 100; optional "tile",
+                    "near"; a tile that settles at the tick defers the rest; no confirm = dry run)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
 Every change is re-read after sending and only logged ok if the game actually holds it.
@@ -874,6 +877,65 @@ def _apply_plot(e):
     return dict(ok=True, tile=c["tile"], claimed=True, owner_now=_tile_owner(town, c["tile"]), expand_after=after)
 
 
+def _apply_site(e):
+    """A new building start to finish, no map click (Oct 20, Taylor: build a net maker):
+    {"site": {"type": "net maker"}, "confirm": true}; optional "tile": "1522.6:2388.1" and "near": "<building id>"
+    (default the storehouse). Picks a free town-centre tile (ours first, then nearest), buys it if nobody owns it
+    (a property, ~24), creates the site (POST /buildings via _apply_build), links the storehouse as the construction's
+    provider and sets delivery pace 100 (a new construction sits at pace 0 with no provider and never moves). A bought
+    tile that only settles at the tick defers the rest until after it. Skips if a site step for this type is already
+    waiting. No confirm = DRY RUN (tile, owner, materials)."""
+    s = e["site"]
+    typ = str(s.get("type") or "")
+    try:
+        specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
+        anchor = _get_json("/buildings/%s" % str(s.get("near") or STORE))
+        town = _get_json("/towns/%s" % anchor["town_id"])
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
+    if typ not in specs:
+        return dict(ok=False, error="unknown building type %r" % typ)
+    pend = [d for d in _load_deferred() if str(((d.get("entry") or {}).get("site") or {}).get("type")) == typ]
+    if pend:
+        return dict(ok=True, skipped="a %s site step is already waiting until %s" % (typ, pend[0].get("after")))
+    materials = ((specs[typ].get("construction") or {}).get("materials"))
+    tile = s.get("tile")
+    if not tile:
+        cands = _expansion_candidates(anchor, town, float(s.get("range") or 64))
+        if not cands:
+            return dict(ok=False, error="no free town-centre tile")
+        tile = cands[0]["tile"]
+    owner = _tile_owner(town, tile)
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, type=typ, tile=tile, owner=owner or None, ours=owner == OWNER_ID, materials=materials)
+    if owner != OWNER_ID:
+        if owner:
+            return dict(ok=False, tile=tile, error="tile owned by %s" % owner)
+        cok, cerr = _claim_tile(anchor["town_id"], tile)
+        if not cok:
+            return dict(ok=False, tile=tile, error=cerr)
+        try:
+            town = _get_json("/towns/%s" % anchor["town_id"])
+        except Exception:
+            town = {}
+        if _tile_owner(town, tile) != OWNER_ID:
+            after = _defer({"site": dict(s, tile=tile), "confirm": True})
+            return dict(ok=True, tile=tile, claimed=True, build_after=after)
+    cx, sx, cy, sy = _parse_loc(tile)
+    r = _apply_build({"build": {"type": typ, "town_id": str(anchor["town_id"]), "location": "%d:%d" % (cx, cy),
+                                "sublocation": {"x": sx, "y": sy}}, "confirm": True})
+    if not r.get("ok"):
+        r["tile"] = tile
+        return r
+    bid = r.get("building_id")
+    link = _apply_construction({"construction": {"building": bid, "set": {"provider_id": STORE}}})
+    pace = _apply_pace({"pace": {"building": bid, "pace": 100}})
+    good = bool(link.get("ok")) and bool(pace.get("ok"))
+    return dict(ok=good, tile=tile, building_id=bid, stage=r.get("stage"), linked=link.get("ok"), pace=pace.get("pace_now"),
+                materials=materials, error=None if good else "site %s created; link %s, pace %s" % (
+                    bid, link.get("reply") or link.get("now"), pace.get("reply") or pace.get("pace_now")))
+
+
 def _apply_claim(e):
     """Buy town-centre tiles: {"claim": {"town_id": "152202387", "tiles": ["1522.3:2388.5"]}, "confirm": true}.
     No confirm = dry run (lists tiles, owner and asking price from the live town data). Logs the game's reply verbatim."""
@@ -930,6 +992,8 @@ def apply_entry(e):
         return _apply_expand(e)
     if e.get("plot"):
         return _apply_plot(e)
+    if e.get("site"):
+        return _apply_site(e)
     if e.get("pace"):
         return _apply_pace(e)
     if e.get("v2"):
