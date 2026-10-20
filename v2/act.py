@@ -181,13 +181,18 @@ def _side(tiers, has, keys):
 
 
 def _canon(tiers):
-    """Order tiers in a form that compares equal however the game formats the numbers ("22" == 22.0)."""
+    """Order tiers in a form that compares equal however the game formats the numbers ("22" == 22.0).
+    Oct 20: the game drops a zero volume/holding from a tier (we send buy_volume 0, it stores no buy_volume), so a
+    zero there counts as absent; otherwise every labour trim to 0 read back 'not verified' and labour suspended itself
+    to v1 ('write failed 2 runs in a row', 09:59 UTC)."""
     def v(x):
         try:
             return round(float(x), 4)
         except (TypeError, ValueError):
             return str(x)
-    return json.dumps([{k: v(x) for k, x in sorted(t.items())} for t in tiers], sort_keys=True)
+    zero_ok = ("buy_volume", "sell_volume", "min_holding", "max_holding")
+    return json.dumps([{k: v(x) for k, x in sorted(t.items()) if not (k in zero_ok and v(x) == 0)} for t in tiers],
+                      sort_keys=True)
 
 
 # ---------------------------------------------------------------- guards

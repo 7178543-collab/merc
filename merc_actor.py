@@ -90,7 +90,7 @@ def _current_price(d, field):
 # Taylor's standing limits. Sells never go below the floor, buys never above
 # the ceiling. Items with no limit here are never repriced (don't guess).
 SELL_FLOORS = {
-    "timber": 6.70,   # Oct 16 (Taylor): was 8.50, over a ~6.95 home bid, so 640 timber sat unsold; unit cost ~6.0
+    "timber": 6.50,   # Oct 20: 6.70 sat over the market (last 6.5, ~82 a turn traded, ours 0); Oct 16 was 8.50; unit cost ~6.0
     "flax fibres": 5.40,
     "flax plants": 1.27,
     "beer": 3.90,
