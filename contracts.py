@@ -190,6 +190,10 @@ def score(c, mk, st):
         verdict = "GOOD" if home and edge > 0.05 * home * vol else ("OK" if edge > 0 else "SKIP")
         why = "they sell %.0f %s at %.2f vs home ask %s: %+.0f vs buying at home" % (
             vol, item, price, ("%.2f" % home) if home else "none", edge)
+        if net >= 0:
+            # Oct 20: a cheap offer for a good we don't use is no saving (100 wool showed as GOOD in the app's
+            # Attention list every run); only goods we consume more of than we make can be a good buy
+            verdict, why = "SKIP", why + "; we don't use %s" % item
     r.update(edge=round(edge), verdict=verdict, why=why)
     return r
 
