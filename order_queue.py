@@ -461,7 +461,7 @@ def _apply_travel(e):
     sid, tid = str(tr["transport"]), str(tr["to_town"])
     try:
         ship = _get_json("/transports/%s" % sid)
-        town = _get_json("/towns/%s" % tid)
+        town = _town(tid)
     except Exception as ex:
         return dict(ok=False, error="read failed: %s: %s" % (type(ex).__name__, ex))
     loc = ship.get("location") or {}
@@ -558,6 +558,33 @@ def _apply_build(e):
     return dict(ok=bool(new_id) and stage == "INITIAL", status=status, building_id=new_id, stage=stage, **info)
 
 
+def _town(town_id):
+    """GET /towns/{id} with its tiles. Oct 20: the game moved tile ownership and structures out of the town record
+    ("domain" keyed by tile id) into GET /towns/{id}/domain ("borough": [{owner_id, structure, location "x.sx:y.sy"}],
+    "center_sites": ["x:y"]). Without them every tile read as free and unowned: a park plot was aimed at our own
+    brewery's tile and the net maker at a tile someone else owns. Rebuilds the old shape so callers are unchanged."""
+    t = _get_json("/towns/%s" % town_id)
+    if t.get("domain"):
+        return t
+    try:
+        d = _get_json("/towns/%s/domain" % town_id)
+    except Exception:
+        d = {}
+    dom = {}
+    for b in d.get("borough") or []:
+        try:
+            cx, sx, cy, sy = _parse_loc(b["location"])
+        except (KeyError, ValueError):
+            continue
+        dom[str((cx * 100000 + cy) * 1000000 + sx * 1000 + sy)] = {"owner_id": b.get("owner_id"), "structure": b.get("structure")}
+    if not dom:
+        raise RuntimeError("town %s tile data unreadable (no domain in /towns or /towns/{id}/domain)" % town_id)
+    t["domain"] = dom
+    if not t.get("center_ids") and d.get("center_sites"):
+        t["center_ids"] = [int(a) * 100000 + int(b) for a, b in (str(s).split(":") for s in d["center_sites"])]
+    return t
+
+
 def _tile_str(cx, sx, cy, sy):
     return "%d.%d:%d.%d" % (cx, sx, cy, sy)
 
@@ -635,7 +662,7 @@ def _apply_expand(e):
     try:
         specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
         bld = _get_json("/buildings/%s" % bid)
-        town = _get_json("/towns/%s" % bld["town_id"])
+        town = _town(bld["town_id"])
     except Exception as exn:
         return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
     spec = (specs.get(bld.get("type")) or {}).get("construction") or {}
@@ -841,7 +868,7 @@ def _apply_plot(e):
     try:
         specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
         bld = _get_json("/buildings/%s" % bid)
-        town = _get_json("/towns/%s" % bld["town_id"])
+        town = _town(bld["town_id"])
     except Exception as exn:
         return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
     stage = (bld.get("construction") or {}).get("stage")
@@ -866,7 +893,7 @@ def _apply_plot(e):
     if not cok:
         return dict(ok=False, tile=c["tile"], error=cerr)
     try:
-        town = _get_json("/towns/%s" % bld["town_id"])
+        town = _town(bld["town_id"])
     except Exception:
         town = {}
     if _tile_owner(town, c["tile"]) == OWNER_ID:          # bought outright: build now
@@ -890,7 +917,7 @@ def _apply_site(e):
     try:
         specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
         anchor = _get_json("/buildings/%s" % str(s.get("near") or STORE))
-        town = _get_json("/towns/%s" % anchor["town_id"])
+        town = _town(anchor["town_id"])
     except Exception as exn:
         return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
     if typ not in specs:
@@ -915,7 +942,7 @@ def _apply_site(e):
         if not cok:
             return dict(ok=False, tile=tile, error=cerr)
         try:
-            town = _get_json("/towns/%s" % anchor["town_id"])
+            town = _town(anchor["town_id"])
         except Exception:
             town = {}
         if _tile_owner(town, tile) != OWNER_ID:
@@ -943,7 +970,7 @@ def _apply_claim(e):
     tid = str(c["town_id"])
     tiles = [str(t) for t in c.get("tiles") or []]
     try:
-        town = _get_json("/towns/%s" % tid)
+        town = _town(tid)
     except Exception as exn:
         return dict(ok=False, error="read failed: %s" % exn)
     dom = town.get("domain") or {}
@@ -957,7 +984,7 @@ def _apply_claim(e):
     body = {"claims": [], "properties": [{"location": t} for t in tiles]}      # centre tiles are bought (see _claim_tile)
     ok, status, resp = _req("POST", "/towns/%s/expand" % tid, body)
     try:
-        dom = (_get_json("/towns/%s" % tid).get("domain")) or {}
+        dom = (_town(tid).get("domain")) or {}
         after = [(t, _tile_owner({"domain": dom}, t)) for t in tiles]
     except Exception:
         after = None
