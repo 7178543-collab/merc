@@ -151,11 +151,13 @@ def quarry_rule(cash, spare=None):
         qov = "auto"
     if qov == "slow":
         want, why = QUARRY_SLOW, "Taylor's switch from the app: quarry slow"
-    elif cash < AUTO_PLOT_MIN_CASH and held >= LIMESTONE_RESERVE:
+    elif cash < AUTO_PLOT_MIN_CASH:
         # Oct 15 recovery: no new plots under 20k cash, so limestone only backs church asks; 44 labour a turn for a
-        # pile nobody draws is waste (the home market trades ~2 a turn). Restarts at 0.4x when it is needed again.
-        want, why = 0, "recovery: no new park plots under %d cash, limestone %.0f covers the church reserve" % (
-            AUTO_PLOT_MIN_CASH, held)
+        # pile nobody draws is waste (the home market trades ~2 a turn). Oct 20 (Taylor's one-off park plot takes 60):
+        # under 20k the quarry never runs on bought labour, even under the church reserve; spare own labour (Rule 7,
+        # below) refills it. Restarts at 0.4x on bought labour once cash is over 20k.
+        want, why = 0, "recovery: no bought labour for the quarry under %d cash (limestone %.0f, reserve %d)" % (
+            AUTO_PLOT_MIN_CASH, held, LIMESTONE_RESERVE)
     elif cash > QUARRY_FAST_CASH and held < need:
         want, why = QUARRY_FAST, "cash %.0f over %d, %d plot(s) still fit, limestone %.0f of %.0f" % (cash, QUARRY_FAST_CASH, room, held, need)
     elif cash < QUARRY_SLOW_CASH or held >= need:
