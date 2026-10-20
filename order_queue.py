@@ -949,12 +949,19 @@ def _apply_site(e):
         after = _defer({"site": dict(s, tile=tile), "confirm": True})
         return dict(ok=True, tile=tile, claimed=True, build_after=after)
     cx, sx, cy, sy = _parse_loc(tile)
-    r = _apply_build({"build": {"type": typ, "town_id": str(anchor["town_id"]), "location": "%d:%d" % (cx, cy),
-                                "sublocation": {"x": sx, "y": sy}}, "confirm": True})
+    # Oct 20: a game update moved building locations to the full tile string ("1522.1:2388.4", with the old map tile
+    # under "location_legacy"). The old form, location "1522:2386" + sublocation, now reads as the whole centre map
+    # tile, which the town owns ("must own the land ... owned by 0"). New form first, the old one as a fallback.
+    tries = [{"location": tile, "sublocation": {"x": sx, "y": sy}}, {"location": tile},
+             {"location": "%d:%d" % (cx, cy), "sublocation": {"x": sx, "y": sy}}]
+    r, refused = {}, []
+    for loc in tries:
+        r = _apply_build({"build": dict({"type": typ, "town_id": str(anchor["town_id"])}, **loc), "confirm": True})
+        if r.get("ok") or r.get("building_id"):
+            break
+        refused.append("%s: %s" % (json.dumps(loc), str(r.get("body") or r.get("error"))[:120]))
     if not r.get("ok"):
-        r["tile"] = tile
-        if "must own the land" in str(r.get("body") or "") and not s.get("_retried"):
-            r["build_after"] = _defer({"site": dict(s, tile=tile, _retried=True), "confirm": True})
+        r["tile"], r["refusals"] = tile, refused
         return r
     bid = r.get("building_id")
     link = _apply_construction({"construction": {"building": bid, "set": {"provider_id": STORE}}})
