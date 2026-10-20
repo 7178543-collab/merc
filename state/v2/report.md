@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13426, 2026-10-20 19:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13426, 2026-10-20 19:56. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 6,400, prestige 3,397 (727 free, -0.9/turn).
 
 ## Items v2 runs (last turn)
@@ -12,23 +12,23 @@ Cash 6,400, prestige 3,397 (727 free, -0.9/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 23 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 56 | 0 | 2 | 0 | 0 | min_holding 30, sell 24, sell @ 20 |
+| garments | 56 | 0 | 2 | 0 | 0 | min_holding 30, sell 22, sell @ 20 |
 | grain | 104 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
 | labour | 264 | 264 | 714 | 0 | 0 | buy 264, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 36.8 |
+| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 37.2 |
 | porterage | 10 | 10 | 10 | 0 | 0 | buy 10, buy @ 1.1 |
 
-**1 risks, 0 waste, 3 tuning** where v2 would act differently from v1.
+**2 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
 - **cloth**: cloth buffer 0.1 turns (holds 7, next step uses 46/turn) -> v2: check the step that makes it
+- **flax plants**: flax plants buffer 1.0 turns (holds 80, next step uses 81/turn) -> v2: check the step that makes it
 
 ## Tuning
 
-- **flax fibres**: flax fibres buffer thin: 1.7 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 61
-- **flax plants**: flax plants buffer thin: 1.0 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 158
+- **flax fibres**: flax fibres buffer thin: 1.7 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 63
 - **timber**: build materials for park 1, net maker152202386007001 are in (288.0 held, 116 needed) but a buy is still live -> v2: switch the timber buy off
 
 ## Builds under construction
@@ -46,7 +46,7 @@ Labour metered per turn while a site can progress: labour 35
 
 ## Notes
 
-- labour: projection runs 75 over real use lately; planning 727, not 802
+- labour: projection runs 75 over real use lately; planning 735, not 810
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -75,7 +75,7 @@ Labour metered per turn while a site can progress: labour 35
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.0 / 0.00 | 0 | 120102307 | 0 | - | - | 0 |
+| Flax Wyrm | 0.1 / 0.00 | 0 | 120102307 | 0.1 | - | - | 0 |
 | linen snake | 0.0 / 0.00 | 0 | 185801747 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
@@ -109,30 +109,30 @@ Labour metered per turn while a site can progress: labour 35
 | fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
 | garments |  | 22 @ min 20.0 | makes 23.4, uses 2.1, holds 56 (keeps 30): sells the surplus + 1/turn of the excess |
 | grain | 27 @ 3.7, stop 104 |  | uses 26.0/turn (brewery 1), makes 0.0, holds 104 = 4.0 turns |
-| labour | 277 @ 2.2, stop - |  | uses 727.2/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 264 = 1.0 turns |
+| labour | 285 @ 2.2, stop - |  | uses 735.1/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 264 = 0.9 turns |
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 9 @ min 37.2 |  |
 | pasties | 3 @ 15.4, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 13 = 4.7 turns |
-| porterage | 10 @ 1.1, stop - |  | uses 9.7/turn (observed), makes 0.0, holds 10 = 1.0 turns |
+| porterage | 10 @ 1.1, stop - |  | uses 9.8/turn (observed), makes 0.0, holds 10 = 1.0 turns |
 | rope |  | 4 @ min 73.0 | makes 2.2, uses 0.0, holds 18 (keeps 0): sells the surplus + 1/turn of the excess |
 | timber |  | 8 @ min 6.5 |  |
-| tools | 6 @ 6.2, stop 45 |  | uses 5.5/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 36.2 turns |
+| tools | 6 @ 6.2, stop 45 |  | uses 5.5/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 36.1 turns |
 
 ## Chain sizing
 
-Mode HOLD, garments sold 13.2/turn (+0.0 exported); plan makes 23.0 garments a turn.
-Labour: own 450, everything else 423, chain may buy 350 -> chain allowance 377, chain plan 377 (+3 vs now).
+Mode HOLD, garments sold 15.2/turn (+0.0 exported); plan makes 23.0 garments a turn.
+Labour: own 450, everything else 423, chain may buy 350 -> chain allowance 377, chain plan 377 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 4.97 | 5.08 |
-| ret | 3 | 0.88 | 0.90 |
-| spin | 4 | 1.82 | 1.86 |
-| weave | 3 | 0.92 | 0.90 |
+| flax | 11 | 5.08 | 5.08 |
+| ret | 3 | 0.90 | 0.90 |
+| spin | 4 | 1.86 | 1.86 |
+| weave | 3 | 0.90 | 0.90 |
 | sew | 2 | 0.57 | 0.56 |
 
 Buffers: flax fibres 52/74, thread 400/217, cloth 7/90
-- chain plan needed 485 labour, budget left 377: cut to 377 (sewing capped at 0.56)
+- chain plan needed 488 labour, budget left 377: cut to 377 (sewing capped at 0.56)
 
 ## Self-diagnosis
 
