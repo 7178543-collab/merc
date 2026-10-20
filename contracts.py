@@ -56,7 +56,8 @@ RESERVE = {"limestone": 60,    # Oct 10 (Taylor): park plots first (60 each); Oc
 CHURCH_STOCK = {"furniture": 135, "limestone": 100, "candles": 61, "jewellery": 45,
                 "tapestries": 7, "windows": 6}    # Oct 14: ships stock these when v2 config ship_church.on
 KEEP_AFTER_FILL = {"garments": 30}   # Oct 15: garments min_holding is raised to the ask while we build up for it
-BUY_AFTER_FILL = {"furniture": {"buy_volume": 2, "max_holding": 20}}   # Oct 16 (Taylor): recovery, no church restock after the fill;
+BUY_AFTER_FILL = {"furniture": {"buy_volume": 2, "max_holding": 20},   # Oct 16 (Taylor): recovery, no church restock after the fill;
+                  "candles": {"buy_volume": 3, "max_holding": 12}}    # Oct 20 (Taylor: do what you can): buy 4 to 47 for the 45 ask, then slot upkeep
 #   keep only the household upkeep buy (furniture is a sustenance slot, ~1.4/turn; tier 0 = the buy). Restore readiness by hand over 20k
 MIN_BONUS = 20                         # don't bother below this much prestige
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"

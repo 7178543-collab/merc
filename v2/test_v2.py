@@ -735,6 +735,48 @@ def test_diagnose_r5_and_owned_items():
     assert diagnose.snap_up(80.5 * 1.015) == 82.0 and diagnose.snap_up(3.3 * 1.015) == 3.36
 
 
+def test_diagnose_r7_stale_ask_and_market_sanity():
+    # Oct 20: timber (v1) asked 6.7 and garments (v2) 20.8 while the town traded them at 6.5 / 20.2 and we sold 0
+    items = {"timber": {"held": 434.0, "unit_cost": 6.0, "flow": {"sale": 0.0},
+                        "orders": [{"min_holding": 350, "sell_volume": 20, "sell_price": "6.7"}, {"buy_price": "8.6"}]},
+             "garments": {"held": 149.0, "unit_cost": 19.54, "flow": {"sale": 0.0},
+                          "orders": [{"min_holding": 30, "sell_volume": 14, "sell_price": "20.8"}]},
+             "nets": {"held": 16.0, "flow": {"sale": 8.0}, "orders": [{"min_holding": 15, "sell_volume": 9, "sell_price": "36"}]},
+             "beer": {"held": 131.0, "unit_cost": 3.6, "flow": {"sale": 0.0},
+                      "orders": [{"min_holding": 60, "sell_volume": 28, "sell_price": "3.8"}]}}
+    market = {"timber": {"price": 6.5, "traded": 82.0}, "garments": {"price": 20.2, "traded": 55.0},
+              "nets": {"price": 37.0, "traded": 22.0}, "beer": {"price": 3.5, "traded": 166.0}}
+    s = _dsnap(store={"id": STORE_ID, "items": items}, market=market)
+    st = {"stale_ask": {k: {"turns": [13250, 13251]} for k in ("timber", "garments", "beer")}}
+    cfg = copy.deepcopy(CFG)
+    cfg["sell_floor"] = {"garments": 20.0, "timber": 6.5, "beer": 3.38}
+    f, acts = diagnose.diagnose(s, cfg, _dctx(s, state=st, owned=["garments"], fs_level=1))   # cuts run reduce-only
+    by = {a["item"]: a for a in acts if a["rule"] == "R7 stale ask"}
+    assert by["timber"]["via"] == "queue" and by["timber"]["entry"]["set"] == {"sell_price": "6.5"} and by["timber"]["entry"]["tier"] == 0
+    assert by["garments"]["via"] == "direct" and by["garments"]["managers"][0]["sell_price"] == "20.2"
+    assert by["beer"]["entry"]["set"] == {"sell_price": "3.6"}            # unit cost 3.6 over the 3.5 market: stops at cost
+    assert "nets" not in by                                                 # selling: left alone
+    # first sighting only counts a turn; no action yet
+    f2, acts2 = diagnose.diagnose(s, cfg, _dctx(s, state={}, owned=["garments"]))
+    assert not [a for a in acts2 if a["rule"] == "R7 stale ask"]
+    # floor at or over the market: a finding for Taylor, no action
+    cfg["sell_floor"]["timber"] = 6.7
+    f3, acts3 = diagnose.diagnose(s, cfg, _dctx(s, state={"stale_ask": {"timber": {"turns": [13250, 13251]}}}))
+    assert any(x["rule"] == "R7 stale ask" and x.get("item") == "timber" and "Taylor's call" in x["finding"] for x in f3)
+    assert not [a for a in acts3 if a.get("item") == "timber"]
+    # a good a ship exports is left alone (exports only get stock after home sells take theirs)
+    s5 = _dsnap(store={"id": STORE_ID, "items": {"rope": {"held": 11.0, "flow": {"sale": 0.0},
+                                                          "orders": [{"sell_volume": 6, "sell_price": "77"}]}}},
+                market={"rope": {"price": 68.5, "traded": 3.0}},
+                ships=[{"id": "9", "route_orders": {"rope": [{"sell_volume": 2, "sell_price": "83"}]}}])
+    f5, acts5 = diagnose.diagnose(s5, CFG, _dctx(s5, state={"stale_ask": {"rope": {"turns": [13250, 13251]}}}))
+    assert not [x for x in f5 if x["rule"] == "R7 stale ask"]
+    # R6: the renamed marketdata fields read as price 0 / traded 0 everywhere
+    s4 = _dsnap(market={"g%d" % k: {"price": 0.0, "traded": 0.0} for k in range(12)})
+    f4, _ = diagnose.diagnose(s4, CFG, _dctx(s4))
+    assert any(x["rule"] == "R6 data sanity" and x.get("item") == "market" for x in f4)
+
+
 def test_act_runs_diagnose_safely():
     d, cfg = _act_dir(cfg_live=[])
     try:

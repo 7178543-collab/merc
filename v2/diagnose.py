@@ -25,7 +25,11 @@ Rules (each: detect -> propose -> apply within caps -> log + report):
                          use held -> a finding; auto-raise only for an input of a running building, under its config
                          buy ceiling and 5% of cash. Labour is never raised.
   R6 data sanity         household prestige read 0 while prestige is allocated, legacy 0, no prestige impacts, or cash
-                         0 with goods held -> a finding only (an API shape change blinded every reader on Oct 14).
+                         0 with goods held, or most home market prices and volumes 0 -> a finding only (API shape
+                         changes blinded every reader on Oct 14 and, for market fields, again until Oct 20).
+  R7 stale ask           a sell order with stock over its min_holding, our sale 0 for 3+ turns, the town trading the
+                         good and our ask over the last trade price -> lower the ask to that price (price grid, never
+                         under config sell_floor or unit cost); a finding when the floor is at or over the market.
 Guards: failsafe level > 0 or quiet hours (23:00-07:00 Toronto) -> reduce-only; never prestige spends, contracts,
 sell/donate/demolish, or the token; ship trade goods are never touched; v2-owned items are written directly (merge
 into the live tiers, re-read, verify), v1 items only through the order queue's handler + spend guard + log
@@ -54,6 +58,8 @@ MAX_CUT = 0.25
 R4_FLOOR = 0.5             # R4 never takes a textile step under half its target at the first cut
 UNDER_ASK_TURNS = 3        # R5
 LOW_TURNS = 3              # R5
+STALE_TURNS = 3            # R7
+STALE_MIN_TRADED = 3       # R7: the town must trade at least this many a turn
 CASH_SHARE = 0.05
 BID_OVER_ASK = 1.015
 COOLDOWN_TURNS = 2
@@ -466,6 +472,46 @@ def diagnose(snap, cfg, ctx):
         store_fix(f, item, i, {"buy_price": price_str(bid)}, "buy price %s -> %s (ask %s, ceiling %s)" % (
             tier.get("buy_price"), price_str(bid), ask, ceil_), True)
 
+    # ---- R7: a sell order priced over the market (Oct 20: garments sat at 20.8 and timber at 6.7 for days while the
+    # town bought ~55 garments at 20.2 and ~82 timber at 6.5 a turn from rivals; nothing flagged it because buyers'
+    # bids fill at the tick, so the resting book looked empty). Stock over what we keep, our sale 0 for STALE_TURNS
+    # turns, the town traded it, our ask over the last trade price -> lower the ask to the last trade price (snapped
+    # up to the price grid), never under the config sell_floor or our unit cost. A price cut is allowed reduce-only.
+    stale = st.setdefault("stale_ask", {})
+    floors = (cfg or {}).get("sell_floor") or {}
+    # goods a ship route exports are left alone: exports only get stock after home sells take theirs, so a cheaper
+    # home ask would starve a dearer export (rope: home ~68, Rouhomme ~83)
+    exported = {k for sh in snap.get("ships") or [] for k, ts in ((sh or {}).get("route_orders") or {}).items()
+                if any(_n(t.get("sell_volume")) > 0 for t in ts or [])}
+    for item, tiers in sorted(live.items()):
+        si = next((k for k, t in enumerate(tiers or []) if _n(t.get("sell_volume")) > 0 and _n(t.get("sell_price")) > 0), None)
+        it = items.get(item) or {}
+        m = market.get(item) or {}
+        if si is None or item in exported:
+            stale.pop(item, None)
+            continue
+        tier = tiers[si]
+        ask, last, traded = _n(tier.get("sell_price")), _n(m.get("price")), _n(m.get("traded"))
+        spare = _n(it.get("held")) - _n(tier.get("min_holding"))
+        sold = _n((it.get("flow") or {}).get("sale"))
+        if spare < 1 or sold > 0 or last <= 0 or traded < STALE_MIN_TRADED or ask <= last:
+            stale.pop(item, None)
+            continue
+        c = stale.setdefault(item, {"turns": []})
+        if turn not in c["turns"]:
+            c["turns"] = (c["turns"] + [turn])[-6:]
+        if len(c["turns"]) < STALE_TURNS:
+            continue
+        f = note("R7 stale ask", item, "item", "%s ask %s over the market for %d turns: the town trades ~%.0f a turn at %s, we sold 0 with %.0f over what we keep" % (
+            item, tier.get("sell_price"), len(c["turns"]), traded, price_str(last), spare))
+        floor = max(_n(floors.get(item)), _n(it.get("unit_cost")))
+        new = snap_up(max(last, floor))
+        if new >= ask:
+            f["finding"] += "; floor %s (config sell_floor / unit cost) is at or over the market: Taylor's call" % price_str(floor)
+            continue
+        store_fix(f, item, si, {"sell_price": price_str(new)}, "sell price %s -> %s (last trade %s, floor %s)" % (
+            tier.get("sell_price"), price_str(new), price_str(last), price_str(floor)), False)
+
     # R6 data sanity: the game API changed shape once (Oct 14, turn 13277: prestige moved under prestige_board) and
     # every reader saw prestige 0 for 6 turns without an alert. Flag impossible reads; finding only, no action.
     hh = snap.get("household") or {}
@@ -484,6 +530,12 @@ def diagnose(snap, cfg, ctx):
                  "until v2/snapshot.py / merc_status4.get read it again" % ", ".join(bad))
     if cash <= 0 and items:
         note("R6 data sanity", "cash", "item", "cash read %g while the storehouse holds goods: business read broken?" % cash)
+    # Oct 20: a game update renamed the marketdata fields and every price and volume read 0 for days, unflagged
+    if len(market) >= 10:
+        zero = sum(1 for v in market.values() if _n((v or {}).get("price")) <= 0 and _n((v or {}).get("traded")) <= 0)
+        if zero >= 0.8 * len(market):
+            note("R6 data sanity", "market", "item", "home market read looks broken: %d of %d goods show price 0 and "
+                 "traded 0; the game API may have renamed marketdata fields (fix v2/snapshot.py)" % (zero, len(market)))
 
     acts = actions[:MAX_ACTIONS]
     for a in actions[MAX_ACTIONS:]:
