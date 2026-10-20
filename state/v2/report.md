@@ -1,29 +1,25 @@
 # v2 shadow report
 
-Turn 13408, 2026-10-20 01:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13408, 2026-10-20 01:58. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 8,134, prestige 3,418 (748 free, -1.0/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 189 | 0 | 4 | 0 | 0 | min_holding 60, sell 34, sell @ 3.38 |
+| beer | 189 | 0 | 4 | 0 | 0 | min_holding 60, sell 33, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 17 | 4 | 4 | 0 | 0 | stop 18, buy 5, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 152 | 0 | 2 | 0 | 0 | min_holding 30, sell 14, sell @ 20.8 |
 | grain | 51 | 13 | 13 | 0 | 0 | stop 52, buy 14, buy @ 3.7 |
-| labour | 9 | 9 | 459 | 10 | 0 | buy 9, buy @ 2.2 |
+| labour | 9 | 9 | 459 | 10 | 0 | buy 26, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
+| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34.8 |
 | porterage | 37 | 37 | 16 | 0 | 21 | buy 37, buy @ 1.1 |
 
-**1 risks, 1 waste, 1 tuning** where v2 would act differently from v1.
-
-## Risks (will stall or run out)
-
-- **labour**: buying 9, short of ~19 needed -> v2: buy 19
+**0 risks, 1 waste, 1 tuning** where v2 would act differently from v1.
 
 ## Waste (money lost now)
 
@@ -35,7 +31,7 @@ Cash 8,134, prestige 3,418 (748 free, -1.0/turn).
 
 ## Notes
 
-- labour: projection runs 150 over real use lately; planning 469, not 544
+- labour: projection runs 150 over real use lately; planning 469, not 541
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -64,8 +60,8 @@ Cash 8,134, prestige 3,418 (748 free, -1.0/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.10 | 10 | 120102307 | 0.048 | - | - | 0 |
-| linen snake | 0.1 / 0.10 | 10 | 151802239 | 0.048 | - | furniture 1 | -14 |
+| Flax Wyrm | 0.0 / 0.10 | 10 | 120102307 | 0 | - | - | 0 |
+| linen snake | 0.0 / 0.10 | 10 | 151802239 | 0 | - | furniture 1 | -14 |
 
 ## Ship plans (this turn's world prices)
 
@@ -103,22 +99,22 @@ Cash 8,134, prestige 3,418 (748 free, -1.0/turn).
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 9 @ min 34.8 |  |
 | pasties | 3 @ 15.1, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 14 = 4.9 turns |
-| porterage | 16 @ 1.1, stop - |  | uses 15.9/turn (observed), makes 0.0, holds 37 = 2.3 turns |
+| porterage | 16 @ 1.1, stop - |  | uses 16.0/turn (observed), makes 0.0, holds 37 = 2.3 turns |
 | rope |  | 2 @ min 78.0 |  |
 | timber |  | 11 @ min 6.7 | makes 8.4, uses 0.0, holds 391 (keeps 350): sells the surplus + 3/turn of the excess |
 | tools | 3 @ 6.2, stop 22 |  | uses 2.7/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 200 = 73.6 turns |
 
 ## Chain sizing
 
-Mode HOLD, garments sold 3.3/turn (+0.0 exported); plan makes 1.6 garments a turn.
-Labour: own 450, everything else 406, chain may buy 350 -> chain allowance 394, chain plan 134 (+7 vs now).
+Mode HOLD, garments sold 3.2/turn (+0.0 exported); plan makes 1.6 garments a turn.
+Labour: own 450, everything else 406, chain may buy 350 -> chain allowance 394, chain plan 132 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 2.58 | 2.69 |
+| flax | 11 | 2.69 | 2.68 |
 | ret | 3 | 0.48 | 0.48 |
-| spin | 4 | 0.98 | 1.05 |
-| weave | 3 | 0.07 | 0.06 |
+| spin | 4 | 1.05 | 1.04 |
+| weave | 3 | 0.07 | 0.05 |
 | sew | 2 | 0.04 | 0.04 |
 
 Buffers: flax fibres 58/45, thread 300/133, cloth 11/6
