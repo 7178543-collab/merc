@@ -150,9 +150,19 @@ def take():
 
     md = api.get("/towns/%s/marketdata" % s["home_town"]) or {}
     mk = md.get("markets", md) if isinstance(md, dict) else {}
-    s["market"] = {k: {"price": n(v.get("price")), "bid": n(v.get("highest_bid")) or None, "ask": n(v.get("lowest_ask")) or None,
+    # Oct 20: a game update renamed marketdata fields: "price" -> "last_price" (also average_price, price_ema_12) and
+    # "volume_prev_12" -> "volume_ema_12" / "previous_volume". Reading only the old names gave price 0 and traded 0 for
+    # every item, so with no resting bid (buyers' bids fill at the tick) v2 saw "no buyers" and held garments at 20.8
+    # while the town bought ~55 a turn from a rival at 20.2. Old names first, new ones as fallback.
+    def _traded(v):
+        if v.get("volume_prev_12") is not None:
+            return n(v.get("volume_prev_12")) / 12.0
+        return n(v.get("volume_ema_12")) or n(v.get("previous_volume")) or n(v.get("volume"))
+
+    s["market"] = {k: {"price": n(v.get("price")) or n(v.get("last_price")) or n(v.get("average_price")),
+                       "bid": n(v.get("highest_bid")) or None, "ask": n(v.get("lowest_ask")) or None,
                        "bid_vol": n(v.get("bid_volume_10")), "ask_vol": n(v.get("ask_volume_10")),
-                       "traded": n(v.get("volume_prev_12")) / 12.0}
+                       "traded": _traded(v)}
                    for k, v in mk.items() if isinstance(v, dict)}
 
     s["history_use"] = _history_use()

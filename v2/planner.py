@@ -375,7 +375,7 @@ def plan(s, cfg=None, recipes=None, goals=None):
     for item, mk in make.items():
         it = items.get(item) or {}
         surplus = mk - use.get(item, 0)
-        if surplus <= 0.5 or item in inter:
+        if item in inter:
             continue
         uc = it.get("unit_cost") or 0
         floor = max(floor_.get(item, 0), snap_price(uc * 1.02, up=True) if uc else 0)
@@ -387,8 +387,15 @@ def plan(s, cfg=None, recipes=None, goals=None):
         # (garments: 497 held against 30 kept back)
         keep = max([_n(o.get("min_holding")) for o in it.get("orders") or []] + [float(stockpiles.get(item, 0) or 0)]
                    + [float(((bp or {}).get("buys") or {}).get(item, {}).get("need", 0) or 0)])
+        # Oct 20: an item we barely make any more (garments, sewing throttled to ~0.2) still has a pile to sell. It used
+        # to be skipped here (surplus <= 0.5), so its sell order was never repriced and sat at a stale 20.8 while the
+        # town bought ~55 a turn at 20.2. Skip only when there is neither a surplus nor stock above what we keep.
+        if surplus <= 0.5 and it.get("held", 0) - keep < 1:
+            continue
+        surplus = max(0.0, surplus)
         excess = max(0.0, it.get("held", 0) - keep - surplus)
-        draw = excess / float(cfg.get("sell_drawdown_turns", 12))
+        # per-item override (Oct 20, Taylor: clear the garment pile faster): config sell_drawdown_turns_item {item: n}
+        draw = excess / float((cfg.get("sell_drawdown_turns_item") or {}).get(item) or cfg.get("sell_drawdown_turns", 12))
         # price: a sale clears at the market, so a low limit with a big volume drags the clearing price down for every
         # unit (Oct 12: garments asked 22 for 60 and got 22.3 each, with home bids at ~25.8 for ~41). With a live bid,
         # ask a little under it (97%) and let what it can't take wait for the ships; never under the cost floor.

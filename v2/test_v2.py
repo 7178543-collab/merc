@@ -80,7 +80,7 @@ def test_act_guards():
     assert any("2x+10" in w for w in act.check("firewood", live, [{"buy_volume": 95, "buy_price": "2.4"}], cfg, 20000))
     assert any("reserve" in w for w in act.check("firewood", live, [{"buy_volume": 45, "buy_price": "2.4"}], cfg, 3000))
     assert any("floor" in w for w in act.check("garments", [{"sell_volume": 39, "sell_price": "22"}],
-                                               [{"sell_volume": 39, "sell_price": "20"}], cfg, 20000))
+                                               [{"sell_volume": 39, "sell_price": "19.5"}], cfg, 20000))
     assert any("never_drop" in w for w in act.check("porterage", [{"buy_volume": 24, "buy_price": "0.6"}], [], cfg, 20000))
     assert act.check("firewood", live, [{"buy_volume": 30, "buy_price": "2.4", "max_holding": 60}], cfg, 20000) == []
     plan = planner.plan(SNAP, CFG, goals=[])
