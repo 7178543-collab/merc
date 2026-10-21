@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13432, 2026-10-21 01:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13432, 2026-10-21 01:59. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 4,525, prestige 3,516 (846 free, +125.0/turn).
 
 ## Items v2 runs (last turn)
@@ -12,24 +12,25 @@ Cash 4,525, prestige 3,516 (846 free, +125.0/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 23 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 51 | 0 | 2 | 0 | 0 | min_holding 30, sell 22, sell @ 20 |
+| garments | 51 | 0 | 2 | 0 | 0 | min_holding 30, sell 21, sell @ 20 |
 | grain | 104 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
 | labour | 264 | 264 | 714 | 0 | 0 | buy 264, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 37.2 |
+| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 37.4 |
 | porterage | 10 | 10 | 10 | 0 | 0 | buy 10, buy @ 1.1 |
 
-**1 risks, 0 waste, 4 tuning** where v2 would act differently from v1.
+**2 risks, 0 waste, 4 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **cloth**: cloth buffer 0.1 turns (holds 3, next step uses 46/turn) -> v2: check the step that makes it
+- **cloth**: cloth buffer 0.1 turns (holds 3, next step uses 42/turn) -> v2: check the step that makes it
+- **flax plants**: flax plants buffer 1.0 turns (holds 83, next step uses 84/turn) -> v2: check the step that makes it
 
 ## Tuning
 
 - **candles**: home ask 71.50 is above our ceiling 70.00 and last turn bought 4 of ~2 needed: the buy can't fill -> v2: raise the ceiling or find another source
-- **flax fibres**: flax fibres buffer thin: 1.6 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 63
-- **flax plants**: flax plants buffer thin: 1.0 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 162
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
+- **flax fibres**: flax fibres buffer thin: 1.6 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 65
 - **timber**: build materials for park 1, net maker152202386007001 are in (271.3 held, 71 needed) but a buy is still live -> v2: switch the timber buy off
 
 ## Builds under construction
@@ -47,7 +48,7 @@ Labour metered per turn while a site can progress: labour 36
 
 ## Notes
 
-- labour: projection runs 96 over real use lately; planning 714, not 806
+- labour: projection runs 96 over real use lately; planning 716, not 812
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -60,24 +61,24 @@ Labour metered per turn while a site can progress: labour 36
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | hold banquet 3 (pies) | mansion | 8 | 54.4 | 54.4 | thin at home: hop beer, pies |
-| hold sermon 2 (candles) | church | 31 | 52.2 | 54.8 | needs a church (build cost 71,073); thin at home: jewellery, furniture |
+| hold sermon 2 (candles) | church | 31 | 52.2 | 54.8 | needs a church (build cost 70,905); thin at home: jewellery, furniture |
 | maintain 1 | park | 0.5 | 51.0 | 55.0 | running |
 | hold banquet 1 (fish) | mansion | 4.2 | 55.5 | 55.5 |  |
-| hold prayer 2 | chapel | 13 | 52.8 | 55.7 | needs a chapel (build cost 33,598); thin at home: furniture |
-| hold sermon 2 | church | 24 | 52.6 | 56.0 | needs a church (build cost 71,073); thin at home: jewellery, furniture |
+| hold prayer 2 | chapel | 13 | 52.8 | 55.7 | needs a chapel (build cost 33,526); thin at home: furniture |
+| hold sermon 2 | church | 24 | 52.6 | 56.0 | needs a church (build cost 70,905); thin at home: jewellery, furniture |
 | hold banquet 3 (fish) | mansion | 7.6 | 56.3 | 56.3 | thin at home: hop beer, cured fish |
 | hold banquet 4 (pies) | mansion | 18 | 57.0 | 57.0 | thin at home: hop beer, wine |
-| jousting 3 | arena | 230 | 58.2 | 58.4 | needs a arena (build cost 26,749); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold mass 1 | cathedral | 180 | 56.6 | 58.5 | needs a cathedral (build cost 284,900); thin at home: jewellery, glassware, candles |
-| hold banquet 2 (pies) | mansion | 7 | 59.6 | 59.6 | thin at home: wine, pies |
-| hold banquet 2 (fish) | mansion | 6.8 | 59.9 | 59.9 | thin at home: wine, cured fish |
+| jousting 3 | arena | 230 | 58.2 | 58.4 | needs a arena (build cost 26,725); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold mass 1 | cathedral | 180 | 56.6 | 58.5 | needs a cathedral (build cost 284,300); thin at home: jewellery, glassware, candles |
+| hold banquet 2 (pies) | mansion | 7 | 59.5 | 59.5 | thin at home: wine, pies |
+| hold banquet 2 (fish) | mansion | 6.8 | 59.7 | 59.7 | thin at home: wine, cured fish |
 
 ## Ships (last turn, real)
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.0 / 0.00 | 0 | 120102307 | 0 | - | - | 0 |
-| linen snake | 0.0 / 0.00 | 0 | 185801747 | 0 | - | - | 0 |
+| Flax Wyrm | 0.1 / 0.00 | 0 | 120102307 | 0.092 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 185801747 | 0.08 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -109,32 +110,32 @@ Labour metered per turn while a site can progress: labour 36
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 7 @ 2.4, stop 24 |  | uses 6.0/turn (brewery 1, household upkeep), makes 0.0, holds 23 = 3.9 turns |
 | fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
-| garments |  | 21 @ min 20.0 |  |
+| garments |  | 20 @ min 20.0 |  |
 | grain | 27 @ 3.7, stop 104 |  | uses 26.0/turn (brewery 1), makes 0.0, holds 104 = 4.0 turns |
-| labour | 264 @ 2.2, stop - |  | uses 714.0/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 264 = 1.0 turns |
+| labour | 266 @ 2.2, stop - |  | uses 716.3/turn (brewery 1, construction, flax farm 1), makes 450.0, holds 264 = 1.0 turns |
 | meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
 | nets |  | 9 @ min 37.4 |  |
 | pasties | 3 @ 15.3, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 13 = 4.8 turns |
-| porterage | 10 @ 1.1, stop - |  | uses 9.8/turn (observed), makes 0.0, holds 10 = 1.0 turns |
+| porterage | 10 @ 1.1, stop - |  | uses 10.0/turn (observed), makes 0.0, holds 10 = 1.0 turns |
 | rope |  | 4 @ min 71.5 | makes 2.2, uses 0.0, holds 29 (keeps 0): sells the surplus + 2/turn of the excess |
 | timber |  | 8 @ min 6.5 |  |
-| tools | 4 @ 6.2, stop 29 |  | uses 3.5/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 56.1 turns |
+| tools | 4 @ 6.2, stop 29 |  | uses 3.6/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 55.2 turns |
 
 ## Chain sizing
 
-Mode HOLD, garments sold 22.0/turn (+0.0 exported); plan makes 21.7 garments a turn.
-Labour: own 450, everything else 424, chain may buy 350 -> chain allowance 376, chain plan 376 (-3 vs now).
+Mode HOLD, garments sold 21.3/turn (+0.0 exported); plan makes 21.7 garments a turn.
+Labour: own 450, everything else 424, chain may buy 350 -> chain allowance 376, chain plan 376 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 5.08 | 5.24 |
-| ret | 3 | 0.90 | 0.93 |
-| spin | 4 | 1.86 | 1.92 |
-| weave | 3 | 0.90 | 0.85 |
-| sew | 2 | 0.57 | 0.53 |
+| flax | 11 | 5.24 | 5.24 |
+| ret | 3 | 0.93 | 0.93 |
+| spin | 4 | 1.92 | 1.92 |
+| weave | 3 | 0.85 | 0.85 |
+| sew | 2 | 0.53 | 0.53 |
 
 Buffers: flax fibres 51/72, thread 336/212, cloth 3/85
-- chain plan needed 512 labour, budget left 376: cut to 376 (sewing capped at 0.53)
+- chain plan needed 511 labour, budget left 376: cut to 376 (sewing capped at 0.53)
 
 ## Self-diagnosis
 
