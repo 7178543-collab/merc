@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13448, 2026-10-21 17:00. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13448, 2026-10-21 17:56. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 5,239, prestige 3,590 (920 free, -1.4/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 193 | 0 | 4 | 0 | 0 | min_holding 60, sell 57, sell @ 3.68 |
+| beer | 193 | 0 | 4 | 0 | 0 | min_holding 60, sell 59, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 23 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
@@ -44,7 +44,7 @@ Labour metered per turn while a site can progress: labour 14
 
 ## Notes
 
-- labour: projection runs 88 over real use lately; planning 714, not 801
+- labour: projection runs 87 over real use lately; planning 714, not 801
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -73,15 +73,15 @@ Labour metered per turn while a site can progress: labour 14
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.2 / 0.00 | 0 | 120102307 | 0 | - | - | 0 |
+| Flax Wyrm | 0.0 / 0.00 | 0 | 120102307 | 0 | - | - | 0 |
 | linen snake | 0.3 / 0.00 | 0 | 185801747 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
-- **linen snake** on Neuborn: furniture buy 30 @ 13.7, tools buy 3 @ 4.84; crew 0.3; est +353 a turn; stock: furniture 30 @ 13.7 (keep 145)
-- **Flax Wyrm** on Rouhomme: nothing pays; crew 0.0; est +0 a turn; best orders clear only -7 a turn after crew: ship stays at 0
-- best towns now: Grandgues +407, Etallaen +395, Angefont +365, Bordetes +354, Neuborn +353
-- Grandgues would trade: furniture buy 31 @ 13.5, rope sell 2 @ 82.5, tools buy 3 @ 4.68; crew 0.1
+- **Flax Wyrm** on Rouhomme: furniture buy 29 @ 14.2, tools buy 3 @ 4.38; crew 0.2; est +338 a turn; stock: furniture 29 @ 14.2 (keep 145)
+- **linen snake** on Neuborn: furniture buy 27 @ 13.7, tools buy 3 @ 4.78; crew 0.3; est +316 a turn; stock: furniture 27 @ 13.7 (keep 145)
+- best towns now: Grandgues +393, Angefont +373, Etallaen +369, Bordetes +355, Brunnham +352
+- Grandgues would trade: furniture buy 31 @ 13.5, tools buy 3 @ 4.68; crew 0.1
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -89,13 +89,13 @@ Labour metered per turn while a site can progress: labour 14
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Bordetes | 831 | 0.23 | 0.20 (20/turn) | plate armour 1 (1134->1330), gold ore 1 (126->156.75), limestone 1 (20.89->52.25), cloth 4 (8.66->11.4) | windows 1 (445.2->565.25), candles 1 (73.5->82), stockfish 1 (123.9->129.2), tools 3 (4.47->5.5) | +401 |
-| Hofkirchen | 991 | 0.32 | 0.20 (20/turn) | gold ore 2 (126->162.45), plate armour 1 (1134->1187.5), wine 10 (6.41->8.03), dye 1 (36.75->49.4) | windows 1 (466.2->565.25), stockfish 1 (114.45->129.2), candles 1 (73.5->82), spirits 1 (17.32->22.61) | +274 |
-| Dortgart | 1045 | 0.34 | 0.20 (20/turn) | dye 1 (36.75->45.98), coats 2 (58.28->60.32), wine 2 (6.41->6.89) | sails 1 (535.5->646), windows 1 (480.9->565.25), stockfish 1 (109.2->129.2), canvas 3 (23.73->29.26) | +258 |
-| Kleinburgh | 1440 | 0.56 | 0.40 (40/turn) | lead ore 12 (12.71->17), hinges 1 (31.08->36.1), rope 2 (75->77.9), thread 6 (4.18->5.03) | sails 1 (530.25->646), windows 1 (478.8->565.25), stockfish 1 (113.4->129.2), gears 2 (57.23->62.7) | +257 |
-| Herschweig | 775 | 0.21 | 0.10 (10/turn) | coats 2 (58.28->65.08), dye 1 (36.75->47.5), pies 2 (12.6->14.91), wine 3 (6.41->7.22) | windows 1 (378->565.25), stockfish 1 (109.2->129.2), harnesses 3 (58.8->61.27), candles 1 (77.17->82) | +255 |
+| Hofkirchen | 991 | 0.32 | 0.20 (20/turn) | plate armour 1 (1102.5->1187.5), gold ore 1 (122.85->159.6), dye 1 (35.91->49.4), wine 10 (6.56->8.12) | stockfish 1 (108.15->129.2), windows 1 (443.1->461.7), candles 1 (74.03->82), garments 2 (18.9->20.6) | +203 |
+| Kirchwerp | 1072 | 0.36 | 0.20 (20/turn) | lathes 1 (136.5->179.55), dye 1 (35.91->52.25), wine 10 (6.56->8.55), tar 5 (9.71->11.4) | cheese 17 (6.25->7.98), stockfish 1 (110.25->129.2), candles 1 (71.4->82), pasties 2 (11.03->15.1) | +148 |
+| Bordetes | 831 | 0.23 | 0.20 (20/turn) | gold ore 1 (122.85->151.05), limestone 1 (20.79->52.25), dye 1 (35.91->45.22), nets 4 (37.8->40.09) | cheese 14 (6.2->7.98), windows 1 (445.2->461.7), wrought iron 3 (8.56->12.16), slaked lime 3 (6.83->9.97) | +141 |
+| Calange | 218 | 0.06 | 0.10 (10/turn) | dye 1 (35.91->42.18), flax fibres 3 (4.7->5.13), pasties 1 (12.9->13.68) | windows 1 (401.1->461.7), candles 1 (71.92->82), stockfish 1 (118.65->129.2), cloth 15 (7.88->8.25) | +111 |
+| Toqueque | 642 | 0.17 | 0.10 (10/turn) | nets 2 (37.8->39.14), flax fibres 4 (4.7->5.22), lead ore 1 (12.71->13.59) | windows 1 (371.7->461.7), candles 1 (71.4->82), canvas 1 (25.41->29.26), tools 3 (4.6->5.7) | +110 |
 
-**Best:** Bordetes at about +401 coin a turn.
+**Best:** Hofkirchen at about +203 coin a turn.
 
 ## v2 orders
 
