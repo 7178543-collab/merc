@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13450, 2026-10-21 19:08. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13450, 2026-10-21 19:56. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 6,098, prestige 3,587 (917 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 179 | 0 | 4 | 0 | 0 | min_holding 60, sell 59, sell @ 3.38 |
+| beer | 179 | 0 | 4 | 0 | 0 | min_holding 60, sell 57, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 23 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
@@ -16,7 +16,7 @@ Cash 6,098, prestige 3,587 (917 free, -1.3/turn).
 | grain | 104 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
 | labour | 264 | 264 | 714 | 0 | 0 | buy 264, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 36.8 |
+| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 37.4 |
 | porterage | 10 | 10 | 10 | 0 | 0 | buy 10, buy @ 1.1 |
 
 **2 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
@@ -48,7 +48,7 @@ Labour metered per turn while a site can progress: labour 17
 
 ## Prestige spending, cheapest coin per prestige first
 
-951 turns left: prestige gained now converts 99.2% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+951 turns left: prestige gained now converts 99.1% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 11 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
