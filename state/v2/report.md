@@ -1,22 +1,22 @@
 # v2 shadow report
 
-Turn 13456, 2026-10-22 01:08. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13456, 2026-10-22 01:59. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 5,921, prestige 3,579 (909 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 151 | 0 | 4 | 0 | 0 | min_holding 60, sell 56, sell @ 3.38 |
+| beer | 151 | 0 | 4 | 0 | 0 | min_holding 60, sell 55, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 23 | 6 | 6 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 39 | 0 | 2 | 0 | 0 | min_holding 30, sell 19, sell @ 20 |
+| garments | 39 | 0 | 2 | 0 | 0 | min_holding 30, sell 10, sell @ 20 |
 | grain | 104 | 26 | 26 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
-| labour | 274 | 274 | 724 | 2 | 0 | buy 274, buy @ 2.2 |
+| labour | 274 | 274 | 724 | 2 | 0 | buy 276, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 37 |
+| nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 36.8 |
 | porterage | 10 | 10 | 10 | 0 | 0 | buy 10, buy @ 1.1 |
 
 **1 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
@@ -62,7 +62,7 @@ Cash 5,921, prestige 3,579 (909 free, -1.3/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 120102307 | 0 | - | - | 0 |
-| linen snake | 0.2 / 0.20 | 19 | 185801747 | 0.336 | - | furniture 21 | -296 |
+| linen snake | 0.2 / 0.20 | 19 | 185801747 | 0.368 | - | furniture 21 | -296 |
 
 ## Ship plans (this turn's world prices)
 
@@ -107,7 +107,7 @@ Cash 5,921, prestige 3,579 (909 free, -1.3/turn).
 
 ## Chain sizing
 
-Mode HOLD, garments sold 20.0/turn (+0.0 exported); plan makes 22.6 garments a turn.
+Mode HOLD, garments sold 19.9/turn (+0.0 exported); plan makes 22.6 garments a turn.
 Labour: own 450, everything else 403, chain may buy 350 -> chain allowance 397, chain plan 398 (+7 vs now).
 
 | Step | Plots | Now | Plan |
