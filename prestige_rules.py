@@ -11,10 +11,11 @@ Rule 1, mansion banquet (cash-only since Oct 10, Taylor: cash is worth nothing a
         + storehouse cured fish buy 6/turn @ max 24.60, stock to 20
   OFF = mansion target 0 + cured fish buy off
 Rule 2, Tenants (moved here from the Ops panel Oct 9, so it no longer depends on a browser tab):
-  buy one Tenants level (+5) when free prestige covers the cost (50 x (level - 2)) and prestige
-  income is positive, up to TENANTS_MAX_LEVEL. Management has room for ~8 more farmstead plots, so
-  only one more level is useful. After buying, writes state/needs_you.json: the +5 farmstead plots
-  are a map pick in-game (no API for it yet), and alerts.py puts that in the status email.
+  buy one Tenants level (+5) when free prestige covers the cost (50 x (level - 2)) and leaves at least
+  TENANTS_KEEP_FREE free, up to TENANTS_MAX_LEVEL. Oct 22 (Taylor: "Yes, keep 300 free"): up to level 17 = the
+  farmstead's 75-plot cap; each level = +5 plots = +50 own labour (~75 coin/turn less bought labour). The 300 is the
+  cushion against overallocation (free < 0: the game may drop a random track level each turn); it replaces the old
+  'income positive' test (income is ~-1.2/turn between church fills). Rule 8 (farmstead_rule) builds the plots.
 
 Rule 3, promotions (Oct 10): see promote_rule(); free and no-choice, so automatic.
 Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, then recruit + net duty.
@@ -53,7 +54,8 @@ MEAT = "cured meat"
 MEAT_ORDER = {"buy_volume": 6, "buy_price": "29", "max_holding": 10}     # storage cap 10; ask ~27.8 Oct 14
 FISH_RUN, MEAT_RUN = 5.5, 6
 ON_CASH, OFF_CASH, PROFIT_TURNS, GUARD_TURNS = 15000, 10000, 24, 12
-TENANTS_MAX_LEVEL = 11
+TENANTS_MAX_LEVEL = 17          # Oct 22 (Taylor): to the farmstead's 75-plot cap (was 11)
+TENANTS_KEEP_FREE = 300         # Oct 22 (Taylor): free prestige left after a buy
 NEEDS_YOU = os.path.join(HERE, "state", "needs_you.json")
 
 
@@ -91,8 +93,9 @@ def tenants_rule():
     free = total - allocated
     rate = sum(m.num(x.get("impact")) for x in (hh.get("prestige_impacts") or pb.get("prestige_impacts") or []))
     cost = 50 * (level - 2)
-    say("tenants: level %d (max %d), cost %d, free %.1f, rate %+.2f" % (level, TENANTS_MAX_LEVEL, cost, free, rate))
-    if level >= TENANTS_MAX_LEVEL or cost <= 0 or free < cost or rate <= 0:
+    say("tenants: level %d (max %d), cost %d, free %.1f (keeps %d), rate %+.2f" % (
+        level, TENANTS_MAX_LEVEL, cost, free, TENANTS_KEEP_FREE, rate))
+    if level >= TENANTS_MAX_LEVEL or cost <= 0 or free - cost < TENANTS_KEEP_FREE:
         return
     if not LIVE:
         say("  would buy Tenants level %d for %d" % (level + 1, cost))

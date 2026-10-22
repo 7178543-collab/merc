@@ -66,6 +66,11 @@ BUILDUP_MAX_CPP = 40      # a church ask our own output covers this cheaply (par
 BUILDUP_STATE = os.path.join(HERE, "state", "church_buildup.json")
 MIN_SALE_EDGE = 15        # a 'they buy' offer we fill now from stock is signed by itself when it beats home by this much
 NO_AUTO_SALE = {"limestone", "jewellery", "furniture", "candles", "windows", "tapestries"}   # church stock: Taylor decides
+# Oct 22 (Taylor: "Yes, above 8k cash"): buy the missing goods for a church ask at home when it's cheap prestige
+CHURCH_BUY_MAX_CPP = 35        # coin per prestige, counting the whole ask at the price we bid
+CHURCH_BUY_MIN_CASH = 8000     # cash left after the whole remaining buy
+CHURCH_BUY_PER_TURN = 10       # bid volume per turn (thin markets: jewellery trades ~0.3/turn at home)
+CHURCH_BUY_STATE = os.path.join(HERE, "state", "church_buy.json")
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
 
@@ -391,6 +396,126 @@ def church_buildup(scored, apply=None, failsafe_level=None):
     return out
 
 
+def _snap_up(p):
+    """The game's price grid: 3 significant digits; lead 1 any, 2-4 even last digit, 5-9 last digit 0 or 5. Rounds up."""
+    import math
+    if not p or p <= 0:
+        return p
+    e = math.floor(math.log10(p) + 1e-12) - 2
+    lead = int(p / 10 ** (e + 2) + 1e-9)
+    step = max(10 ** e * (5 if lead >= 5 else 2 if lead >= 2 else 1), 0.01)
+    return round(math.ceil(p / step - 1e-9) * step, 6)
+
+
+def _snap_down(p):
+    import math
+    if not p or p <= 0:
+        return p
+    e = math.floor(math.log10(p) + 1e-12) - 2
+    lead = int(p / 10 ** (e + 2) + 1e-9)
+    step = max(10 ** e * (5 if lead >= 5 else 2 if lead >= 2 else 1), 0.01)
+    return round(math.floor(p / step + 1e-9) * step, 6)
+
+
+def _cash():
+    b = m.get("/businesses/%s" % BUSINESS) or {}
+    mon = ((b.get("account") or {}).get("assets") or {}).get("money") or {}
+    return m.num(mon.get("balance")) - m.num(mon.get("reserved"))
+
+
+def church_buy(scored, cash=None, apply=None, failsafe_level=None, mk=None):
+    """Oct 22 (Taylor: "Yes, above 8k cash"). A church ask we can't cover from stock or own output ('buy': sold at home)
+    gets a home buy order for what's missing when the whole ask costs <= CHURCH_BUY_MAX_CPP coin per prestige at our
+    bid and cash stays >= CHURCH_BUY_MIN_CASH after the whole remaining buy. Bid = the cheaper of the prestige value
+    (CHURCH_BUY_MAX_CPP x bonus / volume) and home ask + 10%, CHURCH_BUY_PER_TURN a turn, stop at the ask + RESERVE.
+    Taylor's Oct 9 rule still holds: nothing is signed until stock covers the ask in full; auto_fill then fills it and
+    BUY_AFTER_FILL puts the order back. The buy is switched off when cash drops under the line, the failsafe brakes,
+    or the ask leaves the board. Tier 0 is the item's buy tier (household slot for candles/furniture)."""
+    if apply is None:
+        import order_queue as q
+
+        def apply(e):
+            r = q.apply_entry(e)
+            q.log(e, r, source="contracts")
+            return r
+    if failsafe_level is None:
+        try:
+            failsafe_level = int(m.num(json.load(open(os.path.join(HERE, "state", "failsafe.json"))).get("level")))
+        except (OSError, ValueError):
+            failsafe_level = 0
+    try:
+        with open(CHURCH_BUY_STATE) as f:
+            st = json.load(f) or {}
+    except (OSError, ValueError):
+        st = {}
+    if cash is None:
+        cash = _cash()
+    if mk is None:
+        mk = world_market(sorted({r["item"] for r in scored if r["kind"] == "church"}))
+    open_ids = {str(r["id"]) for r in scored}
+    plans = {}
+    for r in scored:
+        if not (r["kind"] == "church" and r["verdict"] == "WAIT" and r.get("fill") == "buy"
+                and (r.get("bonus") or 0) >= MIN_BONUS and r["item"] not in KEEP_AFTER_FILL):
+            continue
+        ask = (mk.get(r["item"]) or {}).get("home_ask")
+        if not ask:
+            continue
+        target = r["volume"] + RESERVE.get(r["item"], 0)
+        need = target - r["held"]
+        if need <= 0:
+            continue
+        bid = _snap_down(min(CHURCH_BUY_MAX_CPP * r["bonus"] / r["volume"], ask * 1.10))
+        if bid < ask * 0.9:
+            continue                # can't buy it cheaply enough at home now
+        cpp = (r["volume"] * bid) / r["bonus"]
+        best = plans.get(r["item"])
+        if cpp <= CHURCH_BUY_MAX_CPP and (best is None or cpp < best["cpp"]):
+            plans[r["item"]] = dict(contract=str(r["id"]), need=need, bid=bid, target=int(target + 0.999), cpp=round(cpp, 1),
+                                    cost=round(need * bid), bonus=r["bonus"])
+    out = []
+    for item, cur in list(st.items()):
+        p = plans.get(item)
+        if p and p["contract"] == cur.get("contract"):
+            continue
+        if p:
+            continue                # replaced below
+        why = "ask left the board" if cur.get("contract") not in open_ids else "no longer cheap enough"
+        if cur.get("on"):
+            apply({"item": item, "tier": 0, "set": BUY_AFTER_FILL.get(item, {"buy_volume": 0}),
+                   "note": "church buy over (%s): %s buy back to normal" % (why, item)})
+        del st[item]
+        out.append(("stop", item, why))
+    for item, p in plans.items():
+        ok_cash = cash - p["cost"] >= CHURCH_BUY_MIN_CASH and failsafe_level < 2
+        cur = st.get(item) or {}
+        on = bool(cur.get("on"))
+        if ok_cash and (not on or cur.get("contract") != p["contract"] or cur.get("bid") != p["bid"]):
+            e = {"item": item, "tier": 0,
+                 "set": {"buy_volume": int(min(p["need"], CHURCH_BUY_PER_TURN) + 0.999), "buy_price": "%g" % p["bid"],
+                         "max_holding": p["target"]},
+                 "note": "church buy: %s for the church ask (+%.0f prestige, %.1f coin/prestige at bid %g); need %.0f "
+                         "(~%d coin), cash %.0f stays over %d; auto-fill delivers once %d held" % (
+                             item, p["bonus"], p["cpp"], p["bid"], p["need"], p["cost"], cash, CHURCH_BUY_MIN_CASH, p["target"])}
+            r = apply(e)
+            st[item] = dict(p, on=bool(r.get("ok")))
+            out.append(("buy", item, p["need"], p["bid"], bool(r.get("ok"))))
+        elif not ok_cash and on:
+            apply({"item": item, "tier": 0, "set": BUY_AFTER_FILL.get(item, {"buy_volume": 0}),
+                   "note": "church buy paused: cash %.0f - %d to buy < %d (or failsafe %s)" % (
+                       cash, p["cost"], CHURCH_BUY_MIN_CASH, failsafe_level)})
+            st[item] = dict(p, on=False)
+            out.append(("pause", item, round(cash), p["cost"]))
+        elif not ok_cash:
+            st[item] = dict(p, on=False)
+            out.append(("wait", item, round(cash), p["cost"]))
+    with open(CHURCH_BUY_STATE, "w") as f:
+        json.dump(st, f, indent=1)
+    for o in out:
+        print("contracts: church buy", o)
+    return out
+
+
 if __name__ == "__main__":
     import sys
     board = score_board()
@@ -399,9 +524,11 @@ if __name__ == "__main__":
     if "--fill" in sys.argv and m.USER and m.TOKEN:
         auto_fill(board)
         try:
-            church_buildup(score_board())       # re-read: a fill this run takes its ask off the board
+            board2 = score_board()              # re-read: a fill this run takes its ask off the board
+            church_buildup(board2)
+            church_buy(board2)
         except Exception as ex:
-            print("contracts: build-up failed: %s: %s" % (type(ex).__name__, ex))
+            print("contracts: build-up / church buy failed: %s: %s" % (type(ex).__name__, ex))
     try:
         import app_status
         app_status.write()      # phone app overview, after queue + rules + contracts in this workflow run
