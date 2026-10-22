@@ -211,6 +211,21 @@ def plan(s, cfg=None, recipes=None, goals=None):
                 if k.startswith(("producer/", "construction/")) or (item == "labour" and k.startswith(("transport/", "knight/"))):
                     pj = (((op.get("flows") or {}).get(item) or {}).get("projection") or {})
                     projected += (pj.get("consumption", 0) or 0) + (pj.get("shortfall", 0) or 0)
+            if item == "labour" and projected > 0:
+                # Oct 22: a ship's operation can come back with no projection (Linen Snake at Neuborn, crew set 0.5:
+                # target 0, flows empty), so its crew labour (snekkja 1: 50 a crew unit) was never bought, and the
+                # ship ran short of crew and of the moves for its trip home. Add crew x recipe labour for those ships.
+                for sh in s.get("ships") or []:
+                    crew = _n(sh.get("target"))
+                    op = (s.get("operations") or {}).get("transport/%s" % sh.get("id")) or {}
+                    pj = (((op.get("flows") or {}).get("labour") or {}).get("projection") or {})
+                    if crew > 0 and not (pj.get("consumption") or pj.get("shortfall")):
+                        rec = recipes.get(op.get("recipe") or "snekkja 1") or {}
+                        per = sum(_n(i.get("amount")) for i in rec.get("inputs") or [] if i.get("product") == "labour")
+                        if per:
+                            projected += crew * per
+                            notes.append("labour: +%.0f crew for %s (crew %.2f, no projection from the game)" % (
+                                crew * per, sh.get("name"), crew))
         observed_raw = observed
         observed = max(observed, projected)
         # bursty inputs (porterage) are covered to their recent peak, but only the last few turns: a 24-turn peak from

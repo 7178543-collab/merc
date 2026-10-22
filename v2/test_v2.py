@@ -179,8 +179,22 @@ def test_no_false_cant_fill():
     k = keys(planner.plan(s, CFG))
     assert "tune:porterage" not in k and "risk:porterage:cantfill" not in k
     assert not any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
-    it["flow"]["purchase"] = 0; it["held"] = 0             # really failing: flagged
-    assert any("can't fill" in f["text"] for f in planner.plan(s, CFG)["flags"])
+    it["flow"]["purchase"] = 0; it["held"] = 0             # really failing: flagged (stall wording since the stall check)
+    assert any("can't fill" in f["text"] or "is above it" in f["text"] for f in planner.plan(s, CFG)["flags"])
+
+
+def test_ship_crew_labour_without_projection():
+    # Oct 22: Linen Snake at Neuborn, crew set 0.5, the game sent no projection for it: its 25 crew labour is planned
+    s = copy.deepcopy(SNAP)
+    s.setdefault("operations", {})["producer/test"] = {"flows": {"labour": {"projection": {"consumption": 300}}}}
+    base = planner.plan(s, CFG)
+    s["ships"] = [{"id": "999", "name": "test snake", "target": 0.5}]
+    s.setdefault("operations", {})["transport/999"] = {"recipe": "snekkja 1", "flows": {"labour": {"projection": {}}}}
+    p = planner.plan(s, CFG)
+    assert any("+25 crew for test snake" in n for n in p["notes"]), p["notes"]
+    s["ships"][0]["target"] = 0.0
+    assert not any("crew for test snake" in n for n in planner.plan(s, CFG)["notes"])
+    assert not any("crew for test snake" in n for n in base["notes"])
 
 
 def test_act_takes_off_an_unneeded_buy():
