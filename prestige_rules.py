@@ -21,6 +21,8 @@ Rule 4, 2nd apprentice (Taylor, Oct 10): see apprentice_rule(); 250 prestige, th
 Rule 5, park plots (Oct 10): see park_ready_rule(); places a plot itself when it fits and materials are in.
 Rule 6, quarry speed by cash (Oct 14): see quarry_rule(); 1x above 18k cash while park plots still fit, 0.4x under 15k.
 Rule 7, buy when affordable (Oct 14): see wants_rule(); prestige buys Taylor queued from the app, bought at the exact price.
+Rule 8, farmstead plots (Oct 22): see farmstead_rule(); unused tenant room becomes farmstead plots by itself (land bought
+  from the town, expansion after the tick). Replaces the needs_you map pick that Rule 2 used to write.
 
 Only sends a change when the game differs from the wanted state; every change is verified
 and logged to state/order_queue_done.jsonl (source "prestige_rules").
@@ -102,9 +104,75 @@ def tenants_rule():
           dict(ok=good, status=status, body=body[:200], before=level, after=after), source="prestige_rules")
     say("  bought Tenants level %d for %d -> %s" % (level + 1, cost, "OK" if good else "FAILED %s %s" % (status, body[:150])))
     if good:
-        with open(NEEDS_YOU, "w") as f:
-            json.dump({"what": "Expand the farmstead +5 plots (map: farmstead > modify > expand). Tenants level %d was bought for %d prestige." % (after, cost),
-                       "since_turn": None}, f)
+        say("  farmstead_rule turns the new tenant room into farmstead plots (no map pick needed since Oct 22)")
+
+
+FARMSTEAD = "151602398"
+FARM_MIN_CASH = 5000        # +5 plots = 500 labour (~1.1k coin bought) + 100 own timber + ~60 land, over 3 turns
+FARM_MAX_ASK = 30           # district land sells at ~12 a tile; anything dearer is another player's asking price
+TENANTS_PER_PLOT = {"farmstead": 1, "boardinghouse": 5}
+
+
+def farmstead_rule(cash=None):
+    """Rule 8 (Oct 22, Taylor: "figure it out for next time"). Tenant room the household has but doesn't use becomes
+    farmstead plots by itself, however the Tenants level was bought (tenants rule, the app's Buy when affordable, the
+    queue, or by hand in game). Each plot = +10 own labour a turn (~22 coin at 2.2), +0.5 tax.
+    Uses order_queue's rural expand: land in range with fertility, touching the farmstead first, bought from the town
+    at <= FARM_MAX_ASK a tile, expansion parked until after the tick, then storehouse link + pace 100.
+    Waits while the farmstead is building, while a parked expand step for it is pending, at failsafe BRAKE/STOP, or
+    under FARM_MIN_CASH. Proven Oct 22: Taylor's in-game +5 sent the same thing (stage EXPANSION, domain of 'x:y' map
+    tiles 1510:2400, 1510:2402, 1511:2400-2402, provider storehouse, pace 100)."""
+    pl = m.get("/player") or {}
+    hid = (pl.get("household") or {}).get("id")
+    hh = m.get("/households/%s" % hid) or {}
+    cap = m.num((hh.get("caps") or {}).get("tenants"))
+    biz = m.get("/businesses/%s" % q.OWNER_ID) or {}
+    used, farm = 0.0, None
+    for b in biz.get("buildings") or []:
+        per = TENANTS_PER_PLOT.get(b.get("type"))
+        if not per:
+            continue
+        bd = m.get("/buildings/%s" % b["id"]) or {}
+        con = bd.get("construction") or {}
+        extra = len(con.get("domain") or []) if con.get("stage") == "EXPANSION" else 0
+        used += per * (m.num(bd.get("size")) + extra)
+        if str(b["id"]) == FARMSTEAD:
+            farm = bd
+    room = int(cap - used + 1e-6)
+    say("farmstead: tenants %.0f used of %.0f, room %d" % (used, cap, room))
+    if farm is None or room < 1:
+        return
+    stage = (farm.get("construction") or {}).get("stage")
+    if stage not in (None, "", "NONE"):
+        say("  waiting: farmstead already building (%s)" % stage)
+        return
+    pend = [d for d in q._load_deferred() if str(((d.get("entry") or {}).get("expand") or {}).get("building")) == FARMSTEAD]
+    if pend:
+        say("  waiting: land bought, expansion parked until %s" % pend[0].get("after"))
+        return
+    try:
+        fs = json.load(open(os.path.join(HERE, "state", "failsafe.json")))
+    except (OSError, ValueError):
+        fs = {}
+    if int(m.num(fs.get("level"))) >= 2:
+        say("  held: failsafe level %s" % fs.get("level"))
+        return
+    if cash is not None and cash < FARM_MIN_CASH:
+        say("  held: cash %.0f under %d (+%d plots cost ~%d coin of labour over 3 turns)" % (cash, FARM_MIN_CASH, room, 220 * room))
+        return
+    e = {"expand": {"building": FARMSTEAD, "count": room, "max_ask": FARM_MAX_ASK},
+         "note": "farmstead rule: %d tenant room -> +%d plots" % (room, room)}
+    if not LIVE:
+        r = q.apply_entry(dict(e))          # no confirm: the queue's dry run (tiles, land price, materials)
+        say("  would expand +%d: %s" % (room, json.dumps({k: r.get(k) for k in ("would_try", "land_cost", "short", "error")})))
+        return
+    e["confirm"] = True
+    try:
+        r = q.apply_entry(e)
+    except Exception as ex:
+        r = dict(ok=False, error="%s: %s" % (type(ex).__name__, ex))
+    q.log(e, r, source="prestige_rules")
+    say("  expand +%d -> %s" % (room, "OK %s" % (r.get("would_try") or r.get("tiles")) if r.get("ok") else "FAILED %s" % r.get("error")))
 
 
 PARK = "152202388002004"
@@ -699,6 +767,10 @@ def main():
         wants_rule()
     except Exception as ex:
         say("wants rule crashed: %s: %s" % (type(ex).__name__, ex))
+    try:
+        farmstead_rule(cash)
+    except Exception as ex:
+        say("farmstead rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         apprentice_rule()
     except Exception as ex:
