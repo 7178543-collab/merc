@@ -796,7 +796,7 @@ def _land_quote(town_id, tile):
         q = _get_json("/towns/%s/expand/position/%s" % (town_id, tile))
     except urllib.error.HTTPError as ex:
         try:
-            body = ex.read().decode()[:120]
+            body = ex.read().decode()[:400]
         except Exception:
             body = ""
         return [], [], "quote refused %s %s" % (ex.code, body.replace("\n", " "))
