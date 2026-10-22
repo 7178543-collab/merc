@@ -799,7 +799,17 @@ def _land_quote(town_id, tile):
             body = ex.read().decode()[:400]
         except Exception:
             body = ""
-        return [], [], "quote refused %s %s" % (ex.code, body.replace("\n", " "))
+        # Oct 22: a tile already in the town's domain is not quoted; the 409 says what it is, e.g.
+        # "already claimed by town: (empty plot, domain of town 152202387, no owner, for sale at 12)" -> buy it from the
+        # town as a property; "(empty plot, ..., owned by 39992)" -> ours already; "(plot with grain farm ...)" -> taken
+        import re
+        mm = re.search(r"\(empty plot, domain of town \d+, (no owner, for sale at ([\d.]+)|owned by (\d+))", body)
+        if ex.code == 409 and mm:
+            if mm.group(2):
+                return [(str(tile), float(mm.group(2)))], [], None
+            if mm.group(3) == OWNER_ID:
+                return [], [], "ours"
+        return [], [], "quote refused %s %s" % (ex.code, body.replace("\n", " ")[:160])
     except Exception as ex:
         return [], [], "quote failed %s" % type(ex).__name__
     q = q or {}
@@ -902,10 +912,20 @@ def _apply_expand_rural(e, bld, specs):
     # quote, an empty one (owned already, or not for sale) or any part priced over max_ask is skipped and listed.
     max_ask = float(ex.get("max_ask", 30))
     plan, quotes, refused = [], {}, []
-    for c in cands[:max(15, 4 * count)]:
+    ours = []
+    for c in cands[:max(40, 8 * count)]:
         props, claims, err = _land_quote(bld["town_id"], c["tile"])
+        if err == "ours":
+            ours.append(c["tile"])
+            quotes[c["tile"]] = ([], [])
+            plan.append(c["tile"])
+            if len(plan) >= count:
+                break
+            continue
         if not err and not props and not claims:
             err = "nothing to buy (ours already, or not for sale)"
+        if not err and claims and not ex.get("allow_claims"):
+            err = "wilderness claim (%d tiles; set allow_claims to use)" % len(claims)
         if not err and any(a > max_ask for _, a in props):
             err = "priced %s (over max_ask %g)" % (", ".join("%s @%g" % pa for pa in props), max_ask)
         if err:
@@ -926,12 +946,15 @@ def _apply_expand_rural(e, bld, specs):
         for c in quotes[t][1]:
             if c not in claims:
                 claims.append(c)
-    info.update(would_try=plan, land_buy={k: v for k, v in props.items()}, land_cost=round(sum(props.values()), 2),
-                claims=len(claims), materials_total={k: v * len(plan) for k, v in per.items()})
+    info.update(would_try=plan, already_ours=ours, land_buy={k: v for k, v in props.items()},
+                land_cost=round(sum(props.values()), 2), claims=len(claims),
+                materials_total={k: v * len(plan) for k, v in per.items()})
     if len(plan) < count:
         info["short"] = "only %d of %d plots quoted" % (len(plan), count)
     if e.get("confirm") is not True:
         return dict(ok=True, dry_run=True, **info)
+    if not props and not claims:
+        return _start_expansion(bid, bld, plan, ex.get("pace", 100), info)       # all of it ours already
     body = {"claims": claims, "properties": [{"location": loc} for loc in props]}
     ok, status, resp = _req("POST", "/towns/%s/expand" % bld["town_id"], body)
     if not ok:
