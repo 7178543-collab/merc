@@ -61,6 +61,11 @@ BUY_AFTER_FILL = {"furniture": {"buy_volume": 2, "max_holding": 20},   # Oct 16 
                   "candles": {"buy_volume": 3, "max_holding": 12}}    # Oct 20 (Taylor: do what you can): buy 4 to 47 for the 45 ask, then slot upkeep
 #   keep only the household upkeep buy (furniture is a sustenance slot, ~1.4/turn; tier 0 = the buy). Restore readiness by hand over 20k
 MIN_BONUS = 20                         # don't bother below this much prestige
+# Oct 22 (Taylor: "I want the bot to do more ... we are leaving money on the table"):
+BUILDUP_MAX_CPP = 40      # a church ask our own output covers this cheaply (park ~47, banquet ~57) gets home sales held back
+BUILDUP_STATE = os.path.join(HERE, "state", "church_buildup.json")
+MIN_SALE_EDGE = 15        # a 'they buy' offer we fill now from stock is signed by itself when it beats home by this much
+NO_AUTO_SALE = {"limestone", "jewellery", "furniture", "candles", "windows", "tapestries"}   # church stock: Taylor decides
 MARKET_URL = "https://api.mercatorio-tools.tech/data/marketdata"
 
 
@@ -236,13 +241,30 @@ def approvals():
         return set()
 
 
+def _load_buildup():
+    try:
+        with open(BUILDUP_STATE) as f:
+            return json.load(f) or {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _auto_sale(r, building_up):
+    """Oct 22: a 'they buy' offer is signed and delivered by itself when it beats selling at home by MIN_SALE_EDGE,
+    we hold the full volume now, it isn't church stock (NO_AUTO_SALE) and we aren't holding that item for a church ask."""
+    return (r["kind"] == "they buy" and r["verdict"] == "GOOD" and r.get("fill") == "now"
+            and (r.get("edge") or 0) >= MIN_SALE_EDGE and r["item"] not in NO_AUTO_SALE and r["item"] not in building_up)
+
+
 def auto_fill(scored):
     import order_queue as q
     done = []
     ok_ids = approvals()
+    building_up = _load_buildup()
     for r in scored:
         approved = str(r["id"]) in ok_ids and r["kind"] in ("church", "they buy") and r.get("fill") == "now"
-        if not approved and not (r["kind"] == "church" and r["verdict"] == "GOOD" and r.get("fill") == "now" and r["bonus"] >= MIN_BONUS):
+        church_ok = r["kind"] == "church" and r["verdict"] == "GOOD" and r.get("fill") == "now" and r["bonus"] >= MIN_BONUS
+        if not approved and not church_ok and not _auto_sale(r, building_up):
             continue
         if r["held"] - r["volume"] < RESERVE.get(r["item"], 0):
             print("contracts: %s offer skipped, would dip under our reserve of %s" % (r["item"], RESERVE.get(r["item"])))
@@ -269,11 +291,16 @@ def auto_fill(scored):
         at = (after.get("transactions") or [{}])[0]
         remaining = m.num(at.get("volume"))
         good = ok and (at.get("stage") == "done" or remaining <= 0.001)   # fully delivered, nothing left open
-        q.log({"contract": r["id"], "item": r["item"], "volume": r["volume"], "bonus": r["bonus"], "note": "auto-fill church offer from stock"},
+        what = ("church offer from stock" if r["kind"] == "church" else
+                "sale %s @ %s (+%s vs home)" % (r["item"], r.get("price"), r.get("edge")))
+        q.log({"contract": r["id"], "item": r["item"], "volume": r["volume"], "bonus": r["bonus"], "note": "auto-fill " + what},
               dict(ok=bool(good), status=status, body=resp[:200], after_stage=at.get("stage"), after_signed=after.get("signed"),
                    remaining=remaining),
               source="contracts")
-        print("contracts: auto-fill %s %s for +%s prestige -> %s" % (r["volume"], r["item"], r["bonus"], "OK" if good else "FAILED %s %s" % (status, resp[:150])))
+        print("contracts: auto-fill %s %s (%s) -> %s" % (r["volume"], r["item"], what, "OK" if good else "FAILED %s %s" % (status, resp[:150])))
+        if r["kind"] != "church":
+            done.append(dict(r, filled=bool(good)))
+            continue
         if good and r["item"] in KEEP_AFTER_FILL:
             e = {"item": r["item"], "tier": 0, "set": {"min_holding": KEEP_AFTER_FILL[r["item"]]},
                  "note": "church %s ask filled: sell reserve back to normal" % r["item"]}
@@ -292,6 +319,71 @@ def auto_fill(scored):
     return done
 
 
+def church_buildup(scored, apply=None, failsafe_level=None):
+    """Oct 22 (Taylor: "I want the bot to do more ... we are leaving money on the table"). A church ask our own production
+    covers ('own') at <= BUILDUP_MAX_CPP coin per prestige gets the item's home sell reserve (tier 0 min_holding) raised
+    to the ask's volume, so home sales stop eating the pile (Oct 22: garments 75 for +75 = ~20 coin/prestige sat WAIT
+    for days while 23 a turn sold at home). auto_fill signs and delivers the moment stock covers it (Taylor's rule
+    holds: nothing is signed before it can be filled in full) and KEEP_AFTER_FILL puts the reserve back. When the ask
+    leaves the board unfilled (expired, or another player took it), or the failsafe brakes, the reserve goes back too.
+    Only items in KEEP_AFTER_FILL (we sell them and know the normal reserve). v2 never touches min_holding."""
+    if apply is None:
+        import order_queue as q
+
+        def apply(e):
+            r = q.apply_entry(e)
+            q.log(e, r, source="contracts")
+            return r
+    if failsafe_level is None:
+        try:
+            failsafe_level = int(m.num(json.load(open(os.path.join(HERE, "state", "failsafe.json"))).get("level")))
+        except (OSError, ValueError):
+            failsafe_level = 0
+    st = _load_buildup()
+    open_ids = {str(r["id"]) for r in scored}
+    want = {}
+    if failsafe_level < 2:
+        for r in scored:
+            if (r["kind"] == "church" and r["item"] in KEEP_AFTER_FILL and r.get("fill") in ("own", "now")
+                    and r["verdict"] in ("WAIT", "GOOD") and (r.get("bonus") or 0) >= MIN_BONUS
+                    and r.get("coin_per_prestige") is not None and r["coin_per_prestige"] <= BUILDUP_MAX_CPP):
+                best = want.get(r["item"])
+                if best is None or r["coin_per_prestige"] < best["coin_per_prestige"]:
+                    want[r["item"]] = r
+    out = []
+    for item, cur in list(st.items()):
+        w = want.get(item)
+        if w and str(w["id"]) == str(cur.get("contract")):
+            continue
+        why = ("failsafe level %s" % failsafe_level if failsafe_level >= 2 else
+               "ask %s left the board" % cur.get("contract") if str(cur.get("contract")) not in open_ids else
+               "ask no longer worth holding for")
+        if w:
+            continue        # a better ask for the same item replaces it below
+        e = {"item": item, "tier": 0, "set": {"min_holding": KEEP_AFTER_FILL[item]},
+             "note": "church build-up over (%s): %s sell reserve back to %s" % (why, item, KEEP_AFTER_FILL[item])}
+        apply(e)
+        del st[item]
+        out.append(("release", item, why))
+    for item, r in want.items():
+        if str((st.get(item) or {}).get("contract")) == str(r["id"]):
+            continue
+        target = int(r["volume"] + 0.999)
+        e = {"item": item, "tier": 0, "set": {"min_holding": target},
+             "note": "church build-up: hold %s home sales until %d held for the church ask (+%.0f prestige, %.0f coin/prestige); "
+                     "auto-fill delivers it, then the reserve goes back to %s" % (
+                         item, target, r["bonus"], r["coin_per_prestige"], KEEP_AFTER_FILL[item])}
+        res = apply(e)
+        if res.get("ok"):
+            st[item] = {"contract": str(r["id"]), "volume": r["volume"], "bonus": r["bonus"]}
+        out.append(("hold", item, target, bool(res.get("ok"))))
+    with open(BUILDUP_STATE, "w") as f:
+        json.dump(st, f, indent=1)
+    for o in out:
+        print("contracts: build-up", o)
+    return out
+
+
 if __name__ == "__main__":
     import sys
     board = score_board()
@@ -299,6 +391,10 @@ if __name__ == "__main__":
         print("%-4s %-9s %-12s %s" % (r["verdict"], r["kind"], r["item"], r["why"]))
     if "--fill" in sys.argv and m.USER and m.TOKEN:
         auto_fill(board)
+        try:
+            church_buildup(score_board())       # re-read: a fill this run takes its ask off the board
+        except Exception as ex:
+            print("contracts: build-up failed: %s: %s" % (type(ex).__name__, ex))
     try:
         import app_status
         app_status.write()      # phone app overview, after queue + rules + contracts in this workflow run
