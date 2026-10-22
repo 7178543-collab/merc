@@ -21,6 +21,8 @@ Entry kinds (a JSON list of these):
   build (new site)  {"build": {"type": "park", "town_id": "152202387", "location": "1522:2388", "sublocation": {"x": 3, "y": 3}}, "confirm": true}
                     (no confirm = dry run: cost + payload only)
   expand building   {"expand": {"building": "<id>", "count": 1}, "confirm": true}   (park plots: adds free centre tiles; no confirm = dry run)
+                    district buildings (farmstead etc., map land "x:y"): suitable land in range, quoted by the town; confirm
+                    buys it (max_ask 30 a tile) and runs the expansion after the tick; "tiles": [...] expands onto held land
   deferred step     {"later": {"after": "2026-10-13T00:05:00Z", "entry": {...any entry above...}}}   (parked in state/deferred.json;
                     runs on the first workflow run at/after that time; for steps that need a turn tick in between)
   bot v2 item       {"v2": {"suspend": "porterage"}} hands it back to v1 now; {"v2": {"resume": "porterage"}} gives it back to v2
@@ -662,6 +664,13 @@ def _apply_expand(e):
     try:
         specs = json.load(open(os.path.join(HERE, "v2", "data", "buildings.json")))
         bld = _get_json("/buildings/%s" % bid)
+    except Exception as exn:
+        return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
+    if "." not in str(bld.get("location") or ""):
+        # Oct 22: a district building (farmstead, farms, camps) sits on map land "x:y", not a centre sub-tile;
+        # the centre path below crashed on it ("not enough values to unpack (expected 2, got 1)")
+        return _apply_expand_rural(e, bld, specs)
+    try:
         town = _town(bld["town_id"])
     except Exception as exn:
         return dict(ok=False, error="read failed: %s: %s" % (type(exn).__name__, exn))
@@ -720,6 +729,216 @@ def _apply_expand(e):
                         error=None if held else "expansion not visible after PATCH", **info)
         errors.append("%s: %s" % (",".join(tiles), (resp or "")[:160].replace("\n", " ")))
     return dict(ok=False, error="all attempts refused", refusals=errors, **info)
+
+
+def _map_plots(x0, y0, x1, y1):
+    """{(x, y): plot} for the map tiles in a box, read from the game's 32 x 32 map sections
+    (GET /map/section/position/x:y, plots row by row: index = dy * 32 + dx). A plot has alt, area (odd = land,
+    even > 0 = water), fertility, forest, region."""
+    S = 32
+    out = {}
+    for sy in range(y0 // S * S, y1 // S * S + 1, S):
+        for sx in range(x0 // S * S, x1 // S * S + 1, S):
+            for i, p in enumerate(_get_json("/map/section/position/%d:%d" % (sx, sy)).get("plots") or []):
+                x, y = sx + i % S, sy + i // S
+                if x0 <= x <= x1 and y0 <= y <= y1:
+                    out[(x, y)] = p
+    return out
+
+
+def _xy(loc):
+    """'1516:2398' (or {"x": 1516, "y": 2398}) -> (1516, 2398)."""
+    if isinstance(loc, dict):
+        return int(loc["x"]), int(loc["y"])
+    a, b = str(loc).split(":")
+    return int(float(a)), int(float(b))
+
+
+def _rural_candidates(bld, spec_all, rng, plots, town_dom=None, taken=()):
+    """Map tiles a district building could add as plots: land (odd area), the building type's fertility rule met, within
+    `rng` tiles of the building, not already in its domain, no known structure and not someone else's (from the old-style
+    town domain when the game still sends it). Tiles touching the current domain first (same soil, one connected
+    estate), then nearest. Each: {tile, dist, fertility, adjacent}."""
+    bx, by = _xy(bld["location"])
+    mine = {_xy(t) for t in (bld.get("domain") or [])} | {(bx, by)}
+    taken = set(taken) - mine
+    fert = ((spec_all.get("requires") or {}).get("fertility")) or {}
+    town_dom = town_dom or {}
+    out = []
+    for (x, y), p in plots.items():
+        if (x, y) in mine or (x, y) in taken:
+            continue                    # ours already, or under another of our buildings
+        area = int(p.get("area") or 0)
+        if area <= 0 or area % 2 == 0:
+            continue                    # water
+        f = float(p.get("fertility") or 0)
+        if fert.get("min") and f < float(fert["min"]):
+            continue
+        if fert.get("max") and f > float(fert["max"]):
+            continue
+        dist = ((x - bx) ** 2 + (y - by) ** 2) ** 0.5
+        if dist > rng:
+            continue
+        ent = town_dom.get(str(x * 100000 + y)) or {}
+        if ent.get("structure") or str(ent.get("owner_id") or "") not in ("", OWNER_ID):
+            continue
+        adj = any((x + dx, y + dy) in mine for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy)
+        out.append(dict(tile="%d:%d" % (x, y), dist=round(dist, 2), fertility=f, adjacent=adj))
+    out.sort(key=lambda c: (not c["adjacent"], c["dist"]))
+    return out
+
+
+def _land_quote(town_id, tile):
+    """The town's quote for taking a district tile (the client's own call before 'claim'/'buy'):
+    GET /towns/{id}/expand/position/x:y -> {properties: [{location, plot: {ask_price}}], claims: [...], route: ...}.
+    Returns (properties [(location, ask)], claims [..], error)."""
+    try:
+        q = _get_json("/towns/%s/expand/position/%s" % (town_id, tile))
+    except urllib.error.HTTPError as ex:
+        try:
+            body = ex.read().decode()[:120]
+        except Exception:
+            body = ""
+        return [], [], "quote refused %s %s" % (ex.code, body.replace("\n", " "))
+    except Exception as ex:
+        return [], [], "quote failed %s" % type(ex).__name__
+    q = q or {}
+    props = []
+    for p in q.get("properties") or []:
+        loc = p.get("location")
+        if isinstance(loc, dict):
+            loc = "%s:%s" % (loc.get("x"), loc.get("y"))
+        props.append((str(loc), float(((p.get("plot") or {}).get("ask_price")) or 0)))
+    return props, list(q.get("claims") or []), None
+
+
+def _start_expansion(bid, bld, tiles, pace, info):
+    """PATCH the expansion onto `tiles`, verify it shows, then link the storehouse and set the delivery pace
+    (a new construction has no provider and sits at pace 0, so nothing is delivered until both are set)."""
+    body = {"construction": {"stage": "EXPANSION", "domain": list(tiles)}}
+    ok, status, resp = _req("PATCH", "/buildings/%s" % bid, body)
+    if not ok:
+        return dict(ok=False, status=status, tiles=tiles, error=(resp or "")[:200].replace("\n", " "), **info)
+    try:
+        after = (_get_json("/buildings/%s" % bid).get("construction") or {})
+    except Exception:
+        after = {}
+    held = after.get("stage") == "EXPANSION" and set(tiles) <= set(after.get("domain") or [])
+    pace_now = None
+    if held:
+        prov = bld.get("provider_id") or STORE
+        lok, _, lresp = _req("PATCH", "/buildings/%s/construction" % bid, {"provider_id": str(prov)})
+        if not lok:
+            info["provider_error"] = (lresp or "")[:160]
+        pok, _, perr, pace_now = _set_pace(bid, pace)
+        if not pok:
+            info["pace_error"] = perr
+    return dict(ok=held, status=status, tiles=tiles, stage=after.get("stage"), pace=pace_now,
+                error=None if held else "expansion not visible after PATCH", **info)
+
+
+def _apply_expand_rural(e, bld, specs):
+    """Plots for a district building on map land (Oct 22, Taylor: farmstead +5 for the Tenants L12 level):
+    {"expand": {"building": "151602398", "count": 5}}               DRY RUN: tiles, fertility, land quote, materials
+    {"expand": {"building": "151602398", "count": 5}, "confirm": true}  buys the land the town quotes (POST
+        /towns/{id}/expand {claims, properties}, the client's call), then parks the expansion until after the turn tick
+        (bought land settles at the tick; a new site was refused on fresh land Oct 20)
+    {"expand": {"building": "...", "tiles": ["1517:2395", ...]}, "confirm": true}  expands onto land we already hold
+        (what the parked step runs): PATCH /buildings/{id} {construction: {stage: EXPANSION, domain: [...]}}, then the
+        storehouse link and pace 100.
+    Candidates: land in range with the type's fertility, touching the current domain first. The game still enforces
+    tenants, management, range and suitability; its refusal is logged."""
+    ex = e["expand"]
+    bid = str(ex["building"])
+    count = max(1, int(ex.get("count", 1)))
+    spec_all = specs.get(bld.get("type")) or {}
+    spec = spec_all.get("construction") or {}
+    rng = float(spec.get("range") or 8)
+    per = spec.get("materials") or {}
+    stage = (bld.get("construction") or {}).get("stage")
+    if stage not in (None, "", "NONE"):
+        return dict(ok=False, error="building already under construction (stage %s)" % stage)
+    size = float(bld.get("size") or 0)
+    cap = float(spec.get("size") or 0)
+    wanted = [str(t) for t in ex.get("tiles") or []]
+    n = len(wanted) or count
+    info = dict(building=bld.get("type"), location=bld.get("location"), size=size, size_cap=cap or None, range=rng,
+                requires=spec_all.get("requires"), materials_per_plot=per, build_turns=spec.get("time"),
+                materials_total={k: v * n for k, v in per.items()}, tenants_per_plot=spec_all.get("tenants"))
+    if cap and size + n > cap:
+        return dict(ok=False, error="size %g + %d plots is over the type's cap %g" % (size, n, cap), **info)
+    if wanted:
+        info["would_try"] = wanted
+        if e.get("confirm") is not True:
+            return dict(ok=True, dry_run=True, **info)
+        return _start_expansion(bid, bld, wanted, ex.get("pace", 100), info)
+    bx, by = _xy(bld["location"])
+    r = int(rng) + 1
+    try:
+        plots = _map_plots(bx - r, by - r, bx + r, by + r)
+    except Exception as exn:
+        return dict(ok=False, error="map read failed: %s: %s" % (type(exn).__name__, exn), **info)
+    try:
+        town_dom = (_get_json("/towns/%s" % bld["town_id"]).get("domain")) or {}
+    except Exception:
+        town_dom = {}
+    taken = set()
+    try:      # our other district buildings' tiles (ids are their map tile, 9 digits; centre buildings are longer)
+        for ob in (_get_json("/businesses/%s" % OWNER_ID).get("building_ids") or []):
+            if len(str(ob)) > 9 or str(ob) == bid:
+                continue
+            o = _get_json("/buildings/%s" % ob)
+            taken |= {_xy(t) for t in (o.get("domain") or [])} | {_xy(o["location"])}
+    except Exception as exn:
+        return dict(ok=False, error="our buildings unreadable: %s: %s" % (type(exn).__name__, exn), **info)
+    cands = _rural_candidates(bld, spec_all, rng, plots, town_dom, taken)
+    info["candidates"] = ["%s f%g %.1f%s" % (c["tile"], c["fertility"], c["dist"], " adj" if c["adjacent"] else "")
+                          for c in cands[:12]]
+    if not cands:
+        return dict(ok=False, error="no suitable land in range", **info)
+    # Oct 22: the town record no longer says who owns district land, and the tiles touching the farmstead are mostly
+    # another player's (Oct 20 dump: 58616's logging camp and grain farm, one listed at 9,450). So a tile goes in the
+    # plan only when the town quotes it as land to buy at a plain land price (district land sells at ~12): a refused
+    # quote, an empty one (owned already, or not for sale) or any part priced over max_ask is skipped and listed.
+    max_ask = float(ex.get("max_ask", 30))
+    plan, quotes, refused = [], {}, []
+    for c in cands[:max(15, 4 * count)]:
+        props, claims, err = _land_quote(bld["town_id"], c["tile"])
+        if not err and not props and not claims:
+            err = "nothing to buy (ours already, or not for sale)"
+        if not err and any(a > max_ask for _, a in props):
+            err = "priced %s (over max_ask %g)" % (", ".join("%s @%g" % pa for pa in props), max_ask)
+        if err:
+            refused.append("%s: %s" % (c["tile"], err))
+            continue
+        quotes[c["tile"]] = (props, claims)
+        plan.append(c["tile"])
+        if len(plan) >= count:
+            break
+    info["refused"] = refused[:12]
+    if not plan:
+        return dict(ok=False, error="the town quoted none of the candidate tiles", **info)
+    props = {}
+    claims = []
+    for t in plan:
+        for loc, ask in quotes[t][0]:
+            props[loc] = ask
+        for c in quotes[t][1]:
+            if c not in claims:
+                claims.append(c)
+    info.update(would_try=plan, land_buy={k: v for k, v in props.items()}, land_cost=round(sum(props.values()), 2),
+                claims=len(claims), materials_total={k: v * len(plan) for k, v in per.items()})
+    if len(plan) < count:
+        info["short"] = "only %d of %d plots quoted" % (len(plan), count)
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, **info)
+    body = {"claims": claims, "properties": [{"location": loc} for loc in props]}
+    ok, status, resp = _req("POST", "/towns/%s/expand" % bld["town_id"], body)
+    if not ok:
+        return dict(ok=False, status=status, error="land purchase refused: %s" % (resp or "")[:200].replace("\n", " "), **info)
+    after = _defer({"expand": {"building": bid, "tiles": plan, "pace": ex.get("pace", 100)}, "confirm": True,
+                    "note": "parked by the rural expand: land bought, expansion after the tick"})
+    return dict(ok=True, land_bought=True, status=status, expand_after=after, **info)
 
 
 def _set_pace(bid, pace=100):

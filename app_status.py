@@ -255,8 +255,15 @@ def build():
             continue
         e = d.get("entry") or {}
         what = (e.get("note") or "")[:90]
+        # Oct 22: ship moves, routes, expansions and promotions all showed as "?" with an empty error on the phone
+        sub = lambda k, f: (f % (e[k] if not isinstance(e[k], dict) else (e[k].get("transport") or e[k].get("building")
+                                                                           or e[k].get("type") or ""))) if e.get(k) else None
         label = e.get("item") or e.get("prestige") or e.get("donate") or e.get("dump") or e.get("contract") \
+            or sub("travel", "ship %s sail") or sub("route", "ship %s route") \
             or (("ship " + str(e.get("transport"))) if e.get("transport") else None) \
+            or sub("expand", "expand building %s") or sub("plot", "plot on building %s") or sub("site", "new %s site") \
+            or sub("construction", "construction %s") or sub("pace", "build pace %s") \
+            or (("promote worker " + str(e.get("promote"))) if e.get("promote") else None) \
             or (("building " + str(e.get("building"))) if e.get("building") else None) \
             or ("override" if e.get("override") else None) or ("note for Claude" if e.get("message") else None) or "?"
         if "price check" in (e.get("note") or ""):      # a refused 1-prestige offer is the expected answer, not a failure
@@ -267,7 +274,8 @@ def build():
                          "ok": bool(mm), "error": None if mm else (str(d.get("body") or d.get("error") or ""))[:120]})
             continue
         done.append({"ts": d.get("ts"), "source": d.get("source"), "what": label, "note": what,
-                     "ok": d.get("ok"), "error": (d.get("error") or "")[:120] if not d.get("ok") else None})
+                     "ok": d.get("ok"), "error": (str(d.get("error") or d.get("body") or d.get("status") or ""))[:120]
+                     if not d.get("ok") else None})
     s["recent"] = list(reversed(done))
     pend = _json("state/order_queue.json", []) or []
     s["queue_pending"] = len(pend) if isinstance(pend, list) else 0
