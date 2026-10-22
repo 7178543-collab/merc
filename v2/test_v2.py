@@ -294,17 +294,39 @@ def test_export_first_home_sales():
     p = {"orders": {"garments": {"sell": {"sell_volume": 69, "sell_price": "22.0"}}, "beer": {"sell": {"sell_volume": 12}}},
          "ship_plans": {"plans": [{"orders": {"garments": {"sell_volume": 34}}}, {"orders": {"garments": {"sell_volume": 25},
                                                                                          "beer": {"sell_volume": 56}}}]}}
-    shadow.export_first(p)
+    shadow.export_first(p, hist=[])
     assert p["orders"]["garments"]["sell"]["sell_volume"] == 10        # 69 - 59 abroad
     assert p["orders"]["beer"]["sell"]["sell_volume"] == 10            # never under the home minimum
     p = {"orders": {"garments": {"sell": {"sell_volume": 69}}},
          "ship_plans": {"plans": [{"orders": {"garments": {"sell_volume": 42}}}]}}
     snap = {"store": {"items": {"garments": {"held": 402, "orders": [{"min_holding": 30}]}}}}
-    shadow.export_first(p, snap)
+    shadow.export_first(p, snap, hist=[])
     assert p["orders"]["garments"]["sell"]["sell_volume"] == 69        # 372 spare covers 69 + 42: no cut
     snap["store"]["items"]["garments"]["held"] = 120
-    shadow.export_first(p, snap)
+    shadow.export_first(p, snap, hist=[])
     assert p["orders"]["garments"]["sell"]["sell_volume"] == 48        # 90 spare - 42 abroad
+
+
+def test_export_first_follows_real_exports():
+    import shadow
+    snap = {"store": {"items": {"garments": {"held": 63, "orders": [{"min_holding": 30}]}}}}
+    plan = lambda: {"orders": {"garments": {"sell": {"sell_volume": 24}}},
+                    "ship_plans": {"plans": [{"orders": {"garments": {"sell_volume": 23}}}]}}
+    # Oct 22: offered 23 a turn for 12 runs, shipped 0 -> no home cut
+    hist = [{"offers": {"garments": 23}, "exports": {}} for _ in range(12)]
+    p = plan(); shadow.export_first(p, snap, hist=hist)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 24 and p["export_offers"] == {"garments": 23}
+    # still on trial (11 runs): the planned cut stands
+    p = plan(); shadow.export_first(p, snap, hist=hist[:11])
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 10
+    # shipped a little (24 in 12 turns = 2 a turn): cut held to 2
+    hist2 = [{"offers": {"garments": 23}, "exports": {"garments": 12 if i in (3, 9) else 0}} for i in range(12)]
+    p = plan(); shadow.export_first(p, snap, hist=hist2)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 24     # 33 spare covers 24 + 2: no cut
+    # shipping for real (20 a turn): the planned cut stands
+    hist3 = [{"offers": {"garments": 23}, "exports": {"garments": 20}} for _ in range(12)]
+    p = plan(); shadow.export_first(p, snap, hist=hist3)
+    assert p["orders"]["garments"]["sell"]["sell_volume"] == 10
 
 
 def test_ship_voyage_steps():

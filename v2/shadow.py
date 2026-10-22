@@ -221,10 +221,30 @@ def _route_exports(snap):
     return out
 
 
-def export_first(p, snap=None):
+EXPORT_TRIAL_RUNS = 12  # a route gets this many runs of home-sell cuts to prove it ships; then the cut follows real exports
+
+
+def _export_history(n=EXPORT_TRIAL_RUNS):
+    try:
+        lines = open(os.path.join(OUT, "history.jsonl")).read().splitlines()[-n:]
+    except OSError:
+        return []
+    out = []
+    for line in lines:
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            pass
+    return out
+
+
+def export_first(p, snap=None, hist=None):
     """When stock is short, the routes only get what the home sell orders leave, so home sells give way to the ship
     plans' offers (never under HOME_SELL_MIN). When stock covers both (garments 400 held, beer 280), nothing is cut:
-    Oct 13 the cut left home garments at 30 and beer at 10 for two turns while the routes sold nothing."""
+    Oct 13 the cut left home garments at 30 and beer at 10 for two turns while the routes sold nothing.
+    Oct 22: Linen Snake on Neuborn was offered 23 garments a turn for 40 turns and shipped 0, while home sells sat at
+    10 (was 24) and the pile grew. Each run's offers now go to the history; after EXPORT_TRIAL_RUNS runs of an offer,
+    if the ships really shipped under a quarter of it, the cut is held to what they really shipped."""
     sp = p.get("ship_plans") or {}
     items = ((snap or {}).get("store") or {}).get("items") or {}
     ex = {}
@@ -232,9 +252,23 @@ def export_first(p, snap=None):
         for item, o in (pl.get("orders") or {}).items():
             if "sell_volume" in o:
                 ex[item] = ex.get(item, 0) + int(o["sell_volume"])
+    p["export_offers"] = dict(ex)
+    hist = _export_history() if hist is None else hist
     for item, n in ex.items():
         s = (p.get("orders") or {}).get(item, {}).get("sell")
         if not s:
+            continue
+        offered = [h for h in hist if ((h.get("offers") or {}).get(item) or 0) > 0]
+        held_to = ""
+        if len(offered) >= EXPORT_TRIAL_RUNS:
+            real = sum(((h.get("exports") or {}).get(item) or 0) for h in offered)
+            if real < 0.25 * sum(h["offers"][item] for h in offered):
+                n_real = int(-(-real // len(offered)))      # ceil: the turn average they really shipped
+                held_to = " (ships shipped %.0f in %d turns, so the cut is held to %d)" % (real, len(offered), n_real)
+                n = n_real
+        if n <= 0:
+            p["orders"][item]["why"] = "%s; ships offered abroad but shipped none in %d turns: no home cut" % (
+                p["orders"][item].get("why") or "sell", len(offered))
             continue
         before = int(s.get("sell_volume") or 0)
         it = items.get(item)
@@ -246,8 +280,8 @@ def export_first(p, snap=None):
             s["sell_volume"] = max(HOME_SELL_MIN, min(before, int(room - n)))
         else:
             s["sell_volume"] = max(HOME_SELL_MIN, before - n)
-        p["orders"][item]["why"] = "%s; ships offer %d a turn abroad, so home sells %d (was %d)" % (
-            p["orders"][item].get("why") or "sell", n, s["sell_volume"], before)
+        p["orders"][item]["why"] = "%s; ships offer %d a turn abroad%s, so home sells %d (was %d)" % (
+            p["orders"][item].get("why") or "sell", n, held_to, s["sell_volume"], before)
 
 
 def labour_numbers(snap):
@@ -334,6 +368,8 @@ def main():
                 "api": (snap.get("api") or {}).get("calls"),
                 # what the ships' routes really sold abroad last turn (chain_balancer averages this for sewing)
                 "exports": _route_exports(snap),
+                # what the ship plans offered abroad this run (export_first holds the home cut to real exports)
+                "offers": p.get("export_offers") or {},
                 # projected vs really used labour (labour_bias trims the buy by the median gap)
                 "labour": dict(zip(("proj", "used", "short"), labour_numbers(snap)))}
         with open(os.path.join(OUT, "history.jsonl"), "a") as f:
