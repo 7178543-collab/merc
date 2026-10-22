@@ -183,13 +183,19 @@ def score(c, mk, st):
                      bonus, penalty, cost, ("%.0f" % cpp) if cpp else "?", BANQUET_COIN_PER_PRESTIGE, fill_txt))
         return r
     price = r["price"] or 0
+    r["town_id"] = str(c.get("town_id") or TOWN)
+    away = r["town_id"] != TOWN
     if theybuy:
         home = k.get("home_bid") or 0
         edge = (price - home) * vol
-        can = held >= vol or held + max(0, net) * max(turns, 1) >= vol
+        can = (held >= vol or held + max(0, net) * max(turns, 1) >= vol) and not away
         verdict = "GOOD" if edge > 0.05 * home * vol and can else ("OK" if edge > 0 and can else ("POOR" if can else "SKIP"))
         why = "they buy %.0f %s at %.2f vs home bid %.2f: %+.0f vs selling at home; we hold %.0f" % (vol, item, price, home, edge, held)
-        r["fill"] = "now" if held >= vol else "later"     # the phone app can approve a fill-now delivery
+        # Oct 22: contracts are regional. A buyer in another town takes delivery there, so our storehouse can't fill it
+        # (the beer 60 @3.50 was signed and refused: 'storage/... not present in town 105202565')
+        r["fill"] = "ship" if away else ("now" if held >= vol else "later")     # the phone app can approve a fill-now delivery
+        if away:
+            why += "; delivery in town %s, not here: needs a ship" % r["town_id"]
     else:
         home = k.get("home_ask") or 0
         edge = (home - price) * vol if home else 0
@@ -253,6 +259,7 @@ def _auto_sale(r, building_up):
     """Oct 22: a 'they buy' offer is signed and delivered by itself when it beats selling at home by MIN_SALE_EDGE,
     we hold the full volume now, it isn't church stock (NO_AUTO_SALE) and we aren't holding that item for a church ask."""
     return (r["kind"] == "they buy" and r["verdict"] == "GOOD" and r.get("fill") == "now"
+            and str(r.get("town_id") or TOWN) == TOWN
             and (r.get("edge") or 0) >= MIN_SALE_EDGE and r["item"] not in NO_AUTO_SALE and r["item"] not in building_up)
 
 
