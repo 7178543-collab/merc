@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13474, 2026-10-22 19:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13474, 2026-10-22 19:58. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 2,361, prestige 3,629 (509 free, -1.6/turn).
 
 ## Items v2 runs (last turn)
@@ -37,7 +37,7 @@ Cash 2,361, prestige 3,629 (509 free, -1.6/turn).
 
 ## Notes
 
-- labour: projection runs 84 over real use lately; planning 702, not 777
+- labour: projection runs 81 over real use lately; planning 702, not 777
 - labour expiry guard: 71 bought labour expired last turn, buy 202 (not 202) this turn
 
 ## Prestige spending, cheapest coin per prestige first
@@ -113,7 +113,7 @@ Cash 2,361, prestige 3,629 (509 free, -1.6/turn).
 
 ## Chain sizing
 
-Mode HOLD, garments sold 12.2/turn (+0.0 exported); plan makes 22.6 garments a turn.
+Mode HOLD, garments sold 11.9/turn (+0.0 exported); plan makes 22.6 garments a turn.
 Labour: own 500, everything else 415, chain may buy 350 -> chain allowance 435, chain plan 435 (+76 vs now).
 
 | Step | Plots | Now | Plan |
