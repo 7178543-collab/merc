@@ -648,6 +648,12 @@ def enable_writes():
 
 
 # ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
+def goal_cash_ok(snap, cfg):
+    """With the goal planner live, its own cash floor (in the plan) replaces the failsafe's BRAKE and STOP; only cash
+    under goal.hard_floor (default 1,000) stands its jobs down."""
+    return _n((snap or {}).get("cash")) >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+
+
 def chain_moves(plan, cfg, snap, fs_level, dturn, cstate):
     """Pure: which chain targets to write this run. Returns (moves, why). A move is
     {step, id, name, recipe, from, to}. Writes only when cfg live.chain is on, the plan is usable, and a target drifted
@@ -657,6 +663,8 @@ def chain_moves(plan, cfg, snap, fs_level, dturn, cstate):
     pc = (plan or {}).get("chain") or {}
     if not ((cfg.get("live") or {}).get("chain")):
         return [], "live.chain is off (plan only)"
+    if goal_live(cfg, "rates"):
+        return [], "the goal planner owns building rates"
     if not pc.get("ok"):
         return [], "no usable chain plan: %s" % pc.get("why")
     if not snap or snap.get("errors"):
@@ -734,7 +742,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
                 streak[bid] = k
                 if k[1] < hold:
                     continue
-            if fs_level >= 3:
+            if fs_level >= 3 and not goal_cash_ok(snap, cfg):
                 continue
             first = min(to, max(smin, share * max(cur, to)))
             moves.append({"id": bid, "name": b.get("name"), "recipe": rec, "from": cur, "to": round(first, 3),
@@ -743,7 +751,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
         streak.pop(bid, None)
         if not b.get("recipe") or abs(to - cur) < 0.05:
             continue
-        if fs_level >= 3 and to > cur:
+        if fs_level >= 3 and to > cur and not goal_cash_ok(snap, cfg):
             continue
         lim = max(smin, share * cur)
         new = round(cur + max(-lim, min(lim, to - cur)), 3)
@@ -991,7 +999,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     # with the goal planner live on buys and sells, its floors replace the failsafe's BRAKE stand-down;
     # STOP (3) still stands everything down
     fs_decide = fs_level
-    if goal_live(cfg, "buys") and goal_live(cfg, "sells") and fs_level < 3:
+    if goal_live(cfg, "buys") and goal_live(cfg, "sells") and (fs_level < 3 or goal_cash_ok(snap, cfg)):
         fs_decide = 0
     rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_decide, paused=paused)
     for r in rows:
@@ -1001,7 +1009,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
             r.setdefault("refused", []).append("diagnose fixed it at turn %s: held for 2 turns" % t_)
     results, sent = {}, 0
     ship_ids = set(((cfg.get("live") or {}).get("ships")) or [])
-    if goal_live(cfg, "ships") and fs_level < 3 and live_mode and ship_ids:
+    if goal_live(cfg, "ships") and goal_cash_ok(snap, cfg) and live_mode and ship_ids:
         enable_writes()
     diag_on = bool((cfg.get("diagnose") or {}).get("on")) and bool(snap) and not (snap or {}).get("errors")
     if live_mode and not stand and (owned or ship_ids):
@@ -1049,7 +1057,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
 
     st = _load(STATE, {})
     paused_ships, ship_done = [], []
-    ships_free = goal_live(cfg, "ships") and fs_level < 3
+    ships_free = goal_live(cfg, "ships") and goal_cash_ok(snap, cfg)
     if live_mode and ship_ids and (not stand or ships_free):
         paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
         ship_done = ship_auto(plan or {}, cfg, snap, LOG, st["ships"])

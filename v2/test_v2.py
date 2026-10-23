@@ -23,6 +23,7 @@ import planner    # noqa: E402
 
 SNAP = json.load(open(os.path.join(HERE, "fixtures", "snapshot_2026-10-11.json")))
 CFG = json.load(open(os.path.join(HERE, "config.json")))
+CFG.pop("goal", None)       # these checks cover v2's own rules; the goal planner's hand-over has its own tests
 
 
 def keys(p):
@@ -1089,6 +1090,7 @@ def test_chain_moves_rules():
     pc["moves"] = [("sew", 0.21, 0.9), ("weave", 0.12, 0.05)]
     pc["drift"] = ["sew"]
     plan = {"chain": pc}
+    cfg.pop("goal", None)
     cfg["live"]["chain"] = False
     assert act.chain_moves(plan, cfg, snap, 0, {}, {})[0] == []
     cfg["live"]["chain"] = True
@@ -1104,6 +1106,8 @@ def test_chain_moves_rules():
     d = act.chain_labour_delta(plan, snap, rec, [{"id": pc["buildings"]["sew"]["id"], "recipe": "sew garments 2",
                                                   "from": 0.21, "to": 0.9}])
     assert abs(d - 0.69 * 155) < 0.01, d
+    cfg["goal"] = {"live": {"rates": True}}                      # the goal planner owns rates: chain sizing yields
+    assert act.chain_moves(plan, cfg, snap, 0, {}, {})[1] == "the goal planner owns building rates"
 
 if __name__ == "__main__":
     n = 0

@@ -246,20 +246,21 @@
   }
  },
  "endgame": {
-  "on": true,
+  "on": false,
   "start": "2026-11-10T00:00:00Z",
   "season_end": "2026-11-30T11:00:00Z",
-  "_about": "endgame.py (Taylor Oct 20): from start, prestige still turns ~90% into legacy by the season end and cash/stock are worth nothing after it, so the 20k cash gates drop to small floors above the failsafe brake: park plots + quarry on bought labour over plot_min_cash, banquet on/off at banquet_on_cash/banquet_off_cash, ship_church on over church_min_cash, church readiness buys kept after a fill, outputs sold down over sell_drawdown_turns. Defaults in endgame.DEFAULT; set on false to stop it."
+  "_about": "endgame.py (Taylor Oct 20): from start, prestige still turns ~90% into legacy by the season end and cash/stock are worth nothing after it, so the 20k cash gates drop to small floors above the failsafe brake: park plots + quarry on bought labour over plot_min_cash, banquet on/off at banquet_on_cash/banquet_off_cash, ship_church on over church_min_cash, church readiness buys kept after a fill, outputs sold down over sell_drawdown_turns. Defaults in endgame.DEFAULT; set on false to stop it.",
+  "_off": "Taylor Oct 23: 'I don't care about this season. Our goal is to be ready for next.' Spend-down off; the rest of Season 8 is the test bench for the Season 9 bot."
  },
  "goal": {
   "_about": "Goal planner (v2/goal.py; Taylor Oct 22-23: goal = business value; \"leave it and it just plays the game, from the start to the end, with full control of everything\"). Jobs: rates (building rates and recipes), buys (perishable buys), sells (sell volumes, raise only), ships (each ship's town), invest (+1 plots, new buildings), trim (donate buildings that lose money). auto: it takes the jobs over itself, in auto_promote order, once its model check has held hold_runs runs in a row (needs 24+ turns of history), at most one every promote_gap_turns; drop_runs failed checks in a row hand the newest job back. Holds against flapping: recipe switch switch_hold_runs runs at switch_min/turn; ship move ship_hold_runs at ship_switch_min; investment invest_hold_runs; donation trim_hold_runs runs at trim_min/turn. live.<job>: true forces a job on by hand. off: true = kill switch, all jobs back to the old rules. State: state/v2/goal_live.json, state/v2/goal_state.json.",
   "live": {
-   "rates": false,
-   "buys": false,
-   "sells": false,
-   "ships": false,
-   "invest": false,
-   "trim": false
+   "rates": true,
+   "buys": true,
+   "sells": true,
+   "ships": true,
+   "invest": true,
+   "trim": true
   },
   "auto_promote": [
    "rates",
@@ -287,6 +288,8 @@
   "ship_switch_min": 20.0,
   "ship_hold_runs": 6,
   "ship_screen": 8,
-  "new_screen": 12
+  "new_screen": 12,
+  "hard_floor": 1000,
+  "_live_why": "Oct 23 (Taylor: ready for next season, this season doesn't matter): every job forced live now so the bot is battle-tested on real turns before Season 9. The model check still holds rate moves while it reads OFF, and is logged for tuning. Kill switch: off true."
  }
 }

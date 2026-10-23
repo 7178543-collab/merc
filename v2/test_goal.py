@@ -165,8 +165,10 @@ def test_rate_moves_step_and_respect_guards():
     moves, why = act.goal_moves({"goal": G}, cfg, snap, 0, {})
     by = {m["name"]: m["to"] for m in moves}
     assert by == {"spinnery 1": 1.5, "brewery 1": 0.65}, by                        # steps, not jumps
-    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 3, {})                        # failsafe STOP: cuts only
+    moves, _ = act.goal_moves({"goal": G}, cfg, dict(snap, cash=500), 3, {})        # STOP under the hard floor: cuts only
     assert [m["name"] for m in moves] == ["spinnery 1"]
+    moves, _ = act.goal_moves({"goal": G}, cfg, dict(snap, cash=2400), 3, {})       # STOP over it: the plan's own floor rules
+    assert len(moves) == 2
     moves, _ = act.goal_moves({"goal": G}, cfg, snap, 0, {"spinnery 1": 199})       # touched last turn: held
     assert [m["name"] for m in moves] == ["brewery 1"]
     G2 = dict(G, scorecard={"turns": 24, "predicted": 300.0, "real": 20.0})
