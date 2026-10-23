@@ -234,7 +234,11 @@ def check(item, live, new, cfg, cash):
         lv, nv = _n((lb or {}).get("buy_volume")), _n(nb.get("buy_volume"))
         if nv > 2 * lv + 10 and item not in FAST_BUYS:
             why.append("buy volume %d -> %d is over 2x+10 in one run" % (lv, nv))
-        if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0):
+        goal_buys = item in set(cfg.get("perishable") or []) | {"labour"} and goal_live(cfg, "buys") and \
+            cash is not None and cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+        if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys:
+            # with the goal planner live on buys, its plan already keeps cash over its floor (and labour bought for
+            # the rates it set is what makes them run), so v2's reserve rule only applies under the hard floor
             why.append("cash %.0f under the reserve: no buy raises" % cash)
     elif lb and item in set(cfg.get("never_drop") or []):
         why.append("%s is never_drop: v2 will not take its buy off" % item)

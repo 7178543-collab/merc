@@ -275,6 +275,17 @@ def test_model_picks_one_recipe_and_ship_cargo_is_ours():
     assert min(lv.get("workshop", 0), max([v for k, v in lv.items() if "[make gadgets]" in k] or [0])) < 1e-6, lv
 
 
+def test_goal_buys_skip_v2_reserve_over_hard_floor():
+    import act
+    cfg = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},
+           "goal": {"live": {"buys": True}, "hard_floor": 1000}}
+    live, new = [{"buy_price": "2"}], [{"buy_price": "2.2", "buy_volume": 121}]
+    assert act.check("labour", live, new, cfg, 2366) == []
+    assert any("reserve" in w for w in act.check("labour", live, new, cfg, 800))
+    cfg["goal"]["live"]["buys"] = False
+    assert any("reserve" in w for w in act.check("labour", live, new, cfg, 2366))
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
