@@ -416,10 +416,18 @@ def test_raises_wait_for_labour_in_hand():
     assert act.labour_room(snap) == 40
     moves = [{"id": "r", "recipe": "make rope 2", "from": 0.5, "to": 1.0},       # 14 labour
              {"id": "b", "recipe": "brew beer 1", "from": 0.4, "to": 0.65},     # 32.5 labour
-             {"id": "c", "recipe": "brew beer 1", "from": 1.0, "to": 0.5}]      # a cut: always
+             {"id": "c", "recipe": "brew beer 1", "from": 1.0, "to": 0.5}]      # a cut of 65 labour
     out = act.buy_first(moves, snap, rec, order=["b", "r"])
     by = {m["id"]: m for m in out}
-    assert not by["b"].get("deferred") and by["r"].get("deferred") and not by["c"].get("deferred"), out
+    assert not by["b"].get("deferred") and by["r"].get("deferred"), out
+    # turn 13500: the labour held covers today's rates, so cutting now lets 65 paid labour expire: the cut waits a
+    # run and the labour buy shrinks by 65 instead
+    assert by["c"].get("deferred") and by["c"]["labour"] == -65.0, by["c"]
+    short = dict(snap, store={"items": {"labour": {"held": 30}}})              # today's rates 30 short
+    cut = act.buy_first([{"id": "c", "recipe": "make rope 2", "from": 1.0, "to": 0.0}], short, rec)[0]
+    assert not cut.get("deferred"), cut                                       # frees 28 of the 30 missing: no waste
+    sw = act.buy_first([{"id": "s", "recipe": "make rope 2", "from": 1.0, "to": 0.5, "switch": True}], snap, rec)[0]
+    assert not sw.get("deferred"), sw
 
 
 if __name__ == "__main__":

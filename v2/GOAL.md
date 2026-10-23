@@ -73,6 +73,9 @@ They explain every change in plain coin.
   Three ticks running under it (by over max(150, half the prediction)) and the goal only cuts: no raises, recipe
   switches, buy raises or investments, until a tick keeps up. This is the bot's own brake; goal.off stays the
   human kill switch.
+- **Labour timing**: labour is bought at a turn's start and expires at the tick. A raise waits until its labour is
+  held (the labour is bought first); a cut waits a run while the held labour covers today's rates (the labour buy
+  shrinks first). Turn 13500 shows why: rates cut mid-turn let 304 paid labour expire (~450 coin).
 
 ## Not modelled yet (stated so nobody trusts it blindly)
 Contracts and church asks (contracts.py still runs them), price elasticity beyond the sales steps, new rural

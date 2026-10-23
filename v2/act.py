@@ -739,8 +739,18 @@ def buy_first(moves, snap, recipes, order=None):
     """Labour is bought at the start of a turn, so a rate raised mid-turn with no labour held runs short at the next
     tick (turns 13495-13497: ropewalk, net maker, camp at 0 after their raises). Raises go ahead only while this
     turn's spare labour covers them (best first by `order`); the rest are marked deferred: their labour is bought
-    now and they are raised on the next run, when it is held. Cuts always go ahead."""
+    now and they are raised on the next run, when it is held.
+    Cuts the other way round (turn 13500: rates cut mid-turn after 348 labour was bought for them, 304 expired, ~450
+    coin): while this turn's labour covers today's rates, a cut would only let paid labour expire, so it is deferred
+    (labour < 0): the labour buy shrinks now and the cut goes ahead on the next run, when less is held. A cut that only
+    trims a rate already short of labour goes ahead; recipe switches always do."""
     room = labour_room(snap)
+    for m in [m for m in moves if m["to"] < m["from"] and not m.get("switch")]:
+        freed = (m["from"] - m["to"]) * _labour_per_unit(m["recipe"], recipes)
+        waste = freed if room >= 0 else max(0.0, room + freed)
+        if freed > 0 and waste >= 1:
+            m["deferred"] = True
+            m["labour"] = -round(freed, 1)
     rank = {k: i for i, k in enumerate(order or [])}
     raises = sorted([m for m in moves if m["to"] > m["from"]], key=lambda m: rank.get(m["id"], 999))
     for m in raises:
@@ -1035,7 +1045,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         for m_ in gmoves:
             ok = status = body = None
             if m_.get("deferred"):
-                pass                                   # its labour is bought below; raised on the next run
+                pass                                   # labour bought (or not bought) below; moved on the next run
             elif rates_live and m_.get("switch"):
                 r_ = _queue_apply({"building": m_["id"], "producer": {"recipe": m_["recipe"], "target": m_["to"],
                                                                       "provider_id": store},
