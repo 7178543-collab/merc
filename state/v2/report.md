@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13499, 2026-10-23 20:33. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13499, 2026-10-23 20:44. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
@@ -19,11 +19,10 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
 | porterage | 12 | 12 | 12 | 7 | 0 | buy 24, buy @ 1.1 |
 
-**3 risks, 3 waste, 2 tuning** where v2 would act differently from v1.
+**2 risks, 3 waste, 3 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **flax plants**: retting pit 1 ran short of flax plants (buy is live (no volume cap @ 2.04), home ask 1.63 x2, yet 0 bought last turn); labour need rises ~44/turn when they restart -> v2: find out why the buy isn't filling
 - **wax**: net maker152202386007001 ran short of wax (no buy order); labour need rises ~12/turn when they restart -> v2: add a wax buy
 - **wax**: needed (0.1/turn) but there is NO buy order, stock 0.0 -> v2: add buy 1
 
@@ -35,12 +34,13 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 
 ## Tuning
 
-- **cloth**: cloth buffer thin: 1.7 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 53
+- **flax fibres**: flax fibres buffer thin: 1.4 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 57
+- **flax plants**: flax plants buffer thin: 1.5 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 149
 - **grain**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 
 ## Notes
 
-- labour: projection runs 134 over real use lately; planning 740, not 838
+- labour: projection runs 134 over real use lately; planning 740, not 676
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -102,49 +102,47 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 | candles | 2 @ 70.0, stop 6 |  | uses 1.5/turn (household upkeep), makes 0.0, holds 10 = 6.7 turns |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 14 @ 2.4, stop 44 |  | uses 10.8/turn (brewery 1, household upkeep), makes 0.0, holds 38 = 3.5 turns |
-| fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
-| garments |  | 35 @ min 20.0 | makes 13.7, uses 2.1, holds 135 (keeps 30): sells the surplus + 23/turn of the excess |
+| fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
 | grain | 104 @ 3.7, stop 260 |  | uses 65.0/turn (brewery 1), makes 0.0, holds 183 = 2.8 turns |
-| labour | 240 @ 2.2, stop - |  | uses 740.5/turn (brewery 1, flax farm 1, household), makes 500.0, holds 348 = 1.4 turns |
-| meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
+| labour | 79 @ 2.2, stop - |  | goal planner: buys 79 for today's rates (v2 had 240) |
+| meat | 6 @ 3.02, stop - |  | goal planner: buys 6 for today's rates (v2 had 6) |
 | nets |  | 9 @ min 34.0 |  |
 | pasties | 4 @ 14.5, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 11 = 3.9 turns |
-| porterage | 13 @ 1.1, stop - |  | uses 12.9/turn (observed), makes 0.0, holds 12 = 0.9 turns |
-| rope |  | 4 @ min 73.0 |  |
+| porterage | 10 @ 1.1, stop - |  | goal planner: buys 10 for today's rates (v2 had 9) |
+| rope |  | 5 @ min 73.0 | goal planner: sells 5 (v2 had 4) |
 | tar | 2 @ 11.0, stop 5 |  | uses 1.1/turn (ropewalk 1), makes 0.0, holds 9 = 7.7 turns |
 | timber |  | 11 @ min 6.5 | makes 8.4, uses 0.0, holds 386 (keeps 350): sells the surplus + 2/turn of the excess |
-| tools | 4 @ 6.2, stop 31 |  | uses 3.8/turn (logging camp w/ tool), makes 0.0, holds 196 = 51.5 turns |
+| tools | 4 @ 6.2, stop 31 |  | uses 3.8/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 196 = 51.5 turns |
 | wax | 1 @ 22.6, stop 1 |  | uses 0.1/turn (observed), makes 0.0, holds 0 = 0.0 turns |
 
-## Goal: business value (shadow)
-- Value now 16.1k (cash + stock at home prices); -20/turn over 6 turns, +35/turn over 24 turns.
+## Goal: business value (live: rates, buys, sells, ships, invest, trim)
+- Value now 16.3k (cash + stock at home prices); -3/turn over 6 turns, +37/turn over 24 turns.
 - Limits: cash flow >= +121/turn, prestige >= -0.72/turn (values are after 240 tax a turn).
-- Today's settings: value -109/turn, cash -181/turn, prestige -1.37/turn - breaks the prestige floor and cash floor.
-- Plan: value +165/turn, cash +258/turn, prestige -0.72/turn, inside both limits.
+- Today's settings: value +100/turn, cash +214/turn, prestige -1.37/turn - breaks the prestige floor.
+- Plan: value +171/turn, cash +260/turn, prestige -0.72/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -454 vs +291, -217 vs +316, -187 vs +377 - FAILED: the goal only cuts until a tick passes.
 - Route sales counted at most (what the ships really sold, a turn): garments 0.5, nets 0.0, rope 0.1.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - ship linen snake -> Toqueque: +5/turn
   - ship Flax Wyrm -> Heidlowe: +2/turn
-  - sewing shop 1 0.33 -> 0.12: +113/turn
-  - retting pit 1 1.75 -> 1.19: +51/turn
-  - brewery 1 0.75 -> 0.46: +48/turn
-  - spinnery 1 2.48 -> 2.22: +27/turn
-  - flax farm 1 8.47 -> 6.84: +10/turn
-  - logging camp w/ tool 7.00 -> 0.00: +5/turn
+  - brewery 1 0.75 -> 0.50: +41/turn
+  - net maker 0.50 -> 1.00: +7/turn
+  - logging camp w/ tool 7.00 -> 0.00: +7/turn
   - logging camp w/ tool [cut firewood 1] 0.00 -> 20.00: +17/turn
   - quarry 1 0.00 -> 0.08: +5/turn
+  - sewing shop 1 0.00 -> 0.11: -8/turn
+  - weavery 1 0.00 -> 0.18: +2/turn
+  - spinnery 1 1.70 -> 2.29: +3/turn
 - Model check: not enough runs yet (needs 6 turns of goal history).
 - Worth of one more unit per turn: labour 1.47, thread 3.63, cloth 5.84, flax fibres 4.20, garments 16.95, nets 35.00, beer 2.74, timber 6.39, prestige 55.83, cash 0.00
-- Orders it would set (dry run): furniture buy 2 (v2 None); grain buy 27 (v2 104); labour buy 273 (v2 240); light armour buy 1 (v2 None); porterage buy 14 (v2 13); rope sell 5 (v2 4)
+- Orders it would set: furniture buy 2 (v2 None); grain buy 30 (v2 104); labour buy 79 (v2 240); light armour buy 1 (v2 None); porterage buy 10 (v2 9); rope sell 5 (v2 4)
 - Recipe: logging camp w/ tool split timber 2 -> cut firewood 1 at 20.00, worth +17/turn.
-- Recipe: net maker make nets 2 -> make nets 3 at 1.00, worth +36/turn.
 - Ship linen snake: Grandgues -> Toqueque (+5/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Heidlowe (+2/turn over staying).
 - Management: ~13.78 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +73/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - +1 plot net maker for ~1352 coin: +29/turn, payback 46 turns
+  - Tenants L13 for 500 prestige: +74/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - +1 plot net maker for ~1352 coin: +30/turn, payback 45 turns
   - new weaponsmith (forge arms 1) for ~2644 coin: +16/turn, payback 161 turns, doesn't pay yet (materials thin at home: bricks)
 - Trim: donate quarry 1: +15/turn (tax 20 saved).
 - Trim: donate weavery 1: +15/turn (tax 18 saved).
@@ -152,15 +150,15 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 ## Chain sizing
 
 Mode HOLD, garments sold 0.0/turn (+0.0 exported); plan makes 0.0 garments a turn.
-Labour: own 500, everything else 475, chain may buy 0 -> chain allowance 25, chain plan 204 (-193 vs now).
+Labour: own 500, everything else 475, chain may buy 0 -> chain allowance 25, chain plan 204 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 8.47 | 4.66 |
-| ret | 3 | 1.75 | 0.83 |
-| spin | 4 | 2.48 | 1.70 |
-| weave | 3 | 0.19 | 0.00 |
-| sew | 2 | 0.33 | 0.00 |
+| flax | 11 | 4.66 | 4.66 |
+| ret | 3 | 0.83 | 0.83 |
+| spin | 4 | 1.70 | 1.70 |
+| weave | 3 | 0.00 | 0.00 |
+| sew | 2 | 0.00 | 0.00 |
 
 Buffers: flax fibres 39/69, thread 406/204, cloth 45/0
 - chain plan needed 204 labour, budget left 25: cut to 204
