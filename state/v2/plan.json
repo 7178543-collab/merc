@@ -1,6 +1,6 @@
 {
  "turn": 13497,
- "t": "2026-10-23T18:34:09+00:00",
+ "t": "2026-10-23T18:41:03+00:00",
  "mode": "handover",
  "live_items": [
   "beer",
@@ -20,7 +20,7 @@
  "prestige_free": 475.547,
  "prestige_rate": -1.3840000000000021,
  "counts": {
-  "risk": 2,
+  "risk": 1,
   "waste": 0,
   "tune": 1
  },
@@ -28,14 +28,8 @@
   {
    "severity": "risk",
    "item": "porterage",
-   "text": "flax farm 1 ran short of porterage (buy is live (5 @ 1.1), 5 bought last turn); knock-on: retting pit 1 (no flax plants); labour need rises ~93/turn when they restart",
+   "text": "flax farm 1 ran short of porterage (buy is live (12 @ 1.1), 5 bought last turn); knock-on: retting pit 1 (no flax plants); labour need rises ~93/turn when they restart",
    "fix": "the buy is too small for the stalled buildings: raise it"
-  },
-  {
-   "severity": "risk",
-   "item": "porterage",
-   "text": "buying 5, short of ~12 needed",
-   "fix": "buy 12"
   },
   {
    "severity": "tune",
@@ -113,10 +107,10 @@
    },
    "why": "uses 1.8/turn (logging camp w/ tool), makes 0.0, holds 199 = 113.8 turns"
   },
-  "cloth": {
+  "flax fibres": {
    "buffer": {
-    "target": 17,
-    "held": 43
+    "target": 67,
+    "held": 47
    }
   },
   "thread": {
@@ -125,10 +119,10 @@
     "held": 412
    }
   },
-  "flax fibres": {
+  "cloth": {
    "buffer": {
-    "target": 67,
-    "held": 47
+    "target": 17,
+    "held": 43
    }
   },
   "timber": {
@@ -206,11 +200,11 @@
   "arms": {
    "buy_off": "holds 4, twice the 1-unit runway"
   },
-  "tar": {
-   "buy_off": "holds 10, twice the 1-unit runway"
-  },
   "cured meat": {
    "buy_off": "holds 10, twice the 4-unit runway"
+  },
+  "tar": {
+   "buy_off": "holds 10, twice the 1-unit runway"
   }
  },
  "sinks": [
@@ -233,7 +227,7 @@
    "crew_last": 0.0,
    "cost": 0,
    "route_to": "134102075",
-   "trips": 0.16,
+   "trips": 0.144,
    "sold": {},
    "bought": {},
    "trade_value": 0,
@@ -246,7 +240,7 @@
    "crew_last": 0.0,
    "cost": 0,
    "route_to": "151802239",
-   "trips": 0.176,
+   "trips": 0.128,
    "sold": {},
    "bought": {},
    "trade_value": 0,
@@ -256,8 +250,8 @@
  "builds": null,
  "goals": [],
  "prestige_plan": {
-  "turns_left": 904.4308333333333,
-  "legacy_factor": 0.989256962176931,
+  "turns_left": 904.3158333333333,
+  "legacy_factor": 0.9892507676501728,
   "ranked": [
    {
     "sink": "maintain 1",
@@ -654,7 +648,7 @@
     "running": false,
     "prestige_per_turn": 4,
     "coin_per_prestige": 279.4,
-    "effective": 303.8,
+    "effective": 303.9,
     "capex": 76588,
     "class": "crafting",
     "missing": [],
@@ -1817,10 +1811,10 @@
    "take_share": 0.3,
    "slippage": 0.05
   },
-  "t": "2026-10-23T18:34:24+00:00"
+  "t": "2026-10-23T18:41:21+00:00"
  },
  "ship_plans": {
-  "t": "2026-10-23T18:34:24+00:00",
+  "t": "2026-10-23T18:41:21+00:00",
   "plans": [
    {
     "ship": "Flax Wyrm",
@@ -1845,15 +1839,7 @@
     "notes": [
      "stock: furniture 9 @ 12.7 (keep 145)"
     ],
-    "diff": {
-     "furniture": [
-      {
-       "buy_volume": 9,
-       "buy_price": "12.7",
-       "max_holding": 145
-      }
-     ]
-    }
+    "diff": {}
    },
    {
     "ship": "linen snake",
@@ -1878,15 +1864,7 @@
     "notes": [
      "stock: furniture 8 @ 13.7 (keep 145)"
     ],
-    "diff": {
-     "furniture": [
-      {
-       "buy_volume": 8,
-       "buy_price": "13.7",
-       "max_holding": 145
-      }
-     ]
-    }
+    "diff": {}
    }
   ],
   "best": [
@@ -2093,6 +2071,14 @@
  },
  "goal": {
   "ok": false,
-  "why": "goal plan failed: KeyError: 'value'"
+  "why": "goal plan failed: KeyError: 'value'",
+  "trace": [
+   "    G = goal_mod.plan_goal(snap, cfg_all, rec_all,",
+   "        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+   "  File \"/home/runner/work/merc/merc/v2/goal.py\", line 885, in plan_goal",
+   "    \"gain\": (r[\"value\"] - base_r[\"value\"]) if r.get(\"ok\") else None})",
+   "                          ~~~~~~^^^^^^^^^",
+   "KeyError: 'value'"
+  ]
  }
 }

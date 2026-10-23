@@ -1,30 +1,29 @@
 # v2 shadow report
 
-Turn 13497, 2026-10-23 18:34. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13497, 2026-10-23 18:41. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,500, prestige 3,596 (476 free, -1.4/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 83 | 0 | 4 | 0 | 0 | min_holding 60, sell 84, sell @ 3.38 |
+| beer | 83 | 0 | 4 | 0 | 0 | min_holding 60, sell 119, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
-| firewood | 22 | 6 | 9 | 0 | 0 | stop 24, buy 7, buy @ 2.4 |
+| firewood | 22 | 6 | 9 | 0 | 0 | stop 40, buy 19, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 121 | 0 | 2 | 0 | 0 | min_holding 30, sell 24, sell @ 20 |
-| grain | 82 | 27 | 46 | 0 | 0 | stop 104, buy 27, buy @ 3.7 |
-| labour | 205 | 88 | 588 | 114 | 0 | buy 205, buy @ 2 |
+| grain | 82 | 27 | 46 | 0 | 0 | stop 234, buy 64, buy @ 3.7 |
+| labour | 205 | 88 | 588 | 114 | 0 | buy 202, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 11, sell @ 34 |
-| porterage | 5 | 5 | 5 | 1 | 0 | buy 5, buy @ 1.1 |
+| porterage | 5 | 5 | 5 | 1 | 0 | buy 12, buy @ 1.1 |
 
-**2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
+**1 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **porterage**: flax farm 1 ran short of porterage (buy is live (5 @ 1.1), 5 bought last turn); knock-on: retting pit 1 (no flax plants); labour need rises ~93/turn when they restart -> v2: the buy is too small for the stalled buildings: raise it
-- **porterage**: buying 5, short of ~12 needed -> v2: buy 12
+- **porterage**: flax farm 1 ran short of porterage (buy is live (12 @ 1.1), 5 bought last turn); knock-on: retting pit 1 (no flax plants); labour need rises ~93/turn when they restart -> v2: the buy is too small for the stalled buildings: raise it
 
 ## Tuning
 
@@ -61,8 +60,8 @@ Cash 1,500, prestige 3,596 (476 free, -1.4/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.00 | 0 | 134102075 | 0.16 | - | - | 0 |
-| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.176 | - | - | 0 |
+| Flax Wyrm | 0.1 / 0.00 | 0 | 134102075 | 0.144 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.128 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
