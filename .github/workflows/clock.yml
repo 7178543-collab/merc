@@ -1,0 +1,57 @@
+name: clock
+# Oct 23 (Taylor: "get this working perfectly"): GitHub's cron dropped every scheduled run for 1.5 hours that day
+# (17:10-18:35 UTC), so the bot sat still. This workflow is the backstop clock: it keeps one run alive for ~5.5 hours,
+# checks every few minutes when each job last ran, dispatches whichever is overdue, then starts its own next run
+# (workflow_dispatch from GITHUB_TOKEN is allowed to start runs). Its own cron only restarts it if the chain breaks.
+# The jobs keep their own crons too; the clock only fills gaps. Public repo: Actions minutes are free.
+on:
+  schedule:
+    - cron: '17 */4 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: clock
+  cancel-in-progress: false
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - name: Fill gaps in the bot's schedule
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -u
+          last() {   # minutes since the newest run of a workflow started (any event, any state); 999 if none
+            t=$(gh api "repos/$REPO/actions/workflows/$1/runs?per_page=1" --jq '.workflow_runs[0].created_at // empty' 2>/dev/null || true)
+            if [ -z "$t" ]; then echo 999; return; fi
+            echo $(( ( $(date -u +%s) - $(date -u -d "$t" +%s) ) / 60 ))
+          }
+          busy() {   # a run of the shared merc-actor concurrency group is queued or running
+            n=0
+            for s in queued in_progress; do
+              c=$(gh api "repos/$REPO/actions/runs?status=$s&per_page=20" --jq "[.workflow_runs[] | select(.created_at > \"$(date -u -d '-3 hours' +%Y-%m-%dT%H:%M:%SZ)\") | select(.name==\"merc-actor\" or .name==\"v2-shadow\" or .name==\"order-queue\")] | length" 2>/dev/null || echo 0)
+              n=$((n + c))
+            done
+            echo $n
+          }
+          end=$(( $(date -u +%s) + 330 * 60 ))
+          while [ "$(date -u +%s)" -lt "$end" ]; do
+            if [ "$(busy)" = "0" ]; then
+              a=$(last merc.yml); v=$(last v2-shadow.yml); q=$(last order-queue.yml)
+              echo "$(date -u +%H:%M) since last run: merc-actor ${a}m, v2-shadow ${v}m, order-queue ${q}m"
+              # the bot runs twice an hour, v2 and the queue hourly: dispatch anything 20 minutes past due
+              if [ "$v" -ge 80 ]; then
+                gh workflow run v2-shadow.yml --repo "$REPO" && echo "  dispatched v2-shadow"
+              elif [ "$a" -ge 50 ]; then
+                gh workflow run merc.yml --repo "$REPO" -f live=true && echo "  dispatched merc-actor (live)"
+              elif [ "$q" -ge 80 ]; then
+                gh workflow run order-queue.yml --repo "$REPO" && echo "  dispatched order-queue"
+              fi
+            fi
+            sleep 300
+          done
+          gh workflow run clock.yml --repo "$REPO" && echo "next clock run started"
