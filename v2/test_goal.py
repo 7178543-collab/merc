@@ -286,6 +286,16 @@ def test_goal_buys_skip_v2_reserve_over_hard_floor():
     assert any("reserve" in w for w in act.check("labour", live, new, cfg, 2366))
 
 
+def test_no_false_arbitrage_and_unmet_needs_stay_feasible():
+    s = snap()
+    s["market"]["bread"] = {"price": 3.0, "bid": 3.4, "bid_vol": 500, "ask": 3.0, "ask_vol": 500, "traded": 600}
+    G = goal.plan_goal(s, CFG, RECIPES, hist=hist_selling("widgets", 5))
+    assert not (G["sell"].get("bread") and G["buy"].get("bread")), (G["sell"].get("bread"), G["buy"].get("bread"))
+    s = snap(sustenance={"unobtainium": 2.0})
+    G = goal.plan_goal(s, CFG, RECIPES, hist=hist_selling("widgets", 5))
+    assert G["ok"] and G["short"] == {"unobtainium": 2.0}, G.get("short")
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

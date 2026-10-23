@@ -38,6 +38,7 @@ DEFAULTS = {
 }
 
 NOT_STOCK = {"money", "labour", "porterage", "lodging", "protection"}
+SHORT_COST = 1e5            # per unit of a fixed need left unmet: only when nothing can supply it (see solve)
 
 
 def _n(x, d=0.0):
@@ -376,9 +377,13 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
         p1 = sell_px or last
         if avg > 0 and p1:
             steps.append((p1, avg))
-        if bid and _n(m.get("bid_vol")) > 0 and (not floor or _n(bid) >= floor) and (not p1 or _n(bid) < p1):
-            steps.append((_n(bid), _n(m.get("bid_vol"))))       # instant fill at the home bid
+        if bid and _n(m.get("bid_vol")) > 0 and (not floor or _n(bid) >= floor):
+            steps.append((_n(bid), _n(m.get("bid_vol"))))       # instant fill at the home bid (resting buyers; a bid
+                                                                # over the last price is still there to take)
         p2 = g["undercut"] * last
+        if ask:
+            p2 = min(p2, 0.99 * _n(ask))   # never above the lowest ask: a seller there takes the buyers first (and
+                                           # selling over the ask we'd buy at is a false arbitrage)
         room = g["market_share"] * traded - avg - (_n(m.get("bid_vol")) if bid else 0.0)
         if p2 and room > 0.5 and (not floor or p2 >= floor):
             steps.append((p2, room))
@@ -389,6 +394,10 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
             draw_cap = max(0.0, held - keep) / g["drain_turns"]
             capy = _n(it.get("capacity"))
             stock_cap = max(0.0, capy - held) / g["drain_turns"] if capy else 0.0
+        if buy_px and buy_cap > 0:
+            # never sell a good for more than we could buy it back: a crossed book (bid over ask) or a stale last
+            # price would otherwise read as free arbitrage (buy at the ask, sell at the bid)
+            steps = [(min(p_, 0.99 * buy_px), c_) for p_, c_ in steps]
         goods[item] = {"held": held, "cost": cost, "mark": mark, "buy_px": buy_px, "buy_cap": buy_cap,
                        "sell": steps, "draw_cap": draw_cap, "stock_cap": stock_cap, "perishable": perish,
                        "reserve": reserve, "last": last, "traded": traded}
@@ -528,6 +537,10 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
             cols.append(("stock", k, None)); c.append(-g["keep_value"] * gd["mark"]); lb.append(0.0); ub.append(gd["stock_cap"])
         # free disposal of an output nobody takes (waste, worth 0) keeps the balance feasible
         cols.append(("waste", k, None)); c.append(0.0); lb.append(0.0); ub.append(None)
+        # a fixed need (household upkeep, a build site) nothing can supply: priced so high it is only used when there
+        # is no other way, and reported, so a missing market never makes the whole plan infeasible
+        if M["fixed_demand"].get(k, 0.0) > 0:
+            cols.append(("short", k, None)); c.append(SHORT_COST); lb.append(0.0); ub.append(M["fixed_demand"][k])
     for si, so in enumerate(ships or []):
         for j, (item, px, cap, sz) in enumerate(so["out"]):
             cols.append(("exp", item, (si, j))); c.append(-px); lb.append(0.0); ub.append(cap)
@@ -564,7 +577,7 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
         elif kind == "sell":
             A_eq[idx[key]][j] -= 1.0
             cash_row[j] = -goods[key]["sell"][step][0]
-        elif kind == "draw":
+        elif kind in ("draw", "short"):
             A_eq[idx[key]][j] += 1.0
         elif kind in ("stock", "waste"):
             A_eq[idx[key]][j] -= 1.0
@@ -672,7 +685,7 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
         if kind in ("exp", "imp"):
             su = ship_use.setdefault(str(ships[step[0]].get("ship")), {})
             su.setdefault(kind, {})[key] = su.get(kind, {}).get(key, 0.0) + x[j]
-    value = -sum(c[j] * x[j] for j in range(n)) - fixed
+    value = -sum(c[j] * x[j] for j in range(n) if cols[j][0] != "short") - fixed
     cashflow = -sum(cash_row[j] * x[j] for j in range(n)) - fixed
     # the same turn in book terms, the way the model check measures real turns (cash + held x home price): stock
     # change = stocked + unsold output - drawn, at the home last price (perishables and services never count)
@@ -981,6 +994,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
                                            for k, v in (opt.get("ships") or {}).items()},
         "mgmt": {"cap": M.get("mgmt_cap"), "used": M.get("mgmt_used")},
+        "short": {k: round(v["short"], 2) for k, v in opt["flows"].items() if v.get("short")},
         "shadow": {k: round(sh[k], 3) for k in keys + ["_prestige", "_cash"] if k in sh},
         "flows": {k: {kk: round(vv, 2) for kk, vv in v.items()} for k, v in opt["flows"].items()},
     }
@@ -1056,6 +1070,8 @@ def report_lines(G):
                 "%+.0f" % m["gain_over_current"] if m.get("gain_over_current") is not None else "?"))
         elif m.get("town"):
             out.append("- Ship %s: stays on %s (worth %+.0f/turn)." % (m["name"], m.get("town_name"), m.get("worth") or 0))
+    if G.get("short"):
+        out.append("- UNMET needs (no market or stock for them): %s." % ", ".join("%s %.1f" % kv for kv in G["short"].items()))
     mg = G.get("mgmt") or {}
     if mg.get("cap"):
         out.append("- Management: ~%.2f of %.0f used." % (mg.get("used") or 0, mg["cap"]))
