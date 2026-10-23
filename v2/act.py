@@ -721,7 +721,10 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
     if not snap or snap.get("errors"):
         return [], "snapshot unusable"
     sc = G.get("scorecard")
-    if sc and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])):
+    # the check only holds rates once it spans a full day (24 turns): over the first turns after a change the real
+    # turns lag the plan (labour and inputs arrive a tick after the rates), and freezing the ramp there would only
+    # keep the gap open
+    if sc and sc.get("turns", 0) >= 24 and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])):
         return [], "model check OFF (predicted %+.0f/turn, real %+.0f): holding rates" % (sc["predicted"], sc["real"])
     total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None and ch.get("kind") != "ship")
     if total < _n(gc.get("min_gain", 3.0)):

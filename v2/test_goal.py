@@ -174,6 +174,8 @@ def test_rate_moves_step_and_respect_guards():
     G2 = dict(G, scorecard={"turns": 24, "predicted": 300.0, "real": 20.0})
     moves, why = act.goal_moves({"goal": G2}, cfg, snap, 0, {})
     assert moves == [] and "OFF" in why
+    G2 = dict(G, scorecard={"turns": 8, "predicted": 300.0, "real": 20.0})       # under a day: the ramp goes on
+    assert len(act.goal_moves({"goal": G2}, cfg, snap, 0, {})[0]) == 2
     G3 = dict(G, changes=[dict(G["changes"][0], gain=1.0)], buildings=G["buildings"])
     assert act.goal_moves({"goal": G3}, cfg, snap, 0, {})[0] == []                  # not worth moving
 
