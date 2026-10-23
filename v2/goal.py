@@ -171,6 +171,21 @@ def management_used(s, bdata):
     return used
 
 
+def materials_thin(btype, bdata, goods, turns=24, share=0.3):
+    """Materials the home market can't supply within `turns` (what we hold over the reserve + share x what the town
+    trades a turn x turns). Bricks trade ~2 a turn at home: a building needing 120 would sit unbuilt for months."""
+    mats = ((bdata.get(btype) or {}).get("construction") or {}).get("materials") or {}
+    thin = []
+    for item, q in mats.items():
+        gd = goods.get(item) or {}
+        if gd.get("perishable"):
+            continue                      # labour: deep market, bought per turn as the site works
+        have = max(0.0, gd.get("held", 0.0) - gd.get("reserve", 0.0))
+        if have + share * gd.get("traded", 0.0) * turns < _n(q):
+            thin.append(item)
+    return thin
+
+
 def materials_cost(btype, bdata, goods):
     """Coin for one plot of a building type: the full construction materials (a new building is one plot; a park
     plot cost the park's full materials, as the game charged), at home asks, else last price, else our unit cost."""
@@ -185,13 +200,18 @@ def materials_cost(btype, bdata, goods):
 
 # ---------------------------------------------------------------- the model
 
-def _coeffs(b, recipes):
+def _coeffs(b, recipes, memory=None):
     """Per unit of target: (inputs, outputs, prestige). Live flows when it produced (they carry the real porterage,
-    tool wear and worker bonuses), else the recipe."""
+    tool wear and worker bonuses); when it didn't (starved last turn), the last flows it ran on with this recipe
+    (memory, kept by shadow.py), else the recipe. Oct 23: a starved remote building fell back to the recipe, which has
+    no porterage, so the plan under-bought porterage for the farm, pit and camp."""
     r = recipes.get(b.get("recipe") or "") or {}
     prod = _n(b.get("production"))
     ins, outs = {}, {}
     fl = b.get("flows") or {}
+    mem = (memory or {}).get(str(b.get("id"))) or {}
+    if not (prod > 0 and fl) and mem.get("recipe") == b.get("recipe") and mem.get("ins"):
+        return dict(mem["ins"]), dict(mem.get("outs") or {}), _n(r.get("prestige"))
     if prod > 0 and fl:
         for item, f in fl.items():
             if _n(f.get("consumption")) > 0:
@@ -241,7 +261,17 @@ def new_building_candidates(s, recipes, bdata):
     return out
 
 
-def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extra_items=()):
+def coef_memory(s, recipes, memory=None):
+    """Update the per-building flow memory from this snapshot: buildings that produced store their per-unit flows."""
+    mem = dict(memory or {})
+    for b in s.get("buildings") or []:
+        if _n(b.get("production")) > 0 and b.get("flows") and recipes.get(b.get("recipe") or ""):
+            ins, outs, _ = _coeffs(dict(b), recipes)
+            mem[str(b.get("id"))] = {"recipe": b.get("recipe"), "ins": ins, "outs": outs, "turn": s.get("turn")}
+    return mem
+
+
+def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extra_items=(), memory=None):
     """Collect everything the LP needs into plain dicts (separate from solving, so tests can poke at it)."""
     g = load_cfg(cfg)
     bdata = buildings_data or {}
@@ -294,7 +324,7 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
         groups[bid] = ub
         nm = _act_name(b)
         if r:
-            ins, outs, pr = _coeffs(b, recipes)
+            ins, outs, pr = _coeffs(b, recipes, memory)
             if outs or pr:
                 acts.append({"name": nm, "kind": "building", "id": bid, "type": b.get("type"), "recipe": rec,
                              "ins": ins, "outs": outs, "prestige": pr, "lb": 0.0, "ub": ub,
@@ -737,7 +767,8 @@ def _with_ship(opt, sid):
     return o
 
 
-def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=None, sea=None, products=None):
+def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=None, sea=None, products=None,
+              memory=None):
     if not _ensure_scipy():
         return {"ok": False, "why": "scipy not installed and pip install failed"}
     bdata = buildings_data or {}
@@ -748,7 +779,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         extra |= set(i_) | set(o_)
     for t, _, _ in cands:
         extra |= set(((bdata.get(t) or {}).get("construction") or {}).get("materials") or {})
-    M = build_model(s, cfg, recipes, drip=drip, hist=hist, buildings_data=bdata, extra_items=extra)
+    M = build_model(s, cfg, recipes, drip=drip, hist=hist, buildings_data=bdata, extra_items=extra, memory=memory)
     g = M["cfg"]
 
     def ok_like(r, ref):
@@ -914,9 +945,11 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         if gain <= 0.5:
             continue
         cost = materials_cost(a0["type"], bdata, M["goods"])
+        thin = materials_thin(a0["type"], bdata, M["goods"])
         inv.append({"kind": "plot", "building": grp, "what": "+1 plot %s" % a0["name"].split(" [")[0],
                     "cost": "~%.0f coin" % cost, "coin": cost, "gain": gain, "mgmt": need,
-                    "payback": cost / gain, "pays": cost / gain <= g["invest_horizon"]})
+                    "payback": cost / gain, "pays": cost / gain <= g["invest_horizon"] and not thin,
+                    "note": ("materials thin at home: %s" % ", ".join(thin)) if thin else None})
     # new buildings: each type's best recipe as a one-plot building (screened at the plan's prices first)
     sh = opt["shadow"]
     scored = []
@@ -947,11 +980,13 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         need = 0.5 if t in owned_types else 1.0
         cost = materials_cost(t, bdata, M["goods"])
         fits = room is None or need <= room + 1e-9
+        thin = materials_thin(t, bdata, M["goods"])
         inv.append({"kind": "build", "type": t, "recipe": rn, "what": "new %s (%s)" % (t, rn),
                     "cost": "~%.0f coin" % cost, "coin": cost, "gain": gain, "mgmt": need,
                     "payback": cost / gain if gain > 0 else None,
-                    "pays": bool(fits and cost / gain <= g["invest_horizon"]),
-                    "note": None if fits else "no management room (%.2f free, needs %.1f)" % (room or 0, need)})
+                    "pays": bool(fits and not thin and cost / gain <= g["invest_horizon"]),
+                    "note": ("no management room (%.2f free, needs %.1f)" % (room or 0, need)) if not fits else
+                            ("materials thin at home: %s" % ", ".join(thin)) if thin else None})
     inv.sort(key=lambda d: -(d["gain"] or 0))
     # trims: a building whose removal (its plots idle AND its tax gone) beats keeping it
     trims = []

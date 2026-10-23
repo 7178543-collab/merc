@@ -30,7 +30,11 @@ def owned_items():
     # ship trade goods (v2/ships.py trade mode, Oct 13): their home orders are v2's alone
     st = _load(ACT_STATE, {})
     trade = set((st.get("trade_items") or {}) if isinstance(st, dict) else [])
-    return (live - set(sus if isinstance(sus, dict) else [])) | trade
+    build = set()
+    if goal_owns("invest"):          # materials for a building the goal planner started (v2/act.py buys them)
+        plan = _load(os.path.join(ROOT, "state", "v2", "plan.json"), {}) or {}
+        build = {k for k, o in (plan.get("orders") or {}).items() if isinstance(o, dict) and o.get("build_buy")}
+    return (live - set(sus if isinstance(sus, dict) else [])) | trade | build
 
 
 def owned(item):

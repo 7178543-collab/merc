@@ -296,6 +296,20 @@ def test_no_false_arbitrage_and_unmet_needs_stay_feasible():
     assert G["ok"] and G["short"] == {"unobtainium": 2.0}, G.get("short")
 
 
+def test_starved_building_keeps_its_real_flows():
+    s = snap()
+    s["buildings"][1].update(production=5, flows={"labour": {"consumption": 60}, "porterage": {"consumption": 5},
+                                                  "widgets": {"production": 5}})
+    mem = goal.coef_memory(s, RECIPES)
+    assert mem["2"]["ins"] == {"labour": 12.0, "porterage": 1.0}
+    s["buildings"][1].update(production=0, flows={})                     # starved this turn
+    M = goal.build_model(s, CFG, RECIPES, memory=mem)
+    a = next(x for x in M["acts"] if x["name"] == "workshop")
+    assert a["ins"] == {"labour": 12.0, "porterage": 1.0}, a["ins"]        # not the recipe's labour 10, no porterage
+    M = goal.build_model(s, CFG, RECIPES)
+    assert next(x for x in M["acts"] if x["name"] == "workshop")["ins"] == {"labour": 10.0}
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

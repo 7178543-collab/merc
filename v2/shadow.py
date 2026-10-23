@@ -369,9 +369,21 @@ def main():
             sea = routes_mod.load_sea()
         except Exception:
             pass
-        G = goal_mod.plan_goal(snap, cfg_all, planner.load_json("data/recipes.json"),
+        rec_all = planner.load_json("data/recipes.json")
+        mem_path = os.path.join(out, "goal_coef.json")
+        try:
+            with open(mem_path) as f:
+                mem = json.load(f)
+        except (OSError, ValueError):
+            mem = {}
+        mem = goal_mod.coef_memory(snap, rec_all, mem)
+        if not replay:
+            with open(mem_path, "w") as f:
+                json.dump(mem, f, indent=1)
+        G = goal_mod.plan_goal(snap, cfg_all, rec_all,
                                drip=((p.get("builds") or {}).get("drip")) or {}, hist=ghist,
-                               buildings_data=planner.load_json("data/buildings.json"), world=world, sea=sea)
+                               buildings_data=planner.load_json("data/buildings.json"), world=world, sea=sea,
+                               memory=mem)
         import goal_switch
         gh_path = os.path.join(out, "goal_history.jsonl")
         gh = []

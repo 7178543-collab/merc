@@ -234,8 +234,10 @@ def check(item, live, new, cfg, cash):
         lv, nv = _n((lb or {}).get("buy_volume")), _n(nb.get("buy_volume"))
         if nv > 2 * lv + 10 and item not in FAST_BUYS:
             why.append("buy volume %d -> %d is over 2x+10 in one run" % (lv, nv))
-        goal_buys = item in set(cfg.get("perishable") or []) | {"labour"} and goal_live(cfg, "buys") and \
-            cash is not None and cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+        # Oct 23: with the goal live on buys, the inputs that feed its rates (grain, firewood for the brewery it
+        # raised) must follow too, so the 4k reserve rule yields for every item while cash is over the hard floor
+        goal_buys = goal_live(cfg, "buys") and cash is not None and \
+            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
         if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys:
             # with the goal planner live on buys, its plan already keeps cash over its floor (and labour bought for
             # the rates it set is what makes them run), so v2's reserve rule only applies under the hard floor
@@ -876,6 +878,16 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     plan = _load(os.path.join(out, "plan.json"), None)
     sus = _load(SUSPENDED, {})
     owned = set(((cfg.get("live") or {}).get("items")) or []) - set(sus)
+    # Oct 23: a building the goal planner started needs its materials bought: while it owns investments, every item
+    # with a build buy in the plan is v2's (one-off buy, priced by the build manager; any standing sell of it is off)
+    if plan and goal_live(cfg, "invest"):
+        for item, o in ((plan.get("orders") or {}).items()):
+            bb = o.get("build_buy")
+            if bb:
+                owned.add(item)
+                ceil_ = cfg.setdefault("buy_ceiling", {})
+                ceil_[item] = max(_n(ceil_.get(item)), _n(bb.get("buy_price")))
+                o["sell"] = "off"
     fs = _load(failsafe, {})
     fs_level = int(_n(fs.get("level")))
     paused = set((fs.get("paused") or {}).keys())
