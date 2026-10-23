@@ -64,6 +64,23 @@ BRAKE_ITEMS = ["wheels", "timber", "jewellery", "tiles", "nails", "bricks"]
 STOP_ITEMS = ["limestone", "cured fish"]
 
 
+def goal_hard_floor():
+    try:
+        with open(os.path.join(HERE, "v2", "config.json")) as f:
+            return float(((json.load(f).get("goal") or {}).get("hard_floor")) or 1000)
+    except (OSError, ValueError, TypeError):
+        return 1000.0
+
+
+def v2_keeps_items(lvl, cash, goal_buys, hard_floor=None):
+    """Pure: does bot v2 keep its own items at this failsafe level? Below BRAKE always; at BRAKE/STOP only when the
+    goal planner runs buys live and cash is at or over its hard floor (goal.hard_floor, default 1,000)."""
+    if lvl < 2:
+        return True
+    floor = goal_hard_floor() if hard_floor is None else hard_floor
+    return bool(goal_buys) and cash >= floor
+
+
 def say(*a):
     print(" ".join(str(x) for x in a))
 
@@ -273,9 +290,12 @@ def main():
 
     # items bot v2 runs live are left to v2 below brake level; at BRAKE/STOP v2 stands down
     # (v2/act.py reads state/failsafe.json) and the failsafe acts on everything
+    # Oct 23: with the goal planner live on buys, its own cash floor replaces BRAKE/STOP (v2/act.py goal_cash_ok):
+    # its items stay with v2 at every level while cash is over goal.hard_floor. Before this the failsafe re-capped
+    # the planner's labour bid at 2.00 every hour (v2 set 2.2), so labour ran short and raised rates did not run.
     try:
         import v2_owned
-        mine = v2_owned.owned_items() if lvl < 2 else set()
+        mine = v2_owned.owned_items() if v2_keeps_items(lvl, cash, v2_owned.goal_owns("buys")) else set()
     except Exception:
         mine = set()
     if mine:

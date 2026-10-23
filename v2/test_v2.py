@@ -1109,6 +1109,24 @@ def test_chain_moves_rules():
     cfg["goal"] = {"live": {"rates": True}}                      # the goal planner owns rates: chain sizing yields
     assert act.chain_moves(plan, cfg, snap, 0, {}, {})[1] == "the goal planner owns building rates"
 
+def test_failsafe_leaves_goal_items_to_v2():
+    """Oct 23: at BRAKE/STOP the failsafe re-capped the goal planner's labour bid each hour; with goal buys live and
+    cash over goal.hard_floor, v2's items stay with v2. (failsafe.py asks for credentials on import: load the pure
+    helper from its source.)"""
+    src = open(os.path.join(os.path.dirname(HERE), "failsafe.py")).read()
+    tree = ast.parse(src)
+    ns = {"os": os, "json": json, "HERE": os.path.dirname(HERE)}
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name in ("goal_hard_floor", "v2_keeps_items"):
+            exec(compile(ast.Module(body=[node], type_ignores=[]), "failsafe.py", "exec"), ns)
+    keep = ns["v2_keeps_items"]
+    assert keep(0, 500, False)                         # below BRAKE: always v2's
+    assert not keep(3, 2334, False)                    # goal buys off: old rules
+    assert keep(3, 2334, True, hard_floor=1000)        # goal live, cash over the floor
+    assert not keep(3, 900, True, hard_floor=1000)     # under the hard floor: the failsafe acts
+    assert ns["goal_hard_floor"]() > 0
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
