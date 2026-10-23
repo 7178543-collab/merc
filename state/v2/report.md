@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13494, 2026-10-23 15:02. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13494, 2026-10-23 15:03. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 2,366, prestige 3,600 (480 free, -1.4/turn).
 
 ## Items v2 runs (last turn)
@@ -119,7 +119,7 @@ Cash 2,366, prestige 3,600 (480 free, -1.4/turn).
   - logging camp w/ tool 7.00 -> 0.00: -8/turn
   - logging camp w/ tool [cut firewood 1] 0.00 -> 20.00: +17/turn
   - weavery 1 0.00 -> 1.00: -27/turn
-- Model check over the last 13 turns: predicted +91/turn for the settings we ran, real +44/turn - OFF, trust the plan less.
+- Model check over the last 13 turns: predicted +95/turn for the settings we ran, real +44/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.46, thread 4.25, cloth 6.44, flax fibres 4.97, garments 17.64, nets 33.43, beer 3.50, timber 6.15, prestige 56.47, cash 0.00
 - Orders it would set (dry run): porterage buy 9 (v2 8); rope sell 3 (v2 2)
 - Recipe: logging camp w/ tool split timber 2 -> cut firewood 1 at 20.00, worth +17/turn.
