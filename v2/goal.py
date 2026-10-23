@@ -465,6 +465,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None):
     cur = free(cur_fix)                     # what today's settings earn
     cur_lim = solve(M, fix=cur_fix)         # ... and which limits they break
     breaks = cur_lim.get("relaxed") if cur_lim.get("ok") else ["no feasible flow"]
+    now_flows = (cur_lim if cur_lim.get("ok") else cur).get("flows") or {}
 
     # changes, priced one at a time on top of each other (best first), so the gains add up to plan - today.
     # Moves that only work together (a chain stage and its feeder) are priced as one group.
@@ -546,6 +547,10 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None):
         "current_breaks": breaks,
         "plan_cashflow": opt["cashflow"], "current_cashflow": cur.get("cashflow"),
         "buy": {k: round(v.get("buy", 0), 2) for k, v in opt["flows"].items() if v.get("buy")},
+        # buys and sells for the rates that run today (the 'buys'/'sells' jobs use these: rates move in steps,
+        # so orders follow the real targets, not the plan's end state)
+        "orders_now": {"buy": {k: round(v.get("buy", 0), 2) for k, v in now_flows.items() if v.get("buy")},
+                       "sell": {k: round(v.get("sell", 0), 2) for k, v in now_flows.items() if v.get("sell")}},
         "sell": {k: round(v.get("sell", 0), 2) for k, v in opt["flows"].items() if v.get("sell")},
         "plan_prestige_rate": opt["prestige_rate"], "current_prestige_rate": cur.get("prestige_rate"),
         "prestige_min": M["prestige_min"], "cash_min": M["cash_min"], "fixed_cost": M["fixed_cost"],
@@ -559,7 +564,8 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None):
 def report_lines(G):
     if not G:
         return []
-    out = ["## Goal: business value (shadow)"]
+    lj = [j for j, v in (G or {}).get("live_jobs", {}).items() if v] if G else []
+    out = ["## Goal: business value (%s)" % (("live: " + ", ".join(lj)) if lj else "shadow")]
     if not G.get("ok"):
         return out + ["- no plan: %s" % G.get("why")]
     tr = G.get("trend") or {}
@@ -589,6 +595,8 @@ def report_lines(G):
                 out.append("  - %s %.2f -> %.2f: %s" % (ch["name"], ch["from"], ch["to"], g_))
     else:
         out.append("- No building changes: today's rates are the plan's.")
+    if G.get("promoted"):
+        out.append("- HAND-OVER: %s." % G["promoted"])
     if sc:
         out.append("- Model check over the last %d turns: predicted %+.0f/turn for the settings we ran, real %+.0f/turn%s." % (
             sc["turns"], sc["predicted"], sc["real"],
@@ -599,6 +607,17 @@ def report_lines(G):
     if sh:
         out.append("- Worth of one more unit per turn: " + ", ".join(
             "%s %.2f" % (k.strip("_"), v) for k, v in sh.items()))
+    go = G.get("goal_orders") or {}
+    if go:
+        diffs = []
+        for item, d in sorted(go.items()):
+            for side in ("buy", "sell"):
+                k = side + "_volume"
+                if k in d and d[k] != d.get("v2_" + k):
+                    diffs.append("%s %s %s (v2 %s)" % (item, side, d[k], d.get("v2_" + k, "none")))
+        if diffs:
+            out.append("- Orders it would set%s: %s" % (
+                "" if G.get("orders_live") else " (dry run)", "; ".join(diffs[:10])))
     if G.get("investments"):
         out.append("- Investments:")
         for d in G["investments"][:5]:
@@ -618,7 +637,9 @@ def history_line(G):
     return {"t": G.get("t"), "turn": G.get("turn"), "ok": True, "value_now": G.get("value_now"),
             "pred_today": (G["current_value"] - fc) if G.get("current_value") is not None else None,
             "pred_plan": G["plan_value"] - fc, "cash_today": G.get("current_cashflow"), "cash_plan": G.get("plan_cashflow"),
-            "levels": G.get("levels"), "live": bool(G.get("live"))}
+            "levels": G.get("levels"), "live": G.get("live_jobs"),
+            "check": None if not G.get("scorecard") else (abs(G["scorecard"]["predicted"] - G["scorecard"]["real"])
+                                                         <= max(40.0, 0.5 * abs(G["scorecard"]["real"])))}
 
 
 def scorecard(goal_hist, hist, perishable=(), min_turns=6):
@@ -639,3 +660,43 @@ def scorecard(goal_hist, hist, perishable=(), min_turns=6):
         real = (value_of(now, perishable)[0] - value_of(by_turn[start["turn"]], perishable)[0]) / (t_now - start["turn"])
         return {"turns": t_now - start["turn"], "predicted": pred, "real": real, "runs": len(span)}
     return None
+
+
+# ---------------------------------------------------------------- orders (the 'buys' and 'sells' jobs)
+
+def apply_orders(G, plan, cfg):
+    """Put the goal planner's volumes into v2's planned orders for the jobs that are live; v2 keeps prices, tiers
+    and the write/verify path (act.py). Returns ({item: volumes it wants vs v2's}, any job live).
+    buys: perishables only (labour, porterage, fish, meat): bought to exactly what today's rates use, whole units up.
+    sells: every item the plan sells at home: sell_volume raised to what the plan sells when that is more than v2
+           offers (drawing a pile down faster); never cut, since a sell order only caps what buyers can take."""
+    import math
+    if not G or not G.get("ok"):
+        return {}, False
+    import goal_switch
+    live = {j: goal_switch.owns(j, cfg) for j in ("buys", "sells")}
+    orders = plan.setdefault("orders", {})
+    now = G.get("orders_now") or {}
+    per = set(cfg.get("perishable") or []) | {"labour"}
+    out = {}
+    for item in sorted(per):
+        want = int(math.ceil(_n((now.get("buy") or {}).get(item)) - 1e-6))
+        o = (orders.get(item) or {}).get("buy")
+        d = out.setdefault(item, {})
+        d["buy_volume"] = want
+        d["v2_buy_volume"] = (o or {}).get("buy_volume")
+        if live["buys"] and o is not None:
+            o["buy_volume"] = want
+            orders[item]["why"] = "goal planner: buys %d for today's rates (v2 had %s)" % (want, d["v2_buy_volume"])
+    for item, v in sorted((now.get("sell") or {}).items()):
+        o = (orders.get(item) or {}).get("sell")
+        if o is None:
+            continue
+        want = max(int(math.ceil(_n(v) - 1e-6)), int(_n(o.get("sell_volume"))))
+        d = out.setdefault(item, {})
+        d["sell_volume"] = want
+        d["v2_sell_volume"] = o.get("sell_volume")
+        if live["sells"] and want != o.get("sell_volume"):
+            o["sell_volume"] = want
+            orders[item]["why"] = "goal planner: sells %d (v2 had %s)" % (want, d["v2_sell_volume"])
+    return out, any(live.values())

@@ -192,7 +192,14 @@ def tool_guard(actions, st):
                         "note": "tool guard: keep the tool bid at the cap (%.1f turns of stock)" % turns})
     prod = q.read_producer(CAMP)
     tgt = m.num(prod.get("target"))
-    if turns < TOOLS_LOW_TURNS and tgt > CAMP_SLOW:
+    try:
+        import v2_owned
+        goal_rates = v2_owned.goal_owns("rates")
+    except Exception:
+        goal_rates = False
+    if goal_rates:
+        pass            # the goal planner owns building rates (it prices tool wear into the camp's rate)
+    elif turns < TOOLS_LOW_TURNS and tgt > CAMP_SLOW:
         st["camp_slowed"] = True
         actions.append({"building": CAMP, "producer": {"recipe": CAMP_RECIPE, "target": CAMP_SLOW, "provider_id": q.STORE},
                         "note": "tool guard: tools at %.1f turns of use; camp %g -> %d until stock recovers" % (turns, tgt, CAMP_SLOW)})

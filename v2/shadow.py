@@ -354,7 +354,7 @@ def main():
         G = goal_mod.plan_goal(snap, cfg_all, planner.load_json("data/recipes.json"),
                                drip=((p.get("builds") or {}).get("drip")) or {}, hist=ghist,
                                buildings_data=planner.load_json("data/buildings.json"))
-        G["live"] = bool((cfg_all.get("goal") or {}).get("live"))
+        import goal_switch
         gh_path = os.path.join(out, "goal_history.jsonl")
         gh = []
         try:
@@ -363,6 +363,10 @@ def main():
         except (OSError, ValueError):
             pass
         G["scorecard"] = goal_mod.scorecard(gh, ghist, set(cfg_all.get("perishable") or []))
+        if not replay:
+            G["promoted"] = goal_switch.promote(cfg_all, gh, G["scorecard"], snap.get("turn"))
+        G["live_jobs"] = {j: goal_switch.owns(j, cfg_all) for j in goal_switch.JOBS}
+        G["goal_orders"], G["orders_live"] = goal_mod.apply_orders(G, p, cfg_all)
         p["goal"] = G
         with open(os.path.join(out, "goal.json"), "w") as f:
             json.dump(G, f, indent=1, default=float)

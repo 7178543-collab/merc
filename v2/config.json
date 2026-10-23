@@ -50,7 +50,7 @@
    "1948883264": "151802239",
    "845668271": "134102075"
   },
-  "_ship_pins_about": "Oct 18 (Taylor: get on track): pinned ships sail to their town and stay on that route (v2 sets orders + crew there, never picks another town). Oct 20 (Taylor: go): Linen Snake -> Neuborn (780 moves) to export the garment pile (no home garment bids, rival asks 20.2; route table: ~9 garments a turn at ~21.85 + beer, est +106 a turn); was Grandgues (+16, furniture only, Flax Wyrm's imports cover the slot). Flax Wyrm -> Rouhomme (368: candles 74, furniture 13.7, pasties 15.2; beer/cloth exports when they beat home). Oct 22 (Taylor: do it): Linen Snake back to Grandgues (151802239): in ~40 turns on Neuborn it shipped 0 garments while v2 held home garment sells at 10 for it. Oct 22 (Taylor: do more, money on the table): Flax Wyrm Rouhomme -> Caillech\u00e2tel (134102075, 488 moves): Rouhomme 'nothing pays' (crew 0 for days, furniture stock full at 143/145); Caillech\u00e2tel buys beer ~5.03 vs 3.18 home (46/turn) + nets 37 (9/turn), est +83/turn after crew on our own goods. Unpin = delete the entry."
+  "_ship_pins_about": "Oct 18 (Taylor: get on track): pinned ships sail to their town and stay on that route (v2 sets orders + crew there, never picks another town). Oct 20 (Taylor: go): Linen Snake -> Neuborn (780 moves) to export the garment pile (no home garment bids, rival asks 20.2; route table: ~9 garments a turn at ~21.85 + beer, est +106 a turn); was Grandgues (+16, furniture only, Flax Wyrm's imports cover the slot). Flax Wyrm -> Rouhomme (368: candles 74, furniture 13.7, pasties 15.2; beer/cloth exports when they beat home). Oct 22 (Taylor: do it): Linen Snake back to Grandgues (151802239): in ~40 turns on Neuborn it shipped 0 garments while v2 held home garment sells at 10 for it. Oct 22 (Taylor: do more, money on the table): Flax Wyrm Rouhomme -> Caillechâtel (134102075, 488 moves): Rouhomme 'nothing pays' (crew 0 for days, furniture stock full at 143/145); Caillechâtel buys beer ~5.03 vs 3.18 home (46/turn) + nets 37 (9/turn), est +83/turn after crew on our own goods. Unpin = delete the entry."
  },
  "season_end": "2026-11-30T11:00:00+00:00",
  "cash": {
@@ -250,5 +250,30 @@
   "start": "2026-11-10T00:00:00Z",
   "season_end": "2026-11-30T11:00:00Z",
   "_about": "endgame.py (Taylor Oct 20): from start, prestige still turns ~90% into legacy by the season end and cash/stock are worth nothing after it, so the 20k cash gates drop to small floors above the failsafe brake: park plots + quarry on bought labour over plot_min_cash, banquet on/off at banquet_on_cash/banquet_off_cash, ship_church on over church_min_cash, church readiness buys kept after a fill, outputs sold down over sell_drawdown_turns. Defaults in endgame.DEFAULT; set on false to stop it."
+ },
+ "goal": {
+  "_about": "Goal planner (v2/goal.py, Oct 23; Taylor: goal = business value, full control inside the hard limits; \"leave it and it just plays\"). Jobs: rates (building rates), buys (perishable buys), sells (sell volumes, raise only), invest (+1 plots). auto: it takes the jobs over itself, in auto_promote order, once its model check has held hold_runs runs in a row (needs 24+ turns of history), at most one every promote_gap_turns; drop_runs failed checks in a row hand the newest job back. live.<job>: true forces a job on by hand. off: true = kill switch, all jobs back to the old rules. State: state/v2/goal_live.json. Every other writer of a live job stands aside (v2_owned.goal_owns / v2/goal_switch.py).",
+  "live": {
+   "rates": false,
+   "buys": false,
+   "sells": false,
+   "invest": false
+  },
+  "auto_promote": [
+   "rates",
+   "buys",
+   "sells",
+   "invest"
+  ],
+  "step_share": 0.25,
+  "step_min": 0.25,
+  "min_gain": 3.0,
+  "invest_cash_margin": 2000,
+  "invest_cooldown_turns": 24,
+  "off": false,
+  "auto": true,
+  "hold_runs": 12,
+  "drop_runs": 3,
+  "promote_gap_turns": 24
  }
 }

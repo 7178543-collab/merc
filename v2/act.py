@@ -683,6 +683,86 @@ def chain_moves(plan, cfg, snap, fs_level, dturn, cstate):
     return moves, why
 
 
+def goal_live(cfg, job):
+    """The goal planner runs this job live (v2/config.json goal.live.<job>)."""
+    import goal_switch
+    return goal_switch.owns(job, cfg)
+
+
+def goal_moves(plan, cfg, snap, fs_level, dturn):
+    """Pure: the building rate changes the goal planner (v2/goal.py) wants this run. Returns (moves, why).
+    main() writes them only when goal.live.rates is on and logs them either way (state/v2/goal_act.jsonl), so the
+    shadow days show exactly what it would have done. Guards: the whole plan must beat today's settings by
+    goal.min_gain a turn; a move steps at most max(step_min, step_share x target) a run (no whiplash on one
+    turn's prices); the model check must not be OFF; at failsafe STOP (3) only cuts; a building diagnose or Taylor
+    touched in the last 2 turns is held."""
+    G = (plan or {}).get("goal") or {}
+    gc = cfg.get("goal") or {}
+    if not G.get("ok"):
+        return [], "no goal plan: %s" % G.get("why")
+    if not snap or snap.get("errors"):
+        return [], "snapshot unusable"
+    sc = G.get("scorecard")
+    if sc and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])):
+        return [], "model check OFF (predicted %+.0f/turn, real %+.0f): holding rates" % (sc["predicted"], sc["real"])
+    flat = []
+    for ch in G.get("changes") or []:
+        flat.extend(ch.get("group") or [ch])
+    total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None)
+    if total < _n(gc.get("min_gain", 3.0)):
+        return [], "plan beats today's rates by only %+.1f/turn: nothing to move" % total
+    blds = {str(b.get("id")): b for b in snap.get("buildings") or []}
+    share, smin = _n(gc.get("step_share", 0.25)), _n(gc.get("step_min", 0.25))
+    moves = []
+    for ch in flat:
+        b = blds.get(str(ch.get("id") or ""))
+        if not b or not b.get("recipe") or b.get("construction"):
+            continue
+        cur, to = _n(b.get("target")), _n(ch.get("to"))
+        if abs(to - cur) < 0.05:
+            continue
+        t_ = dturn.get(b.get("name")) if b.get("name") in dturn else dturn.get(str(b.get("id")))
+        if t_ is not None and snap.get("turn") is not None and snap["turn"] - t_ < 2:
+            continue
+        if fs_level >= 3 and to > cur:
+            continue
+        lim = max(smin, share * cur)
+        new = round(cur + max(-lim, min(lim, to - cur)), 3)
+        moves.append({"id": str(b["id"]), "name": b.get("name"), "recipe": b.get("recipe"), "from": cur, "to": new,
+                      "plan": to})
+    return moves, "plan %+.0f/turn over today's rates" % total
+
+
+def invest_pick(plan, cfg, snap, state):
+    """Pure: the one investment the goal planner would make this run, or (None, why). Only a '+1 plot' that pays back
+    within the horizon, with cash after the materials at least the floor + invest_cash_margin, no building under
+    construction, and invest_cooldown_turns since the last one."""
+    G = (plan or {}).get("goal") or {}
+    gc = cfg.get("goal") or {}
+    if not G.get("ok"):
+        return None, "no goal plan"
+    if any(b.get("construction") for b in (snap or {}).get("buildings") or []):
+        return None, "a building is under construction"
+    lt = (state or {}).get("last_invest_turn")
+    last = _n(lt) if lt is not None else -1e9
+    if snap.get("turn") is not None and snap["turn"] - last < _n(gc.get("invest_cooldown_turns", 24)):
+        return None, "cooldown since turn %d" % last
+    cash = _n(snap.get("cash"))
+    floor = _n(gc.get("cash_floor", 4000)) + _n(gc.get("invest_cash_margin", 2000))
+    for d in G.get("investments") or []:
+        if not str(d.get("what", "")).startswith("+1 plot") or not d.get("pays"):
+            continue
+        cost = _n(str(d.get("cost", "")).replace("~", "").split(" ")[0])
+        if cash - cost < floor:
+            return None, "%s pays (%+.0f/turn) but cash %.0f - %.0f < %.0f" % (d["what"], d["gain"], cash, cost, floor)
+        name = d["what"][len("+1 plot "):]
+        b = next((x for x in snap.get("buildings") or [] if x.get("name") == name or x.get("type") == name), None)
+        if b:
+            return {"plot": {"building": str(b["id"])}, "confirm": True,
+                    "note": "goal planner: %s, %+.0f/turn, payback %.0f turns" % (d["what"], d["gain"], d.get("payback") or 0)}, "ok"
+    return None, "no investment pays back within %s turns" % gc.get("invest_horizon", 240)
+
+
 def chain_labour_delta(plan, snap, recipes, done):
     """Labour a turn the applied chain moves add (+) or free (-), from the buildings' recipes."""
     by_id = {str(b.get("id")): b for b in (snap or {}).get("buildings") or []}
@@ -763,7 +843,55 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     except Exception as e:      # the chain step must never stop the store orders
         chain_why = "chain step failed: %s: %s" % (type(e).__name__, e)
 
-    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_level, paused=paused)
+    # goal planner (v2/goal.py): building rates + one investment; logged every run, written only for live jobs
+    GLOG = os.path.join(out, "goal_act.jsonl")
+    try:
+        gmoves, gwhy = goal_moves(plan, cfg, snap, fs_level, dturn)
+        rates_live = live_mode and goal_live(cfg, "rates")
+        g_done = []
+        if rates_live and gmoves:
+            enable_writes()
+        for m_ in gmoves:
+            ok = status = body = None
+            if rates_live:
+                ok, status, body = api.write("PUT", "/buildings/%s/producer" % m_["id"],
+                                             {"target": "%.3f" % m_["to"], "autoset_buying": False,
+                                              "autoset_selling": False, "allow_overprod": False})
+                if ok:
+                    g_done.append(m_)
+            with open(GLOG, "a") as f:
+                f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
+                                    "rate": m_["name"], "from": m_["from"], "to": m_["to"], "plan": m_["plan"],
+                                    "dry": not rates_live, "why": gwhy, "ok": ok, "status": status,
+                                    "reply": None if ok in (None, True) else str(body)[:200]}, default=str) + "\n")
+        if g_done and "labour" in owned:
+            recipes = _load(os.path.join(HERE, "data", "recipes.json"), {})
+            d_lab = chain_labour_delta(plan, snap, recipes, g_done)
+            lo = ((plan.get("orders") or {}).get("labour") or {}).get("buy")
+            if lo and abs(d_lab) >= 1:
+                lo["buy_volume"] = max(0, int(round(_n(lo.get("buy_volume")) + d_lab)))
+        gst_path = os.path.join(out, "goal_state.json")
+        gst = _load(gst_path, {})
+        pick, iwhy = invest_pick(plan, cfg, snap or {}, gst)
+        if pick:
+            inv_live = live_mode and goal_live(cfg, "invest")
+            r = _queue_apply(pick) if inv_live else {"ok": None, "dry": True}
+            if inv_live and r.get("ok"):
+                gst["last_invest_turn"] = (snap or {}).get("turn")
+                _save(gst_path, gst)
+            with open(GLOG, "a") as f:
+                f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
+                                    "invest": pick, "dry": not inv_live, "result": r}, default=str) + "\n")
+    except Exception as e:      # the goal step must never stop the store orders
+        with open(GLOG, "a") as f:
+            f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "error": "%s: %s" % (type(e).__name__, e)}) + "\n")
+
+    # with the goal planner live on buys and sells, its floors replace the failsafe's BRAKE stand-down;
+    # STOP (3) still stands everything down
+    fs_decide = fs_level
+    if goal_live(cfg, "buys") and goal_live(cfg, "sells") and fs_level < 3:
+        fs_decide = 0
+    rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_decide, paused=paused)
     for r in rows:
         t_ = dturn.get(r["item"])
         if r["owned"] and not r["same"] and t_ is not None and (snap or {}).get("turn") is not None \

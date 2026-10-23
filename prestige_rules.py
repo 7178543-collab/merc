@@ -83,6 +83,15 @@ def say(*a):
     _LINES.append(line)
 
 
+def _goal_owns(job):
+    """The goal planner (v2/goal.py) owns this job live: this script's rule for it stands aside."""
+    try:
+        import v2_owned
+        return v2_owned.goal_owns(job)
+    except Exception:
+        return False
+
+
 def tenants_rule():
     pl = m.get("/player") or {}
     hid = (pl.get("household") or {}).get("id")
@@ -353,7 +362,7 @@ def park_ready_rule(cash=None):
     # 10th plot was built but the target stayed at 9, so one plot gave no prestige)
     built = int(m.num(park.get("size")))
     prod = park.get("producer") or {}
-    if LIVE and built and prod.get("recipe") == "maintain 1" and m.num(prod.get("target")) < built:
+    if LIVE and built and prod.get("recipe") == "maintain 1" and m.num(prod.get("target")) < built and not _goal_owns("rates"):
         e = {"building": PARK, "producer": {"recipe": "maintain 1", "target": built, "provider_id": q.STORE},
              "note": "park rule: maintain all %d built plots (was %s)" % (built, prod.get("target"))}
         try:
@@ -367,6 +376,9 @@ def park_ready_rule(cash=None):
     if ready and cash is not None and cash < endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH):
         say("  park plot held: cash %.0f under %d (%s)" % (cash, endgame.floor("plot_min_cash", AUTO_PLOT_MIN_CASH),
                                                           "endgame" if endgame.active() else "recovery"))
+        return
+    if ready and LIVE and AUTO_PLOT and _goal_owns("invest"):
+        say("  park plot: left to the goal planner (it owns investments)")
         return
     if ready and LIVE and AUTO_PLOT:
         e = {"plot": {"building": PARK}, "confirm": True, "note": "park rule: pool %.1f/%.0f, limestone %.0f, timber %.0f" % (
@@ -713,7 +725,10 @@ def main():
             ov = (json.load(f) or {}).get("banquet", "auto")
     except (FileNotFoundError, ValueError):
         ov = "auto"
-    if ov in ("on", "off"):
+    goal_rates = _goal_owns("rates")
+    if goal_rates:
+        want_on, why = running, "the goal planner owns the banquet rate (target %s): recipe and inputs only" % prod.get("target")
+    elif ov in ("on", "off"):
         want_on, why = ov == "on", "Taylor's override from the app: banquet %s" % ov
     elif cash < endgame.floor("banquet_off_cash", OFF_CASH):
         want_on, why = False, "cash %.0f under %d%s" % (cash, endgame.floor("banquet_off_cash", OFF_CASH),
@@ -738,7 +753,10 @@ def main():
             todo.append({"item": FISH, "tier": 0, "set": FISH_ORDER, "note": "banquet rule: " + why})
         if not meat_on:
             todo.append({"item": MEAT, "tier": 0, "set": MEAT_ORDER, "note": "banquet rule (meat fallback): " + why})
-        if not running or prod.get("recipe") != recipe:
+        if goal_rates and running and prod.get("recipe") != recipe:
+            todo.append({"building": MANSION, "producer": {"recipe": recipe, "target": m.num(prod.get("target")), "provider_id": q.STORE},
+                         "note": "banquet rule: recipe %s at the goal planner's rate (fish %.1f, meat %.1f held)" % (recipe, fish_held, meat_held)})
+        elif not goal_rates and (not running or prod.get("recipe") != recipe):
             todo.append({"building": MANSION, "producer": {"recipe": recipe, "target": 1, "provider_id": q.STORE},
                          "note": "banquet rule: %s; recipe %s (fish %.1f, meat %.1f held)" % (why, recipe, fish_held, meat_held)})
     else:
@@ -757,15 +775,18 @@ def main():
         park_ready_rule(cash)
     except Exception as ex:
         say("park rule crashed: %s: %s" % (type(ex).__name__, ex))
-    try:
+    if _goal_owns("rates"):
+        say("spare labour + quarry rules: stand aside (the goal planner owns building rates)")
+    else:
         try:
-            spare = spare_labour_rule()
+            try:
+                spare = spare_labour_rule()
+            except Exception as ex:
+                spare = None
+                say("spare labour rule crashed: %s: %s" % (type(ex).__name__, ex))
+            quarry_rule(cash, spare)
         except Exception as ex:
-            spare = None
-            say("spare labour rule crashed: %s: %s" % (type(ex).__name__, ex))
-        quarry_rule(cash, spare)
-    except Exception as ex:
-        say("quarry rule crashed: %s: %s" % (type(ex).__name__, ex))
+            say("quarry rule crashed: %s: %s" % (type(ex).__name__, ex))
     try:
         wants_rule()
     except Exception as ex:

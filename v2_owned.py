@@ -37,6 +37,19 @@ def owned(item):
     return item in owned_items()
 
 
+def goal_owns(job):
+    """True when the goal planner (v2/goal.py) runs this job live: v2/config.json goal.live.<job>, one of
+    rates (building rates and duty), buys, sells, invest (plots and builds). Every other writer of that job stands
+    aside then, so nothing fights the plan. Off unless switched on; an unreadable config means off."""
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(ROOT, "v2"))
+        import goal_switch
+        return goal_switch.owns(job)
+    except Exception:
+        return False
+
+
 def chain_owned():
     """True when bot v2 sets the textile chain's production targets (v2/config.json live.chain, not suspended as
     "chain"). chain_balancer.py stands aside then."""
@@ -44,4 +57,4 @@ def chain_owned():
     sus = _load(SUSPENDED, {})
     ov = (_load(os.path.join(ROOT, "state", "overrides.json"), {}) or {}).get("chain")
     live = (ov == "v2") if ov in ("v2", "v1") else bool((cfg.get("live") or {}).get("chain"))
-    return live and "chain" not in (sus if isinstance(sus, dict) else {})
+    return (live and "chain" not in (sus if isinstance(sus, dict) else {})) or goal_owns("rates")

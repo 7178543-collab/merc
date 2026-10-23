@@ -379,9 +379,14 @@ def diagnose(snap, cfg, ctx):
         if bid not in seen:
             del idle[bid]
 
-    # ---- R4: a priority building projected at 0
+    # ---- R4: a priority building projected at 0 (stands aside when the goal planner owns building rates)
     starved, labour_need = [], 0.0
-    for b in snap.get("buildings") or []:
+    try:
+        import goal_switch
+        goal_rates = goal_switch.owns("rates", cfg)
+    except Exception:
+        goal_rates = False
+    for b in ([] if goal_rates else (snap.get("buildings") or [])):
         if b.get("type") not in priority:
             continue
         op = ops.get("producer/%s" % b.get("id")) or {}

@@ -120,6 +120,69 @@ def test_real_snapshot_plans_and_explains():
     assert any("Goal" in line for line in goal.report_lines(G))
 
 
+def test_hand_over_one_job_at_a_time_and_back():
+    import goal_switch
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "goal_live.json")
+    cfg = {"goal": {"auto": True, "auto_promote": ["rates", "buys"], "hold_runs": 3, "drop_runs": 2,
+                    "promote_gap_turns": 24}}
+    good = {"turns": 24, "predicted": 50.0, "real": 60.0}
+    bad = {"turns": 24, "predicted": 200.0, "real": 10.0}
+    held = [{"check": True}] * 3
+    assert "rates" in goal_switch.promote(cfg, held, good, 100, path=path)
+    st = json.load(open(path))
+    assert goal_switch.owns("rates", cfg, st) and not goal_switch.owns("buys", cfg, st)
+    assert goal_switch.promote(cfg, held, good, 110, path=path) is None          # one job per 24 turns
+    assert "buys" in goal_switch.promote(cfg, held, good, 124, path=path)
+    msg = goal_switch.promote(cfg, held + [{"check": False}], bad, 130, path=path)
+    assert msg and "buys" in msg and "back" in msg, msg                           # newest job handed back first
+    st = json.load(open(path))
+    assert goal_switch.owns("rates", cfg, st) and not goal_switch.owns("buys", cfg, st)
+    # the kill switch beats everything; without auto nothing is live unless forced by hand
+    assert not goal_switch.owns("rates", {"goal": {"auto": True, "off": True}}, st)
+    assert not goal_switch.owns("rates", {"goal": {}}, st)
+    assert goal_switch.owns("invest", {"goal": {"live": {"invest": True}}}, {})
+    # no model check yet (under 24 turns of history): never hands anything over
+    assert goal_switch.promote(cfg, held, {"turns": 6, "predicted": 1, "real": 1}, 500, path=path) is None
+
+
+def test_rate_moves_step_and_respect_guards():
+    import act
+    snap = {"turn": 200, "buildings": [
+        {"id": "7", "name": "spinnery 1", "recipe": "spin thread 1", "target": 2.0},
+        {"id": "8", "name": "brewery 1", "recipe": "brew beer 1", "target": 0.4}]}
+    G = {"ok": True, "changes": [{"name": "spinnery 1", "id": "7", "kind": "building", "from": 2.0, "to": 1.0, "gain": 20},
+                                 {"name": "brewery 1", "id": "8", "kind": "building", "from": 0.4, "to": 1.0, "gain": 10}]}
+    cfg = {"goal": {"step_share": 0.25, "step_min": 0.25, "min_gain": 3}}
+    moves, why = act.goal_moves({"goal": G}, cfg, snap, 0, {})
+    by = {m["name"]: m["to"] for m in moves}
+    assert by == {"spinnery 1": 1.5, "brewery 1": 0.65}, by                        # steps, not jumps
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 3, {})                        # failsafe STOP: cuts only
+    assert [m["name"] for m in moves] == ["spinnery 1"]
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 0, {"spinnery 1": 199})       # touched last turn: held
+    assert [m["name"] for m in moves] == ["brewery 1"]
+    G2 = dict(G, scorecard={"turns": 24, "predicted": 300.0, "real": 20.0})
+    moves, why = act.goal_moves({"goal": G2}, cfg, snap, 0, {})
+    assert moves == [] and "OFF" in why
+    G3 = dict(G, changes=[dict(G["changes"][0], gain=1.0)])
+    assert act.goal_moves({"goal": G3}, cfg, snap, 0, {})[0] == []                  # not worth moving
+
+
+def test_invest_waits_for_cash_and_builds():
+    import act
+    G = {"ok": True, "investments": [{"what": "+1 plot net maker", "cost": "~1400 coin", "gain": 20.0, "payback": 70,
+                                      "pays": True}]}
+    snap = {"turn": 300, "cash": 9000, "buildings": [{"id": "9", "name": "net maker", "type": "net maker"}]}
+    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, snap, {})
+    assert pick and pick["plot"]["building"] == "9" and pick["confirm"], why
+    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, dict(snap, cash=6000), {})
+    assert pick is None and "cash" in why                                          # 6000 - 1400 < 4000 + 2000
+    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, snap, {"last_invest_turn": 290})
+    assert pick is None and "cooldown" in why
+    busy = dict(snap, buildings=snap["buildings"] + [{"id": "5", "construction": {"stage": "EXPANSION"}}])
+    assert act.invest_pick({"goal": G}, {"goal": {}}, busy, {})[0] is None
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
