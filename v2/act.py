@@ -712,8 +712,8 @@ def labour_room(snap):
     own = use = 0.0
     for k, v in ops.items():
         pj = ((((v or {}).get("flows") or {}).get("labour") or {}).get("projection")) or {}
-        own += _n(pj.get("production"))
-        use += _n(pj.get("consumption"))
+        own += _n(pj.get("production")) + _n(pj.get("resident"))    # workers' own labour inside an operation
+        use += _n(pj.get("consumption"))                            # ... is counted in its consumption
     held = _n((((snap or {}).get("store") or {}).get("items") or {}).get("labour", {}).get("held"))
     return held + own - use
 

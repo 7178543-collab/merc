@@ -833,7 +833,11 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
     if sopt is not None and not solve(M, ships=[_with_ship(sopt[sid]["options"][t], sid)
                                                 for sid, t in sorted(chosen.items()) if t]).get("ok"):
         chosen = {sid: None for sid in chosen}        # the joint ship plan won't solve: plan without ships
-    plan_ships = [_with_ship(sopt[sid]["options"][t], sid) for sid, t in sorted(chosen.items()) if t] if sopt else None
+    # Production is planned on the routes the ships really run today. The towns chosen above only decide the pins;
+    # once a ship is on its new route, the next run plans on it. (Oct 23: planning rates on routes the ships hadn't
+    # sailed yet raised the spinnery and flax for thread exports that weren't happening; thread piled up and cash fell.)
+    plan_ships = cur_ships
+    chosen_ships = [_with_ship(sopt[sid]["options"][t], sid) for sid, t in sorted(chosen.items()) if t] if sopt else None
 
     # one recipe per building: the LP may split a building's plots between recipes; keep its main recipe and the
     # best alternative, and run only the one with more plots (the other is pinned to 0 in the plan)
@@ -856,6 +860,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         if len(pair) == 2:
             lo = min(pair, key=lambda a: (opt0["levels"].get(a["name"], 0.0), a is main))
             off[lo["name"]] = 0.0
+    M_all = M                   # every recipe still open: what the chosen ship towns would carry (information)
     M = dict(M, acts=keep)
     M_run = dict(M, acts=[dict(a, ub=0.0) if a["name"] in off else a for a in M["acts"]])
     opt = solve(M_run, ships=plan_ships)
@@ -890,6 +895,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
                             "gain": (r["value"] - base_r["value"]) if (r.get("ok") and base_r.get("ok")) else None})
             if r.get("ok"):
                 base_r = r
+        base_r = cur            # rates are planned on today's routes: their attribution starts from today
     pending = [a for a in M["acts"] if abs(opt["levels"].get(a["name"], 0.0) - a["cur"]) >= g["change_min"]]
     applied = dict(cur_fix)
     while pending and base_r.get("ok"):
@@ -1044,7 +1050,8 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
         "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
-                                           for k, v in (opt.get("ships") or {}).items()},
+                                           for k, v in ((solve(M_all, ships=chosen_ships) if chosen_ships else opt)
+                                                        .get("ships") or {}).items()},
         "mgmt": {"cap": M.get("mgmt_cap"), "used": M.get("mgmt_used")},
         "short": {k: round(v["short"], 2) for k, v in opt["flows"].items() if v.get("short")},
         "shadow": {k: round(sh[k], 3) for k in keys + ["_prestige", "_cash"] if k in sh},
