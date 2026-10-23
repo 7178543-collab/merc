@@ -180,6 +180,21 @@ def test_rate_moves_step_and_respect_guards():
     assert act.goal_moves({"goal": G3}, cfg, snap, 0, {})[0] == []                  # not worth moving
 
 
+def test_rate_moves_skip_noise_and_quick_reversals():
+    import act
+    snap = {"turn": 600, "buildings": [{"id": "7", "name": "weavery 1", "recipe": "weave cloth 2", "target": 0.4},
+                                       {"id": "8", "name": "brewery 1", "recipe": "brew beer 1", "target": 0.4}]}
+    G = {"ok": True, "changes": [{"id": "7", "kind": "building", "gain": 1.0}, {"id": "8", "kind": "building", "gain": 20}],
+         "buildings": {"7": {"recipe": "weave cloth 2", "target": 1.0}, "8": {"recipe": "brew beer 1", "target": 1.0}}}
+    cfg = {"goal": {"move_min_gain": 3, "reverse_hold_turns": 3}}
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 0, {}, {})
+    assert [m["id"] for m in moves] == ["8"]                                    # weavery's +1/turn is noise
+    gst = {"last_dir": {"8": {"dir": -1, "turn": 599}}}
+    assert act.goal_moves({"goal": G}, cfg, snap, 0, {}, gst)[0] == []          # cut last turn: no raise yet
+    gst = {"last_dir": {"8": {"dir": -1, "turn": 590}}}
+    assert len(act.goal_moves({"goal": G}, cfg, snap, 0, {}, gst)[0]) == 1
+
+
 def test_invest_waits_for_cash_and_builds():
     import act
     G = {"ok": True, "investments": [{"kind": "plot", "building": "9", "what": "+1 plot net maker", "cost": "~1400 coin",

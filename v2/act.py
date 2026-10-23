@@ -766,6 +766,13 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
     if total < _n(gc.get("min_gain", 3.0)):
         return [], "plan beats today's rates by only %+.1f/turn: nothing to move" % total
     bplan = G.get("buildings") or {}
+    gains = {}
+    for ch in G.get("changes") or []:
+        if ch.get("id") and ch.get("gain") is not None:
+            gains[str(ch["id"])] = gains.get(str(ch["id"]), 0.0) + _n(ch["gain"])
+    last_dir = gst.setdefault("last_dir", {})
+    turn = snap.get("turn") or 0
+    band = _n(gc.get("move_min_gain", 3.0))
     share, smin = _n(gc.get("step_share", 0.25)), _n(gc.get("step_min", 0.25))
     hold, smin_gain = int(_n(gc.get("switch_hold_runs", 6))), _n(gc.get("switch_min", 10.0))
     streak = gst.setdefault("switch", {})
@@ -798,10 +805,16 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
             continue
         if fs_level >= 3 and to > cur and not goal_cash_ok(snap, cfg):
             continue
+        if bid in gains and abs(gains[bid]) < band:
+            continue                        # worth less than the noise in a turn's prices: leave it
+        d = 1 if to > cur else -1
+        ld = last_dir.get(bid) or {}
+        if ld.get("dir") == -d and turn - _n(ld.get("turn")) < int(_n(gc.get("reverse_hold_turns", 3))):
+            continue                        # just moved the other way: no back-and-forth on one turn's prices
         lim = max(smin, share * cur)
         new = round(cur + max(-lim, min(lim, to - cur)), 3)
         moves.append({"id": bid, "name": b.get("name"), "recipe": b.get("recipe"), "from": cur, "to": new,
-                      "plan": to, "switch": False})
+                      "plan": to, "switch": False, "dir": d})
     return moves, "plan %+.0f/turn over today's rates" % total
 
 
@@ -1014,6 +1027,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                                               "autoset_selling": False, "allow_overprod": False})
                 if ok:
                     g_done.append(m_)
+                    gst.setdefault("last_dir", {})[m_["id"]] = {"dir": m_.get("dir"), "turn": (snap or {}).get("turn")}
             with open(GLOG, "a") as f:
                 f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
                                     "rate": m_["name"], "recipe": m_["recipe"] if m_.get("switch") else None,
@@ -1060,7 +1074,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     # with the goal planner live on buys and sells, its floors replace the failsafe's BRAKE stand-down;
     # STOP (3) still stands everything down
     fs_decide = fs_level
-    if goal_live(cfg, "buys") and goal_live(cfg, "sells") and (fs_level < 3 or goal_cash_ok(snap, cfg)):
+    if goal_live(cfg, "buys") and goal_live(cfg, "sells"):
+        # the goal's own cash floor governs at every level. Under the hard floor v2 still writes, but check()'s
+        # reserve rule then refuses every buy raise, and goal_moves only cuts: orders can only shrink. (A full
+        # stand-down froze the last labour order in place and kept paying it every turn.)
         fs_decide = 0
     rows, stand = decide(snap, plan, cfg, owned, live_tiers, fs_decide, paused=paused)
     for r in rows:
