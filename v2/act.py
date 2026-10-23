@@ -301,18 +301,24 @@ def unsuspend_check(plan, sus, st, cfg):
     risky = {f["item"] for f in plan.get("flags") or [] if f["severity"] == "risk"}
     live = set(((cfg.get("live") or {}).get("items")) or [])
     back = []
+    goal_buys = goal_live(cfg, "buys")
     for item in list(sus):
         c = st.setdefault(item, {"risk": 0, "fail": 0})
         c["clean"] = 0 if item in risky else c.get("clean", 0) + 1
-        if c["clean"] >= UNSUSPEND_AFTER and item in live:
+        # Oct 23: with the goal planner live on buys, a risk-flag suspension only blocks the planner's own fix for
+        # the shortage the flag reports (porterage suspended 18:34, flag kept firing, so it could never come back)
+        risk_only = str((sus.get(item) or {}).get("why", "")).startswith("risk flag")
+        if item in live and (c["clean"] >= UNSUSPEND_AFTER or (goal_buys and risk_only)):
             c["clean"], c["risk"], c["fail"] = 0, 0, 0
             back.append(item)
     return back
 
 
-def suspend_check(plan, owned, st, results):
-    """Count consecutive risk runs / failed writes per owned item; returns {item: reason} to suspend."""
-    risky = {f["item"] for f in plan.get("flags") or [] if f["severity"] == "risk"}
+def suspend_check(plan, owned, st, results, cfg=None):
+    """Count consecutive risk runs / failed writes per owned item; returns {item: reason} to suspend. With the goal
+    planner live on buys, risk flags no longer suspend (the planner sizes those buys); failed writes still do."""
+    risky = set() if cfg is not None and goal_live(cfg, "buys") else \
+        {f["item"] for f in plan.get("flags") or [] if f["severity"] == "risk"}
     out = {}
     for item in owned:
         c = st.setdefault(item, {"risk": 0, "fail": 0})
@@ -1148,7 +1154,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
             ship_done += ship_voyages(plan or {}, cfg, snap, st["ships"], LOG)
         except Exception as e:      # a voyage step must never stop the store orders
             ship_done.append("voyages failed: %s: %s" % (type(e).__name__, e))
-    newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results) if live_mode else {}
+    newly = suspend_check(plan or {}, owned, st.setdefault("counters", {}), results, cfg) if live_mode else {}
     back = unsuspend_check(plan or {}, sus, st.setdefault("counters", {}), cfg) if live_mode else []
     if newly or back:
         for item, why in newly.items():

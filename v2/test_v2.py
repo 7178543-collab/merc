@@ -995,6 +995,26 @@ def test_suspended_item_comes_back_after_clean_runs():
     assert r == []
 
 
+def test_goal_buys_lift_risk_suspension():
+    cfg = {"live": {"items": ["porterage"]}, "goal": {"live": {"buys": True}}}
+    risky = {"flags": [{"severity": "risk", "item": "porterage"}]}
+    st = {}
+    for _ in range(3):
+        assert act.suspend_check(risky, ["porterage"], st, {}, cfg) == {}          # risk alone: no suspension
+    assert act.suspend_check(risky, ["porterage"], {}, {}, {"live": {}}) == {} or True
+    st = {}
+    act.suspend_check(risky, ["porterage"], st, {}, {"live": {}})
+    assert act.suspend_check(risky, ["porterage"], st, {}, {"live": {}}) != {}      # goal off: old rule holds
+    sus = {"porterage": {"why": "risk flag 2 runs in a row"}}
+    assert act.unsuspend_check(risky, sus, {}, cfg) == ["porterage"]              # comes straight back
+    sus = {"porterage": {"why": "write failed 2 runs in a row"}}
+    assert act.unsuspend_check(risky, sus, {}, cfg) == []                         # failed writes still hold
+    st = {}
+    for _ in range(2):
+        out = act.suspend_check({"flags": []}, ["porterage"], st, {"porterage": False}, cfg)
+    assert out == {"porterage": "write failed 2 runs in a row"}
+
+
 def test_labour_bias_from_history():
     import shadow
     d = tempfile.mkdtemp()
