@@ -37,6 +37,9 @@ Entry kinds (a JSON list of these):
                     "near"; a tile that settles at the tick defers the rest; no confirm = dry run)
   ship travel       {"travel": {"transport": "<ship id>", "to_town": "<town id>"}, "confirm": true}   (no confirm = dry run:
                     logs the sea path length/cost only)
+  move a worker     {"assign": {"worker": 2, "to": "producer/<building id>"}}   (household worker n; "knight/21623" = net
+                    duty, "" = unassigned; the head (worker 0) also needs "head": true; a training worker loses 5% of
+                    tier progress on a change)
 Every change is re-read after sending and only logged ok if the game actually holds it.
 apply_entry() is also used by rule scripts (prestige_rules.py).
 """
@@ -191,6 +194,32 @@ def _apply_ship_operation(e):
     ok, status, resp = _req("PUT", "/transports/%s/operation" % tid, {"operation_target": "%.3f" % float(e["operation_target"])})
     return dict(ok=ok, status=status, before=before, after=e["operation_target"], body=None if ok else resp,
                 note="applies at the turn tick")
+
+
+def _apply_assign(e):
+    """Move a household worker (Oct 23): the game client's own call, PUT /households/{id}/workers/{n}
+    {assignment: <operation ref>, update_buying, mark_to_market}. Buys stay with the bot, so update_buying is off."""
+    a = e["assign"]
+    hid = str(a.get("household") or "21623")
+    n = int(a["worker"])
+    to = str(a.get("to") or "")
+    if n == 0 and not a.get("head"):
+        return dict(ok=False, error='worker 0 is the head of household: add "head": true to move him')
+
+    def cur():
+        ws = (m.get("/households/%s" % hid) or {}).get("workers") or []
+        return (ws[n].get("assignment") or "") if len(ws) > n else None
+    before = cur()
+    if before is None:
+        return dict(ok=False, error="no worker %d in household %s" % (n, hid))
+    if before == to:
+        return dict(ok=True, before=before, after=before, note="already there")
+    ok, status, resp = _req("PUT", "/households/%s/workers/%d" % (hid, n),
+                            {"assignment": to, "update_buying": False, "mark_to_market": False})
+    after = cur()
+    good = bool(ok) and after == to
+    return dict(ok=good, status=status, before=before, after=after, body=None if ok else resp,
+                error=None if good else "assignment not applied")
 
 
 def _apply_household_slot(e):
@@ -1286,6 +1315,8 @@ def apply_entry(e):
         return _apply_claim(e)
     if e.get("travel"):
         return _apply_travel(e)
+    if isinstance(e.get("assign"), dict):
+        return _apply_assign(e)
     if e.get("household"):
         return _apply_household_slot(e)
     if e.get("producer"):
