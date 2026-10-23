@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13497, 2026-10-23 18:41. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13497, 2026-10-23 18:43. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,500, prestige 3,596 (476 free, -1.4/turn).
 
 ## Items v2 runs (last turn)
@@ -13,7 +13,7 @@ Cash 1,500, prestige 3,596 (476 free, -1.4/turn).
 | firewood | 22 | 6 | 9 | 0 | 0 | stop 40, buy 19, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 121 | 0 | 2 | 0 | 0 | min_holding 30, sell 24, sell @ 20 |
-| grain | 82 | 27 | 46 | 0 | 0 | stop 234, buy 64, buy @ 3.7 |
+| grain | 82 | 27 | 46 | 0 | 0 | stop 234, buy 117, buy @ 3.7 |
 | labour | 205 | 88 | 588 | 114 | 0 | buy 202, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 11, sell @ 34 |
@@ -91,21 +91,51 @@ Cash 1,500, prestige 3,596 (476 free, -1.4/turn).
 | beer |  | 119 @ min 3.38 |  |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 19 @ 2.4, stop 40 |  | uses 10.0/turn (brewery 1, household upkeep), makes 0.0, holds 22 = 2.2 turns |
-| fish | 7 @ 2.5, stop - |  | uses 7.0/turn (household upkeep), makes 0.0, holds 7 = 1.0 turns |
+| fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
 | garments |  | 24 @ min 20.0 | makes 4.4, uses 2.1, holds 121 (keeps 30): sells the surplus + 22/turn of the excess |
 | grain | 117 @ 3.7, stop 234 |  | uses 58.5/turn (brewery 1), makes 0.0, holds 82 = 1.4 turns |
-| labour | 202 @ 2.2, stop - |  | uses 701.9/turn (brewery 1, household, logging camp w/ tool), makes 500.0, holds 205 = 1.0 turns |
+| labour | 205 @ 2.2, stop - |  | goal planner: buys 205 for today's rates (v2 had 202) |
 | limestone |  | 1 @ min 17.1 |  |
-| meat | 6 @ 3.02, stop - |  | uses 6.0/turn (household upkeep), makes 0.0, holds 6 = 1.0 turns |
+| meat | 6 @ 3.02, stop - |  | goal planner: buys 6 for today's rates (v2 had 6) |
 | nets |  | 11 @ min 34.0 |  |
 | pasties | 3 @ 14.5, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 13 = 4.8 turns |
-| porterage | 12 @ 1.1, stop - |  | uses 11.7/turn (observed), makes 0.0, holds 5 = 0.4 turns |
-| rope |  | 4 @ min 75.0 |  |
+| porterage | 13 @ 1.1, stop - |  | goal planner: buys 13 for today's rates (v2 had 12) |
+| rope |  | 5 @ min 75.0 | goal planner: sells 5 (v2 had 4) |
 | timber |  | 10 @ min 6.5 | makes 8.4, uses 0.0, holds 376 (keeps 350): sells the surplus + 1/turn of the excess |
 | tools | 2 @ 6.2, stop 14 |  | uses 1.8/turn (logging camp w/ tool), makes 0.0, holds 199 = 113.8 turns |
 
-## Goal: business value (shadow)
-- no plan: goal plan failed: KeyError: 'value'
+## Goal: business value (live: rates, buys, sells, ships, invest, trim)
+- Value now 16.1k (cash + stock at home prices); -19/turn over 6 turns, +43/turn over 24 turns.
+- Limits: cash flow >= +104/turn, prestige >= -0.73/turn (values are after 240 tax a turn).
+- Today's settings: value +189/turn, cash +316/turn, prestige -0.73/turn.
+- Plan: value +476/turn, cash +565/turn, prestige -0.73/turn, inside both limits.
+- Changes, each priced on top of the one before (value/turn, limits aside):
+  - ship linen snake -> Briclives: +97/turn
+  - ship Flax Wyrm -> Fontaux: +2/turn
+  - weavery 1 0.50 -> 0.37: +22/turn
+  - brewery 1 0.90 -> 1.00: +12/turn
+  - net maker 0.50 -> 0.00: -7/turn
+  - net maker [make nets 2] 0.00 -> 1.00: +17/turn
+  - spinnery 1 1.98 -> 3.58: +19/turn
+  - logging camp w/ tool 7.00 -> 0.00: -15/turn
+  - logging camp w/ tool [cut firewood 1] 0.00 -> 20.00: +55/turn
+  - flax farm 1 5.42 -> 11.00: -17/turn
+- Model check: not enough runs yet (needs 6 turns of goal history).
+- Worth of one more unit per turn: labour 1.44, thread 3.95, cloth 6.11, flax fibres 5.26, garments 17.36, nets 35.00, beer 3.38, timber 6.15, prestige 56.64, cash 0.00
+- Orders it would set: labour buy 205 (v2 202); porterage buy 13 (v2 12); rope sell 5 (v2 4)
+- Recipe: logging camp w/ tool split timber 2 -> cut firewood 1 at 20.00, worth +55/turn.
+- Recipe: net maker make nets 1 -> make nets 2 at 1.00, worth +30/turn.
+- Ship linen snake: Grandgues -> Briclives (+86/turn over staying).
+- Ship Flax Wyrm: Caillechâtel -> Fontaux (+62/turn over staying).
+- Management: ~13.78 of 17 used.
+- Investments:
+  - new chandlery (make candles 2) for ~3934 coin: +72/turn, payback 55 turns, doesn't pay yet (materials thin at home: bricks)
+  - Tenants L13 for 500 prestige: +72/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - +1 plot ropewalk 1 for ~2615 coin: +58/turn, payback 45 turns
+  - +1 plot brewery 1 for ~2859 coin: +48/turn, payback 60 turns, doesn't pay yet (materials thin at home: bricks)
+  - +1 plot net maker for ~1304 coin: +21/turn, payback 61 turns
+  - new bullion forge (smelt gold 1) for ~2461 coin: +9/turn, payback 264 turns, doesn't pay yet (materials thin at home: bricks)
+- Trim: donate quarry 1: +15/turn (tax 20 saved).
 
 ## Chain sizing
 
