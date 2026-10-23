@@ -349,10 +349,15 @@ def diagnose(snap, cfg, ctx):
                 ("buy already stops at %s" % tier.get("max_holding")) if tier and _n(tier.get("buy_volume")) > 0 else "no buy on it",
                 item)
 
-    # ---- R3: finished building left idle
+    # ---- R3: finished building left idle (stands aside when the goal planner owns building rates: it picks the recipe)
     idle = st.setdefault("idle", {})
     seen = set()
-    for b in snap.get("buildings") or []:
+    try:
+        import goal_switch
+        r3_off = goal_switch.owns("rates", cfg)
+    except Exception:
+        r3_off = False
+    for b in ([] if r3_off else (snap.get("buildings") or [])):
         bid = str(b.get("id"))
         if b.get("construction") or (b.get("recipe") and _n(b.get("target")) > 0):
             continue

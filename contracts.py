@@ -42,9 +42,10 @@ import endgame
 import merc_status4 as m
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TOWN = "152202387"
-STORE = "152202386005001"
-BUSINESS = "39992"
+import ids as _ids                               # season-proof ids (state/v2/ids.json)
+TOWN = _ids.get("home_town", "152202387")
+STORE = _ids.get("store", "152202386005001")
+BUSINESS = _ids.get("business", "39992")
 OUT = os.path.join(HERE, "state", "contracts_scored.json")
 BANQUET_COIN_PER_PRESTIGE = 57.0     # hold banquet 1 (fish), Oct 8 prices
 RESERVE = {"limestone": 60,    # Oct 10 (Taylor): park plots first (60 each); Oct 14: one plot's worth (the quarry makes ~5/turn, the bin was full)

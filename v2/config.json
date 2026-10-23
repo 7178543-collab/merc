@@ -252,18 +252,22 @@
   "_about": "endgame.py (Taylor Oct 20): from start, prestige still turns ~90% into legacy by the season end and cash/stock are worth nothing after it, so the 20k cash gates drop to small floors above the failsafe brake: park plots + quarry on bought labour over plot_min_cash, banquet on/off at banquet_on_cash/banquet_off_cash, ship_church on over church_min_cash, church readiness buys kept after a fill, outputs sold down over sell_drawdown_turns. Defaults in endgame.DEFAULT; set on false to stop it."
  },
  "goal": {
-  "_about": "Goal planner (v2/goal.py, Oct 23; Taylor: goal = business value, full control inside the hard limits; \"leave it and it just plays\"). Jobs: rates (building rates), buys (perishable buys), sells (sell volumes, raise only), invest (+1 plots). auto: it takes the jobs over itself, in auto_promote order, once its model check has held hold_runs runs in a row (needs 24+ turns of history), at most one every promote_gap_turns; drop_runs failed checks in a row hand the newest job back. live.<job>: true forces a job on by hand. off: true = kill switch, all jobs back to the old rules. State: state/v2/goal_live.json. Every other writer of a live job stands aside (v2_owned.goal_owns / v2/goal_switch.py).",
+  "_about": "Goal planner (v2/goal.py; Taylor Oct 22-23: goal = business value; \"leave it and it just plays the game, from the start to the end, with full control of everything\"). Jobs: rates (building rates and recipes), buys (perishable buys), sells (sell volumes, raise only), ships (each ship's town), invest (+1 plots, new buildings), trim (donate buildings that lose money). auto: it takes the jobs over itself, in auto_promote order, once its model check has held hold_runs runs in a row (needs 24+ turns of history), at most one every promote_gap_turns; drop_runs failed checks in a row hand the newest job back. Holds against flapping: recipe switch switch_hold_runs runs at switch_min/turn; ship move ship_hold_runs at ship_switch_min; investment invest_hold_runs; donation trim_hold_runs runs at trim_min/turn. live.<job>: true forces a job on by hand. off: true = kill switch, all jobs back to the old rules. State: state/v2/goal_live.json, state/v2/goal_state.json.",
   "live": {
    "rates": false,
    "buys": false,
    "sells": false,
-   "invest": false
+   "ships": false,
+   "invest": false,
+   "trim": false
   },
   "auto_promote": [
    "rates",
    "buys",
    "sells",
-   "invest"
+   "ships",
+   "invest",
+   "trim"
   ],
   "step_share": 0.25,
   "step_min": 0.25,
@@ -274,6 +278,15 @@
   "auto": true,
   "hold_runs": 12,
   "drop_runs": 3,
-  "promote_gap_turns": 24
+  "promote_gap_turns": 24,
+  "switch_hold_runs": 6,
+  "switch_min": 10.0,
+  "invest_hold_runs": 3,
+  "trim_min": 10.0,
+  "trim_hold_runs": 48,
+  "ship_switch_min": 20.0,
+  "ship_hold_runs": 6,
+  "ship_screen": 8,
+  "new_screen": 12
  }
 }

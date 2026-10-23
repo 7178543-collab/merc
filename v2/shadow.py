@@ -150,6 +150,9 @@ def report(p):
     return "\n".join(L) + "\n"
 
 
+_WORLD = {}          # this run's world market (ship_routes fetches it; the goal planner reuses it)
+
+
 def ship_routes(snap, out, replay):
     """World prices -> (route ranking, per-ship route plans). Fetched every run (ships need this turn's bids; one public
     download). A replay uses --world FILE (marketdata list or the queue's compact world.json.gz) if given, else the last
@@ -176,6 +179,7 @@ def ship_routes(snap, out, replay):
                     world = json.load(f)
         else:
             world = routes.fetch_world()
+        _WORLD["w"] = world
         cfg = planner.load_json("config.json")
         try:        # goods ship trade mode already runs (act.trade_home), so the planner keeps them in play
             with open(os.path.join(out, "act_state.json")) as f:
@@ -327,6 +331,13 @@ def main():
             return
         snap = snapshot.take()
     snap["labour_bias"] = labour_bias(os.path.join(OUT, "history.jsonl"))
+    if "--from" not in sys.argv:
+        try:            # season-proof ids for every script (state/ids.json)
+            sys.path.insert(0, ROOT)
+            import ids
+            ids.save(snap)
+        except Exception as e:
+            print("ids not saved: %s" % e)
     p = planner.plan(snap)
     replay = "--from" in sys.argv
     out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else OUT
@@ -351,9 +362,16 @@ def main():
         import goal as goal_mod
         cfg_all = planner.load_json("config.json")
         ghist = goal_mod.read_history()
+        import routes as routes_mod
+        world = _WORLD.get("w")
+        sea = None
+        try:
+            sea = routes_mod.load_sea()
+        except Exception:
+            pass
         G = goal_mod.plan_goal(snap, cfg_all, planner.load_json("data/recipes.json"),
                                drip=((p.get("builds") or {}).get("drip")) or {}, hist=ghist,
-                               buildings_data=planner.load_json("data/buildings.json"))
+                               buildings_data=planner.load_json("data/buildings.json"), world=world, sea=sea)
         import goal_switch
         gh_path = os.path.join(out, "goal_history.jsonl")
         gh = []

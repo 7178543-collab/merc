@@ -113,8 +113,7 @@ def test_real_snapshot_plans_and_explains():
     assert G["plan_value"] is not None and G["current_value"] is not None
     # the gains of the changes add up to plan - today (limits aside), so every coin of the difference is explained
     total = sum(ch["gain"] for ch in G["changes"] if ch.get("gain") is not None)
-    fixed = goal.solve(goal.build_model(s, cfg, rec, hist=[]), fix=G["levels"], prestige_min=-1e9, cash_min=None)
-    assert abs(total - (fixed["value"] - G["current_value"])) < 1.0, (total, fixed["value"], G["current_value"])
+    assert abs(total - (G["plan_free"] - G["current_value"])) < 1.0, (total, G["plan_free"], G["current_value"])
     # duty never planned over the workers' own labour
     assert G["levels"]["household duty"] <= 2.0 + 1e-6
     assert any("Goal" in line for line in goal.report_lines(G))
@@ -152,7 +151,8 @@ def test_rate_moves_step_and_respect_guards():
         {"id": "7", "name": "spinnery 1", "recipe": "spin thread 1", "target": 2.0},
         {"id": "8", "name": "brewery 1", "recipe": "brew beer 1", "target": 0.4}]}
     G = {"ok": True, "changes": [{"name": "spinnery 1", "id": "7", "kind": "building", "from": 2.0, "to": 1.0, "gain": 20},
-                                 {"name": "brewery 1", "id": "8", "kind": "building", "from": 0.4, "to": 1.0, "gain": 10}]}
+                                 {"name": "brewery 1", "id": "8", "kind": "building", "from": 0.4, "to": 1.0, "gain": 10}],
+         "buildings": {"7": {"recipe": "spin thread 1", "target": 1.0}, "8": {"recipe": "brew beer 1", "target": 1.0}}}
     cfg = {"goal": {"step_share": 0.25, "step_min": 0.25, "min_gain": 3}}
     moves, why = act.goal_moves({"goal": G}, cfg, snap, 0, {})
     by = {m["name"]: m["to"] for m in moves}
@@ -164,23 +164,105 @@ def test_rate_moves_step_and_respect_guards():
     G2 = dict(G, scorecard={"turns": 24, "predicted": 300.0, "real": 20.0})
     moves, why = act.goal_moves({"goal": G2}, cfg, snap, 0, {})
     assert moves == [] and "OFF" in why
-    G3 = dict(G, changes=[dict(G["changes"][0], gain=1.0)])
+    G3 = dict(G, changes=[dict(G["changes"][0], gain=1.0)], buildings=G["buildings"])
     assert act.goal_moves({"goal": G3}, cfg, snap, 0, {})[0] == []                  # not worth moving
 
 
 def test_invest_waits_for_cash_and_builds():
     import act
-    G = {"ok": True, "investments": [{"what": "+1 plot net maker", "cost": "~1400 coin", "gain": 20.0, "payback": 70,
-                                      "pays": True}]}
+    G = {"ok": True, "investments": [{"kind": "plot", "building": "9", "what": "+1 plot net maker", "cost": "~1400 coin",
+                                      "coin": 1400, "gain": 20.0, "payback": 70, "pays": True}]}
     snap = {"turn": 300, "cash": 9000, "buildings": [{"id": "9", "name": "net maker", "type": "net maker"}]}
-    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, snap, {})
+    cfg = {"goal": {"invest_hold_runs": 3}}
+    st = {}
+    for _ in range(2):
+        assert act.invest_pick({"goal": G}, cfg, snap, st)[0] is None          # same pick 3 runs in a row first
+    pick, why = act.invest_pick({"goal": G}, cfg, snap, st)
     assert pick and pick["plot"]["building"] == "9" and pick["confirm"], why
-    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, dict(snap, cash=6000), {})
-    assert pick is None and "cash" in why                                          # 6000 - 1400 < 4000 + 2000
-    pick, why = act.invest_pick({"goal": G}, {"goal": {}}, snap, {"last_invest_turn": 290})
+    st = {"want": {"key": "plot:9", "runs": 5}}
+    pick, why = act.invest_pick({"goal": G}, cfg, dict(snap, cash=6000), st)
+    assert pick is None and "cash" in why                                      # 6000 - 1400 < 4000 + 2000
+    pick, why = act.invest_pick({"goal": G}, cfg, snap, {"last_invest_turn": 290, "want": {"key": "plot:9", "runs": 5}})
     assert pick is None and "cooldown" in why
     busy = dict(snap, buildings=snap["buildings"] + [{"id": "5", "construction": {"stage": "EXPANSION"}}])
-    assert act.invest_pick({"goal": G}, {"goal": {}}, busy, {})[0] is None
+    assert act.invest_pick({"goal": G}, cfg, busy, {"want": {"key": "plot:9", "runs": 5}})[0] is None
+    # a new building goes through the order queue's site entry
+    Gb = {"ok": True, "investments": [{"kind": "build", "type": "raghouse", "what": "new raghouse", "coin": 2000,
+                                       "gain": 80.0, "payback": 25, "pays": True}]}
+    pick, _ = act.invest_pick({"goal": Gb}, cfg, snap, {"want": {"key": "build:raghouse", "runs": 2}})
+    assert pick == {"site": {"type": "raghouse"}, "confirm": True, "note": pick["note"]}
+
+
+def test_trims_need_a_long_streak():
+    import act
+    G = {"ok": True, "trims": [{"building": "7", "what": "donate quarry", "gain": 15.0, "tax": 20}]}
+    snap = {"turn": 400, "cash": 9000, "buildings": [{"id": "7", "type": "quarry"}]}
+    cfg = {"goal": {"trim_hold_runs": 3}}
+    st = {}
+    assert act.invest_pick({"goal": G}, cfg, snap, st, trim_ok=True)[0] is None
+    assert act.invest_pick({"goal": G}, cfg, snap, st, trim_ok=True)[0] is None
+    pick, why = act.invest_pick({"goal": G}, cfg, snap, st, trim_ok=True)
+    assert pick == {"donate": "7", "confirm": True, "note": pick["note"]} and why == "trim"
+    # a run where it no longer pays resets the streak
+    act.invest_pick({"goal": {"ok": True, "trims": []}}, cfg, snap, st, trim_ok=True)
+    assert "7" not in st["trim"]
+    # a refused donation is not retried for 48 turns
+    st = {"trim": {"7": 10}, "trim_failed": {"7": 390}}
+    assert act.invest_pick({"goal": G}, cfg, snap, st, trim_ok=True)[0] is None
+
+
+def test_recipe_switch_and_ship_move_hold():
+    import act
+    snap = {"turn": 500, "buildings": [{"id": "3", "name": "net maker", "recipe": "make nets 1", "target": 0.5},
+                                       {"id": "4", "name": "raghouse 1", "recipe": None, "target": 0.0}]}
+    G = {"ok": True, "changes": [{"kind": "building", "gain": 30}],
+         "buildings": {"3": {"recipe": "make nets 2", "target": 1.0, "switch_gain": 13.0},
+                       "4": {"recipe": "make paper 1", "target": 1.0}}}
+    cfg = {"goal": {"switch_hold_runs": 2, "switch_min": 10}}
+    gst = {}
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 0, {}, gst)
+    by = {m["id"]: m for m in moves}
+    assert "3" not in by and by["4"]["switch"] and by["4"]["recipe"] == "make paper 1"   # idle: at once
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap, 0, {}, gst)
+    by = {m["id"]: m for m in moves}
+    assert by["3"]["switch"] and by["3"]["recipe"] == "make nets 2"                    # 2nd run in a row
+    G2 = dict(G, buildings={"3": dict(G["buildings"]["3"], switch_gain=4.0)})
+    assert act.goal_moves({"goal": G2}, cfg, snap, 0, {}, {})[0] == []                # not worth a switch
+    # ships: a better town must win ship_hold_runs runs in a row before the pin moves
+    Gs = {"ok": True, "ships": [{"ship": "1", "current": "A", "town": "B", "gain_over_current": 30.0}]}
+    cfg = {"goal": {"ship_hold_runs": 2, "ship_switch_min": 20}, "live": {"ship_pins": {"1": "A"}}}
+    gst = {}
+    assert act.goal_pins({"goal": Gs}, cfg, gst)["1"] == "A"
+    assert act.goal_pins({"goal": Gs}, cfg, gst)["1"] == "B"
+    Gw = {"ok": True, "ships": [{"ship": "1", "current": "A", "town": "B", "gain_over_current": 5.0}]}
+    assert act.goal_pins({"goal": Gw}, cfg, {})["1"] == "A"
+
+
+def test_model_picks_one_recipe_and_ship_cargo_is_ours():
+    """With ships modelled, cargo out is only what we make or hold, cargo back only what we use; a building runs
+    one recipe."""
+    rec = dict(RECIPES)
+    rec["make gadgets"] = {"site": "workshop", "tier": 1, "class": "crafting",
+                           "inputs": [{"product": "labour", "amount": 10}], "outputs": [{"product": "gadgets", "amount": 1}]}
+    rec["make widgets"] = dict(RECIPES["make widgets"], site="workshop", tier=1, **{"class": "crafting"})
+    s = snap()
+    s["home_town"] = "H"
+    s["market"]["gadgets"] = {"price": 25.0, "traded": 100}
+    s["market"]["wine"] = {"price": 9.0, "ask": 9.0, "ask_vol": 100, "traded": 100}
+    world = [{"name": "Far", "markets": {"widgets": {"highest_bid": "60", "bid_volume_10": 50, "volume_ema_12": 50},
+                                         "wine": {"highest_bid": "30", "bid_volume_10": 50, "volume_ema_12": 50}}}]
+    sea = {"T": {"name": "Far", "moves": 200}}
+    prods = {"widgets": {"type": "commodity", "size": 1}, "wine": {"type": "commodity", "size": 1},
+             "gadgets": {"type": "commodity", "size": 1}}
+    s["ships"] = [{"id": "S1", "name": "boat", "route_to": None}]
+    G = goal.plan_goal(s, CFG, rec, hist=hist_selling("widgets", 5), world=world, sea=sea, products=prods)
+    assert G["ok"], G
+    assert G["ships"][0]["town"] == "T", G["ships"]
+    sp = G["ship_plan"]["S1"]
+    assert "wine" not in (sp.get("exp") or {}), sp          # never bought at home to export
+    assert sp["exp"]["widgets"] > 0
+    lv = G["levels"]
+    assert min(lv.get("workshop", 0), max([v for k, v in lv.items() if "[make gadgets]" in k] or [0])) < 1e-6, lv
 
 
 if __name__ == "__main__":

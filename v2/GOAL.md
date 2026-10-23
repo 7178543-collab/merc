@@ -47,6 +47,21 @@ They explain every change in plain coin.
 3. Old scripts retire as their jobs move: chain_balancer/chain.py sizing, spare_labour, the banquet and quarry cash
    rules, endgame.py.
 
+## Full control (Oct 23; Taylor: "I want those rules removed ... play the game from the start to the end with minimal intervention")
+- **Recipes**: every building can switch to any recipe the head's rank allows (game rule: tier t needs rank t-1,
+  tier 1 open to all); one recipe per building; a switch needs +10/turn on 6 runs in a row; an idle building gets
+  its best recipe at once (diagnose R3 stands aside).
+- **Ships**: each ship's town is chosen in the plan (screened at the plan's own prices, then re-solved; two ships never
+  share a town); cargo out is only what we make or hold, cargo back only what we use; crew cost is in the plan. A move
+  needs +20/turn over staying on 6 runs in a row; v2's voyage code sails there; ships keep running under the BRAKE.
+- **New buildings**: every town-centre type with a recipe we can run, as a one-plot building priced by re-solving
+  (materials at home asks, 6/turn tax, management room checked); built through the queue's site entry.
+- **Trims**: a building whose removal (output gone AND tax gone) beats keeping it by 10/turn on 48 runs in a row is
+  donated (the old "never donate" rule is gone). A refused donation waits 48 turns.
+- **Season-proof**: ids come from state/v2/ids.json (written each hour from the game), not code.
+
 ## Not modelled yet (stated so nobody trusts it blindly)
-Ship exports and crew (v2 ships logic still runs them), contracts and church asks, price elasticity beyond the two
-steps, recipe changes, new buildings (only +1 plot of existing ones), management room.
+Contracts and church asks (contracts.py still runs them), price elasticity beyond the sales steps, new rural
+buildings on map land (farms, camps, quarries: town-centre buildings and expansions only), building upgrades,
+household duty choice, worker assignment, prestige tracks other than Tenants. Season day 1 (picking a town,
+founding the household) is a one-time step in the game itself.

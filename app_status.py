@@ -12,8 +12,9 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "state", "status.json")
-STORE = "152202386005001"
-BUSINESS = "39992"
+import ids as _ids                               # season-proof ids (state/v2/ids.json)
+STORE = _ids.get("store", "152202386005001")
+BUSINESS = _ids.get("business", "39992")
 SEASON_END = "2026-11-30T11:00:00+00:00"      # 12:00 CET, Season 8
 KEY_ITEMS = ["garments", "cloth", "thread", "flax fibres", "flax plants", "beer", "nets", "timber", "tools",
              "limestone", "wheels", "furniture", "candles", "jewellery", "light armour", "cured fish", "grain",

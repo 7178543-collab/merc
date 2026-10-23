@@ -55,7 +55,8 @@ import merc_status4 as m
 HERE = os.path.dirname(os.path.abspath(__file__))
 QUEUE = os.path.join(HERE, "state", "order_queue.json")
 DONE = os.path.join(HERE, "state", "order_queue_done.jsonl")
-STORE = "152202386005001"
+import ids as _ids                               # season-proof ids (state/v2/ids.json, written every hour)
+STORE = _ids.get("store", "152202386005001")
 FIELDS = {"buy_volume", "buy_price", "max_holding", "sell_volume", "sell_price", "min_holding"}
 PRICE_FIELDS = {"buy_price", "sell_price"}
 
@@ -200,7 +201,7 @@ def _apply_assign(e):
     """Move a household worker (Oct 23): the game client's own call, PUT /households/{id}/workers/{n}
     {assignment: <operation ref>, update_buying, mark_to_market}. Buys stay with the bot, so update_buying is off."""
     a = e["assign"]
-    hid = str(a.get("household") or "21623")
+    hid = str(a.get("household") or _ids.get("household", "21623"))
     n = int(a["worker"])
     to = str(a.get("to") or "")
     if n == 0 and not a.get("head"):
@@ -547,7 +548,7 @@ def _apply_probe_write(e):
     return dict(ok=True, probe=True, sent="%s %s" % (method, path), status=status, accepted=bool(ok), body=resp)
 
 
-OWNER_ID = "39992"  # our business id (owner_id on every building; also the contract participant id)
+OWNER_ID = _ids.get("business", "39992")  # our business id (owner_id on every building; also the contract participant id)
 
 
 def _apply_build(e):

@@ -462,7 +462,9 @@ VOYAGE_CREW = 0.5
 VOYAGE_MIN_GAIN = 60           # a better town must promise this much a turn more before a ship sails
 VOYAGE_COOLDOWN = 12           # turns between voyages per ship
 VOYAGE_COOLDOWN_IDLE = 2       # ... when the ship's own town pays nothing
-HOME_TOWN = "152202387"
+sys.path.insert(0, ROOT)
+import ids as _ids          # noqa: E402  season-proof ids (state/v2/ids.json)
+HOME_TOWN = _ids.get("home_town", "152202387")
 
 
 def _queue_apply(entry):
@@ -689,15 +691,17 @@ def goal_live(cfg, job):
     return goal_switch.owns(job, cfg)
 
 
-def goal_moves(plan, cfg, snap, fs_level, dturn):
-    """Pure: the building rate changes the goal planner (v2/goal.py) wants this run. Returns (moves, why).
-    main() writes them only when goal.live.rates is on and logs them either way (state/v2/goal_act.jsonl), so the
-    shadow days show exactly what it would have done. Guards: the whole plan must beat today's settings by
-    goal.min_gain a turn; a move steps at most max(step_min, step_share x target) a run (no whiplash on one
-    turn's prices); the model check must not be OFF; at failsafe STOP (3) only cuts; a building diagnose or Taylor
-    touched in the last 2 turns is held."""
+def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
+    """The building changes the goal planner (v2/goal.py) wants this run: rate steps and recipe switches. Returns
+    (moves, why). A move is {id, name, recipe, from, to, plan, switch: bool}. main() writes them only when
+    goal.live.rates is on and logs them either way (state/v2/goal_act.jsonl).
+    Guards: the plan's building changes must beat today's settings by goal.min_gain a turn; a rate steps at most
+    max(step_min, step_share x target) a run; a recipe switch needs switch_min a turn of gain on switch_hold_runs runs
+    in a row (gst["switch"] counts them; an idle building gets its recipe at once); the model check must not be OFF;
+    at failsafe STOP (3) only cuts; a building diagnose or Taylor touched in the last 2 turns is held."""
     G = (plan or {}).get("goal") or {}
     gc = cfg.get("goal") or {}
+    gst = gst if gst is not None else {}
     if not G.get("ok"):
         return [], "no goal plan: %s" % G.get("why")
     if not snap or snap.get("errors"):
@@ -705,62 +709,133 @@ def goal_moves(plan, cfg, snap, fs_level, dturn):
     sc = G.get("scorecard")
     if sc and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])):
         return [], "model check OFF (predicted %+.0f/turn, real %+.0f): holding rates" % (sc["predicted"], sc["real"])
-    flat = []
-    for ch in G.get("changes") or []:
-        flat.extend(ch.get("group") or [ch])
-    total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None)
+    total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None and ch.get("kind") != "ship")
     if total < _n(gc.get("min_gain", 3.0)):
         return [], "plan beats today's rates by only %+.1f/turn: nothing to move" % total
-    blds = {str(b.get("id")): b for b in snap.get("buildings") or []}
+    bplan = G.get("buildings") or {}
     share, smin = _n(gc.get("step_share", 0.25)), _n(gc.get("step_min", 0.25))
+    hold, smin_gain = int(_n(gc.get("switch_hold_runs", 6))), _n(gc.get("switch_min", 10.0))
+    streak = gst.setdefault("switch", {})
     moves = []
-    for ch in flat:
-        b = blds.get(str(ch.get("id") or ""))
-        if not b or not b.get("recipe") or b.get("construction"):
+    for b in snap.get("buildings") or []:
+        bid = str(b.get("id"))
+        e = bplan.get(bid)
+        if not e or b.get("construction"):
             continue
-        cur, to = _n(b.get("target")), _n(ch.get("to"))
-        if abs(to - cur) < 0.05:
-            continue
-        t_ = dturn.get(b.get("name")) if b.get("name") in dturn else dturn.get(str(b.get("id")))
+        t_ = dturn.get(b.get("name")) if b.get("name") in dturn else dturn.get(bid)
         if t_ is not None and snap.get("turn") is not None and snap["turn"] - t_ < 2:
+            continue
+        cur, to, rec = _n(b.get("target")), _n(e.get("target")), e.get("recipe")
+        if rec and rec != b.get("recipe") and to > 0.05:
+            if b.get("recipe"):
+                k = streak.get(bid) or [None, 0]
+                k = [rec, k[1] + 1] if k[0] == rec and _n(e.get("switch_gain")) >= smin_gain else \
+                    [rec, 1 if _n(e.get("switch_gain")) >= smin_gain else 0]
+                streak[bid] = k
+                if k[1] < hold:
+                    continue
+            if fs_level >= 3:
+                continue
+            first = min(to, max(smin, share * max(cur, to)))
+            moves.append({"id": bid, "name": b.get("name"), "recipe": rec, "from": cur, "to": round(first, 3),
+                          "plan": to, "switch": True, "from_recipe": b.get("recipe")})
+            continue
+        streak.pop(bid, None)
+        if not b.get("recipe") or abs(to - cur) < 0.05:
             continue
         if fs_level >= 3 and to > cur:
             continue
         lim = max(smin, share * cur)
         new = round(cur + max(-lim, min(lim, to - cur)), 3)
-        moves.append({"id": str(b["id"]), "name": b.get("name"), "recipe": b.get("recipe"), "from": cur, "to": new,
-                      "plan": to})
+        moves.append({"id": bid, "name": b.get("name"), "recipe": b.get("recipe"), "from": cur, "to": new,
+                      "plan": to, "switch": False})
     return moves, "plan %+.0f/turn over today's rates" % total
 
 
-def invest_pick(plan, cfg, snap, state):
-    """Pure: the one investment the goal planner would make this run, or (None, why). Only a '+1 plot' that pays back
-    within the horizon, with cash after the materials at least the floor + invest_cash_margin, no building under
-    construction, and invest_cooldown_turns since the last one."""
+def invest_pick(plan, cfg, snap, state, trim_ok=False):
+    """The one investment (or trim) the goal planner would make this run, or (None, why).
+    Investments: '+1 plot' or a new building that pays back within the horizon, cash after the materials at least
+    the floor + invest_cash_margin, no building under construction, invest_cooldown_turns since the last one, and
+    the same pick on invest_hold_runs runs in a row (state["want"]). Trims (donations) when trim_ok: a building whose
+    removal beat keeping it by trim_min a turn on trim_hold_runs runs in a row (state["trim"])."""
     G = (plan or {}).get("goal") or {}
     gc = cfg.get("goal") or {}
+    state = state if state is not None else {}
     if not G.get("ok"):
         return None, "no goal plan"
-    if any(b.get("construction") for b in (snap or {}).get("buildings") or []):
+    turn = snap.get("turn")
+    # trims first: they free tax and management for what comes next
+    tstreak = state.setdefault("trim", {})
+    seen = set()
+    for t in G.get("trims") or []:
+        bid = str(t.get("building"))
+        seen.add(bid)
+        tstreak[bid] = tstreak.get(bid, 0) + 1
+    for bid in list(tstreak):
+        if bid not in seen:
+            tstreak.pop(bid)
+    if trim_ok:
+        failed = state.setdefault("trim_failed", {})
+        for t in G.get("trims") or []:
+            bid = str(t.get("building"))
+            if tstreak.get(bid, 0) < int(_n(gc.get("trim_hold_runs", 48))):
+                continue
+            if turn is not None and failed.get(bid) is not None and turn - _n(failed.get(bid)) < 48:
+                continue
+            return {"donate": bid, "confirm": True,
+                    "note": "goal planner: %s, %+.0f/turn on %d runs in a row" % (t["what"], t["gain"], tstreak[bid])}, "trim"
+    if any(b.get("construction") for b in snap.get("buildings") or []):
         return None, "a building is under construction"
-    lt = (state or {}).get("last_invest_turn")
+    lt = state.get("last_invest_turn")
     last = _n(lt) if lt is not None else -1e9
-    if snap.get("turn") is not None and snap["turn"] - last < _n(gc.get("invest_cooldown_turns", 24)):
+    if turn is not None and turn - last < _n(gc.get("invest_cooldown_turns", 24)):
         return None, "cooldown since turn %d" % last
     cash = _n(snap.get("cash"))
     floor = _n(gc.get("cash_floor", 4000)) + _n(gc.get("invest_cash_margin", 2000))
-    for d in G.get("investments") or []:
-        if not str(d.get("what", "")).startswith("+1 plot") or not d.get("pays"):
+    best = next((d for d in G.get("investments") or [] if d.get("kind") in ("plot", "build") and d.get("pays")), None)
+    if not best:
+        state.pop("want", None)
+        return None, "no investment pays back within %s turns" % gc.get("invest_horizon", 240)
+    key = "%s:%s" % (best["kind"], best.get("building") or best.get("type"))
+    w = state.get("want") or {}
+    state["want"] = {"key": key, "runs": (w.get("runs", 0) + 1) if w.get("key") == key else 1}
+    if state["want"]["runs"] < int(_n(gc.get("invest_hold_runs", 3))):
+        return None, "%s: %d/%s runs" % (best["what"], state["want"]["runs"], gc.get("invest_hold_runs", 3))
+    cost = _n(best.get("coin"))
+    if cash - cost < floor:
+        return None, "%s pays (%+.0f/turn) but cash %.0f - %.0f < %.0f" % (best["what"], best["gain"], cash, cost, floor)
+    note = "goal planner: %s, %+.0f/turn, payback %.0f turns" % (best["what"], best["gain"], best.get("payback") or 0)
+    if best["kind"] == "plot":
+        return {"plot": {"building": str(best["building"])}, "confirm": True, "note": note}, "ok"
+    return {"site": {"type": best["type"]}, "confirm": True, "note": note}, "ok"
+
+
+def goal_pins(plan, cfg, gst):
+    """Ship towns from the goal plan, with a hold: a ship moves to a new town only after it beat staying by
+    ship_switch_min a turn on ship_hold_runs runs in a row (gst["ship"]). Returns {ship id: town id} for
+    ships that should be pinned (current pins kept otherwise)."""
+    G = (plan or {}).get("goal") or {}
+    gc = cfg.get("goal") or {}
+    pins = {str(k): str(v) for k, v in ((cfg.get("live") or {}).get("ship_pins") or {}).items()}
+    st = gst.setdefault("ship", {})
+    for m in G.get("ships") or []:
+        sid, town = str(m.get("ship")), m.get("town")
+        if not town:
+            st.pop(sid, None)
             continue
-        cost = _n(str(d.get("cost", "")).replace("~", "").split(" ")[0])
-        if cash - cost < floor:
-            return None, "%s pays (%+.0f/turn) but cash %.0f - %.0f < %.0f" % (d["what"], d["gain"], cash, cost, floor)
-        name = d["what"][len("+1 plot "):]
-        b = next((x for x in snap.get("buildings") or [] if x.get("name") == name or x.get("type") == name), None)
-        if b:
-            return {"plot": {"building": str(b["id"])}, "confirm": True,
-                    "note": "goal planner: %s, %+.0f/turn, payback %.0f turns" % (d["what"], d["gain"], d.get("payback") or 0)}, "ok"
-    return None, "no investment pays back within %s turns" % gc.get("invest_horizon", 240)
+        if town == m.get("current") or pins.get(sid) == town:
+            st.pop(sid, None)
+            pins[sid] = str(town)
+            continue
+        better = m.get("gain_over_current")
+        better = _n(better) if better is not None else _n(m.get("worth"))
+        k = st.get(sid) or {}
+        k = {"town": town, "runs": (k.get("runs", 0) + 1) if k.get("town") == town else 1} \
+            if better >= _n(gc.get("ship_switch_min", 20.0)) else {"town": town, "runs": 0}
+        st[sid] = k
+        if k["runs"] >= int(_n(gc.get("ship_hold_runs", 6))):
+            pins[sid] = str(town)
+    return pins
 
 
 def chain_labour_delta(plan, snap, recipes, done):
@@ -845,15 +920,26 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
 
     # goal planner (v2/goal.py): building rates + one investment; logged every run, written only for live jobs
     GLOG = os.path.join(out, "goal_act.jsonl")
+    gst_path = os.path.join(out, "goal_state.json")
+    gst = _load(gst_path, {})
     try:
-        gmoves, gwhy = goal_moves(plan, cfg, snap, fs_level, dturn)
+        gmoves, gwhy = goal_moves(plan, cfg, snap, fs_level, dturn, gst)
         rates_live = live_mode and goal_live(cfg, "rates")
         g_done = []
         if rates_live and gmoves:
             enable_writes()
         for m_ in gmoves:
             ok = status = body = None
-            if rates_live:
+            if rates_live and m_.get("switch"):
+                r_ = _queue_apply({"building": m_["id"], "producer": {"recipe": m_["recipe"], "target": m_["to"],
+                                                                      "provider_id": store},
+                                   "note": "goal planner: recipe %s -> %s" % (m_.get("from_recipe"), m_["recipe"])})
+                ok, status = bool(r_.get("ok")), None
+                body = r_.get("error")
+                if ok:
+                    g_done.append(m_)
+                    (gst.get("switch") or {}).pop(m_["id"], None)
+            elif rates_live:
                 ok, status, body = api.write("PUT", "/buildings/%s/producer" % m_["id"],
                                              {"target": "%.3f" % m_["to"], "autoset_buying": False,
                                               "autoset_selling": False, "allow_overprod": False})
@@ -861,7 +947,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                     g_done.append(m_)
             with open(GLOG, "a") as f:
                 f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
-                                    "rate": m_["name"], "from": m_["from"], "to": m_["to"], "plan": m_["plan"],
+                                    "rate": m_["name"], "recipe": m_["recipe"] if m_.get("switch") else None,
+                                    "from": m_["from"], "to": m_["to"], "plan": m_["plan"],
                                     "dry": not rates_live, "why": gwhy, "ok": ok, "status": status,
                                     "reply": None if ok in (None, True) else str(body)[:200]}, default=str) + "\n")
         if g_done and "labour" in owned:
@@ -870,18 +957,33 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
             lo = ((plan.get("orders") or {}).get("labour") or {}).get("buy")
             if lo and abs(d_lab) >= 1:
                 lo["buy_volume"] = max(0, int(round(_n(lo.get("buy_volume")) + d_lab)))
-        gst_path = os.path.join(out, "goal_state.json")
-        gst = _load(gst_path, {})
-        pick, iwhy = invest_pick(plan, cfg, snap or {}, gst)
+        pick, iwhy = invest_pick(plan, cfg, snap or {}, gst, trim_ok=True)
         if pick:
-            inv_live = live_mode and goal_live(cfg, "invest")
+            job = "trim" if "donate" in pick else "invest"
+            inv_live = live_mode and goal_live(cfg, job)
             r = _queue_apply(pick) if inv_live else {"ok": None, "dry": True}
             if inv_live and r.get("ok"):
-                gst["last_invest_turn"] = (snap or {}).get("turn")
-                _save(gst_path, gst)
+                if job == "invest":
+                    gst["last_invest_turn"] = (snap or {}).get("turn")
+                    gst.pop("want", None)
+                else:
+                    (gst.get("trim") or {}).pop(str(pick["donate"]), None)
+            elif inv_live and job == "trim":
+                gst.setdefault("trim_failed", {})[str(pick["donate"])] = (snap or {}).get("turn")
             with open(GLOG, "a") as f:
                 f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
-                                    "invest": pick, "dry": not inv_live, "result": r}, default=str) + "\n")
+                                    job: pick, "dry": not inv_live, "result": r}, default=str) + "\n")
+        # ships job: the goal plan picks each ship's town (with a hold); the existing voyage + route code sails there
+        if goal_live(cfg, "ships"):
+            pins = goal_pins(plan, cfg, gst)
+            cfg.setdefault("live", {})["ship_pins"] = pins
+            modes = cfg["live"].setdefault("ship_modes", {})
+            for sid in pins:
+                modes[sid] = "auto"
+            cfg["live"]["ships"] = sorted(set((cfg["live"].get("ships") or [])) | set(pins))
+        else:
+            goal_pins(plan, cfg, gst)        # count the hold in shadow too, so the log shows what it would do
+        _save(gst_path, gst)
     except Exception as e:      # the goal step must never stop the store orders
         with open(GLOG, "a") as f:
             f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "error": "%s: %s" % (type(e).__name__, e)}) + "\n")
@@ -899,6 +1001,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
             r.setdefault("refused", []).append("diagnose fixed it at turn %s: held for 2 turns" % t_)
     results, sent = {}, 0
     ship_ids = set(((cfg.get("live") or {}).get("ships")) or [])
+    if goal_live(cfg, "ships") and fs_level < 3 and live_mode and ship_ids:
+        enable_writes()
     diag_on = bool((cfg.get("diagnose") or {}).get("on")) and bool(snap) and not (snap or {}).get("errors")
     if live_mode and not stand and (owned or ship_ids):
         enable_writes()
@@ -945,7 +1049,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
 
     st = _load(STATE, {})
     paused_ships, ship_done = [], []
-    if live_mode and ship_ids and not stand:
+    ships_free = goal_live(cfg, "ships") and fs_level < 3
+    if live_mode and ship_ids and (not stand or ships_free):
         paused_ships = ship_guard(plan or {}, ship_ids, st.setdefault("ships", {}), (snap or {}).get("turn"), LOG)
         ship_done = ship_auto(plan or {}, cfg, snap, LOG, st["ships"])
         if (cfg.get("ship_trade") or {}).get("on") and store:

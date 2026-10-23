@@ -114,6 +114,74 @@ def value_trend(hist, perishable=()):
     return out
 
 
+# ---------------------------------------------------------------- game rules the model needs
+
+def rank_tier(points):
+    """Skill rank from points (game code): novice 0 (<100), worker 1 (<700), journeyman 2 (<3700), master 3."""
+    p = _n(points)
+    return 0 if p < 100 else 1 if p < 700 else 2 if p < 3700 else 3
+
+
+def recipe_allowed(r, head_skills):
+    """A recipe of tier t runs when the head of household's rank in its class is at least t - 1: tier-1 recipes are
+    open to a novice (we run tier-1 textile at textile 62), make rope 2 (tier 3) runs on a maritime journeyman. Only
+    the head's rank counts (game: only his promotions unlock recipes). Recipes that need a building upgrade, household
+    duties and resident-only recipes are left out."""
+    if not r or r.get("upgrades") or r.get("resident_only") or r.get("site") == "household":
+        return False
+    t = int(_n(r.get("tier"), 1.0))
+    return rank_tier((head_skills or {}).get(r.get("class") or "", 0)) >= t - 1
+
+
+def plot_tax_rate(btype, bdata):
+    """Building tax per plot per turn when the game didn't tell us (it does, per operation): town-centre buildings 6,
+    the quarry 20, rural land 0.5 (operations seen Oct 23)."""
+    if btype == "quarry":
+        return 20.0
+    req = (bdata.get(btype) or {}).get("requires")
+    return 6.0 if isinstance(req, dict) and req.get("center") else 0.5
+
+
+def mgmt_per_plot(btype, bdata):
+    """Management per extra plot (game client R()): building types with room for 75+ plots 0.01, up to 10 plots 0.25,
+    else 0.1."""
+    size = _n(((bdata.get(btype) or {}).get("construction") or {}).get("size"))
+    if not size:
+        return 0.1
+    return 0.01 if size >= 75 else 0.25 if size <= 10 else 0.1
+
+
+def is_prestige_building(btype, bdata):
+    return bool((bdata.get(btype) or {}).get("prestige")) or btype in ("park", "mansion")
+
+
+def management_used(s, bdata):
+    """Regular management our buildings use (game client U()): 1 for the first building of a type, 0.5 for each
+    further one, plus (plots - 1) x mgmt_per_plot. Prestige buildings use the separate prestige pool. Upgrades are
+    not in the snapshot, so this reads a little low."""
+    seen, used = set(), 1.0                         # the storehouse
+    for b in s.get("buildings") or []:
+        t = b.get("type")
+        if not t or is_prestige_building(t, bdata):
+            continue
+        size = _n(b.get("size")) + _n((b.get("construction") or {}).get("size"))
+        used += (0.5 if t in seen else 1.0) + max(0.0, size - 1) * mgmt_per_plot(t, bdata)
+        seen.add(t)
+    return used
+
+
+def materials_cost(btype, bdata, goods):
+    """Coin for one plot of a building type: the full construction materials (a new building is one plot; a park
+    plot cost the park's full materials, as the game charged), at home asks, else last price, else our unit cost."""
+    mats = ((bdata.get(btype) or {}).get("construction") or {}).get("materials") or {}
+    cost = 0.0
+    for item, q in mats.items():
+        gd = goods.get(item) or {}
+        px = gd.get("buy_px") or gd.get("last") or gd.get("cost") or 0.0
+        cost += _n(q) * px
+    return cost
+
+
 # ---------------------------------------------------------------- the model
 
 def _coeffs(b, recipes):
@@ -130,21 +198,58 @@ def _coeffs(b, recipes):
             if _n(f.get("production")) > 0:
                 outs[item] = _n(f["production"]) / prod
     else:
-        for i in r.get("inputs") or []:
-            ins[i["product"]] = ins.get(i["product"], 0) + _n(i["amount"])
-        for o in r.get("outputs") or []:
-            outs[o["product"]] = outs.get(o["product"], 0) + _n(o["amount"])
+        ins, outs = _recipe_io(r)
     return ins, outs, _n(r.get("prestige"))
 
 
-def build_model(s, cfg, recipes, drip=None, hist=None):
+def _recipe_io(r):
+    ins, outs = {}, {}
+    for i in (r or {}).get("inputs") or []:
+        ins[i["product"]] = ins.get(i["product"], 0) + _n(i["amount"])
+    for o in (r or {}).get("outputs") or []:
+        outs[o["product"]] = outs.get(o["product"], 0) + _n(o["amount"])
+    return ins, outs
+
+
+def _act_name(b):
+    nm = b.get("name") or b.get("type")
+    if b.get("id") and str(b["id"]) in str(nm):
+        nm = b.get("type") or nm            # the game names some buildings '<type><id>'
+    return nm
+
+
+def new_building_candidates(s, recipes, bdata):
+    """(type, recipe name, recipe) for every town-centre building type we could build and run: a recipe the head's
+    rank allows, at a site of that type. Prestige buildings, storehouses and hosted buildings are left out."""
+    head = (((s.get("household") or {}).get("workers") or [{}])[0] or {}).get("skills") or {}
+    out = []
+    for name, r in sorted(recipes.items()):
+        t = r.get("site")
+        b = bdata.get(t) or {}
+        req = b.get("requires")
+        if not t or not isinstance(req, dict) or set(req) != {"center"} or is_prestige_building(t, bdata):
+            continue
+        if t in ("warehouse", "storehouse", "outpost") or not (b.get("construction") or {}).get("materials"):
+            continue
+        if not recipe_allowed(r, head):
+            continue
+        ins, outs = _recipe_io(r)
+        if not outs:
+            continue
+        out.append((t, name, r))
+    return out
+
+
+def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extra_items=()):
     """Collect everything the LP needs into plain dicts (separate from solving, so tests can poke at it)."""
     g = load_cfg(cfg)
+    bdata = buildings_data or {}
     perishable = set((cfg or {}).get("perishable") or []) | {"labour"}
     items = (s.get("store") or {}).get("items") or {}
     market = s.get("market") or {}
     ops = s.get("operations") or {}
     hh = s.get("household") or {}
+    head = ((hh.get("workers") or [{}])[0] or {}).get("skills") or {}
     hist = hist if hist is not None else []
     sold = {}
     if hist:
@@ -155,35 +260,56 @@ def build_model(s, cfg, recipes, drip=None, hist=None):
     for k, v in (g.get("reserve") or {}).items():
         reserves[k] = max(_n(v), _n(reserves.get(k)))
 
-    acts = []            # activities: {name, kind, ins, outs, prestige, lb, ub, cur}
+    acts = []            # activities: {name, kind, ins, outs, prestige, lb, ub, cur, group}
+    groups = {}          # building id -> plots it can run in total (its recipe and any alternative share them)
     fixed_supply, fixed_demand = {}, {}
+    taxes = {}           # building id -> tax per turn
     notes = []
 
     for b in s.get("buildings") or []:
+        bid = str(b.get("id"))
+        op = ops.get("producer/%s" % bid) or {}
+        size = _n(b.get("size")) or 1.0
+        if op.get("tax") is not None:
+            taxes[bid] = _n(op.get("tax"))
+        else:
+            taxes[bid] = plot_tax_rate(b.get("type"), bdata) * size
         if b.get("construction"):
             continue                          # a site: its materials are fixed demand (drip), not an activity
-        r = recipes.get(b.get("recipe") or "")
-        if not r:                             # e.g. the farmstead's 'service 1': its flows are fixed supply/demand
+        rec = b.get("recipe")
+        r = recipes.get(rec or "")
+        if rec and not r:                     # e.g. the farmstead's 'service 1': its flows are fixed supply/demand
             for item, f in (b.get("flows") or {}).items():
                 if _n(f.get("production")):
                     fixed_supply[item] = fixed_supply.get(item, 0) + _n(f["production"])
                 if _n(f.get("consumption")):
                     fixed_demand[item] = fixed_demand.get(item, 0) + _n(f["consumption"])
             continue
-        ins, outs, pr = _coeffs(b, recipes)
-        if not outs and not pr:
-            continue
-        ub = _n(b.get("size")) or 1.0
+        ub = size
         cap = (g.get("max_target") or {}).get(b.get("type"))
         if cap is not None:
             ub = min(ub, float(cap))
         ub = max(ub, _n(b.get("target")))     # never plan a building smaller than it already runs by hand
-        nm = b.get("name") or b.get("type")
-        if b.get("id") and str(b["id"]) in str(nm):
-            nm = b.get("type") or nm        # the game names some buildings '<type><id>'
-        acts.append({"name": nm, "kind": "building", "id": b.get("id"),
-                     "type": b.get("type"), "recipe": b.get("recipe"), "ins": ins, "outs": outs, "prestige": pr,
-                     "lb": 0.0, "ub": ub, "cur": _n(b.get("target")), "size": _n(b.get("size"))})
+        groups[bid] = ub
+        nm = _act_name(b)
+        if r:
+            ins, outs, pr = _coeffs(b, recipes)
+            if outs or pr:
+                acts.append({"name": nm, "kind": "building", "id": bid, "type": b.get("type"), "recipe": rec,
+                             "ins": ins, "outs": outs, "prestige": pr, "lb": 0.0, "ub": ub,
+                             "cur": _n(b.get("target")), "size": size, "group": bid, "main": True})
+        # alternative recipes for the same building (not for prestige buildings: their recipe follows its own rules)
+        if is_prestige_building(b.get("type"), bdata):
+            continue
+        for alt, ar in sorted(recipes.items()):
+            if alt == rec or ar.get("site") != b.get("type") or not recipe_allowed(ar, head):
+                continue
+            ins, outs = _recipe_io(ar)
+            if not outs:
+                continue
+            acts.append({"name": "%s [%s]" % (nm, alt), "kind": "building", "id": bid, "type": b.get("type"),
+                         "recipe": alt, "ins": ins, "outs": outs, "prestige": _n(ar.get("prestige")), "lb": 0.0,
+                         "ub": ub, "cur": 0.0, "size": size, "group": bid, "main": not r, "alt": True})
 
     # resident (worker) labour inside building operations is free labour already there
     for k, op in ops.items():
@@ -211,7 +337,8 @@ def build_model(s, cfg, recipes, drip=None, hist=None):
     for item, v in (drip or {}).items():
         fixed_demand[item] = fixed_demand.get(item, 0) + _n(v)
 
-    names = set(fixed_supply) | set(fixed_demand) | set(items)
+    names = set(fixed_supply) | set(fixed_demand) | set(items) | set(extra_items)
+    names |= {k for k, m in market.items() if _n(m.get("traded")) > 0}
     for a in acts:
         names |= set(a["ins"]) | set(a["outs"])
     names.discard("money")
@@ -268,7 +395,7 @@ def build_model(s, cfg, recipes, drip=None, hist=None):
 
     # prestige: impacts that no activity of ours explains are fixed (sustenance, legacy drain)
     imp = hh.get("impacts") or {}
-    act_recipes = {a.get("recipe") for a in acts}
+    act_recipes = {a.get("recipe") for a in acts if not a.get("alt")}
     fixed_pr = sum(_n(v) for k, v in imp.items() if k not in act_recipes)
     free = _n(hh.get("free"))
     if free >= g["prestige_floor"]:
@@ -277,23 +404,97 @@ def build_model(s, cfg, recipes, drip=None, hist=None):
         pr_min = (g["prestige_floor"] - free) / g["prestige_recover_turns"]
 
     cash = _n(s.get("cash"))
-    fixed_cost = _n(g["building_tax"]) + sum(_n(sh.get("running_cost")) for sh in s.get("ships") or [])
+    seen_tax = any((ops.get("producer/%s" % k) or {}).get("tax") is not None for k in taxes)
+    tax = sum(taxes.values()) if (taxes and (seen_tax or bdata)) else _n(g["building_tax"])
+    ship_running = sum(_n(sh.get("running_cost")) for sh in s.get("ships") or [])
     if cash < g["cash_floor"]:
         cash_min = (g["cash_floor"] - cash) / g["cash_recover_turns"]
     else:
         cash_min = -(cash - g["cash_floor"]) / g["cash_recover_turns"]
 
-    return {"acts": acts, "goods": goods, "fixed_supply": fixed_supply, "fixed_demand": fixed_demand,
+    cap = _n((hh.get("caps") or {}).get("regular_management"))
+    return {"acts": acts, "groups": groups, "goods": goods, "fixed_supply": fixed_supply, "fixed_demand": fixed_demand,
             "fixed_prestige": fixed_pr, "prestige_min": pr_min, "free_prestige": free,
-            "cash": cash, "cash_min": cash_min, "fixed_cost": fixed_cost, "cfg": g, "notes": notes,
-            "tenants_level": _n((hh.get("levels") or {}).get("tenants"))}
+            "cash": cash, "cash_min": cash_min, "fixed_cost": tax, "taxes": taxes, "ship_running": ship_running,
+            "cfg": g, "notes": notes, "tenants_level": _n((hh.get("levels") or {}).get("tenants")),
+            "mgmt_cap": cap, "mgmt_used": management_used(s, bdata) if bdata else None}
 
 
-def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
-    """Solve the LP. fix: {activity name: level} pins those activities. Returns a result dict (ok False if infeasible
-    even after relaxing the floors, with the reason)."""
+# ---------------------------------------------------------------- ships
+
+def ship_options(s, M, world, sea, products=None, recipes=None):
+    """{ship id: {"name", "current": town id or None, "options": {town id: option}}}: for every town a ship can run a
+    route to (sea distance within twice the snekkja's range, a market in the world data), what it could sell there
+    (95% of their bid, or 90% of their 12-turn average price, as deep as max(bid depth, 30% of what they trade)) and
+    buy there (105% of their ask, same depth), for goods in our model. Crew: snekkja recipe cost per turn at crew 1
+    (v2/routes.running_cost), moving journey_capacity(moves) cargo units each way per turn at crew 1."""
+    import routes
+    prods = products if products is not None else routes._products()
+    goods = M["goods"]
+    by_name = {t.get("name"): t for t in world or []}
+    home = str(s.get("home_town") or "")
+    cost1 = routes.running_cost(s, recipes)
+
+    def cargo(item):
+        p_ = prods.get(item) or {}
+        return p_.get("type") == "commodity" if prods else item not in routes.NOT_CARGO
+
+    def size(item):
+        return float((prods.get(item) or {}).get("size") or 1)
+
+    opts = {}
+    for tid, d in (sea or {}).items():
+        if tid == home or not d.get("moves"):
+            continue
+        jcap = routes.journey_capacity(d["moves"])
+        t = by_name.get(d.get("name"))
+        if jcap <= 0 or not t:
+            continue
+        out, back = [], []
+        for item, raw in (t.get("markets") or {}).items():
+            if item not in goods or not cargo(item):
+                continue
+            m = routes._mk(raw)
+            if m["bid"] > 0:
+                px = m["bid"] * (1 - routes.SLIP)
+            elif m["ema"] > 0 and m["traded"] > 0:
+                px = 0.9 * m["ema"]
+            else:
+                px = 0.0
+            if px > 0 and m["sell_room"] >= 1:
+                out.append((item, px, m["sell_room"], size(item)))
+            if m["ask"] > 0 and m["buy_room"] >= 1:
+                back.append((item, m["ask"] * (1 + routes.SLIP), m["buy_room"], size(item)))
+        if out or back:
+            opts[tid] = {"town": tid, "name": d.get("name"), "moves": d["moves"], "jcap": float(jcap),
+                         "cost1": cost1, "out": out, "back": back}
+    res = {}
+    for sh in s.get("ships") or []:
+        cur = str(sh.get("route_to")) if sh.get("route_to") else None
+        res[str(sh.get("id"))] = {"name": sh.get("name"), "current": cur, "options": opts}
+    return res
+
+
+def _ship_bound(opt, shadow):
+    """Upper bound on what a town is worth to one ship at the plan's own item prices (for screening)."""
+    per = opt["cost1"] / opt["jcap"]
+    b = 0.0
+    for item, px, cap, sz in opt["out"]:
+        b += max(0.0, px - sz * per - shadow.get(item, 0.0)) * min(cap, opt["jcap"] / sz)
+    for item, px, cap, sz in opt["back"]:
+        b += max(0.0, shadow.get(item, 0.0) - px - sz * per) * min(cap, opt["jcap"] / sz)
+    return b
+
+
+# ---------------------------------------------------------------- the solver
+
+def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ships=None, extra_acts=None):
+    """Solve the LP. fix: {activity name: level} pins those activities. ships: route options to include (one per
+    ship); None = ships not modelled (today's crew cost counted as fixed). Returns a result dict whose "value" is
+    value gained per turn NET of taxes and crew."""
     from scipy.optimize import linprog
-    acts, goods = M["acts"], M["goods"]
+    acts = list(M["acts"]) + list(extra_acts or [])
+    goods = M["goods"]
     g = M["cfg"]
     fix = fix or {}
     sup = dict(M["fixed_supply"])
@@ -301,6 +502,7 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
         sup[k] = sup.get(k, 0) + v
     item_names = sorted(goods)
     idx = {k: i for i, k in enumerate(item_names)}
+    fixed = M["fixed_cost"] + (M.get("ship_running", 0.0) if ships is None else 0.0)
 
     cols = []      # (kind, key, step) ; c = objective coefficient (we minimise -value)
     c, lb, ub = [], [], []
@@ -326,6 +528,12 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
             cols.append(("stock", k, None)); c.append(-g["keep_value"] * gd["mark"]); lb.append(0.0); ub.append(gd["stock_cap"])
         # free disposal of an output nobody takes (waste, worth 0) keeps the balance feasible
         cols.append(("waste", k, None)); c.append(0.0); lb.append(0.0); ub.append(None)
+    for si, so in enumerate(ships or []):
+        for j, (item, px, cap, sz) in enumerate(so["out"]):
+            cols.append(("exp", item, (si, j))); c.append(-px); lb.append(0.0); ub.append(cap)
+        for j, (item, px, cap, sz) in enumerate(so["back"]):
+            cols.append(("imp", item, (si, j))); c.append(px); lb.append(0.0); ub.append(cap)
+        cols.append(("crew", so.get("ship"), si)); c.append(so["cost1"]); lb.append(0.0); ub.append(1.0)
 
     n = len(cols)
     A_eq = [[0.0] * n for _ in item_names]
@@ -334,9 +542,13 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
         b_eq[idx[k]] = M["fixed_demand"].get(k, 0.0) - sup.get(k, 0.0)
     pr_row = [0.0] * n
     cash_row = [0.0] * n
+    extra_ub, extra_b = [], []
+    by_name = {a["name"]: a for a in acts}
+    group_cols = {}
+    ship_rows = {}
     for j, (kind, key, step) in enumerate(cols):
         if kind == "act":
-            a = next(x for x in acts if x["name"] == key)
+            a = by_name[key]
             for i, q in a["outs"].items():
                 if i in idx:
                     A_eq[idx[i]][j] += q
@@ -344,6 +556,8 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
                 if i in idx:
                     A_eq[idx[i]][j] -= q
             pr_row[j] = -a["prestige"]          # >= written as <=: -prestige * x <= fixed - min
+            if a.get("group"):
+                group_cols.setdefault(a["group"], []).append(j)
         elif kind == "buy":
             A_eq[idx[key]][j] += 1.0
             cash_row[j] = goods[key]["buy_px"]  # -cashflow <= -cash_min
@@ -354,6 +568,65 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
             A_eq[idx[key]][j] += 1.0
         elif kind in ("stock", "waste"):
             A_eq[idx[key]][j] -= 1.0
+        elif kind == "exp":
+            si, jj = step
+            A_eq[idx[key]][j] -= 1.0
+            cash_row[j] = -ships[si]["out"][jj][1]
+            ship_rows.setdefault((si, "out"), []).append((j, ships[si]["out"][jj][3]))
+        elif kind == "imp":
+            si, jj = step
+            A_eq[idx[key]][j] += 1.0
+            cash_row[j] = ships[si]["back"][jj][1]
+            ship_rows.setdefault((si, "back"), []).append((j, ships[si]["back"][jj][3]))
+        elif kind == "crew":
+            cash_row[j] = ships[step]["cost1"]
+    # one building runs one recipe at a time: its recipe and the alternatives share its plots
+    for grp, js in group_cols.items():
+        if len(js) > 1:
+            row = [0.0] * n
+            for j in js:
+                row[j] = 1.0
+            extra_ub.append(row)
+            extra_b.append(M["groups"].get(grp, max(ub[j] for j in js)))
+    # ships carry only what we make or hold (out) and what we use (back), like v2's own route orders (trade mode
+    # off): exp(item) <= made + drawn, imp(item) <= used. Without this the plan would buy at home to export, or import
+    # to resell at home, which no order of ours carries out.
+    if ships:
+        exp_cols, imp_cols = {}, {}
+        for j, (kind, key, step) in enumerate(cols):
+            if kind == "exp":
+                exp_cols.setdefault(key, []).append(j)
+            elif kind == "imp":
+                imp_cols.setdefault(key, []).append(j)
+        for item, js in exp_cols.items():
+            row = [0.0] * n
+            for j in js:
+                row[j] = 1.0
+            for j, (kind, key, step) in enumerate(cols):
+                if kind == "act":
+                    row[j] -= by_name[key]["outs"].get(item, 0.0)
+                elif kind == "draw" and key == item:
+                    row[j] -= 1.0
+            extra_ub.append(row)
+            extra_b.append(0.0)
+        for item, js in imp_cols.items():
+            row = [0.0] * n
+            for j in js:
+                row[j] = 1.0
+            for j, (kind, key, step) in enumerate(cols):
+                if kind == "act":
+                    row[j] -= by_name[key]["ins"].get(item, 0.0)
+            extra_ub.append(row)
+            extra_b.append(M["fixed_demand"].get(item, 0.0))
+    # cargo each way within what the crew level carries: sum(size x units) <= journey capacity x crew
+    for (si, side), lst in ship_rows.items():
+        row = [0.0] * n
+        for j, sz in lst:
+            row[j] = sz
+        crew_j = next(j for j, col in enumerate(cols) if col[0] == "crew" and col[2] == si)
+        row[crew_j] = -ships[si]["jcap"]
+        extra_ub.append(row)
+        extra_b.append(0.0)
 
     pmin = M["prestige_min"] if prestige_min is None else prestige_min
     cmin = M["cash_min"] if cash_min is None else cash_min
@@ -363,15 +636,18 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
     # the floor. So an impossible floor still gets as close as it can (never "ignored"), and is reported.
     PEN_P, PEN_C = 10000.0, 100.0
     use_cash = cmin is not None
-    cc = list(c) + [PEN_P] + ([PEN_C] if use_cash else [])
-    bb = list(zip(lb, ub)) + [(0, None)] + ([(0, None)] if use_cash else [])
     ext = 1 + (1 if use_cash else 0)
+    cc = list(c) + [PEN_P] + ([PEN_C] if use_cash else [])
+    bb = list(zip(lb, ub)) + [(0, None)] * ext
     A_eq2 = [row + [0.0] * ext for row in A_eq]
     A_ub = [pr_row + [-1.0] + ([0.0] if use_cash else [])]       # -prestige - slack <= fixed - min
     b_ub = [M["fixed_prestige"] - pmin]
     if use_cash:
         A_ub.append(cash_row + [0.0, -1.0])                       # -cashflow - slack <= -(min + fixed)
-        b_ub.append(-(cmin + M["fixed_cost"]))
+        b_ub.append(-(cmin + fixed))
+    for row, bv in zip(extra_ub, extra_b):
+        A_ub.append(row + [0.0] * ext)
+        b_ub.append(bv)
     res = linprog(cc, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq2, b_eq=b_eq, bounds=bb, method="highs")
     if res.status != 0:
         return {"ok": False, "why": res.message, "relaxed": relaxed}
@@ -384,47 +660,34 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None):
 
     x = res.x[:n]
     levels = {key: x[j] for j, (kind, key, _) in enumerate(cols) if kind == "act"}
-    flows = {}
+    flows, ship_use = {}, {}
     for j, (kind, key, step) in enumerate(cols):
-        if kind != "act" and x[j] > 1e-6:
-            f = flows.setdefault(key, {})
-            f[kind] = f.get(kind, 0.0) + x[j]
-    value = -sum(c[j] * x[j] for j in range(n))
-    cashflow = -sum(cash_row[j] * x[j] for j in range(n)) - M["fixed_cost"]
+        if kind in ("act",) or x[j] <= 1e-6:
+            continue
+        if kind == "crew":
+            ship_use.setdefault(str(key), {})["crew"] = x[j]
+            continue
+        f = flows.setdefault(key, {})
+        f[kind] = f.get(kind, 0.0) + x[j]
+        if kind in ("exp", "imp"):
+            su = ship_use.setdefault(str(ships[step[0]].get("ship")), {})
+            su.setdefault(kind, {})[key] = su.get(kind, {}).get(key, 0.0) + x[j]
+    value = -sum(c[j] * x[j] for j in range(n)) - fixed
+    cashflow = -sum(cash_row[j] * x[j] for j in range(n)) - fixed
     prestige = M["fixed_prestige"] - sum(pr_row[j] * x[j] for j in range(n))
     shadow = {}
     try:
         for k in item_names:
             shadow[k] = res.eqlin.marginals[idx[k]]
         shadow["_prestige"] = -res.ineqlin.marginals[0]
-        shadow["_cash"] = -res.ineqlin.marginals[1] if len(res.ineqlin.marginals) > 1 else 0.0
+        shadow["_cash"] = -res.ineqlin.marginals[1] if use_cash else 0.0
     except Exception:
         pass
     return {"ok": True, "value": value, "levels": levels, "flows": flows, "cashflow": cashflow,
-            "prestige_rate": prestige, "shadow": shadow, "relaxed": relaxed}
+            "prestige_rate": prestige, "shadow": shadow, "relaxed": relaxed, "ships": ship_use, "fixed": fixed}
 
 
 # ---------------------------------------------------------------- the plan
-
-def _margin(a, shadow):
-    """Coin a unit of this activity makes at the plan's own item prices (shadow prices)."""
-    out = sum(q * shadow.get(i, 0.0) for i, q in a["outs"].items())
-    inn = sum(q * shadow.get(i, 0.0) for i, q in a["ins"].items())
-    return out - inn + a["prestige"] * shadow.get("_prestige", 0.0)
-
-
-def _plot_cost(btype, buildings_data, goods):
-    """Coin for one more plot of a building type: one plot takes the building's full construction materials (park
-    plots: 260 labour, 60 limestone, 40 timber, as the game charged), priced at home asks."""
-    b = buildings_data.get(btype) or {}
-    mats = (b.get("construction") or {}).get("materials") or {}
-    cost = 0.0
-    for item, q in mats.items():
-        gd = goods.get(item) or {}
-        px = gd.get("buy_px") or gd.get("last") or gd.get("cost") or 0.0
-        cost += _n(q) * px
-    return cost
-
 
 def _ensure_scipy():
     """The Actions runner has no scipy: install it on first use (~15 s, wheels only). True when importable."""
@@ -446,104 +709,245 @@ def _ensure_scipy():
         return False
 
 
-def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None):
+def _with_ship(opt, sid):
+    o = dict(opt)
+    o["ship"] = sid
+    return o
+
+
+def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=None, sea=None, products=None):
     if not _ensure_scipy():
         return {"ok": False, "why": "scipy not installed and pip install failed"}
-    M = build_model(s, cfg, recipes, drip=drip, hist=hist)
+    bdata = buildings_data or {}
+    cands = new_building_candidates(s, recipes, bdata) if bdata else []
+    extra = set()
+    for _, _, r in cands:
+        i_, o_ = _recipe_io(r)
+        extra |= set(i_) | set(o_)
+    for t, _, _ in cands:
+        extra |= set(((bdata.get(t) or {}).get("construction") or {}).get("materials") or {})
+    M = build_model(s, cfg, recipes, drip=drip, hist=hist, buildings_data=bdata, extra_items=extra)
     g = M["cfg"]
-    opt = solve(M)
+
+    def ok_like(r, ref):
+        return bool(r.get("ok")) and set(r.get("relaxed") or []) <= set(ref.get("relaxed") or [])
+
+    # ---- ships: today's routes, then each ship's best town (screened by the plan's own prices, then re-solved)
+    sopt = ship_options(s, M, world, sea, products, recipes) if (world and sea) else None
+    cur_ships, chosen, ship_moves = None, {}, []
+    if sopt is not None:
+        cur_ships = [_with_ship(v["options"][v["current"]], sid) for sid, v in sorted(sopt.items())
+                     if v["current"] and v["current"] in v["options"]]
+        base = solve(M, ships=[])
+        sh0 = base.get("shadow") or {}
+        for sid, v in sorted(sopt.items()):
+            others = [_with_ship(sopt[s2]["options"][t2], s2) for s2, t2 in chosen.items() if t2]
+            ref = solve(M, ships=others)
+            scored = sorted(v["options"].values(), key=lambda o: -_ship_bound(o, sh0))
+            look = [o for o in scored[:int(g.get("ship_screen", 8))]]
+            if v["current"] and v["current"] in v["options"] and v["options"][v["current"]] not in look:
+                look.append(v["options"][v["current"]])
+            best, best_r = None, ref
+            for o in look:
+                if o["town"] in chosen.values():
+                    continue                    # two ships never share a town (they would undercut each other)
+                r = solve(M, ships=others + [_with_ship(o, sid)])
+                if ok_like(r, ref) and r["value"] > best_r["value"] + 1e-6:
+                    best, best_r = o, r
+            chosen[sid] = best["town"] if best else None
+            gain_now = None
+            if v["current"] and v["current"] in v["options"]:
+                rc = solve(M, ships=others + [_with_ship(v["options"][v["current"]], sid)])
+                gain_now = (best_r["value"] - rc["value"]) if rc.get("ok") else None
+            ship_moves.append({"ship": sid, "name": v["name"], "current": v["current"],
+                               "current_name": (v["options"].get(v["current"]) or {}).get("name") or v["current"],
+                               "town": chosen[sid], "town_name": (best or {}).get("name"),
+                               "worth": best_r["value"] - ref["value"], "gain_over_current": gain_now})
+    plan_ships = [_with_ship(sopt[sid]["options"][t], sid) for sid, t in sorted(chosen.items()) if t] if sopt else None
+
+    # one recipe per building: the LP may split a building's plots between recipes; keep its main recipe and the
+    # best alternative, and run only the one with more plots (the other is pinned to 0 in the plan)
+    opt0 = solve(M, ships=plan_ships)
+    if not opt0["ok"]:
+        return {"ok": False, "why": "no feasible plan: %s" % opt0.get("why")}
+    keep, off = [], {}
+    for a in M["acts"]:
+        if not a.get("group"):
+            keep.append(a)
+    for grp in M["groups"]:
+        acts_g = [a for a in M["acts"] if a.get("group") == grp]
+        main = next((a for a in acts_g if not a.get("alt")), None)
+        alts = sorted([a for a in acts_g if a.get("alt")], key=lambda a: -opt0["levels"].get(a["name"], 0.0))
+        best_alt = alts[0] if alts and opt0["levels"].get(alts[0]["name"], 0.0) > 1e-6 else None
+        pair = [x for x in (main, best_alt) if x is not None]
+        if not pair:
+            pair = alts[:1]
+        keep.extend(pair)
+        if len(pair) == 2:
+            lo = min(pair, key=lambda a: (opt0["levels"].get(a["name"], 0.0), a is main))
+            off[lo["name"]] = 0.0
+    M = dict(M, acts=keep)
+    M_run = dict(M, acts=[dict(a, ub=0.0) if a["name"] in off else a for a in M["acts"]])
+    opt = solve(M_run, ships=plan_ships)
     if not opt["ok"]:
         return {"ok": False, "why": "no feasible plan: %s" % opt.get("why")}
+    M = M_run                   # pins below set both bounds, so today's levels still price correctly
     cur_fix = {a["name"]: a["cur"] for a in M["acts"]}
 
-    def free(fix):          # value with the levels pinned and the limits set aside: like-for-like comparisons
-        return solve(M, fix=fix, prestige_min=-1e9, cash_min=None)
+    def free(fix, ships):   # value with the levels pinned and the limits set aside: like-for-like comparisons
+        return solve(M, fix=fix, prestige_min=-1e9, cash_min=None, ships=ships)
 
-    def same(r):
-        return bool(r.get("ok"))
-
-    cur = free(cur_fix)                     # what today's settings earn
-    cur_lim = solve(M, fix=cur_fix)         # ... and which limits they break
+    cur = free(cur_fix, cur_ships)                    # what today's settings earn
+    cur_lim = solve(M, fix=cur_fix, ships=cur_ships)  # ... and which limits they break
     breaks = cur_lim.get("relaxed") if cur_lim.get("ok") else ["no feasible flow"]
     now_flows = (cur_lim if cur_lim.get("ok") else cur).get("flows") or {}
 
     # changes, priced one at a time on top of each other (best first), so the gains add up to plan - today.
-    # Moves that only work together (a chain stage and its feeder) are priced as one group.
     changes = []
+    base_r = cur
+    if sopt is not None:
+        applied_sh = {str(x["ship"]): x for x in (cur_ships or [])}
+        for mv in ship_moves:
+            if mv["town"] == mv["current"]:
+                continue
+            if mv["town"]:
+                applied_sh[mv["ship"]] = _with_ship(sopt[mv["ship"]]["options"][mv["town"]], mv["ship"])
+            else:
+                applied_sh.pop(mv["ship"], None)
+            r = free(cur_fix, list(applied_sh.values()))
+            changes.append({"name": "%s -> %s" % (mv["name"], mv["town_name"] or "no route"), "kind": "ship",
+                            "ship": mv["ship"], "from": mv["current"], "to": mv["town"],
+                            "gain": (r["value"] - base_r["value"]) if r.get("ok") else None})
+            if r.get("ok"):
+                base_r = r
     pending = [a for a in M["acts"] if abs(opt["levels"].get(a["name"], 0.0) - a["cur"]) >= g["change_min"]]
-    applied, base = dict(cur_fix), cur
-    while pending and same(base):
+    applied = dict(cur_fix)
+    while pending and base_r.get("ok"):
         best = None
         for a in pending:
             trial = dict(applied)
             trial[a["name"]] = opt["levels"][a["name"]]
-            r = free(trial)
-            if same(r) and (best is None or r["value"] - base["value"] > best[2]):
-                best = (a, r, r["value"] - base["value"])
+            r = free(trial, plan_ships)
+            if r.get("ok") and (best is None or r["value"] - base_r["value"] > best[2]):
+                best = (a, r, r["value"] - base_r["value"])
         if best is None:
-            trial = dict(applied)
-            for a in pending:
-                trial[a["name"]] = opt["levels"][a["name"]]
-            r = free(trial)
-            changes.append({"name": " + ".join(a["name"] for a in pending), "group": [
-                {"name": a["name"], "id": a.get("id"), "kind": a["kind"], "recipe": a.get("recipe"),
-                 "from": round(a["cur"], 3), "to": round(opt["levels"][a["name"]], 3)} for a in pending],
-                "gain": (r["value"] - base["value"]) if same(r) else None})
             break
         a, r, gain = best
         applied[a["name"]] = opt["levels"][a["name"]]
-        base = r
+        base_r = r
         pending.remove(a)
         changes.append({"name": a["name"], "id": a.get("id"), "kind": a["kind"], "recipe": a.get("recipe"),
                         "from": round(a["cur"], 3), "to": round(opt["levels"][a["name"]], 3), "gain": gain})
-    if pending and not same(cur):
-        for a in pending:
-            changes.append({"name": a["name"], "id": a.get("id"), "kind": a["kind"], "recipe": a.get("recipe"),
-                            "from": round(a["cur"], 3), "to": round(opt["levels"][a["name"]], 3), "gain": None})
 
-    # investments, each priced by re-solving with the extra capacity under the same limits
+    # the plan per building: the recipe it gives most plots, its target, and what switching recipe is worth
+    bplan = {}
+    for grp in M["groups"]:
+        acts_g = [a for a in M["acts"] if a.get("group") == grp]
+        top = max(acts_g, key=lambda a: (opt["levels"].get(a["name"], 0.0), not a.get("alt")))
+        main = next((a for a in acts_g if not a.get("alt")), None)
+        lvl = opt["levels"].get(top["name"], 0.0)
+        e = {"id": grp, "name": (main or top)["name"].split(" [")[0], "recipe": top["recipe"], "target": round(lvl, 3),
+             "cur_recipe": main["recipe"] if main else None, "cur": round(main["cur"], 3) if main else 0.0}
+        if main and top is not main and lvl > 1e-3:
+            M2 = dict(M, acts=[a for a in M["acts"] if not (a.get("group") == grp and a.get("alt"))])
+            r = solve(M2, ships=plan_ships)
+            e["switch_gain"] = (opt["value"] - r["value"]) if r.get("ok") else None
+        bplan[grp] = e
+
+    # ---- investments and trims, each priced by re-solving under the same limits (value is net of tax)
     inv = []
     lvl = int(M["tenants_level"]) + 1
     t_cost = 50 * (lvl - 3)          # 450 for L12, 500 for L13 (game prices seen Oct 22)
     left = M["free_prestige"] - t_cost
     M_t = dict(M)
     M_t["prestige_min"] = -(left - g["prestige_floor"]) / g["prestige_horizon"] if left >= g["prestige_floor"] else M["prestige_min"]
-    tl = solve(M_t, extra_supply={"labour": g["tenants_labour"]})
-    if tl.get("ok") and tl.get("relaxed") == opt.get("relaxed"):
-        inv.append({"what": "Tenants L%d" % lvl, "cost": "%d prestige" % t_cost, "gain": tl["value"] - opt["value"],
-                    "pays": left >= g["prestige_floor"],
+    tl = solve(M_t, extra_supply={"labour": g["tenants_labour"]}, ships=plan_ships)
+    if ok_like(tl, opt):
+        inv.append({"kind": "tenants", "what": "Tenants L%d" % lvl, "cost": "%d prestige" % t_cost,
+                    "gain": tl["value"] - opt["value"], "pays": left >= g["prestige_floor"],
                     "note": ("free after %.0f" % left) if left >= g["prestige_floor"] else
                             "waits until %.0f free (keeps %d after)" % (t_cost + g["prestige_floor"], g["prestige_floor"])})
-    bdata = buildings_data or {}
-    for a in M["acts"]:
-        if a["kind"] != "building" or opt["levels"].get(a["name"], 0) < a["ub"] - 1e-6:
+    room = (M["mgmt_cap"] - M["mgmt_used"]) if M.get("mgmt_used") is not None and M.get("mgmt_cap") else None
+    owned_types = {b.get("type") for b in s.get("buildings") or []}
+    # +1 plot of a building the plan runs flat out
+    for grp, cap_ in M["groups"].items():
+        acts_g = [a for a in M["acts"] if a.get("group") == grp]
+        if sum(opt["levels"].get(a["name"], 0.0) for a in acts_g) < cap_ - 1e-6:
             continue
-        if a["type"] in (g.get("max_target") or {}):
+        a0 = acts_g[0]
+        if a0["type"] in (g.get("max_target") or {}):
             continue
-        most = _n(((bdata.get(a["type"]) or {}).get("construction") or {}).get("size"))
-        if most and a["size"] >= most:
+        most = _n(((bdata.get(a0["type"]) or {}).get("construction") or {}).get("size"))
+        if most and a0["size"] >= most:
             continue                  # already at the most plots the building type allows
-        M2 = dict(M)
-        M2["acts"] = [dict(x, ub=x["ub"] + 1) if x["name"] == a["name"] else x for x in M["acts"]]
-        r = solve(M2)
-        if not (r.get("ok") and r.get("relaxed") == opt.get("relaxed")):
+        need = mgmt_per_plot(a0["type"], bdata) if not is_prestige_building(a0["type"], bdata) else 0.0
+        if room is not None and need > room + 1e-9:
             continue
-        gain = r["value"] - opt["value"] - g["urban_plot_tax"]
+        M2 = dict(M, groups=dict(M["groups"], **{grp: cap_ + 1}),
+                  acts=[dict(x, ub=x["ub"] + 1) if x.get("group") == grp else x for x in M["acts"]])
+        r = solve(M2, ships=plan_ships)
+        if not ok_like(r, opt):
+            continue
+        gain = r["value"] - opt["value"] - plot_tax_rate(a0["type"], bdata)
         if gain <= 0.5:
             continue
-        cost = _plot_cost(a["type"], bdata, M["goods"])
-        inv.append({"what": "+1 plot %s" % a["name"], "cost": "~%.0f coin" % cost, "gain": gain,
+        cost = materials_cost(a0["type"], bdata, M["goods"])
+        inv.append({"kind": "plot", "building": grp, "what": "+1 plot %s" % a0["name"].split(" [")[0],
+                    "cost": "~%.0f coin" % cost, "coin": cost, "gain": gain, "mgmt": need,
                     "payback": cost / gain, "pays": cost / gain <= g["invest_horizon"]})
+    # new buildings: each type's best recipe as a one-plot building (screened at the plan's prices first)
+    sh = opt["shadow"]
+    scored = []
+    for t, rn, r_ in cands:
+        i_, o_ = _recipe_io(r_)
+        margin = sum(q * sh.get(k, 0.0) for k, q in o_.items()) - sum(q * sh.get(k, 0.0) for k, q in i_.items())
+        if margin > plot_tax_rate(t, bdata):
+            scored.append((margin, t, rn, r_))
+    best_new = {}
+    for margin, t, rn, r_ in sorted(scored, reverse=True)[:int(g.get("new_screen", 12))]:
+        i_, o_ = _recipe_io(r_)
+        act = {"name": "new %s [%s]" % (t, rn), "kind": "new", "type": t, "recipe": rn, "ins": i_, "outs": o_,
+               "prestige": _n(r_.get("prestige")), "lb": 0.0, "ub": 1.0, "cur": 0.0}
+        r = solve(M, ships=plan_ships, extra_acts=[act])
+        if not ok_like(r, opt):
+            continue
+        gain = r["value"] - opt["value"] - plot_tax_rate(t, bdata)
+        if gain > 0.5 and gain > best_new.get(t, (0,))[0]:
+            best_new[t] = (gain, rn)
+    for t, (gain, rn) in best_new.items():
+        need = 0.5 if t in owned_types else 1.0
+        cost = materials_cost(t, bdata, M["goods"])
+        fits = room is None or need <= room + 1e-9
+        inv.append({"kind": "build", "type": t, "recipe": rn, "what": "new %s (%s)" % (t, rn),
+                    "cost": "~%.0f coin" % cost, "coin": cost, "gain": gain, "mgmt": need,
+                    "payback": cost / gain if gain > 0 else None,
+                    "pays": bool(fits and cost / gain <= g["invest_horizon"]),
+                    "note": None if fits else "no management room (%.2f free, needs %.1f)" % (room or 0, need)})
     inv.sort(key=lambda d: -(d["gain"] or 0))
+    # trims: a building whose removal (its plots idle AND its tax gone) beats keeping it
+    trims = []
+    for grp in M["groups"]:
+        acts_g = [a for a in M["acts"] if a.get("group") == grp]
+        tax_b = M["taxes"].get(grp, 0.0)
+        M2 = dict(M, fixed_cost=M["fixed_cost"] - tax_b,
+                  acts=[dict(x, ub=0.0) if x.get("group") == grp else x for x in M["acts"]])
+        r = solve(M2, ships=plan_ships)
+        if not ok_like(r, opt):
+            continue
+        gain = r["value"] - opt["value"]
+        if gain >= g.get("trim_min", 5.0):
+            trims.append({"kind": "donate", "building": grp, "what": "donate %s" % acts_g[0]["name"].split(" [")[0],
+                          "type": acts_g[0]["type"], "gain": gain, "tax": tax_b})
+    trims.sort(key=lambda d: -d["gain"])
 
     hist = hist or []
     trend = value_trend(hist, set((cfg or {}).get("perishable") or [])) if hist else {}
-    sh = opt["shadow"]
     keys = ["labour", "thread", "cloth", "flax fibres", "garments", "nets", "beer", "timber"]
     return {
         "ok": True, "goal": "business value", "turn": s.get("turn"), "t": s.get("t"),
         "value_now": trend.get("now"), "trend": trend,
         "plan_value": opt["value"], "current_value": cur.get("value") if cur.get("ok") else None,
+        "plan_free": (free({k: v for k, v in opt["levels"].items()}, plan_ships) or {}).get("value"),
         "current_breaks": breaks,
         "plan_cashflow": opt["cashflow"], "current_cashflow": cur.get("cashflow"),
         "buy": {k: round(v.get("buy", 0), 2) for k, v in opt["flows"].items() if v.get("buy")},
@@ -553,9 +957,13 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None):
                        "sell": {k: round(v.get("sell", 0), 2) for k, v in now_flows.items() if v.get("sell")}},
         "sell": {k: round(v.get("sell", 0), 2) for k, v in opt["flows"].items() if v.get("sell")},
         "plan_prestige_rate": opt["prestige_rate"], "current_prestige_rate": cur.get("prestige_rate"),
-        "prestige_min": M["prestige_min"], "cash_min": M["cash_min"], "fixed_cost": M["fixed_cost"],
+        "prestige_min": M["prestige_min"], "cash_min": M["cash_min"], "fixed_cost": opt.get("fixed"),
         "relaxed": opt["relaxed"], "levels": {k: round(v, 3) for k, v in opt["levels"].items()},
-        "changes": changes, "investments": inv,
+        "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
+        "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
+                                                    {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
+                                           for k, v in (opt.get("ships") or {}).items()},
+        "mgmt": {"cap": M.get("mgmt_cap"), "used": M.get("mgmt_used")},
         "shadow": {k: round(sh[k], 3) for k in keys + ["_prestige", "_cash"] if k in sh},
         "flows": {k: {kk: round(vv, 2) for kk, vv in v.items()} for k, v in opt["flows"].items()},
     }
@@ -574,15 +982,15 @@ def report_lines(G):
         bits = ["%s/turn over %d turns" % ("%+.0f" % tr["per_turn_%d" % n], n) for n in (6, 24) if ("per_turn_%d" % n) in tr]
         out.append("- Value now %.1fk (cash + stock at home prices); %s." % (G["value_now"] / 1000, ", ".join(bits) or "no trend yet"))
     cv, pv = G.get("current_value"), G.get("plan_value")
-    out.append("- Limits: cash flow >= %+.0f/turn, prestige >= %+.2f/turn (after %.0f tax and crew)." % (
-        G["cash_min"], G["prestige_min"], G["fixed_cost"]))
+    out.append("- Limits: cash flow >= %+.0f/turn, prestige >= %+.2f/turn (values are after %.0f tax a turn)." % (
+        G["cash_min"], G["prestige_min"], G.get("fixed_cost") or 0))
     if cv is not None:
         br = G.get("current_breaks") or []
         out.append("- Today's settings: value %+.0f/turn, cash %+.0f/turn, prestige %+.2f/turn%s." % (
-            cv - G["fixed_cost"], G.get("current_cashflow") or 0, G.get("current_prestige_rate") or 0,
+            cv, G.get("current_cashflow") or 0, G.get("current_prestige_rate") or 0,
             (" - breaks the %s" % " and ".join(br)) if br else ""))
     out.append("- Plan: value %+.0f/turn, cash %+.0f/turn, prestige %+.2f/turn%s." % (
-        pv - G["fixed_cost"], G["plan_cashflow"], G["plan_prestige_rate"],
+        pv, G["plan_cashflow"], G["plan_prestige_rate"],
         (" - could not meet the %s" % " and ".join(G["relaxed"])) if G.get("relaxed") else ", inside both limits"))
     if G.get("changes"):
         out.append("- Changes, each priced on top of the one before (value/turn, limits aside):")
@@ -591,6 +999,8 @@ def report_lines(G):
             if ch.get("group"):
                 out.append("  - together: %s: %s" % (", ".join("%s %.2f -> %.2f" % (x["name"], x["from"], x["to"])
                                                             for x in ch["group"]), g_))
+            elif ch.get("kind") == "ship":
+                out.append("  - ship %s: %s" % (ch["name"], g_))
             else:
                 out.append("  - %s %.2f -> %.2f: %s" % (ch["name"], ch["from"], ch["to"], g_))
     else:
@@ -618,12 +1028,29 @@ def report_lines(G):
         if diffs:
             out.append("- Orders it would set%s: %s" % (
                 "" if G.get("orders_live") else " (dry run)", "; ".join(diffs[:10])))
+    sw = [b for b in (G.get("buildings") or {}).values() if b.get("recipe") != b.get("cur_recipe") and b.get("target", 0) > 0]
+    for b in sw:
+        out.append("- Recipe: %s %s -> %s at %.2f%s." % (b["name"], b.get("cur_recipe") or "(idle)", b["recipe"], b["target"],
+                                                        (", worth %+.0f/turn" % b["switch_gain"]) if b.get("switch_gain") is not None else ""))
+    for m in G.get("ships") or []:
+        if m.get("town") != m.get("current"):
+            out.append("- Ship %s: %s -> %s (%s/turn over staying)." % (
+                m["name"], m.get("current_name") or "no route", m.get("town_name") or "no route",
+                "%+.0f" % m["gain_over_current"] if m.get("gain_over_current") is not None else "?"))
+        elif m.get("town"):
+            out.append("- Ship %s: stays on %s (worth %+.0f/turn)." % (m["name"], m.get("town_name"), m.get("worth") or 0))
+    mg = G.get("mgmt") or {}
+    if mg.get("cap"):
+        out.append("- Management: ~%.2f of %.0f used." % (mg.get("used") or 0, mg["cap"]))
     if G.get("investments"):
         out.append("- Investments:")
-        for d in G["investments"][:5]:
+        for d in G["investments"][:6]:
             pb = (", payback %.0f turns" % d["payback"]) if d.get("payback") else ""
-            out.append("  - %s for %s: %+.0f/turn%s%s" % (d["what"], d["cost"], d["gain"], pb,
-                                                       (" (%s)" % d["note"]) if d.get("note") else ""))
+            out.append("  - %s for %s: %+.0f/turn%s%s%s" % (d["what"], d["cost"], d["gain"], pb,
+                                                         "" if d.get("pays", True) else ", doesn't pay yet",
+                                                         (" (%s)" % d["note"]) if d.get("note") else ""))
+    for t in (G.get("trims") or [])[:4]:
+        out.append("- Trim: %s: %+.0f/turn (tax %.0f saved)." % (t["what"], t["gain"], t["tax"]))
     return out
 
 
@@ -633,10 +1060,8 @@ def history_line(G):
     """One compact line per run for state/v2/goal_history.jsonl."""
     if not G or not G.get("ok"):
         return {"t": (G or {}).get("t"), "ok": False, "why": (G or {}).get("why")}
-    fc = G.get("fixed_cost") or 0.0
     return {"t": G.get("t"), "turn": G.get("turn"), "ok": True, "value_now": G.get("value_now"),
-            "pred_today": (G["current_value"] - fc) if G.get("current_value") is not None else None,
-            "pred_plan": G["plan_value"] - fc, "cash_today": G.get("current_cashflow"), "cash_plan": G.get("plan_cashflow"),
+            "pred_today": G.get("current_value"), "pred_plan": G["plan_value"], "cash_today": G.get("current_cashflow"), "cash_plan": G.get("plan_cashflow"),
             "levels": G.get("levels"), "live": G.get("live_jobs"),
             "check": None if not G.get("scorecard") else (abs(G["scorecard"]["predicted"] - G["scorecard"]["real"])
                                                          <= max(40.0, 0.5 * abs(G["scorecard"]["real"])))}

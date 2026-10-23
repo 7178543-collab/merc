@@ -126,6 +126,8 @@ def take():
             ops[op.get("reference")] = {
                 "recipe": op.get("recipe"), "target": n(op.get("target")), "volume": n(op.get("volume")),
                 "limitation": op.get("limitation"),
+                # building tax per turn (tax_rate x plots), charged whether the building runs or not (goal planner)
+                "tax": n(op.get("tax")) if op.get("tax") is not None else None, "tax_rate": n(op.get("tax_rate")) or None,
                 "flows": {k: {kind: {kk: n(vv) for kk, vv in (v.get(kind) or {}).items()} for kind in ("projection", "realized")}
                           for k, v in (op.get("flows") or {}).items()}}
     s["operations"] = ops

@@ -7,7 +7,7 @@ over by itself, one at a time, once its own model check has held, instead of wai
       "off": true          kill switch: every job back to the old rules at once (beats everything below)
       "live": {job: true}  a job forced live by hand
       "auto": true         automatic hand-over on (state/v2/goal_live.json, committed by the v2-shadow workflow)
-      "auto_promote": [...] the order jobs go live in: rates, buys, sells, invest
+      "auto_promote": [...] the order jobs go live in: rates, buys, sells, ships, invest, trim
 
 A job goes live automatically when the model check (predicted vs real value per turn over 24+ turns) has held on
 every one of the last `hold_runs` runs, and the last hand-over was at least `promote_gap_turns` turns ago.
@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CONFIG = os.path.join(HERE, "config.json")
 STATE = os.path.join(ROOT, "state", "v2", "goal_live.json")
-JOBS = ("rates", "buys", "sells", "invest")
+JOBS = ("rates", "buys", "sells", "ships", "invest", "trim")
 
 
 def _load(path, default):
