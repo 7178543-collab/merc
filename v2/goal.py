@@ -674,6 +674,15 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
             su.setdefault(kind, {})[key] = su.get(kind, {}).get(key, 0.0) + x[j]
     value = -sum(c[j] * x[j] for j in range(n)) - fixed
     cashflow = -sum(cash_row[j] * x[j] for j in range(n)) - fixed
+    # the same turn in book terms, the way the model check measures real turns (cash + held x home price): stock
+    # change = stocked + unsold output - drawn, at the home last price (perishables and services never count)
+    book = cashflow
+    for j, (kind, key, step) in enumerate(cols):
+        if kind in ("stock", "waste", "draw") and x[j] > 1e-9:
+            gd = goods.get(key) or {}
+            if gd.get("perishable") or key in NOT_STOCK:
+                continue
+            book += (-1.0 if kind == "draw" else 1.0) * x[j] * (gd.get("last") or 0.0)
     prestige = M["fixed_prestige"] - sum(pr_row[j] * x[j] for j in range(n))
     shadow = {}
     try:
@@ -683,7 +692,7 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
         shadow["_cash"] = -res.ineqlin.marginals[1] if use_cash else 0.0
     except Exception:
         pass
-    return {"ok": True, "value": value, "levels": levels, "flows": flows, "cashflow": cashflow,
+    return {"ok": True, "value": value, "book": book, "levels": levels, "flows": flows, "cashflow": cashflow,
             "prestige_rate": prestige, "shadow": shadow, "relaxed": relaxed, "ships": ship_use, "fixed": fixed}
 
 
@@ -914,7 +923,14 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         gain = r["value"] - opt["value"] - plot_tax_rate(t, bdata)
         if gain > 0.5 and gain > best_new.get(t, (0,))[0]:
             best_new[t] = (gain, rn)
+    plot_types = {next((a["type"] for a in M["acts"] if a.get("group") == d["building"]), None)
+                  for d in inv if d.get("kind") == "plot"}
     for t, (gain, rn) in best_new.items():
+        if t in owned_types:
+            most = _n(((bdata.get(t) or {}).get("construction") or {}).get("size"))
+            sizes = [_n(b.get("size")) for b in s.get("buildings") or [] if b.get("type") == t]
+            if t in plot_types or (most and sizes and min(sizes) < most):
+                continue            # growing the one we have is cheaper on management than a second building
         need = 0.5 if t in owned_types else 1.0
         cost = materials_cost(t, bdata, M["goods"])
         fits = room is None or need <= room + 1e-9
@@ -950,6 +966,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "plan_free": (free({k: v for k, v in opt["levels"].items()}, plan_ships) or {}).get("value"),
         "current_breaks": breaks,
         "plan_cashflow": opt["cashflow"], "current_cashflow": cur.get("cashflow"),
+        "current_book": cur_lim.get("book") if cur_lim.get("ok") else cur.get("book"),
         "buy": {k: round(v.get("buy", 0), 2) for k, v in opt["flows"].items() if v.get("buy")},
         # buys and sells for the rates that run today (the 'buys'/'sells' jobs use these: rates move in steps,
         # so orders follow the real targets, not the plan's end state)
@@ -1061,7 +1078,7 @@ def history_line(G):
     if not G or not G.get("ok"):
         return {"t": (G or {}).get("t"), "ok": False, "why": (G or {}).get("why")}
     return {"t": G.get("t"), "turn": G.get("turn"), "ok": True, "value_now": G.get("value_now"),
-            "pred_today": G.get("current_value"), "pred_plan": G["plan_value"], "cash_today": G.get("current_cashflow"), "cash_plan": G.get("plan_cashflow"),
+            "pred_today": G.get("current_value"), "pred_plan": G["plan_value"], "pred_book": G.get("current_book"), "cash_today": G.get("current_cashflow"), "cash_plan": G.get("plan_cashflow"),
             "levels": G.get("levels"), "live": G.get("live_jobs"),
             "check": None if not G.get("scorecard") else (abs(G["scorecard"]["predicted"] - G["scorecard"]["real"])
                                                          <= max(40.0, 0.5 * abs(G["scorecard"]["real"])))}
@@ -1070,7 +1087,9 @@ def history_line(G):
 def scorecard(goal_hist, hist, perishable=(), min_turns=6):
     """Did the model's 'today's settings earn X/turn' match what really happened? Compares the mean prediction of
     the runs since a past turn with the real change in business value since that turn."""
-    rows = [r for r in goal_hist if r.get("ok") and r.get("pred_today") is not None and r.get("turn") is not None]
+    # book-value predictions only (Oct 23): what today's settings add to cash + stock at home prices, the same
+    # measure as the real side; older rows predicted the model's own value (stock marked down) and don't compare
+    rows = [r for r in goal_hist if r.get("ok") and r.get("pred_book") is not None and r.get("turn") is not None]
     if not rows or not hist:
         return None
     now = hist[-1]
@@ -1081,7 +1100,7 @@ def scorecard(goal_hist, hist, perishable=(), min_turns=6):
         if start is None or start["turn"] not in by_turn:
             continue
         span = [r for r in rows if r["turn"] >= start["turn"]]
-        pred = sum(r["pred_today"] for r in span) / len(span)
+        pred = sum(r["pred_book"] for r in span) / len(span)
         real = (value_of(now, perishable)[0] - value_of(by_turn[start["turn"]], perishable)[0]) / (t_now - start["turn"])
         return {"turns": t_now - start["turn"], "predicted": pred, "real": real, "runs": len(span)}
     return None

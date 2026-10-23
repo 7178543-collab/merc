@@ -119,6 +119,14 @@ def test_real_snapshot_plans_and_explains():
     assert any("Goal" in line for line in goal.report_lines(G))
 
 
+def test_model_check_uses_book_value():
+    hist = [{"turn": t, "cash": 1000 + 50 * (t - 100), "items": {"garments": [10, 0, 0, 0, 0, 0, 20.0]}} for t in range(100, 131)]
+    gh = [{"ok": True, "turn": t, "pred_today": 999.0, "pred_book": 48.0} for t in range(100, 131)]
+    sc = goal.scorecard(gh, hist)
+    assert sc["turns"] >= 24 and abs(sc["real"] - 50.0) < 1e-9 and abs(sc["predicted"] - 48.0) < 1e-9, sc
+    assert goal.scorecard([{"ok": True, "turn": 100, "pred_today": 5.0}], hist) is None      # old rows don't count
+
+
 def test_hand_over_one_job_at_a_time_and_back():
     import goal_switch
     import tempfile
