@@ -1,23 +1,23 @@
 # v2 shadow report
 
-Turn 13499, 2026-10-23 20:44. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13499, 2026-10-23 20:48. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 87 | 0 | 4 | 0 | 0 | min_holding 60, sell 136, sell @ 3.38 |
+| beer | 87 | 0 | 4 | 0 | 0 | min_holding 60, sell 101, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 38 | 19 | 11 | 0 | 0 | stop 44, buy 14, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 135 | 0 | 2 | 0 | 0 | min_holding 30, sell 35, sell @ 20 |
 | grain | 183 | 117 | 65 | 0 | 0 | stop 260, buy 104, buy @ 3.7 |
-| labour | 348 | 269 | 740 | 0 | 29 | buy 308, buy @ 2 |
+| labour | 348 | 269 | 740 | 0 | 29 | buy 47, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
-| porterage | 12 | 12 | 12 | 7 | 0 | buy 24, buy @ 1.1 |
+| porterage | 12 | 12 | 12 | 7 | 0 | buy 10, buy @ 1.1 |
 
 **2 risks, 3 waste, 3 tuning** where v2 would act differently from v1.
 
@@ -40,7 +40,7 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 
 ## Notes
 
-- labour: projection runs 134 over real use lately; planning 740, not 676
+- labour: projection runs 106 over real use lately; planning 740, not 644
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -98,13 +98,13 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
 | arms | 1 @ 28.0, stop 2 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 4 = 7.0 turns |
-| beer |  | 101 @ min 3.38 |  |
+| beer |  | 66 @ min 3.38 |  |
 | candles | 2 @ 70.0, stop 6 |  | uses 1.5/turn (household upkeep), makes 0.0, holds 10 = 6.7 turns |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 14 @ 2.4, stop 44 |  | uses 10.8/turn (brewery 1, household upkeep), makes 0.0, holds 38 = 3.5 turns |
 | fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
-| grain | 104 @ 3.7, stop 260 |  | uses 65.0/turn (brewery 1), makes 0.0, holds 183 = 2.8 turns |
-| labour | 79 @ 2.2, stop - |  | goal planner: buys 79 for today's rates (v2 had 240) |
+| grain | 26 @ 3.7, stop 103 |  | goal planner: buys 26 a turn for today's rates, keeps up to 103 (v2 had 104) |
+| labour | 47 @ 2.2, stop - |  | goal planner: buys 47 for today's rates (v2 had 240) |
 | meat | 6 @ 3.02, stop - |  | goal planner: buys 6 for today's rates (v2 had 6) |
 | nets |  | 9 @ min 34.0 |  |
 | pasties | 4 @ 14.5, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 11 = 3.9 turns |
@@ -118,14 +118,13 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 ## Goal: business value (live: rates, buys, sells, ships, invest, trim)
 - Value now 16.3k (cash + stock at home prices); -3/turn over 6 turns, +37/turn over 24 turns.
 - Limits: cash flow >= +121/turn, prestige >= -0.72/turn (values are after 240 tax a turn).
-- Today's settings: value +100/turn, cash +214/turn, prestige -1.37/turn - breaks the prestige floor.
-- Plan: value +171/turn, cash +260/turn, prestige -0.72/turn, inside both limits.
+- Today's settings: value +142/turn, cash +322/turn, prestige -1.37/turn - breaks the prestige floor.
+- Plan: value +172/turn, cash +272/turn, prestige -0.72/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -454 vs +291, -217 vs +316, -187 vs +377 - FAILED: the goal only cuts until a tick passes.
 - Route sales counted at most (what the ships really sold, a turn): garments 0.5, nets 0.0, rope 0.1.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - ship linen snake -> Toqueque: +5/turn
   - ship Flax Wyrm -> Heidlowe: +2/turn
-  - brewery 1 0.75 -> 0.50: +41/turn
   - net maker 0.50 -> 1.00: +7/turn
   - logging camp w/ tool 7.00 -> 0.00: +7/turn
   - logging camp w/ tool [cut firewood 1] 0.00 -> 20.00: +17/turn
@@ -133,9 +132,10 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
   - sewing shop 1 0.00 -> 0.11: -8/turn
   - weavery 1 0.00 -> 0.18: +2/turn
   - spinnery 1 1.70 -> 2.29: +3/turn
+  - flax farm 1 4.66 -> 7.04: -13/turn
 - Model check: not enough runs yet (needs 6 turns of goal history).
 - Worth of one more unit per turn: labour 1.47, thread 3.63, cloth 5.84, flax fibres 4.20, garments 16.95, nets 35.00, beer 2.74, timber 6.39, prestige 55.83, cash 0.00
-- Orders it would set: furniture buy 2 (v2 None); grain buy 30 (v2 104); labour buy 79 (v2 240); light armour buy 1 (v2 None); porterage buy 10 (v2 9); rope sell 5 (v2 4)
+- Orders it would set: furniture buy 2 (v2 None); grain buy 26 (v2 104); labour buy 47 (v2 240); light armour buy 1 (v2 None); porterage buy 10 (v2 9); rope sell 5 (v2 4)
 - Recipe: logging camp w/ tool split timber 2 -> cut firewood 1 at 20.00, worth +17/turn.
 - Ship linen snake: Grandgues -> Toqueque (+5/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Heidlowe (+2/turn over staying).
@@ -150,7 +150,7 @@ Cash 1,096, prestige 3,593 (473 free, -1.3/turn).
 ## Chain sizing
 
 Mode HOLD, garments sold 0.0/turn (+0.0 exported); plan makes 0.0 garments a turn.
-Labour: own 500, everything else 475, chain may buy 0 -> chain allowance 25, chain plan 204 (+0 vs now).
+Labour: own 500, everything else 442, chain may buy 0 -> chain allowance 58, chain plan 204 (+0 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
@@ -161,7 +161,7 @@ Labour: own 500, everything else 475, chain may buy 0 -> chain allowance 25, cha
 | sew | 2 | 0.00 | 0.00 |
 
 Buffers: flax fibres 39/69, thread 406/204, cloth 45/0
-- chain plan needed 204 labour, budget left 25: cut to 204
+- chain plan needed 204 labour, budget left 58: cut to 204
 
 ## Self-diagnosis
 
