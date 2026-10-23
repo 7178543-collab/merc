@@ -237,7 +237,7 @@ def check(item, live, new, cfg, cash):
         # Oct 23: with the goal live on buys, the inputs that feed its rates (grain, firewood for the brewery it
         # raised) must follow too, so the 4k reserve rule yields for every item while cash is over the hard floor
         goal_buys = goal_live(cfg, "buys") and cash is not None and \
-            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and goal_reality_ok(cfg)
         if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys:
             # with the goal planner live on buys, its plan already keeps cash over its floor (and labour bought for
             # the rates it set is what makes them run), so v2's reserve rule only applies under the hard floor
@@ -663,7 +663,13 @@ def enable_writes():
 def goal_cash_ok(snap, cfg):
     """With the goal planner live, its own cash floor (in the plan) replaces the failsafe's BRAKE and STOP; only cash
     under goal.hard_floor (default 1,000) stands its jobs down."""
-    return _n((snap or {}).get("cash")) >= _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+    return _n((snap or {}).get("cash")) >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and goal_reality_ok(cfg)
+
+
+def goal_reality_ok(cfg):
+    """False while real cash has run under the plan's prediction for several ticks (goal.cash_check, put in
+    cfg["_goal_reality"] by main from this run's plan): the goal then only cuts."""
+    return (cfg.get("_goal_reality") or {}).get("ok", True) is not False
 
 
 def chain_moves(plan, cfg, snap, fs_level, dturn, cstate):
@@ -800,7 +806,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
                 streak[bid] = k
                 if k[1] < hold:
                     continue
-            if fs_level >= 3 and not goal_cash_ok(snap, cfg):
+            if (fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg):
                 continue
             first = min(to, max(smin, share * max(cur, to)))
             moves.append({"id": bid, "name": b.get("name"), "recipe": rec, "from": cur, "to": round(first, 3),
@@ -809,7 +815,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
         streak.pop(bid, None)
         if not b.get("recipe") or abs(to - cur) < 0.05:
             continue
-        if fs_level >= 3 and to > cur and not goal_cash_ok(snap, cfg):
+        if to > cur and ((fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg)):
             continue
         if bid in gains and abs(gains[bid]) < band:
             continue                        # worth less than the noise in a turn's prices: leave it
@@ -856,6 +862,8 @@ def invest_pick(plan, cfg, snap, state, trim_ok=False):
                 continue
             return {"donate": bid, "confirm": True,
                     "note": "goal planner: %s, %+.0f/turn on %d runs in a row" % (t["what"], t["gain"], tstreak[bid])}, "trim"
+    if not goal_reality_ok(cfg):
+        return None, "cash check failed: no investments"
     if any(b.get("construction") for b in snap.get("buildings") or []):
         return None, "a building is under construction"
     lt = state.get("last_invest_turn")
@@ -946,6 +954,16 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                 ceil_ = cfg.setdefault("buy_ceiling", {})
                 ceil_[item] = max(_n(ceil_.get(item)), _n(bb.get("buy_price")))
                 o["sell"] = "off"
+    # Oct 23: inputs the goal planner buys for today's rates (goal.apply_orders marks them goal_buy) are v2's, at
+    # the plan's price
+    cfg["_goal_reality"] = (((plan or {}).get("goal") or {}).get("cash_check")) or {}
+    if plan and goal_live(cfg, "buys"):
+        for item, o in ((plan.get("orders") or {}).items()):
+            gb = isinstance(o, dict) and o.get("goal_buy")
+            if gb and item not in sus:
+                owned.add(item)
+                ceil_ = cfg.setdefault("buy_ceiling", {})
+                ceil_[item] = max(_n(ceil_.get(item)), _n(gb.get("buy_price")))
     fs = _load(failsafe, {})
     fs_level = int(_n(fs.get("level")))
     paused = set((fs.get("paused") or {}).keys())

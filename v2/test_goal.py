@@ -321,6 +321,55 @@ def test_route_sales_only_what_the_ships_really_sold():
     assert not any(o["out"] for v in opts.values() for o in v["options"].values()), opts
 
 
+def test_cash_check_turns_the_goal_to_cuts_only():
+    """Oct 23: cash fell four ticks running against a predicted +300 a turn and the plan kept raising. After three
+    ticks under the prediction (by over max(150, half of it)) the goal only cuts: no raises, no buy raises, no
+    investments; one tick that keeps up lifts it."""
+    import act
+    gh = [{"turn": t, "cash_today": 300.0} for t in range(10, 15)]
+    falling = [{"turn": t, "cash": 2400 - 300 * (t - 10)} for t in range(10, 15)]
+    cc = goal.cash_check(gh, falling)
+    assert cc["ok"] is False and len(cc["ticks"]) == 3, cc
+    steady = [{"turn": t, "cash": 2000 + 250 * (t - 10)} for t in range(10, 15)]
+    assert goal.cash_check(gh, steady)["ok"] is True
+    mixed = falling[:4] + [{"turn": 14, "cash": falling[3]["cash"] + 280}]
+    assert goal.cash_check(gh, mixed)["ok"] is True                 # the last tick kept up
+    assert goal.cash_check([], falling)["ok"] is True                # no predictions yet: nothing to judge
+    snap_ = {"turn": 200, "cash": 5000, "buildings": [
+        {"id": "7", "name": "spinnery 1", "recipe": "spin thread 1", "target": 2.0},
+        {"id": "8", "name": "brewery 1", "recipe": "brew beer 1", "target": 0.4}]}
+    G = {"ok": True, "changes": [{"id": "7", "kind": "building", "gain": 20}, {"id": "8", "kind": "building", "gain": 10}],
+         "buildings": {"7": {"recipe": "spin thread 1", "target": 1.0}, "8": {"recipe": "brew beer 1", "target": 1.0}}}
+    cfg = {"goal": {"step_share": 0.25, "step_min": 0.25, "min_gain": 3}, "_goal_reality": cc}
+    moves, _ = act.goal_moves({"goal": G}, cfg, snap_, 0, {})
+    assert [m["name"] for m in moves] == ["spinnery 1"], moves      # the cut goes ahead, the raise waits
+    assert not act.goal_cash_ok(snap_, cfg)
+    pick, why = act.invest_pick({"goal": {"ok": True, "investments": []}}, cfg, snap_, {})
+    assert pick is None and "cash check" in why
+    cfg_b = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},
+             "goal": {"live": {"buys": True}, "hard_floor": 1000}, "_goal_reality": cc}
+    live = [{"buy_volume": 100, "buy_price": "2"}]
+    new = [{"buy_volume": 150, "buy_price": "2"}]
+    assert any("reserve" in w for w in act.check("labour", live, new, cfg_b, 2500)), "buy raise must be refused"
+
+
+def test_goal_buys_every_input_its_rates_use():
+    """Oct 23: the net maker made nothing for want of wax: v1 never bought it and v2 didn't own it. Inputs today's
+    rates use (and the plan still wants) get a v2 buy marked goal_buy; none while the cash check has failed."""
+    G = {"ok": True, "orders_now": {"buy": {"wax": 0.12, "grain": 65.0, "cloth": 7.9}},
+         "buy": {"wax": 0.25, "grain": 30.0}, "buy_px": {"wax": 22.0, "grain": 1.3, "cloth": 15.0}}
+    cfg = {"perishable": ["labour"], "goal": {"live": {"buys": True}}}
+    plan = {"orders": {"grain": {"buy": {"buy_volume": 20, "buy_price": "1.4", "max_holding": 200}}}}
+    goal.apply_orders(G, plan, cfg)
+    o = plan["orders"]
+    assert o["wax"]["buy"] == {"buy_volume": 1, "buy_price": "22.6", "max_holding": 1} and o["wax"]["goal_buy"], o["wax"]
+    assert o["grain"]["buy"]["buy_volume"] == 30 and o["grain"]["buy"]["max_holding"] == 120, o["grain"]
+    assert "cloth" not in o                       # today's sewing rate uses it, the plan doesn't: no stocking up
+    plan2 = {"orders": {}}
+    goal.apply_orders(dict(G, cash_check={"ok": False}), plan2, cfg)
+    assert not plan2["orders"].get("wax", {}).get("goal_buy"), plan2
+
+
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
     import act
     cfg = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},

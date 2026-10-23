@@ -396,6 +396,9 @@ def main():
         if not replay:
             G["promoted"] = goal_switch.promote(cfg_all, gh, G["scorecard"], snap.get("turn"))
         G["live_jobs"] = {j: goal_switch.owns(j, cfg_all) for j in goal_switch.JOBS}
+        if G.get("ok"):
+            G["cash_check"] = goal_mod.cash_check(gh, _export_history(48) + [{"turn": snap.get("turn"),
+                                                                               "cash": snap.get("cash")}])
         G["goal_orders"], G["orders_live"] = goal_mod.apply_orders(G, p, cfg_all)
         p["goal"] = G
         with open(os.path.join(out, "goal.json"), "w") as f:

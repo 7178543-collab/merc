@@ -59,6 +59,20 @@ They explain every change in plain coin.
 - **Trims**: a building whose removal (output gone AND tax gone) beats keeping it by 10/turn on 48 runs in a row is
   donated (the old "never donate" rule is gone). A refused donation waits 48 turns.
 - **Season-proof**: ids come from state/v2/ids.json (written each hour from the game), not code.
+- **Buys**: every input today's rates use and the plan still wants is v2's (goal_buy): the plan's volume, up to 4
+  turns of its use (or the reserve) in stock, a new order at the home ask +2% when none exists. Every v1 writer
+  stands aside for these items.
+
+## Reality checks (Oct 23: cash fell 2.33k -> 1.10k in 4 ticks against a plan of +300..+560 a turn)
+- **Route sales**: a good's route sales count only up to what the ships really sold a turn over the last 72 turns
+  (x1.25). Route prices and goods follow the route orders' own rules (v2/ships.py): 98% of the lower of their bid
+  and 103% of their average, live bids only, after the fare; no intermediates or never-drop goods out; imports only
+  of goods we use a unit a turn or more and don't make. The plan had counted ~1,100 coin a turn of route sales
+  nobody ordered.
+- **Cash check**: each tick's real cash change against the prediction made for today's settings just before it.
+  Three ticks running under it (by over max(150, half the prediction)) and the goal only cuts: no raises, recipe
+  switches, buy raises or investments, until a tick keeps up. This is the bot's own brake; goal.off stays the
+  human kill switch.
 
 ## Not modelled yet (stated so nobody trusts it blindly)
 Contracts and church asks (contracts.py still runs them), price elasticity beyond the sales steps, new rural

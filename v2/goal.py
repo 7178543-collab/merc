@@ -489,6 +489,31 @@ def proven_exports(lines, turns=None, boost=None):
     return {k: round(boost * v / n, 2) for k, v in sorted(tot.items()) if v > 0}
 
 
+def cash_check(goal_hist, v2_hist, turns=3, margin_abs=150.0, margin_share=0.5):
+    """Does real cash follow the plan? Each run's prediction for today's settings (goal history cash_today, made
+    before a tick) against the real cash change over that tick (v2 history cash, the last run of each turn). Fails
+    when the last `turns` ticks all came in more than max(margin_abs, margin_share x |predicted|) under it: the goal
+    then only cuts (no raises, recipe switches, buy raises or investments) until a tick passes. Oct 23: cash fell
+    2.33k -> 1.10k over 4 ticks against a predicted +310..+560 a turn, and the plan kept raising until the kill switch;
+    this would have held it after the third tick. Returns {"ok", "why", "ticks": [[turn, predicted, real], ...]}."""
+    pred, cash = {}, {}
+    for h in goal_hist or []:
+        if (h or {}).get("turn") is not None and h.get("cash_today") is not None:
+            pred[int(h["turn"])] = _n(h["cash_today"])
+    for h in v2_hist or []:
+        if (h or {}).get("turn") is not None and h.get("cash") is not None:
+            cash[int(h["turn"])] = _n(h["cash"])
+    ticks = [[t, round(pred[t - 1], 1), round(cash[t] - cash[t - 1], 1)] for t in sorted(cash)
+             if t - 1 in cash and t - 1 in pred]
+    last = ticks[-turns:]
+    bad = [x for x in last if x[2] < x[1] - max(margin_abs, margin_share * abs(x[1]))]
+    if len(last) == turns and len(bad) == turns:
+        return {"ok": False, "ticks": last,
+                "why": "real cash ran under the plan %d ticks running (%s): cuts only" % (
+                    turns, ", ".join("%+.0f vs %+.0f" % (x[2], x[1]) for x in last))}
+    return {"ok": True, "ticks": last, "why": None}
+
+
 EXPORT_PROVEN_TURNS = 72
 EXPORT_PROVEN_BOOST = 1.25
 
@@ -517,8 +542,12 @@ def ship_options(s, M, world, sea, products=None, recipes=None, proven=None, cfg
     cf = cfg or {}
     no_out = set((cf.get("chain") or {}).get("intermediates") or []) | set(cf.get("never_drop") or [])
     held = (s.get("store") or {}).get("items") or {}
+    stock_goods = set(((cf.get("ship_stock") or {}).get("goods") or {})) if (cf.get("ship_stock") or {}).get("on") else set()
     no_in = set((cf.get("chain") or {}).get("intermediates") or []) | (
         {k for k, it in held.items() if _n(((it or {}).get("flow") or {}).get("production")) > 0} if cfg else set())
+    # the route buys only goods we use a unit a turn or more (or ship_stock goods): v2/ships.py's import rule
+    use_ok = ({k for k, it in held.items() if _n(((it or {}).get("flow") or {}).get("consumption")) >= 1}
+              | stock_goods) if cfg else None
     opts = {}
     for tid, d in (sea or {}).items():
         if tid == home or not d.get("moves"):
@@ -545,7 +574,7 @@ def ship_options(s, M, world, sea, products=None, recipes=None, proven=None, cfg
                 room = min(room, _n(proven.get(item)))
             if px > 0 and room > 0:
                 out.append((item, px, room, size(item)))
-            if m["ask"] > 0 and m["buy_room"] >= 1 and item not in no_in:
+            if m["ask"] > 0 and m["buy_room"] >= 1 and item not in no_in and (use_ok is None or item in use_ok):
                 back.append((item, m["ask"] * (1 + routes.SLIP) + fare, m["buy_room"], size(item)))
         if out or back:
             opts[tid] = {"town": tid, "name": d.get("name"), "moves": d["moves"], "jcap": float(jcap),
@@ -1090,6 +1119,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "relaxed": opt["relaxed"], "levels": {k: round(v, 3) for k, v in opt["levels"].items()},
         "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
         "route_proven": proven,
+        "buy_px": {k: round(_n((M["goods"].get(k) or {}).get("buy_px")), 3) for k, v in now_flows.items() if v.get("buy")},
         "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
                                            for k, v in ((solve(M_all, ships=chosen_ships) if chosen_ships else opt)
@@ -1124,6 +1154,11 @@ def report_lines(G):
     out.append("- Plan: value %+.0f/turn, cash %+.0f/turn, prestige %+.2f/turn%s." % (
         pv, G["plan_cashflow"], G["plan_prestige_rate"],
         (" - could not meet the %s" % " and ".join(G["relaxed"])) if G.get("relaxed") else ", inside both limits"))
+    cc = G.get("cash_check") or {}
+    if cc.get("ticks"):
+        out.append("- Cash check (real vs predicted cash a tick, last %d): %s%s." % (
+            len(cc["ticks"]), ", ".join("%+.0f vs %+.0f" % (x[2], x[1]) for x in cc["ticks"]),
+            "" if cc.get("ok", True) else " - FAILED: the goal only cuts until a tick passes"))
     if G.get("route_proven") is not None:
         rp = G["route_proven"] or {}
         out.append("- Route sales counted at most (what the ships really sold, a turn): %s." % (
@@ -1253,6 +1288,44 @@ def apply_orders(G, plan, cfg):
         if live["buys"] and o is not None:
             o["buy_volume"] = want
             orders[item]["why"] = "goal planner: buys %d for today's rates (v2 had %s)" % (want, d["v2_buy_volume"])
+    # every other input today's rates buy (Oct 23: the net maker made 0 for want of wax, which v1 never bought and
+    # v2 didn't own): v2's buy is kept and only raised to what the rates use; with none, one is made at the home ask
+    # (+2%, on the price grid), keeping up to 4 turns of use. Marked goal_buy: v2's actor owns the item and its
+    # ceiling is that price, and every v1 writer stands aside (v2_owned).
+    pxs = G.get("buy_px") or {}
+    plan_buy = G.get("buy") or {}
+    for item, v in sorted((now.get("buy") or {}).items()):
+        # what today's rates need and the plan still wants (a rate on its way down doesn't stock up)
+        v = min(_n(v), _n(plan_buy.get(item)))
+        if item in per or v <= 0:
+            continue
+        want = int(math.ceil(v - 1e-6))
+        reserve = max(_n(((cfg.get("goal") or {}).get("reserve") or {}).get(item)),
+                      _n((cfg.get("stockpiles") or {}).get(item)))
+        keep = max(want, int(math.ceil(4 * v - 1e-6)), int(math.ceil(reserve - 1e-6)))
+        ent = orders.setdefault(item, {})
+        o = ent.get("effective_buy") or ent.get("buy")
+        d = out.setdefault(item, {})
+        d["buy_volume"] = want
+        d["v2_buy_volume"] = (o or {}).get("buy_volume")
+        if not live["buys"] or (G.get("cash_check") or {}).get("ok") is False:
+            continue
+        if not o:
+            px = _n(pxs.get(item))
+            if px <= 0:
+                continue
+            import planner as _pl
+            o = ent["buy"] = {"buy_volume": want, "buy_price": "%g" % _pl.snap_price(px * 1.02, up=True),
+                              "max_holding": keep}
+            ent.pop("buy_off", None)
+        else:
+            # the plan's volume, and up to 4 turns of its use in stock (Oct 23: v2's runway rule bought grain 104 a
+            # turn up to 260 held while the rates used 65)
+            o["buy_volume"] = want
+            o["max_holding"] = keep
+        ent["goal_buy"] = {"buy_price": o.get("buy_price")}
+        ent["why"] = "goal planner: buys %s a turn for today's rates, keeps up to %s (v2 had %s)" % (
+            o["buy_volume"], o.get("max_holding"), d["v2_buy_volume"])
     for item, v in sorted((now.get("sell") or {}).items()):
         o = (orders.get(item) or {}).get("sell")
         if o is None:
