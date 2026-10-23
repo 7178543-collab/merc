@@ -347,6 +347,30 @@ def main():
                                           last_mode=cst.get("mode"), sales=sales, exports=exports, drip=drip)
     except Exception as e:
         p["chain"] = {"ok": False, "why": "chain plan failed: %s: %s" % (type(e).__name__, e)}
+    try:        # goal planner (v2/goal.py, Oct 23): business value, one LP; shadow only until goal.live
+        import goal as goal_mod
+        cfg_all = planner.load_json("config.json")
+        ghist = goal_mod.read_history()
+        G = goal_mod.plan_goal(snap, cfg_all, planner.load_json("data/recipes.json"),
+                               drip=((p.get("builds") or {}).get("drip")) or {}, hist=ghist,
+                               buildings_data=planner.load_json("data/buildings.json"))
+        G["live"] = bool((cfg_all.get("goal") or {}).get("live"))
+        gh_path = os.path.join(out, "goal_history.jsonl")
+        gh = []
+        try:
+            with open(gh_path) as f:
+                gh = [json.loads(x) for x in f if x.strip()]
+        except (OSError, ValueError):
+            pass
+        G["scorecard"] = goal_mod.scorecard(gh, ghist, set(cfg_all.get("perishable") or []))
+        p["goal"] = G
+        with open(os.path.join(out, "goal.json"), "w") as f:
+            json.dump(G, f, indent=1, default=float)
+        if not replay:
+            with open(gh_path, "a") as f:
+                f.write(json.dumps(goal_mod.history_line(G), default=float) + "\n")
+    except Exception as e:
+        p["goal"] = {"ok": False, "why": "goal plan failed: %s: %s" % (type(e).__name__, e)}
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)
@@ -355,6 +379,11 @@ def main():
     p["_items"] = {k: v for k, v in ((snap.get("store") or {}).get("items") or {}).items() if k in (p.get("live_items") or [])}
     with open(os.path.join(out, "report.md"), "w") as f:
         f.write(report(p))
+        try:
+            import goal as goal_mod
+            f.write("\n" + "\n".join(goal_mod.report_lines(p.get("goal"))) + "\n")
+        except Exception:
+            pass
         try:
             import chain as chain_mod
             f.write("\n" + "\n".join(chain_mod.report_lines(p.get("chain"))) + "\n")
