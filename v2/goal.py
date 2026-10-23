@@ -1308,7 +1308,11 @@ def apply_orders(G, plan, cfg):
         d = out.setdefault(item, {})
         d["buy_volume"] = want
         d["v2_buy_volume"] = (o or {}).get("buy_volume")
-        if not live["buys"] or (G.get("cash_check") or {}).get("ok") is False:
+        if not live["buys"]:
+            continue
+        cut_only = (G.get("cash_check") or {}).get("ok") is False   # failing cash check: buys may only shrink
+        if cut_only and (not o or (want >= _n(o.get("buy_volume")) and (o.get("max_holding") is not None
+                                                                        and keep >= _n(o.get("max_holding"))))):
             continue
         if not o:
             px = _n(pxs.get(item))
@@ -1321,8 +1325,12 @@ def apply_orders(G, plan, cfg):
         else:
             # the plan's volume, and up to 4 turns of its use in stock (Oct 23: v2's runway rule bought grain 104 a
             # turn up to 260 held while the rates used 65)
-            o["buy_volume"] = want
-            o["max_holding"] = keep
+            if cut_only:
+                o["buy_volume"] = min(want, int(_n(o.get("buy_volume"))))
+                o["max_holding"] = keep if o.get("max_holding") is None else min(keep, int(_n(o.get("max_holding"))))
+            else:
+                o["buy_volume"] = want
+                o["max_holding"] = keep
         ent["goal_buy"] = {"buy_price": o.get("buy_price")}
         ent["why"] = "goal planner: buys %s a turn for today's rates, keeps up to %s (v2 had %s)" % (
             o["buy_volume"], o.get("max_holding"), d["v2_buy_volume"])

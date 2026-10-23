@@ -365,9 +365,10 @@ def test_goal_buys_every_input_its_rates_use():
     assert o["wax"]["buy"] == {"buy_volume": 1, "buy_price": "22.6", "max_holding": 1} and o["wax"]["goal_buy"], o["wax"]
     assert o["grain"]["buy"]["buy_volume"] == 30 and o["grain"]["buy"]["max_holding"] == 120, o["grain"]
     assert "cloth" not in o                       # today's sewing rate uses it, the plan doesn't: no stocking up
-    plan2 = {"orders": {}}
+    plan2 = {"orders": {"grain": {"buy": {"buy_volume": 104, "buy_price": "3.7", "max_holding": 260}}}}
     goal.apply_orders(dict(G, cash_check={"ok": False}), plan2, cfg)
-    assert not plan2["orders"].get("wax", {}).get("goal_buy"), plan2
+    assert not plan2["orders"].get("wax", {}).get("goal_buy"), plan2          # failing cash check: nothing new...
+    assert plan2["orders"]["grain"]["buy"] == {"buy_volume": 30, "buy_price": "3.7", "max_holding": 120}, plan2  # ...cuts go ahead
 
 
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
