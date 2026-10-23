@@ -292,6 +292,35 @@ def test_model_picks_one_recipe_and_ship_cargo_is_ours():
     assert min(lv.get("workshop", 0), max([v for k, v in lv.items() if "[make gadgets]" in k] or [0])) < 1e-6, lv
 
 
+def test_route_sales_only_what_the_ships_really_sold():
+    """Oct 23: the plan counted ~170 units a turn of route sales the routes neither ordered nor ever made. With the
+    sales history passed in, a good's route sales are capped at what the ships really sold a turn (x1.25), a good
+    they never sold gets none, and chain intermediates never go out (the route orders never carry them)."""
+    hist_lines = [{"turn": 100 + i, "exports": {"widgets": 4} if i % 2 == 0 else {}} for i in range(72)]
+    hist_lines.append({"turn": 171, "exports": {}})           # a second run in the same turn counts once
+    pv = goal.proven_exports(hist_lines)
+    assert abs(pv["widgets"] - 1.25 * 4 * 36 / 72) < 0.01, pv
+    assert goal.proven_exports([]) == {}
+    rec = dict(RECIPES)
+    rec["make widgets"] = dict(RECIPES["make widgets"], site="workshop", tier=1, **{"class": "crafting"})
+    s = snap()
+    s["home_town"] = "H"
+    world = [{"name": "Far", "markets": {"widgets": {"highest_bid": "60", "bid_volume_10": 50, "volume_ema_12": 50}}}]
+    sea = {"T": {"name": "Far", "moves": 200}}
+    prods = {"widgets": {"type": "commodity", "size": 1}}
+    s["ships"] = [{"id": "S1", "name": "boat", "route_to": None}]
+    G = goal.plan_goal(s, CFG, rec, hist=hist_selling("widgets", 5), world=world, sea=sea, products=prods,
+                       proven={"widgets": 2.0})
+    assert G["ok"], G
+    assert G["ship_plan"]["S1"]["exp"]["widgets"] <= 2.0 + 1e-6, G["ship_plan"]
+    G0 = goal.plan_goal(s, CFG, rec, hist=hist_selling("widgets", 5), world=world, sea=sea, products=prods, proven={})
+    assert not G0["ships"] or not G0["ships"][0].get("town"), G0["ships"]    # nothing proven: no route worth sailing
+    cfg_i = dict(CFG, chain={"intermediates": ["widgets"]})
+    M = goal.build_model(s, cfg_i, rec, hist=hist_selling("widgets", 5))
+    opts = goal.ship_options(s, M, world, sea, prods, rec, proven=None, cfg=cfg_i)
+    assert not any(o["out"] for v in opts.values() for o in v["options"].values()), opts
+
+
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
     import act
     cfg = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},

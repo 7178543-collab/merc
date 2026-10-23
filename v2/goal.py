@@ -463,7 +463,37 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
 
 # ---------------------------------------------------------------- ships
 
-def ship_options(s, M, world, sea, products=None, recipes=None):
+def proven_exports(lines, turns=None, boost=None):
+    """{item: units a turn the ships have really sold abroad}: v2 history "exports" (each run's last-turn route flows;
+    two runs in one turn count once) over the last `turns` turns, x boost. Oct 23: the plan counted beer 75, thread 55,
+    timber 23, cloth 11 and garments 10 a turn of route sales on today's routes while the routes had no such orders
+    and had sold beer 463, garments 196, timber 78 in all over 12 days; cash fell ~300 a turn against a planned +360.
+    The plan now counts no more route sales of a good than the routes have shown they make."""
+    turns = int(turns or EXPORT_PROVEN_TURNS)
+    boost = float(boost or EXPORT_PROVEN_BOOST)
+    per_turn = {}
+    for h in lines or []:
+        t = (h or {}).get("turn")
+        if t is None:
+            continue
+        per_turn[int(t)] = (h.get("exports") or {})
+    if not per_turn:
+        return {}
+    last = max(per_turn)
+    span = [t for t in per_turn if t > last - turns]
+    n = max(1, last - min(span) + 1)
+    tot = {}
+    for t in span:
+        for k, v in per_turn[t].items():
+            tot[k] = tot.get(k, 0.0) + _n(v)
+    return {k: round(boost * v / n, 2) for k, v in sorted(tot.items()) if v > 0}
+
+
+EXPORT_PROVEN_TURNS = 72
+EXPORT_PROVEN_BOOST = 1.25
+
+
+def ship_options(s, M, world, sea, products=None, recipes=None, proven=None, cfg=None):
     """{ship id: {"name", "current": town id or None, "options": {town id: option}}}: for every town a ship can run a
     route to (sea distance within twice the snekkja's range, a market in the world data), what it could sell there
     (95% of their bid, or 90% of their 12-turn average price, as deep as max(bid depth, 30% of what they trade)) and
@@ -483,6 +513,12 @@ def ship_options(s, M, world, sea, products=None, recipes=None):
     def size(item):
         return float((prods.get(item) or {}).get("size") or 1)
 
+    import ships as ships_mod
+    cf = cfg or {}
+    no_out = set((cf.get("chain") or {}).get("intermediates") or []) | set(cf.get("never_drop") or [])
+    held = (s.get("store") or {}).get("items") or {}
+    no_in = set((cf.get("chain") or {}).get("intermediates") or []) | (
+        {k for k, it in held.items() if _n(((it or {}).get("flow") or {}).get("production")) > 0} if cfg else set())
     opts = {}
     for tid, d in (sea or {}).items():
         if tid == home or not d.get("moves"):
@@ -496,16 +532,21 @@ def ship_options(s, M, world, sea, products=None, recipes=None):
             if item not in goods or not cargo(item):
                 continue
             m = {k: _n(v) for k, v in routes._mk(raw).items()}
-            if m["bid"] > 0:
-                px = m["bid"] * (1 - routes.SLIP)
-            elif m["ema"] > 0 and m["traded"] > 0:
-                px = 0.9 * m["ema"]
-            else:
-                px = 0.0
-            if px > 0 and m["sell_room"] >= 1:
-                out.append((item, px, m["sell_room"], size(item)))
-            if m["ask"] > 0 and m["buy_room"] >= 1:
-                back.append((item, m["ask"] * (1 + routes.SLIP), m["buy_room"], size(item)))
+            fare = ships_mod.FARE_PER_SIZE * size(item)
+            # the price and the rules of the orders that really go on the route (v2/ships.py): just under the lower of
+            # their bid and 103% of their average, only against a live bid, after the route fare; never chain
+            # intermediates or never-drop goods out, never goods we make (or intermediates) in
+            px = 0.0
+            if m["bid"] > 0 and item not in no_out:
+                ref = min(m["bid"], m["ema"] * ships_mod.EMA_CAP) if m["ema"] > 0 else m["bid"]
+                px = ref * ships_mod.FILL_SHARE - fare
+            room = m["sell_room"] if m["sell_room"] >= 1 else 0.0
+            if proven is not None:
+                room = min(room, _n(proven.get(item)))
+            if px > 0 and room > 0:
+                out.append((item, px, room, size(item)))
+            if m["ask"] > 0 and m["buy_room"] >= 1 and item not in no_in:
+                back.append((item, m["ask"] * (1 + routes.SLIP) + fare, m["buy_room"], size(item)))
         if out or back:
             opts[tid] = {"town": tid, "name": d.get("name"), "moves": d["moves"], "jcap": float(jcap),
                          "cost1": cost1, "out": out, "back": back}
@@ -775,7 +816,7 @@ def _with_ship(opt, sid):
 
 
 def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=None, sea=None, products=None,
-              memory=None):
+              memory=None, proven=None):
     if not _ensure_scipy():
         return {"ok": False, "why": "scipy not installed and pip install failed"}
     bdata = buildings_data or {}
@@ -793,7 +834,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         return bool(r.get("ok")) and set(r.get("relaxed") or []) <= set(ref.get("relaxed") or [])
 
     # ---- ships: today's routes, then each ship's best town (screened by the plan's own prices, then re-solved)
-    sopt = ship_options(s, M, world, sea, products, recipes) if (world and sea) else None
+    sopt = ship_options(s, M, world, sea, products, recipes, proven=proven, cfg=cfg) if (world and sea) else None
     cur_ships, chosen, ship_moves = None, {}, []
     if sopt is not None:
         cur_ships = [_with_ship(v["options"][v["current"]], sid) for sid, v in sorted(sopt.items())
@@ -1048,6 +1089,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "prestige_min": M["prestige_min"], "cash_min": M["cash_min"], "fixed_cost": opt.get("fixed"),
         "relaxed": opt["relaxed"], "levels": {k: round(v, 3) for k, v in opt["levels"].items()},
         "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
+        "route_proven": proven,
         "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
                                            for k, v in ((solve(M_all, ships=chosen_ships) if chosen_ships else opt)
@@ -1082,6 +1124,10 @@ def report_lines(G):
     out.append("- Plan: value %+.0f/turn, cash %+.0f/turn, prestige %+.2f/turn%s." % (
         pv, G["plan_cashflow"], G["plan_prestige_rate"],
         (" - could not meet the %s" % " and ".join(G["relaxed"])) if G.get("relaxed") else ", inside both limits"))
+    if G.get("route_proven") is not None:
+        rp = G["route_proven"] or {}
+        out.append("- Route sales counted at most (what the ships really sold, a turn): %s." % (
+            ", ".join("%s %.1f" % kv for kv in sorted(rp.items())) or "none"))
     if G.get("changes"):
         out.append("- Changes, each priced on top of the one before (value/turn, limits aside):")
         for ch in G["changes"][:10]:

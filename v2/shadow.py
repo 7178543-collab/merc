@@ -383,7 +383,7 @@ def main():
         G = goal_mod.plan_goal(snap, cfg_all, rec_all,
                                drip=((p.get("builds") or {}).get("drip")) or {}, hist=ghist,
                                buildings_data=planner.load_json("data/buildings.json"), world=world, sea=sea,
-                               memory=mem)
+                               memory=mem, proven=goal_mod.proven_exports(_export_history(200)))
         import goal_switch
         gh_path = os.path.join(out, "goal_history.jsonl")
         gh = []
