@@ -569,10 +569,11 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
             cols.append(("stock", k, None)); c.append(-g["keep_value"] * gd["mark"]); lb.append(0.0); ub.append(gd["stock_cap"])
         # free disposal of an output nobody takes (waste, worth 0) keeps the balance feasible
         cols.append(("waste", k, None)); c.append(0.0); lb.append(0.0); ub.append(None)
-        # a fixed need (household upkeep, a build site) nothing can supply: priced so high it is only used when there
-        # is no other way, and reported, so a missing market never makes the whole plan infeasible
-        if M["fixed_demand"].get(k, 0.0) > 0:
-            cols.append(("short", k, None)); c.append(SHORT_COST); lb.append(0.0); ub.append(M["fixed_demand"][k])
+        # a need nothing can supply (household upkeep with no market, or a pinned rate whose inputs can't be had):
+        # priced so high it is only used when there is no other way, reported, and charged in the value at twice
+        # the good's price, so a starved setting reads worse, never infeasible (Oct 23: today's pinned rates outran
+        # their inputs and the whole plan failed)
+        cols.append(("short", k, None)); c.append(SHORT_COST); lb.append(0.0); ub.append(None)
     for si, so in enumerate(ships or []):
         for j, (item, px, cap, sz) in enumerate(so["out"]):
             cols.append(("exp", item, (si, j))); c.append(-px); lb.append(0.0); ub.append(cap)
@@ -718,6 +719,10 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
             su = ship_use.setdefault(str(ships[step[0]].get("ship")), {})
             su.setdefault(kind, {})[key] = su.get(kind, {}).get(key, 0.0) + x[j]
     value = -sum(c[j] * x[j] for j in range(n) if cols[j][0] != "short") - fixed
+    for j, (kind, key, step) in enumerate(cols):
+        if kind == "short" and x[j] > 1e-9:
+            gd = goods.get(key) or {}
+            value -= x[j] * 2.0 * max(gd.get("buy_px") or 0.0, gd.get("last") or 0.0, gd.get("cost") or 0.0, 1.0)
     cashflow = -sum(cash_row[j] * x[j] for j in range(n)) - fixed
     # the same turn in book terms, the way the model check measures real turns (cash + held x home price): stock
     # change = stocked + unsold output - drawn, at the home last price (perishables and services never count)
@@ -882,7 +887,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
             r = free(cur_fix, list(applied_sh.values()))
             changes.append({"name": "%s -> %s" % (mv["name"], mv["town_name"] or "no route"), "kind": "ship",
                             "ship": mv["ship"], "from": mv["current"], "to": mv["town"],
-                            "gain": (r["value"] - base_r["value"]) if r.get("ok") else None})
+                            "gain": (r["value"] - base_r["value"]) if (r.get("ok") and base_r.get("ok")) else None})
             if r.get("ok"):
                 base_r = r
     pending = [a for a in M["acts"] if abs(opt["levels"].get(a["name"], 0.0) - a["cur"]) >= g["change_min"]]
