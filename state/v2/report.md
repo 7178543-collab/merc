@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13480, 2026-10-23 01:13. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
+Turn 13480, 2026-10-23 01:47. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 2,379, prestige 3,620 (500 free, -1.5/turn).
 
 ## Items v2 runs (last turn)
 
@@ -19,7 +19,7 @@ Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
 | nets | 18 | 0 | 0 | 0 | 0 | min_holding 15, sell 11, sell @ 34.6 |
 | porterage | 10 | 10 | 10 | 0 | 0 | buy 10, buy @ 1.1 |
 
-**1 risks, 1 waste, 2 tuning** where v2 would act differently from v1.
+**1 risks, 1 waste, 3 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -31,6 +31,7 @@ Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
 
 ## Tuning
 
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 - **flax fibres**: flax fibres buffer thin: 1.3 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 69
 - **flax plants**: flax plants buffer thin: 1.0 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 180
 
@@ -49,17 +50,17 @@ Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 48.3 | 48.3 | running |
-| hold banquet 4 (pies) | mansion | 18 | 50.4 | 50.4 | thin at home: hop beer, wine |
+| hold banquet 4 (pies) | mansion | 18 | 49.5 | 49.5 | thin at home: hop beer, wine |
 | hold banquet 3 (pies) | mansion | 8 | 50.8 | 50.8 | thin at home: hop beer, pies |
 | jousting 3 | arena | 230 | 52.2 | 52.3 | needs a arena (build cost 24,713); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold banquet 4 | mansion | 17.5 | 52.6 | 52.6 | thin at home: wine, hop beer, ham |
+| hold banquet 2 (pies) | mansion | 7 | 53.0 | 53.0 | thin at home: wine, pies |
 | hold banquet 3 (meat) | mansion | 7.6 | 53.1 | 53.1 | thin at home: hop beer, cured meat |
 | hold banquet 3 (fish) | mansion | 7.6 | 53.4 | 53.4 | thin at home: hop beer |
-| hold banquet 4 | mansion | 17.5 | 53.6 | 53.6 | thin at home: wine, hop beer, ham |
 | hold sermon 2 (candles) | church | 31 | 51.4 | 53.9 | needs a church (build cost 65,326); thin at home: candles, furniture |
 | hold prayer 2 | chapel | 13 | 51.5 | 54.3 | needs a chapel (build cost 31,559); thin at home: furniture |
-| hold banquet 2 (pies) | mansion | 7 | 54.4 | 54.4 | thin at home: wine, pies |
+| hold banquet 2 (meat) | mansion | 6.8 | 54.4 | 54.4 | thin at home: wine, cured meat |
 | hold banquet 1 (fish) | mansion | 4.2 | 54.5 | 54.5 |  |
-| hold banquet 1 (meat) | mansion | 4.2 | 54.8 | 54.8 | thin at home: cured meat |
 
 ## Ships (last turn, real)
 
@@ -81,7 +82,7 @@ Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | Neuborn | 780 | 0.21 | 1.00 (100/turn) | bread 127 (2.27->3.46), furniture 10 (13.02->15.2), seeds 6 (2.21->3.32), grain 7 (2.58->3.17) | cheese 9 (4.94->5.51), wax 1 (20.06->22.23) | +103 |
 | Heilegg | 826 | 0.23 | 0.10 (10/turn) | grindstones 1 (224.7->311.6), ham 1 (60.9->67.45), lead ore 1 (8.93->14.54), yarn 4 (4.14->4.71) | wax 2 (20.48->22.23), salt 4 (4.09->4.54) | +95 |
-| Chribruck | 1202 | 0.43 | 0.30 (30/turn) | grindstones 1 (224.7->286.9), lead ore 4 (8.93->19.19), mouldboards 1 (31.71->34.01), coats 1 (74.55->76) | wax 2 (20.68->22.23), flax fibres 3 (4.54->5.5) | +85 |
+| Chribruck | 1202 | 0.43 | 0.30 (30/turn) | grindstones 1 (224.7->286.9), lead ore 4 (8.93->19.19), mouldboards 1 (31.71->34.01), coats 1 (74.55->76) | wax 2 (20.68->22.23), flax fibres 3 (4.54->5.5) | +86 |
 | Fontaux | 411 | 0.11 | 0.30 (30/turn) | cheese 11 (6.14->9.79), charcoal 13 (2.02->4.6), casks 5 (5.62->9.5), tools 14 (4.68->5.32) | - | +82 |
 | Kirchwerp | 1072 | 0.36 | 0.50 (50/turn) | soap 2 (91.88->119.7), grindstones 1 (224.7->247), furniture 12 (13.02->14.82), lead ore 2 (8.93->12.35) | garments 2 (19.32->19.9), wax 2 (21.84->22.23) | +78 |
 
@@ -107,9 +108,30 @@ Cash 2,391, prestige 3,620 (500 free, -1.5/turn).
 | timber |  | 8 @ min 6.5 |  |
 | tools | 4 @ 6.2, stop 30 |  | uses 3.8/turn (logging camp w/ tool, retting pit 1), makes 0.0, holds 199 = 53.1 turns |
 
+## Goal: business value (shadow)
+- Value now 15.8k (cash + stock at home prices); +79/turn over 6 turns, -96/turn over 24 turns.
+- Limits: cash flow >= +68/turn, prestige >= -0.83/turn (after 236 tax and crew).
+- Today's settings: value +57/turn, cash +62/turn, prestige -1.51/turn - breaks the prestige floor and cash floor.
+- Plan: value +111/turn, cash +282/turn, prestige -0.83/turn, inside both limits.
+- Changes, each priced on top of the one before (value/turn, limits aside):
+  - net maker 0.50 -> 1.00: +23/turn
+  - logging camp w/ tool 7.00 -> 3.12: +11/turn
+  - ropewalk 1 0.50 -> 0.44: +7/turn
+  - quarry 1 0.00 -> 0.08: +4/turn
+  - sewing shop 1 0.40 -> 0.18: -16/turn
+  - weavery 1 0.67 -> 0.29: +21/turn
+  - spinnery 1 2.05 -> 1.66: +25/turn
+  - retting pit 1 1.00 -> 0.81: +4/turn
+  - flax farm 1 5.61 -> 4.53: +11/turn
+  - mansion 1 0.00 -> 0.16: -36/turn
+- Model check: not enough runs yet (needs 6 turns of goal history).
+- Worth of one more unit per turn: labour 1.61, thread 3.97, cloth 6.39, flax fibres 4.59, garments 18.55, nets 34.60, beer 2.82, timber 5.33, prestige 52.35, cash 0.00
+- Investments:
+  - Tenants L13 for 500 prestige: +80/turn (waits until 800 free (keeps 300 after))
+
 ## Chain sizing
 
-Mode HOLD, garments sold 7.8/turn (+0.0 exported); plan makes 22.6 garments a turn.
+Mode HOLD, garments sold 6.2/turn (+0.0 exported); plan makes 22.6 garments a turn.
 Labour: own 500, everything else 415, chain may buy 350 -> chain allowance 435, chain plan 435 (+76 vs now).
 
 | Step | Plots | Now | Plan |
@@ -121,7 +143,7 @@ Labour: own 500, everything else 415, chain may buy 350 -> chain allowance 435, 
 | sew | 2 | 0.40 | 0.55 |
 
 Buffers: flax fibres 46/80, thread 217/236, cloth 17/89
-- chain plan needed 510 labour, budget left 435: cut to 435 (sewing capped at 0.55)
+- chain plan needed 508 labour, budget left 435: cut to 435 (sewing capped at 0.55)
 
 ## Self-diagnosis
 
