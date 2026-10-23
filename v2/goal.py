@@ -8,6 +8,7 @@ home market depth, the free-prestige floor and the cash floor. Duals and re-solv
 Pure functions over the snapshot; never touches the game.
 """
 import json
+import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -43,9 +44,10 @@ SHORT_COST = 1e5            # per unit of a fixed need left unmet: only when not
 
 def _n(x, d=0.0):
     try:
-        return float(x)
+        v = float(x)
     except (TypeError, ValueError):
         return d
+    return v if math.isfinite(v) else d          # NaN / inf from a market feed would break the solver
 
 
 def load_cfg(cfg=None):
@@ -493,7 +495,7 @@ def ship_options(s, M, world, sea, products=None, recipes=None):
         for item, raw in (t.get("markets") or {}).items():
             if item not in goods or not cargo(item):
                 continue
-            m = routes._mk(raw)
+            m = {k: _n(v) for k, v in routes._mk(raw).items()}
             if m["bid"] > 0:
                 px = m["bid"] * (1 - routes.SLIP)
             elif m["ema"] > 0 and m["traded"] > 0:
@@ -796,6 +798,13 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         for sid, v in sorted(sopt.items()):
             others = [_with_ship(sopt[s2]["options"][t2], s2) for s2, t2 in chosen.items() if t2]
             ref = solve(M, ships=others)
+            if not ref.get("ok"):           # the solver failed on this base: keep the ship where it is
+                chosen[sid] = v["current"] if v["current"] in v["options"] else None
+                ship_moves.append({"ship": sid, "name": v["name"], "current": v["current"],
+                                   "current_name": (v["options"].get(v["current"]) or {}).get("name") or v["current"],
+                                   "town": chosen[sid], "town_name": (v["options"].get(chosen[sid] or "") or {}).get("name"),
+                                   "worth": None, "gain_over_current": None, "note": "solver failed: kept"})
+                continue
             scored = sorted(v["options"].values(), key=lambda o: -_ship_bound(o, sh0))
             look = [o for o in scored[:int(g.get("ship_screen", 8))]]
             if v["current"] and v["current"] in v["options"] and v["options"][v["current"]] not in look:
@@ -816,6 +825,9 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
                                "current_name": (v["options"].get(v["current"]) or {}).get("name") or v["current"],
                                "town": chosen[sid], "town_name": (best or {}).get("name"),
                                "worth": best_r["value"] - ref["value"], "gain_over_current": gain_now})
+    if sopt is not None and not solve(M, ships=[_with_ship(sopt[sid]["options"][t], sid)
+                                                for sid, t in sorted(chosen.items()) if t]).get("ok"):
+        chosen = {sid: None for sid in chosen}        # the joint ship plan won't solve: plan without ships
     plan_ships = [_with_ship(sopt[sid]["options"][t], sid) for sid, t in sorted(chosen.items()) if t] if sopt else None
 
     # one recipe per building: the LP may split a building's plots between recipes; keep its main recipe and the

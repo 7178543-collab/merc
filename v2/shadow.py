@@ -404,7 +404,14 @@ def main():
             with open(gh_path, "a") as f:
                 f.write(json.dumps(goal_mod.history_line(G), default=float) + "\n")
     except Exception as e:
-        p["goal"] = {"ok": False, "why": "goal plan failed: %s: %s" % (type(e).__name__, e)}
+        import traceback
+        tb = traceback.format_exc().strip().splitlines()
+        p["goal"] = {"ok": False, "why": "goal plan failed: %s: %s" % (type(e).__name__, e), "trace": tb[-6:]}
+        try:            # a failed run still says so in goal.json (it used to keep the last good plan and look fine)
+            with open(os.path.join(out, "goal.json"), "w") as f:
+                json.dump(p["goal"], f, indent=1)
+        except OSError:
+            pass
     if not replay:
         with open(os.path.join(out, "snapshot.json"), "w") as f:
             json.dump(snap, f, separators=(",", ":"), default=str)

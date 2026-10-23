@@ -312,6 +312,22 @@ def test_starved_building_keeps_its_real_flows():
     assert next(x for x in M["acts"] if x["name"] == "workshop")["ins"] == {"labour": 10.0}
 
 
+def test_raises_wait_for_labour_in_hand():
+    import act
+    rec = {"brew beer 1": {"inputs": [{"product": "labour", "amount": 130}]},
+           "make rope 2": {"inputs": [{"product": "labour", "amount": 28}]}}
+    snap = {"store": {"items": {"labour": {"held": 100}}},
+            "operations": {"producer/f": {"flows": {"labour": {"projection": {"production": 500}}}},
+                           "producer/b": {"flows": {"labour": {"projection": {"consumption": 560}}}}}}
+    assert act.labour_room(snap) == 40
+    moves = [{"id": "r", "recipe": "make rope 2", "from": 0.5, "to": 1.0},       # 14 labour
+             {"id": "b", "recipe": "brew beer 1", "from": 0.4, "to": 0.65},     # 32.5 labour
+             {"id": "c", "recipe": "brew beer 1", "from": 1.0, "to": 0.5}]      # a cut: always
+    out = act.buy_first(moves, snap, rec, order=["b", "r"])
+    by = {m["id"]: m for m in out}
+    assert not by["b"].get("deferred") and by["r"].get("deferred") and not by["c"].get("deferred"), out
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

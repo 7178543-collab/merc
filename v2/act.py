@@ -705,6 +705,42 @@ def goal_live(cfg, job):
     return goal_switch.owns(job, cfg)
 
 
+def labour_room(snap):
+    """Labour this turn has left: held (bought at the turn's start) + our own production - what the operations
+    project to use at today's targets. Negative = today's rates are already short."""
+    ops = (snap or {}).get("operations") or {}
+    own = use = 0.0
+    for k, v in ops.items():
+        pj = ((((v or {}).get("flows") or {}).get("labour") or {}).get("projection")) or {}
+        own += _n(pj.get("production"))
+        use += _n(pj.get("consumption"))
+    held = _n((((snap or {}).get("store") or {}).get("items") or {}).get("labour", {}).get("held"))
+    return held + own - use
+
+
+def _labour_per_unit(recipe, recipes):
+    r = (recipes or {}).get(recipe or "") or {}
+    return sum(_n(i.get("amount")) for i in r.get("inputs") or [] if i.get("product") == "labour")
+
+
+def buy_first(moves, snap, recipes, order=None):
+    """Labour is bought at the start of a turn, so a rate raised mid-turn with no labour held runs short at the next
+    tick (turns 13495-13497: ropewalk, net maker, camp at 0 after their raises). Raises go ahead only while this
+    turn's spare labour covers them (best first by `order`); the rest are marked deferred: their labour is bought
+    now and they are raised on the next run, when it is held. Cuts always go ahead."""
+    room = labour_room(snap)
+    rank = {k: i for i, k in enumerate(order or [])}
+    raises = sorted([m for m in moves if m["to"] > m["from"]], key=lambda m: rank.get(m["id"], 999))
+    for m in raises:
+        need = (m["to"] - (0.0 if m.get("switch") else m["from"])) * _labour_per_unit(m["recipe"], recipes)
+        m["labour"] = round(need, 1)
+        if need <= room + 1e-6:
+            room -= need
+        else:
+            m["deferred"] = True
+    return moves
+
+
 def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
     """The building changes the goal planner (v2/goal.py) wants this run: rate steps and recipe switches. Returns
     (moves, why). A move is {id, name, recipe, from, to, plan, switch: bool}. main() writes them only when
@@ -951,13 +987,19 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     gst = _load(gst_path, {})
     try:
         gmoves, gwhy = goal_moves(plan, cfg, snap, fs_level, dturn, gst)
+        recipes_ = _load(os.path.join(HERE, "data", "recipes.json"), {})
+        order_ = [str(ch.get("id")) for ch in (((plan or {}).get("goal") or {}).get("changes") or []) if ch.get("id")]
+        gmoves = buy_first(gmoves, snap, recipes_, order_)
         rates_live = live_mode and goal_live(cfg, "rates")
         g_done = []
+        deferred_lab = sum(_n(m_.get("labour")) for m_ in gmoves if m_.get("deferred"))
         if rates_live and gmoves:
             enable_writes()
         for m_ in gmoves:
             ok = status = body = None
-            if rates_live and m_.get("switch"):
+            if m_.get("deferred"):
+                pass                                   # its labour is bought below; raised on the next run
+            elif rates_live and m_.get("switch"):
                 r_ = _queue_apply({"building": m_["id"], "producer": {"recipe": m_["recipe"], "target": m_["to"],
                                                                       "provider_id": store},
                                    "note": "goal planner: recipe %s -> %s" % (m_.get("from_recipe"), m_["recipe"])})
@@ -976,11 +1018,11 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                 f.write(json.dumps({"ts": now().isoformat(timespec="seconds"), "turn": (snap or {}).get("turn"),
                                     "rate": m_["name"], "recipe": m_["recipe"] if m_.get("switch") else None,
                                     "from": m_["from"], "to": m_["to"], "plan": m_["plan"],
+                                    "deferred": bool(m_.get("deferred")) or None,
                                     "dry": not rates_live, "why": gwhy, "ok": ok, "status": status,
                                     "reply": None if ok in (None, True) else str(body)[:200]}, default=str) + "\n")
-        if g_done and "labour" in owned:
-            recipes = _load(os.path.join(HERE, "data", "recipes.json"), {})
-            d_lab = chain_labour_delta(plan, snap, recipes, g_done)
+        if (g_done or deferred_lab) and "labour" in owned:
+            d_lab = chain_labour_delta(plan, snap, recipes_, g_done) + (deferred_lab if rates_live else 0.0)
             lo = ((plan.get("orders") or {}).get("labour") or {}).get("buy")
             if lo and abs(d_lab) >= 1:
                 lo["buy_volume"] = max(0, int(round(_n(lo.get("buy_volume")) + d_lab)))
