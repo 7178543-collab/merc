@@ -237,7 +237,8 @@ def check(item, live, new, cfg, cash):
         # Oct 23: with the goal live on buys, the inputs that feed its rates (grain, firewood for the brewery it
         # raised) must follow too, so the 4k reserve rule yields for every item while cash is over the hard floor
         goal_buys = goal_live(cfg, "buys") and cash is not None and \
-            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and goal_reality_ok(cfg)
+            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and \
+            (goal_reality_ok(cfg) or item in set(cfg.get("_goal_starving") or ()))
         if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys:
             # with the goal planner live on buys, its plan already keeps cash over its floor (and labour bought for
             # the rates it set is what makes them run), so v2's reserve rule only applies under the hard floor
@@ -992,6 +993,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
             gb = isinstance(o, dict) and o.get("goal_buy")
             if gb and item not in sus:
                 owned.add(item)
+                if gb.get("starving"):       # an input a building is stopped for: bought even in cuts-only mode
+                    cfg.setdefault("_goal_starving", []).append(item)
                 ceil_ = cfg.setdefault("buy_ceiling", {})
                 ceil_[item] = max(_n(ceil_.get(item)), _n(gb.get("buy_price")))
     if plan and goal_live(cfg, "sells"):          # goods the goal sells that nobody offered (goal.apply_orders)

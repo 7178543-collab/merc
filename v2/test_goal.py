@@ -355,6 +355,10 @@ def test_cash_check_turns_the_goal_to_cuts_only():
     live = [{"buy_volume": 100, "buy_price": "2"}]
     new = [{"buy_volume": 150, "buy_price": "2"}]
     assert any("reserve" in w for w in act.check("labour", live, new, cfg_b, 2500)), "buy raise must be refused"
+    # Oct 24: an input a building is stopped for (goal_buy starving) is bought even in cuts-only mode
+    cfg_s = dict(cfg_b, buy_ceiling={"varnish": 16.8}, _goal_starving=["varnish"])
+    assert act.check("varnish", [{"sell_volume": 2, "sell_price": "15.8"}],
+                     [{"buy_volume": 1, "buy_price": "16.8", "max_holding": 1}], cfg_s, 1239) == []
     # a leftover buy price with no volume needs no ceiling (thread's sell was refused for it, Oct 23)
     assert act.check("thread", [{"buy_price": "5.4"}], [{"buy_price": "5.4"}, {"sell_volume": 10, "sell_price": "4.62"}],
                      {"sell_floor": {}}, 5000) == []
@@ -376,6 +380,13 @@ def test_goal_buys_every_input_its_rates_use():
     goal.apply_orders(dict(G, cash_check={"ok": False}), plan2, cfg)
     assert not plan2["orders"].get("wax", {}).get("goal_buy"), plan2          # failing cash check: nothing new...
     assert plan2["orders"]["grain"]["buy"] == {"buy_volume": 30, "buy_price": "3.7", "max_holding": 120}, plan2  # ...cuts go ahead
+    # Oct 24: ...except an input a building is stopped for now (net maker, varnish): bought, the leftover sell off
+    snap_s = {"buildings": [{"name": "net maker", "target": 0.25, "limitation": "wax"}],
+              "store": {"items": {"wax": {"held": 0, "orders": [{"sell_volume": 2, "sell_price": "15.8"}]}}}}
+    plan3 = {"orders": {"wax": {"buy": {"buy_volume": 1, "buy_price": "17.1", "max_holding": 1}}}}
+    goal.apply_orders(dict(G, cash_check={"ok": False}), plan3, cfg, snap_s)
+    w = plan3["orders"]["wax"]
+    assert w["goal_buy"] and w["buy"] == {"buy_volume": 1, "buy_price": "22.6", "max_holding": 1} and w["sell"] == "off", w
 
 
 def test_goal_sells_what_nobody_offers():

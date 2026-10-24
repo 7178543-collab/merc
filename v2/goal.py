@@ -1365,6 +1365,27 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
         if not live["buys"]:
             continue
         cut_only = (G.get("cash_check") or {}).get("ok") is False   # failing cash check: buys may only shrink
+        # ...except an input a building is stopped for right now (Oct 24, turn 13514: the net maker switched to nets 3
+        # at 07:35, the cash check failed the next run, and varnish was never bought: production 0, limitation varnish).
+        # Buying what today's rate already uses is not a raise.
+        starving = any(b.get("limitation") == item and _n(b.get("target")) > 0
+                       for b in ((snap or {}).get("buildings") or []))
+        live_tiers_ = (((snap or {}).get("store") or {}).get("items") or {}).get(item, {}).get("orders") or []
+        live_buy_ = any(_n(t.get("buy_volume")) > 0 for t in live_tiers_)
+        if cut_only and starving and not live_buy_:
+            px = _n(pxs.get(item))
+            if px > 0:
+                import planner as _pl
+                o = ent["buy"] = {"buy_volume": want, "buy_price": "%g" % _pl.snap_price(px * 1.02, up=True),
+                                  "max_holding": keep}
+                ent.pop("effective_buy", None)
+                ent.pop("buy_off", None)
+                if any(_n(t.get("sell_volume")) > 0 for t in live_tiers_):
+                    ent["sell"] = "off"          # a leftover sell would sell the input back (varnish 2 @ 15.8)
+                ent["goal_buy"] = {"buy_price": o.get("buy_price"), "starving": True}
+                ent["why"] = "goal planner: %s stops a building now - buys %s a turn, keeps up to %s (cuts only)" % (
+                    item, want, keep)
+            continue
         if cut_only and (not o or (want >= _n(o.get("buy_volume")) and (o.get("max_holding") is not None
                                                                         and keep >= _n(o.get("max_holding"))))):
             continue
