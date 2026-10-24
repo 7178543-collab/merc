@@ -79,6 +79,11 @@ They explain every change in plain coin.
   taken over only if it sold nothing last turn (garments 35 at 20.0 over a 19.5 town). An ask over the plan's price
   is lowered to it. The old config sell floors give way to a sanity floor at 85% of the town's last price, and the
   plan's second sales step sits just under the cheapest seller (99% of the ask, never over the last price).
+- **Proven home sales**: home sales count up to 1.25 x what we really sold a turn (12-24 turn average). A pile with
+  no sales counts nothing; it is offered as a trial outside the plan (just under the cheapest seller, 1/12 of the
+  excess a turn, keeping the floor) and counts once it sells. (Oct 23 evening: ~200 a turn of undercut sales of
+  thread, garments and cloth were counted; offered, they sold nothing. With the cap, today's settings forecast
+  +20 a turn against real -5..+17.)
 - **Labour timing**: labour is bought at a turn's start and expires at the tick. A raise waits until its labour is
   held (the labour is bought first); a cut waits a run while the held labour covers today's rates (the labour buy
   shrinks first). Turn 13500 shows why: rates cut mid-turn let 304 paid labour expire (~450 coin).

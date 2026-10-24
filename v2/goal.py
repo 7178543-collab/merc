@@ -22,6 +22,8 @@ DEFAULTS = {
     "cash_recover_turns": 24,
     "building_tax": 226,         # per turn, all plots (doc, Oct 18); charged whether buildings run or not
     "sales_window": 12,          # turns of our own sales history behind the first sales step
+    "sales_growth": 0.25,        # home sales count up to this much over what we really sold (the rest is a trial)
+    "trial_turns": 12,           # an idle pile is offered over this many turns (not counted in the plan)
     "undercut": 0.93,            # price of the second sales step, which can win up to market_share of the town
     "market_share": 0.3,
     "keep_value": 0.5,           # stock made but not sold counts at this share of its market value
@@ -439,6 +441,18 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
             stock_cap = max(0.0, capy - held) / g["drain_turns"] if capy else 0.0
         if item in never_sell:
             steps = []
+        # home sales count only up to (1 + sales_growth) x what we really sold a turn (Oct 23 evening: the plan
+        # counted ~200 a turn of undercut sales of thread, garments and cloth; offered, they sold nothing). A good we
+        # haven't sold counts nothing here: idle piles are offered as trials outside the plan (apply_orders) and
+        # count once they sell.
+        left = (1.0 + _n(g.get("sales_growth", 0.25))) * avg
+        capped = []
+        for px_, c_ in steps:
+            q_ = min(c_, left)
+            if q_ > 1e-6:
+                capped.append((px_, q_))
+                left -= q_
+        steps = capped
         if buy_px and buy_cap > 0:
             # never sell a good for more than we could buy it back: a crossed book (bid over ask) or a stale last
             # price would otherwise read as free arbitrage (buy at the ask, sell at the bid)
@@ -1140,6 +1154,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "route_proven": proven,
         "buy_px": {k: round(_n((M["goods"].get(k) or {}).get("buy_px")), 3) for k, v in now_flows.items() if v.get("buy")},
         "sell_px": {k: round(_n(v.get("sell_px")), 3) for k, v in now_flows.items() if v.get("sell")},
+        "idle": idle_piles(M, s, cfg, now_flows),
         "sell_keep": {k: round(_n((M["goods"].get(k) or {}).get("keep")), 1) for k, v in now_flows.items() if v.get("sell")},
         "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
@@ -1285,6 +1300,24 @@ def scorecard(goal_hist, hist, perishable=(), min_turns=6):
 
 # ---------------------------------------------------------------- orders (the 'buys' and 'sells' jobs)
 
+def idle_piles(M, s, cfg, flows):
+    """Stock over what we keep that the plan doesn't sell: {item: {excess, keep, last, ask}}. Offered as trials
+    (apply_orders), never counted in the plan until it sells."""
+    never = set((cfg or {}).get("never_drop") or [])
+    mk = s.get("market") or {}
+    out = {}
+    for item, gd in (M.get("goods") or {}).items():
+        if gd.get("perishable") or item in NOT_STOCK or item in never or (flows.get(item) or {}).get("sell"):
+            continue
+        keep = max(_n(gd.get("keep")), _n(gd.get("reserve")))
+        excess = _n(gd.get("held")) - keep
+        m = mk.get(item) or {}
+        if excess >= 5 and _n(m.get("price")) > 0:
+            out[item] = {"excess": round(excess, 1), "keep": round(keep, 1), "last": _n(m.get("price")),
+                         "ask": _n(m.get("ask"))}
+    return out
+
+
 def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
     """Put the goal planner's volumes into v2's planned orders for the jobs that are live; v2 keeps prices, tiers
     and the write/verify path (act.py). Returns ({item: volumes it wants vs v2's}, any job live).
@@ -1391,6 +1424,38 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
         ent["why"] = "goal planner: sells %s a turn at %s, keeps %d (no one offered it)" % (
             ent["sell"]["sell_volume"], ent["sell"]["sell_price"], keep)
         out.setdefault(item, {})["sell_volume"] = ent["sell"]["sell_volume"]
+    # trials: idle piles the plan doesn't count (no sales yet) are offered just under the cheapest seller, over
+    # trial_turns, keeping the plan's floor. They count in the plan once they sell (sales history).
+    tt = max(1, int(_n(load_cfg(cfg).get("trial_turns", 12))))
+    for item, d in sorted((G.get("idle") or {}).items()):
+        if not live["sells"] or item in never:
+            continue
+        ent = orders.setdefault(item, {})
+        tiers = (store_items.get(item) or {}).get("orders") or []
+        held_ = _n((store_items.get(item) or {}).get("held"))
+        b_ = ent.get("effective_buy") or ent.get("buy")
+        if (b_ and _n(b_.get("buy_volume")) > 0) or any(
+                _n(t.get("buy_volume")) > 0 and (t.get("max_holding") is None or _n(t["max_holding"]) > held_) for t in tiers):
+            continue
+        sold_last = _n(((store_items.get(item) or {}).get("flow") or {}).get("sale"))
+        if sold_last > 0 and item not in set(prev_sells or ()):
+            continue                                 # it sells already on someone's offer
+        last, ask = _n(d.get("last")), _n(d.get("ask"))
+        px = min(0.99 * ask, last) if ask else 0.97 * last
+        import planner as _pl
+        price = _pl.snap_price(px, up=False)
+        cur = ent.get("sell")
+        if cur and _n(cur.get("sell_price")) and _n(cur.get("sell_price")) <= price:
+            continue                                 # v2's own offer is already as low
+        live_sell = max([_n(t.get("sell_volume")) for t in tiers] + [0])
+        vol = int(min(2 * live_sell + 10, max(1, math.ceil(_n(d.get("excess")) / tt))))
+        ent["sell"] = {"sell_volume": vol, "sell_price": "%g" % price, "min_holding": int(math.ceil(_n(d.get("keep"))))}
+        ent["goal_sell"] = {"sell_price": ent["sell"]["sell_price"], "trial": True}
+        if any(_n(t.get("buy_volume")) > 0 for t in tiers):
+            ent["buy_off"] = "goal planner offers its idle pile: a dormant buy would buy it back"
+        ent["why"] = "goal planner: trial sale of an idle pile, %d a turn at %s, keeps %d (%.0f over)" % (
+            vol, ent["sell"]["sell_price"], ent["sell"]["min_holding"], _n(d.get("excess")))
+        out.setdefault(item, {})["sell_volume"] = vol
     for item, v in sorted((now.get("sell") or {}).items()):
         o = (orders.get(item) or {}).get("sell")
         if o is None or (orders.get(item) or {}).get("goal_sell"):

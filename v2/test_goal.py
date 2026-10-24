@@ -423,6 +423,26 @@ def test_goal_sells_what_nobody_offers():
     assert M["goods"]["tools"]["sell"] == [], M["goods"]["tools"]["sell"]
 
 
+def test_home_sales_count_only_what_sells_and_idle_piles_are_trials():
+    """Oct 23 evening: the plan counted ~200 a turn of undercut sales of thread, garments and cloth; offered, they
+    sold nothing. Home sales now count up to 1.25 x what we really sold; a pile with no sales is offered as a trial
+    outside the plan (just under the cheapest seller, over 12 turns, keeping the floor)."""
+    s = snap()
+    s["market"]["widgets"] = {"price": 30.0, "bid": 29.0, "bid_vol": 50, "ask": 31.0, "ask_vol": 50, "traded": 200}
+    M = goal.build_model(s, CFG, RECIPES, hist=hist_selling("widgets", 4))
+    assert abs(sum(c for _, c in M["goods"]["widgets"]["sell"]) - 5.0) < 1e-6, M["goods"]["widgets"]["sell"]
+    M0 = goal.build_model(s, CFG, RECIPES, hist=[])
+    assert M0["goods"]["widgets"]["sell"] == []                       # never sold: nothing counted
+    s["store"]["items"]["widgets"]["held"] = 130
+    idle = goal.idle_piles(goal.build_model(s, CFG, RECIPES, hist=[]), s, CFG, {})
+    assert idle["widgets"]["excess"] == 130, idle
+    G = {"ok": True, "orders_now": {}, "idle": idle}
+    plan = {"orders": {}}
+    goal.apply_orders(G, plan, dict(CFG, goal={"live": {"sells": True}}), {"store": {"items": {"widgets": {"held": 130}}}})
+    o = plan["orders"]["widgets"]
+    assert o["sell"] == {"sell_volume": 10, "sell_price": "30", "min_holding": 0} and o["goal_sell"]["trial"], o
+
+
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
     import act
     cfg = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},
