@@ -1,8 +1,36 @@
 {
- "t": "2026-10-24T22:22:15+00:00",
- "turn": 13525,
+ "t": "2026-10-24T23:30:16+00:00",
+ "turn": 13526,
  "mode": "live",
  "reduce_only": true,
- "findings": [],
- "alerts": []
+ "findings": [
+  {
+   "rule": "R5",
+   "item": "varnish",
+   "finding": "varnish buy not filling: bid 17.1 under the home ask 18.2 for 3 turns, bought 0.0 of 1, 0.3 held (2.2 turns); raise needs Taylor (ceiling None)"
+  },
+  {
+   "rule": "R7 stale ask",
+   "item": "rope",
+   "finding": "rope ask 74 over the market for 3 turns: the town trades ~4 a turn at 69.5, we sold 0 with 36 over what we keep",
+   "action": "sell price 74 -> 69.5 (last trade 69.5, floor 59.07)",
+   "raise_": false,
+   "via": "queue",
+   "entry": {
+    "item": "rope",
+    "tier": 0,
+    "set": {
+     "sell_price": "69.5"
+    },
+    "note": "v2 diagnose R7 stale ask: sell price 74 -> 69.5 (last trade 69.5, floor 59.07)",
+    "building": "152202386005001"
+   },
+   "ok": true,
+   "error": null
+  }
+ ],
+ "alerts": [
+  "R5: varnish buy not filling: bid 17.1 under the home ask 18.2 for 3 turns, bought 0.0 of 1, 0.3 held (2.2 turns); raise needs Taylor (ceiling None)",
+  "R7 stale ask: rope ask 74 over the market for 3 turns: the town trades ~4 a turn at 69.5, we sold 0 with 36 over what we keep -> sell price 74 -> 69.5 (last trade 69.5, floor 59.07) ok"
+ ]
 }
