@@ -1147,6 +1147,24 @@ def test_failsafe_leaves_goal_items_to_v2():
     assert ns["goal_hard_floor"]() > 0
 
 
+def test_no_sell_of_an_input_a_building_is_stalled_on():
+    # Oct 24: the brewery stalled on firewood (0.34 of 0.63) while v2 sold the camp's firewood at 1.7
+    s = copy.deepcopy(json.load(open(os.path.join(HERE, "fixtures", "snapshot_2026-10-23.json"))))
+    for b in s["buildings"]:
+        if b["name"].startswith("logging camp"):
+            b["recipe"], b["target"], b["production"], b["limitation"] = "cut firewood 1", 5.0, 5.0, None
+        if b["name"] == "brewery 1":
+            b["target"], b["production"], b["limitation"] = 0.63, 0.33, "firewood"
+    fw = s["store"]["items"]["firewood"]
+    fw["held"], fw["orders"] = 12.5, [{"max_holding": 16, "buy_volume": 2, "buy_price": "2.4"},
+                                      {"sell_volume": 4, "sell_price": "1.7"}]
+    assert planner.plan(s, CFG, goals=[])["orders"]["firewood"].get("sell") == "off"
+    for b in s["buildings"]:
+        if b["name"] == "brewery 1":
+            b["production"], b["limitation"] = 0.63, None       # running again: the camp's surplus may be sold
+    assert planner.plan(s, CFG, goals=[])["orders"]["firewood"].get("sell") != "off"
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

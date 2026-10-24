@@ -396,6 +396,14 @@ def plan(s, cfg=None, recipes=None, goals=None):
         surplus = mk - use.get(item, 0)
         if item in inter:
             continue
+        # Oct 24: an item a building is stalled on is not surplus. The stalled building's use drops out of `use`, so
+        # firewood (camp makes 6.5, brewery stalled at 0.34 of 0.63 on it) read as surplus and v2 sold 1-5 a turn at
+        # 1.7 while buying it at 2.4 - each one ~8 beer lost. Its sell comes off until the building runs again.
+        if item in stalled_items:
+            if first_tier(it.get("orders") or [], "sell_volume")[1]:
+                orders.setdefault(item, {})["sell"] = "off"
+                orders[item]["why"] = "a building is stalled on %s: no sell until it runs again" % item
+            continue
         uc = it.get("unit_cost") or 0
         floor = max(floor_.get(item, 0), snap_price(uc * 1.02, up=True) if uc else 0)
         m = market.get(item) or {}
