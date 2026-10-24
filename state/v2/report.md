@@ -1,20 +1,20 @@
 # v2 shadow report
 
-Turn 13505, 2026-10-24 02:02. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13505, 2026-10-24 02:05. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 871, prestige 3,588 (468 free, -0.7/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 67 | 0 | 7 | 0 | 0 | min_holding 60, sell 74, sell @ 3.38 |
+| beer | 67 | 0 | 7 | 0 | 0 | min_holding 60, sell 73, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
-| firewood | 32 | 0 | 7 | 0 | 0 | stop 15, buy 1, buy @ 2.4; sell 3, sell @ 1.64 |
+| firewood | 32 | 0 | 7 | 0 | 0 | stop 15, buy 1, buy @ 2.4; sell 3, sell @ 1.61 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 116 | 0 | 2 | 0 | 0 | min_holding 30, sell 6, sell @ 18 |
+| garments | 116 | 0 | 2 | 0 | 0 | min_holding 30, sell 6, sell @ 19 |
 | grain | 102 | 32 | 37 | 0 | 0 | stop 125, buy 32, buy @ 3.7 |
-| labour | 95 | 95 | 586 | 0 | 9 | buy 95, buy @ 2 |
+| labour | 95 | 95 | 586 | 0 | 9 | buy 90, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 11, sell @ 34 |
 | porterage | 13 | 13 | 13 | 2 | 0 | buy 13, buy @ 1.1 |
@@ -90,56 +90,55 @@ Cash 871, prestige 3,588 (468 free, -0.7/turn).
 | --- | --- | --- | --- |
 | arms | 1 @ 27.8, stop 1 |  | uses 0.5/turn (household upkeep), makes 0.0, holds 2 = 3.0 turns |
 | beer |  | 73 @ min 3.38 |  |
-| cloth |  | 4 @ min 7 | goal planner: sells 4 a turn at 7, keeps 0 (no one offered it) |
+| cloth |  | 4 @ min 7.25 | goal planner: trial sale of an idle pile, 4 a turn at 7.25, keeps 0 (40 over) |
 | cured meat | 1 @ 29.0, stop 3 |  | goal planner: buys 1 a turn for today's rates, keeps up to 3 (v2 had 1) |
 | donations | 40 @ 1.0, stop 80 |  | uses 40.0/turn (household upkeep), makes 0.0, holds 40 = 1.0 turns |
 | firewood | 1 @ 2.4, stop 15 | 3 @ min 1.64 | makes 6.5, uses 7.3, holds 32 (keeps 0): sells the surplus + 3/turn of the excess |
 | fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
-| flax plants |  | 1 @ min 1.4 | goal planner: sells 1 a turn at 1.4, keeps 274 (no one offered it) |
-| garments |  | 6 @ min 19 | goal planner: sells 6 a turn at 19, keeps 30 (no one offered it) |
-| grain | 37 @ 3.7, stop 146 |  | goal planner: buys 37 a turn for today's rates, keeps up to 146 (v2 had 60) |
+| garments |  | 8 @ min 19 | goal planner: trial sale of an idle pile, 8 a turn at 19, keeps 30 (86 over) |
+| grain | 37 @ 3.7, stop 145 |  | goal planner: buys 37 a turn for today's rates, keeps up to 145 (v2 had 60) |
 | labour | 98 @ 2.2, stop - |  | goal planner: buys 98 for today's rates (v2 had 86) |
 | meat | 6 @ 3.02, stop - |  | goal planner: buys 6 for today's rates (v2 had 6) |
 | nets |  | 11 @ min 34.0 |  |
 | pasties | 3 @ 14.5, stop 12 |  | uses 2.8/turn (household upkeep), makes 0.0, holds 14 = 5.0 turns |
 | porterage | 16 @ 1.1, stop - |  | goal planner: buys 16 for today's rates (v2 had 15) |
-| rope |  | 6 @ min 72.0 | goal planner: sells 6 (v2 had 5) |
-| tar | 1 @ 11.0, stop 3 |  | goal planner: buys 1 a turn for today's rates, keeps up to 3 (v2 had 1) |
-| thread |  | 13 @ min 4.56 | goal planner: sells 13 a turn at 4.56, keeps 249 (no one offered it) |
+| rope |  | 5 @ min 72.0 |  |
+| tar | 1 @ 11.0, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
+| thread |  | 21 @ min 4.56 | goal planner: trial sale of an idle pile, 21 a turn at 4.56, keeps 249 (246 over) |
 | tools | 3 @ 6.2, stop 17 |  | uses 2.0/turn (retting pit 1), makes 0.0, holds 200 = 98.4 turns |
 | wax | 1 @ 20.2, stop 1 |  | uses 0.1/turn (net maker152202386007001), makes 0.0, holds 1 = 5.0 turns |
 
 ## Goal: business value (live: rates, buys, sells, ships, invest, trim)
 - Value now 16.4k (cash + stock at home prices); +43/turn over 6 turns, +26/turn over 24 turns.
 - Limits: cash flow >= +130/turn, prestige >= -0.70/turn (values are after 240 tax a turn).
-- Today's settings: value +132/turn, cash +362/turn, prestige -0.70/turn.
-- Plan: value +244/turn, cash +361/turn, prestige -0.70/turn, inside both limits.
+- Today's settings: value +29/turn, cash +22/turn, prestige -0.70/turn - breaks the cash floor.
+- Plan: value +111/turn, cash +134/turn, prestige -0.70/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -219 vs +303, +17 vs +194, -5 vs +272 - FAILED: the goal only cuts until a tick passes.
 - Route sales counted at most (what the ships really sold, a turn): beer 0.4, garments 0.5, nets 0.0, rope 0.1.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - ship linen snake -> Vauxvais: +13/turn
-  - net maker 0.50 -> 1.00: +31/turn
-  - ropewalk 1 0.87 -> 1.00: +7/turn
-  - quarry 1 0.08 -> 0.00: +7/turn
+  - ship linen snake -> Vauxvais: +11/turn
+  - ship Flax Wyrm -> Rouhomme: +0/turn
+  - spinnery 1 2.08 -> 1.65: +19/turn
+  - logging camp w/ tool [split timber 1] 0.00 -> 7.45: +11/turn
+  - quarry 1 0.08 -> -0.00: +7/turn
+  - retting pit 1 1.01 -> 0.80: +4/turn
+  - flax farm 1 5.83 -> 4.49: +9/turn
+  - ropewalk 1 0.87 -> 0.74: +3/turn
   - logging camp w/ tool 5.00 -> 0.00: -3/turn
-  - logging camp w/ tool [split timber 1] 0.00 -> 20.00: +28/turn
-  - flax farm 1 5.83 -> 9.77: -39/turn
-  - retting pit 1 1.01 -> 1.73: +18/turn
-  - spinnery 1 2.08 -> 3.14: -31/turn
-  - weavery 1 0.00 -> 0.88: -28/turn
-- Model check over the last 10 turns: predicted +169/turn for the settings we ran, real +14/turn - OFF, trust the plan less.
-- Worth of one more unit per turn: labour 1.45, thread 3.58, cloth 5.75, flax fibres 4.12, garments 16.70, nets 35.00, beer 2.67, timber 6.45, prestige 52.49, cash 0.00
-- Orders it would set: cloth sell 4 (v2 none); flax plants sell 1 (v2 none); furniture buy 2 (v2 None); garments sell 6 (v2 none); grain buy 37 (v2 60); labour buy 98 (v2 86); light armour buy 1 (v2 None); porterage buy 16 (v2 15); rope sell 6 (v2 5); thread sell 13 (v2 none)
-- Recipe: logging camp w/ tool cut firewood 1 -> split timber 1 at 20.00, worth +28/turn.
-- Ship linen snake: Grandgues -> Vauxvais (+13/turn over staying).
-- Ship Flax Wyrm: stays on Caillechâtel (worth +1/turn).
+  - sewing shop 1 0.00 -> 0.07: -5/turn
+- Model check over the last 10 turns: predicted +167/turn for the settings we ran, real +14/turn - OFF, trust the plan less.
+- Worth of one more unit per turn: labour 1.45, thread 3.58, cloth 5.75, flax fibres 4.12, garments 16.70, nets 26.54, beer 2.67, timber 5.08, prestige 52.49, cash 0.00
+- Orders it would set: cloth sell 4 (v2 none); furniture buy 2 (v2 None); garments sell 8 (v2 none); grain buy 37 (v2 60); labour buy 98 (v2 86); light armour buy 1 (v2 None); porterage buy 16 (v2 15); thread sell 21 (v2 none)
+- Recipe: logging camp w/ tool cut firewood 1 -> split timber 1 at 7.45, worth +11/turn.
+- Recipe: net maker make nets 2 -> make nets 3 at 0.71, worth +27/turn.
+- Ship linen snake: Grandgues -> Vauxvais (+12/turn over staying).
+- Ship Flax Wyrm: Caillechâtel -> Rouhomme (+0/turn over staying).
 - Management: ~13.78 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +72/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - +1 plot net maker for ~1408 coin: +32/turn, payback 44 turns
-  - +1 plot ropewalk 1 for ~2738 coin: +21/turn, payback 132 turns
-  - new jeweller (make jewellery 1) for ~4715 coin: +20/turn, payback 240 turns, doesn't pay yet (materials thin at home: bricks, nails, tiles)
+  - Tenants L13 for 500 prestige: +73/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
 - Trim: donate quarry 1: +20/turn (tax 20 saved).
+- Trim: donate weavery 1: +16/turn (tax 18 saved).
+- Trim: donate sewing shop 1: +10/turn (tax 12 saved).
 
 ## Chain sizing
 
@@ -159,4 +158,4 @@ Buffers: flax fibres 46/64, thread 495/190, cloth 40/0
 
 ## Self-diagnosis
 
-- R7 stale ask: firewood ask 1.64 over the market for 3 turns: the town trades ~105 a turn at 1.52, we sold 0 with 32 over what we keep -> **sell price 1.64 -> 1.61 (last trade 1.52, floor 1.61)** (ok)
+- R7 stale ask: firewood ask 1.61 over the market for 3 turns: the town trades ~105 a turn at 1.52, we sold 0 with 32 over what we keep; floor 1.61 (config sell_floor / unit cost) is at or over the market: Taylor's call
