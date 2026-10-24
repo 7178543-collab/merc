@@ -355,6 +355,9 @@ def test_cash_check_turns_the_goal_to_cuts_only():
     live = [{"buy_volume": 100, "buy_price": "2"}]
     new = [{"buy_volume": 150, "buy_price": "2"}]
     assert any("reserve" in w for w in act.check("labour", live, new, cfg_b, 2500)), "buy raise must be refused"
+    # a leftover buy price with no volume needs no ceiling (thread's sell was refused for it, Oct 23)
+    assert act.check("thread", [{"buy_price": "5.4"}], [{"buy_price": "5.4"}, {"sell_volume": 10, "sell_price": "4.62"}],
+                     {"sell_floor": {}}, 5000) == []
 
 
 def test_goal_buys_every_input_its_rates_use():

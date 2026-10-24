@@ -225,7 +225,7 @@ def check(item, live, new, cfg, cash):
     floor_ = (cfg.get("sell_floor") or {}).get(item)
     if nb:
         p = _n(nb.get("buy_price"))
-        if ceil_ is None and p:
+        if ceil_ is None and p and _n(nb.get("buy_volume")) > 0:     # a price with no volume buys nothing
             why.append("no buy ceiling in config for %s" % item)
         elif p and p > ceil_ + 1e-9:
             why.append("buy price %.2f above ceiling %.2f" % (p, ceil_))
@@ -969,8 +969,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     cfg["_goal_reality"] = (((plan or {}).get("goal") or {}).get("cash_check")) or {}
     if goal_live(cfg, "sells"):
         # the goal prices its own sells; the old config floors give way to a sanity floor at 85% of the town's last
-        # price (a bug can't dump stock, a stale floor can't hold it off the market)
-        cfg["sell_floor"] = {k: round(0.85 * _n((m or {}).get("price")), 2)
+        # price or lowest ask, whichever is lower (a bug can't dump stock, a stale floor can't hold it off the market)
+        cfg["sell_floor"] = {k: round(0.85 * min(_n((m or {}).get("price")), _n((m or {}).get("ask")) or 1e9), 2)
                              for k, m in (((snap or {}).get("market")) or {}).items() if _n((m or {}).get("price")) > 0}
     if plan and goal_live(cfg, "buys"):
         for item, o in ((plan.get("orders") or {}).items()):
