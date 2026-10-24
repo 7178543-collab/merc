@@ -371,6 +371,30 @@ def test_goal_buys_every_input_its_rates_use():
     assert plan2["orders"]["grain"]["buy"] == {"buy_volume": 30, "buy_price": "3.7", "max_holding": 120}, plan2  # ...cuts go ahead
 
 
+def test_goal_sells_what_nobody_offers():
+    """Turn 13502: the plan sold thread 15 and flax fibres 6.6 a turn at home, but no order offered them (0 sold).
+    The goal now places that sell at its own price (grid, rounded down), keeping its stock floor, ramping 2x+10 a
+    run; never for never-drop goods or a good we are buying."""
+    G = {"ok": True, "orders_now": {"sell": {"thread": 15.0, "tools": 6.3, "flax fibres": 6.6, "nets": 8.0, "hinges": 0.2}},
+         "sell_px": {"thread": 4.663, "tools": 4.5, "flax fibres": 5.9, "nets": 35.0}, "sell_keep": {"thread": 40.2}}
+    cfg = {"perishable": ["labour"], "never_drop": ["tools"], "goal": {"live": {"sells": True}}}
+    plan = {"orders": {"nets": {"sell": {"sell_volume": 6, "sell_price": "35"}},
+                       "flax fibres": {"buy": {"buy_volume": 3, "buy_price": "5.4"}}}}
+    snap_ = {"store": {"items": {"thread": {"orders": [{"buy_price": "5.4"}]}}}}
+    goal.apply_orders(G, plan, cfg, snap_)
+    o = plan["orders"]
+    assert o["thread"]["sell"] == {"sell_volume": 10, "sell_price": "4.66", "min_holding": 41} and o["thread"]["goal_sell"], o
+    assert "sell" not in o.get("tools", {}) and "sell" not in o["flax fibres"] and "sell" not in o.get("hinges", {}), o
+    assert o["nets"]["sell"]["sell_volume"] == 8                         # an existing sell is raised as before
+    snap2 = {"store": {"items": {"thread": {"orders": [{"sell_volume": 10, "sell_price": "4.66"}]}}}}
+    plan2 = {"orders": {}}
+    goal.apply_orders(G, plan2, cfg, snap2, prev_sells=["thread"])
+    assert plan2["orders"]["thread"]["sell"]["sell_volume"] == 15        # next run: ramps to the plan's volume
+    plan3 = {"orders": {}}
+    goal.apply_orders(G, plan3, cfg, snap2)
+    assert "sell" not in plan3["orders"].get("thread", {})              # someone else's live sell: left alone
+
+
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
     import act
     cfg = {"perishable": ["labour"], "buy_ceiling": {"labour": 2.2}, "cash": {"reserve": 4000},

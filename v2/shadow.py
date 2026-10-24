@@ -399,7 +399,13 @@ def main():
         if G.get("ok"):
             G["cash_check"] = goal_mod.cash_check(gh, _export_history(48) + [{"turn": snap.get("turn"),
                                                                                "cash": snap.get("cash")}])
-        G["goal_orders"], G["orders_live"] = goal_mod.apply_orders(G, p, cfg_all)
+        try:        # goods last run's plan sold for the goal (their live sell is the goal's own)
+            with open(os.path.join(out, "plan.json")) as f:
+                prev_sells = [k for k, o in (json.load(f).get("orders") or {}).items()
+                              if isinstance(o, dict) and o.get("goal_sell")]
+        except (OSError, ValueError, AttributeError):
+            prev_sells = []
+        G["goal_orders"], G["orders_live"] = goal_mod.apply_orders(G, p, cfg_all, snap, prev_sells)
         p["goal"] = G
         with open(os.path.join(out, "goal.json"), "w") as f:
             json.dump(G, f, indent=1, default=float)

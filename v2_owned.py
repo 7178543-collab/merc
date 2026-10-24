@@ -37,6 +37,9 @@ def owned_items():
     if goal_owns("buys"):            # inputs the goal planner buys for today's rates (v2/goal.apply_orders)
         plan = _load(os.path.join(ROOT, "state", "v2", "plan.json"), {}) or {}
         build |= {k for k, o in (plan.get("orders") or {}).items() if isinstance(o, dict) and o.get("goal_buy")}
+    if goal_owns("sells"):           # goods the goal planner sells that nobody offered
+        plan = _load(os.path.join(ROOT, "state", "v2", "plan.json"), {}) or {}
+        build |= {k for k, o in (plan.get("orders") or {}).items() if isinstance(o, dict) and o.get("goal_sell")}
     return (live - set(sus if isinstance(sus, dict) else [])) | trade | build
 
 

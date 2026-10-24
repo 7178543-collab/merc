@@ -420,7 +420,7 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
         if p2 and room > 0.5 and (not floor or p2 >= floor):
             steps.append((p2, room))
         # stock: piles over max(reserve, buffer) may be drawn; free bin space may take output (at keep_value)
-        draw_cap = stock_cap = 0.0
+        draw_cap = stock_cap = keep = 0.0
         if not perish and item not in NOT_STOCK:
             keep = max(reserve, g["buffer_turns"] * use_now.get(item, 0.0))
             draw_cap = max(0.0, held - keep) / g["drain_turns"]
@@ -432,7 +432,7 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
             steps = [(min(p_, 0.99 * buy_px), c_) for p_, c_ in steps]
         goods[item] = {"held": held, "cost": cost, "mark": mark, "buy_px": buy_px, "buy_cap": buy_cap,
                        "sell": steps, "draw_cap": draw_cap, "stock_cap": stock_cap, "perishable": perish,
-                       "reserve": reserve, "last": last, "traded": traded}
+                       "reserve": reserve, "last": last, "traded": traded, "keep": keep}
 
     # prestige: impacts that no activity of ours explains are fixed (sustenance, legacy drain)
     imp = hh.get("impacts") or {}
@@ -785,6 +785,9 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
             continue
         f = flows.setdefault(key, {})
         f[kind] = f.get(kind, 0.0) + x[j]
+        if kind == "sell":           # the lowest price the plan sells at: the price a home sell order must ask
+            px_ = goods[key]["sell"][step][0]
+            f["sell_px"] = min(f.get("sell_px", px_), px_)
         if kind in ("exp", "imp"):
             su = ship_use.setdefault(str(ships[step[0]].get("ship")), {})
             su.setdefault(kind, {})[key] = su.get(kind, {}).get(key, 0.0) + x[j]
@@ -1120,6 +1123,8 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
         "route_proven": proven,
         "buy_px": {k: round(_n((M["goods"].get(k) or {}).get("buy_px")), 3) for k, v in now_flows.items() if v.get("buy")},
+        "sell_px": {k: round(_n(v.get("sell_px")), 3) for k, v in now_flows.items() if v.get("sell")},
+        "sell_keep": {k: round(_n((M["goods"].get(k) or {}).get("keep")), 1) for k, v in now_flows.items() if v.get("sell")},
         "ships": ship_moves, "ship_plan": {k: {kk: (round(vv, 2) if isinstance(vv, float) else
                                                     {i: round(q, 1) for i, q in vv.items()}) for kk, vv in v.items()}
                                            for k, v in ((solve(M_all, ships=chosen_ships) if chosen_ships else opt)
@@ -1264,7 +1269,7 @@ def scorecard(goal_hist, hist, perishable=(), min_turns=6):
 
 # ---------------------------------------------------------------- orders (the 'buys' and 'sells' jobs)
 
-def apply_orders(G, plan, cfg):
+def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
     """Put the goal planner's volumes into v2's planned orders for the jobs that are live; v2 keeps prices, tiers
     and the write/verify path (act.py). Returns ({item: volumes it wants vs v2's}, any job live).
     buys: perishables only (labour, porterage, fish, meat): bought to exactly what today's rates use, whole units up.
@@ -1334,9 +1339,39 @@ def apply_orders(G, plan, cfg):
         ent["goal_buy"] = {"buy_price": o.get("buy_price")}
         ent["why"] = "goal planner: buys %s a turn for today's rates, keeps up to %s (v2 had %s)" % (
             o["buy_volume"], o.get("max_holding"), d["v2_buy_volume"])
+    # goods the plan sells at home that nobody offers (Oct 23, turn 13502: thread 15, flax fibres 6.6 a turn in the
+    # plan, no sell order, 0 sold; ~110 coin a turn of plan that never happened): a sell at the plan's own lowest
+    # price (on the grid, rounded down), keeping the plan's stock floor, ramping at most 2x+10 a run (v2's rule).
+    # Marked goal_sell: v2's actor owns the item. Never for never-drop goods or goods with a live buy (no buying and
+    # selling one good at once).
+    store_items = ((snap or {}).get("store") or {}).get("items") or {}
+    never = set(cfg.get("never_drop") or [])
+    for item, v in sorted((now.get("sell") or {}).items()):
+        ent = orders.setdefault(item, {})
+        if ent.get("sell") is not None or _n(v) < 0.5 or item in never or not live["sells"]:
+            continue
+        b_ = ent.get("effective_buy") or ent.get("buy")
+        tiers = (store_items.get(item) or {}).get("orders") or []
+        live_buy = any(_n(t.get("buy_volume")) > 0 for t in tiers)
+        if (b_ and _n(b_.get("buy_volume")) > 0) or live_buy:
+            continue
+        if any(_n(t.get("sell_volume")) > 0 for t in tiers) and item not in set(prev_sells or ()):
+            continue                 # someone else already offers it (timber: v1 sells 20 over its 350 reserve)
+        px = _n((G.get("sell_px") or {}).get(item))
+        if px <= 0:
+            continue
+        import planner as _pl
+        keep = int(math.ceil(_n((G.get("sell_keep") or {}).get(item)) - 1e-6))
+        live_sell = max([_n(t.get("sell_volume")) for t in ((store_items.get(item) or {}).get("orders") or [])] + [0])
+        ent["sell"] = {"sell_volume": int(min(2 * live_sell + 10, math.ceil(_n(v) - 1e-6))),
+                       "sell_price": "%g" % _pl.snap_price(px, up=False), "min_holding": keep}
+        ent["goal_sell"] = {"sell_price": ent["sell"]["sell_price"]}
+        ent["why"] = "goal planner: sells %s a turn at %s, keeps %d (no one offered it)" % (
+            ent["sell"]["sell_volume"], ent["sell"]["sell_price"], keep)
+        out.setdefault(item, {})["sell_volume"] = ent["sell"]["sell_volume"]
     for item, v in sorted((now.get("sell") or {}).items()):
         o = (orders.get(item) or {}).get("sell")
-        if o is None:
+        if o is None or (orders.get(item) or {}).get("goal_sell"):
             continue
         want = max(int(math.ceil(_n(v) - 1e-6)), int(_n(o.get("sell_volume"))))
         d = out.setdefault(item, {})

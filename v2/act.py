@@ -974,6 +974,10 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
                 owned.add(item)
                 ceil_ = cfg.setdefault("buy_ceiling", {})
                 ceil_[item] = max(_n(ceil_.get(item)), _n(gb.get("buy_price")))
+    if plan and goal_live(cfg, "sells"):          # goods the goal sells that nobody offered (goal.apply_orders)
+        for item, o in ((plan.get("orders") or {}).items()):
+            if isinstance(o, dict) and o.get("goal_sell") and item not in sus:
+                owned.add(item)
     fs = _load(failsafe, {})
     fs_level = int(_n(fs.get("level")))
     paused = set((fs.get("paused") or {}).keys())
