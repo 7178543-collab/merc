@@ -227,7 +227,7 @@ def check(item, live, new, cfg, cash):
         p = _n(nb.get("buy_price"))
         if ceil_ is None and p and _n(nb.get("buy_volume")) > 0:     # a price with no volume buys nothing
             why.append("no buy ceiling in config for %s" % item)
-        elif p and p > ceil_ + 1e-9:
+        elif ceil_ is not None and p and p > ceil_ + 1e-9:
             why.append("buy price %.2f above ceiling %.2f" % (p, ceil_))
         if lb and _n(lb.get("buy_price")) and p and abs(p - _n(lb["buy_price"])) / _n(lb["buy_price"]) > MAX_PRICE_MOVE:
             why.append("buy price %.2f -> %.2f is over a %d%% move" % (_n(lb["buy_price"]), p, MAX_PRICE_MOVE * 100))
