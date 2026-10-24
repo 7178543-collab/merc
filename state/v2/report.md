@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13504, 2026-10-24 01:01. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13504, 2026-10-24 01:03. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 876, prestige 3,589 (469 free, -0.7/turn).
 
 ## Items v2 runs (last turn)
@@ -9,10 +9,10 @@ Cash 876, prestige 3,589 (469 free, -0.7/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | beer | 68 | 0 | 7 | 0 | 0 | min_holding 60, sell 74, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
-| donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
-| firewood | 33 | 0 | 7 | 0 | 0 | stop 15, buy 1, buy @ 2.4; sell 3, sell @ 1.63 |
+| donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
+| firewood | 33 | 0 | 7 | 0 | 0 | stop 15, buy 1, buy @ 2.4; sell 3, sell @ 1.64 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 124 | 0 | 2 | 0 | 0 | min_holding 30, sell 35, sell @ 20 |
+| garments | 124 | 0 | 2 | 0 | 0 | min_holding 30, sell 6, sell @ 18 |
 | grain | 107 | 32 | 37 | 0 | 0 | stop 125, buy 32, buy @ 3.7 |
 | labour | 95 | 95 | 586 | 0 | 9 | buy 95, buy @ 2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
@@ -128,7 +128,7 @@ Cash 876, prestige 3,589 (469 free, -0.7/turn).
   - net maker 0.50 -> 0.00: -35/turn
   - net maker [make nets 3] 0.00 -> 1.00: +73/turn
   - spinnery 1 2.08 -> 2.94: -40/turn
-- Model check over the last 9 turns: predicted +172/turn for the settings we ran, real +59/turn - OFF, trust the plan less.
+- Model check over the last 9 turns: predicted +170/turn for the settings we ran, real +59/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.45, thread 3.58, cloth 5.75, flax fibres 4.12, garments 16.70, nets 35.00, beer 2.53, timber 6.05, prestige 51.40, cash 0.00
 - Orders it would set: beer sell 74 (v2 73); cloth sell 4 (v2 none); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 6 (v2 none); grain buy 37 (v2 58); labour buy 98 (v2 86); light armour buy 1 (v2 None); porterage buy 16 (v2 15); thread sell 10 (v2 none)
 - Recipe: logging camp w/ tool cut firewood 1 -> split timber 1 at 20.00, worth +21/turn.
