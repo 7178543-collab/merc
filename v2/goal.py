@@ -383,6 +383,12 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
     for i, q in fixed_demand.items():
         use_now[i] = use_now.get(i, 0) + q
 
+    try:
+        import goal_switch
+        own_sells = goal_switch.owns("sells", cfg) if (cfg or {}).get("goal") else False
+    except Exception:
+        own_sells = False
+    never_sell = set((cfg or {}).get("never_drop") or []) - {"labour"}
     goods = {}
     for item in sorted(names):
         it = items.get(item) or {}
@@ -402,10 +408,13 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
         buy_cap = 0.0
         if buy_px:
             buy_cap = max(traded, _n(m.get("ask_vol")), _n(fl.get("purchase")))
-        # sell steps: what we really sold at our price, then an undercut step for town share
+        # sell steps: what we really sold at our price, then an undercut step for town share. With the goal owning
+        # sells, the old config floors no longer bind (Oct 23: garments 135 held at a 20.0 floor while the town
+        # traded at 19.5, 0 sold for days, cash under 1k); v2 still keeps a sanity floor at 85% of the market. Never
+        # a sale of a never-drop good (no order of ours would make it: tools 6 a turn were planned, v1 buys them).
         steps = []
         avg = sold.get(item, 0.0)
-        floor = _n(((cfg or {}).get("sell_floor") or {}).get(item))
+        floor = 0.0 if own_sells else _n(((cfg or {}).get("sell_floor") or {}).get(item))
         p1 = sell_px or last
         if avg > 0 and p1:
             steps.append((p1, avg))
@@ -414,8 +423,10 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
                                                                 # over the last price is still there to take)
         p2 = g["undercut"] * last
         if ask:
-            p2 = min(p2, 0.99 * _n(ask))   # never above the lowest ask: a seller there takes the buyers first (and
-                                           # selling over the ask we'd buy at is a false arbitrage)
+            # just under the cheapest seller (and never over the last price): we take the buyers first. Selling
+            # over the ask we'd buy at would be a false arbitrage. (Oct 23: garments planned at 18.1 = 93% of 19.5
+            # when 19.3 under the 19.5 wall of asks sells the same.)
+            p2 = min(0.99 * _n(ask), last) if last else 0.99 * _n(ask)
         room = g["market_share"] * traded - avg - (_n(m.get("bid_vol")) if bid else 0.0)
         if p2 and room > 0.5 and (not floor or p2 >= floor):
             steps.append((p2, room))
@@ -426,6 +437,8 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
             draw_cap = max(0.0, held - keep) / g["drain_turns"]
             capy = _n(it.get("capacity"))
             stock_cap = max(0.0, capy - held) / g["drain_turns"] if capy else 0.0
+        if item in never_sell:
+            steps = []
         if buy_px and buy_cap > 0:
             # never sell a good for more than we could buy it back: a crossed book (bid over ask) or a stale last
             # price would otherwise read as free arbitrage (buy at the ask, sell at the bid)
@@ -492,7 +505,8 @@ def proven_exports(lines, turns=None, boost=None):
 def cash_check(goal_hist, v2_hist, turns=3, margin_abs=150.0, margin_share=0.5):
     """Does real cash follow the plan? Each run's prediction for today's settings (goal history cash_today, made
     before a tick) against the real cash change over that tick (v2 history cash, the last run of each turn). Fails
-    when the last `turns` ticks all came in more than max(margin_abs, margin_share x |predicted|) under it: the goal
+    when the last `turns` ticks together came in more than max(2 x margin_abs, margin_share x |predicted|) under
+    them: the goal
     then only cuts (no raises, recipe switches, buy raises or investments) until a tick passes. Oct 23: cash fell
     2.33k -> 1.10k over 4 ticks against a predicted +310..+560 a turn, and the plan kept raising until the kill switch;
     this would have held it after the third tick. Returns {"ok", "why", "ticks": [[turn, predicted, real], ...]}."""
@@ -506,11 +520,13 @@ def cash_check(goal_hist, v2_hist, turns=3, margin_abs=150.0, margin_share=0.5):
     ticks = [[t, round(pred[t - 1], 1), round(cash[t] - cash[t - 1], 1)] for t in sorted(cash)
              if t - 1 in cash and t - 1 in pred]
     last = ticks[-turns:]
-    bad = [x for x in last if x[2] < x[1] - max(margin_abs, margin_share * abs(x[1]))]
-    if len(last) == turns and len(bad) == turns:
+    # judged on the sum over the ticks: a single reading moves +-130 with when in the turn it is taken (turn 13502
+    # read 948, then 1,077 half an hour later), the sum only carries that noise at its two ends
+    p_sum, r_sum = sum(x[1] for x in last), sum(x[2] for x in last)
+    if len(last) == turns and r_sum < p_sum - max(margin_abs * 2, margin_share * abs(p_sum)):
         return {"ok": False, "ticks": last,
-                "why": "real cash ran under the plan %d ticks running (%s): cuts only" % (
-                    turns, ", ".join("%+.0f vs %+.0f" % (x[2], x[1]) for x in last))}
+                "why": "real cash %+.0f over %d ticks against %+.0f planned (%s): cuts only" % (
+                    r_sum, turns, p_sum, ", ".join("%+.0f vs %+.0f" % (x[2], x[1]) for x in last))}
     return {"ok": True, "ticks": last, "why": None}
 
 
@@ -1343,7 +1359,7 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
     # plan, no sell order, 0 sold; ~110 coin a turn of plan that never happened): a sell at the plan's own lowest
     # price (on the grid, rounded down), keeping the plan's stock floor, ramping at most 2x+10 a run (v2's rule).
     # Marked goal_sell: v2's actor owns the item. Never for never-drop goods or goods with a live buy (no buying and
-    # selling one good at once).
+    # selling one good at once), nor goods someone else sells with success.
     store_items = ((snap or {}).get("store") or {}).get("items") or {}
     never = set(cfg.get("never_drop") or [])
     for item, v in sorted((now.get("sell") or {}).items()):
@@ -1352,11 +1368,15 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
             continue
         b_ = ent.get("effective_buy") or ent.get("buy")
         tiers = (store_items.get(item) or {}).get("orders") or []
-        live_buy = any(_n(t.get("buy_volume")) > 0 for t in tiers)
+        held_ = _n((store_items.get(item) or {}).get("held"))
+        live_buy = any(_n(t.get("buy_volume")) > 0 and (t.get("max_holding") is None or _n(t["max_holding"]) > held_)
+                       for t in tiers)   # a buy capped under what we hold buys nothing (cloth: max 4, 45 held)
         if (b_ and _n(b_.get("buy_volume")) > 0) or live_buy:
             continue
-        if any(_n(t.get("sell_volume")) > 0 for t in tiers) and item not in set(prev_sells or ()):
-            continue                 # someone else already offers it (timber: v1 sells 20 over its 350 reserve)
+        sold_last = _n(((store_items.get(item) or {}).get("flow") or {}).get("sale"))
+        if any(_n(t.get("sell_volume")) > 0 for t in tiers) and item not in set(prev_sells or ()) and sold_last > 0:
+            continue                 # someone else offers it and it sells (timber: v1 sells 20 a turn over its 350)
+                                     # - an offer that sold nothing (garments 35 at 20.0 over a 19.5 town) is taken over
         px = _n((G.get("sell_px") or {}).get(item))
         if px <= 0:
             continue
@@ -1366,6 +1386,8 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
         ent["sell"] = {"sell_volume": int(min(2 * live_sell + 10, math.ceil(_n(v) - 1e-6))),
                        "sell_price": "%g" % _pl.snap_price(px, up=False), "min_holding": keep}
         ent["goal_sell"] = {"sell_price": ent["sell"]["sell_price"]}
+        if any(_n(t.get("buy_volume")) > 0 for t in tiers):
+            ent["buy_off"] = "goal planner sells it: a dormant buy would buy back what it sells"
         ent["why"] = "goal planner: sells %s a turn at %s, keeps %d (no one offered it)" % (
             ent["sell"]["sell_volume"], ent["sell"]["sell_price"], keep)
         out.setdefault(item, {})["sell_volume"] = ent["sell"]["sell_volume"]
@@ -1380,4 +1402,14 @@ def apply_orders(G, plan, cfg, snap=None, prev_sells=()):
         if live["sells"] and want != o.get("sell_volume"):
             o["sell_volume"] = want
             orders[item]["why"] = "goal planner: sells %d (v2 had %s)" % (want, d["v2_sell_volume"])
+        # the plan's volume is priced at its lowest step (a live bid or the undercut): an ask over that sells less
+        # than the plan counts (garments at 20.0 over a 19.5 town: 0 sold)
+        px = _n((G.get("sell_px") or {}).get(item))
+        if live["sells"] and px > 0 and px < 0.995 * _n(o.get("sell_price")):
+            import planner as _pl
+            newp = "%g" % _pl.snap_price(px, up=False)
+            d["v2_sell_price"] = o.get("sell_price")
+            o["sell_price"] = newp
+            orders[item]["why"] = "goal planner: sells %d at %s (v2 had %s at %s)" % (
+                want, newp, d["v2_sell_volume"], d["v2_sell_price"])
     return out, any(live.values())

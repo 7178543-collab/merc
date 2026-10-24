@@ -967,6 +967,11 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     # Oct 23: inputs the goal planner buys for today's rates (goal.apply_orders marks them goal_buy) are v2's, at
     # the plan's price
     cfg["_goal_reality"] = (((plan or {}).get("goal") or {}).get("cash_check")) or {}
+    if goal_live(cfg, "sells"):
+        # the goal prices its own sells; the old config floors give way to a sanity floor at 85% of the town's last
+        # price (a bug can't dump stock, a stale floor can't hold it off the market)
+        cfg["sell_floor"] = {k: round(0.85 * _n((m or {}).get("price")), 2)
+                             for k, m in (((snap or {}).get("market")) or {}).items() if _n((m or {}).get("price")) > 0}
     if plan and goal_live(cfg, "buys"):
         for item, o in ((plan.get("orders") or {}).items()):
             gb = isinstance(o, dict) and o.get("goal_buy")

@@ -75,7 +75,10 @@ They explain every change in plain coin.
   human kill switch.
 - **Home sells**: a good the plan sells at home that nobody offers gets a sell at the plan's own lowest price (grid,
   rounded down), keeping its stock floor, ramping 2x+10 a run (turn 13502: thread 15 and flax fibres 6.6 a turn in
-  the plan, no order, 0 sold). Never for never-drop goods, goods we are buying, or goods someone else already sells.
+  the plan, no order, 0 sold). Never for never-drop goods or goods we are buying; an offer someone else placed is
+  taken over only if it sold nothing last turn (garments 35 at 20.0 over a 19.5 town). An ask over the plan's price
+  is lowered to it. The old config sell floors give way to a sanity floor at 85% of the town's last price, and the
+  plan's second sales step sits just under the cheapest seller (99% of the ask, never over the last price).
 - **Labour timing**: labour is bought at a turn's start and expires at the tick. A raise waits until its labour is
   held (the labour is bought first); a cut waits a run while the held labour covers today's rates (the labour buy
   shrinks first). Turn 13500 shows why: rates cut mid-turn let 304 paid labour expire (~450 coin).

@@ -113,7 +113,8 @@ def test_real_snapshot_plans_and_explains():
     assert G["plan_value"] is not None and G["current_value"] is not None
     # the gains of the changes add up to plan - today (limits aside), so every coin of the difference is explained
     total = sum(ch["gain"] for ch in G["changes"] if ch.get("gain") is not None)
-    assert abs(total - (G["plan_free"] - G["current_value"])) < 1.0, (total, G["plan_free"], G["current_value"])
+    # (within 2.5: changes under 0.05 a rate are not listed; with the goal's own sell prices, Oct 23, that left ~2)
+    assert abs(total - (G["plan_free"] - G["current_value"])) < 2.5, (total, G["plan_free"], G["current_value"])
     # duty never planned over the workers' own labour
     assert G["levels"]["household duty"] <= 2.0 + 1e-6
     assert any("Goal" in line for line in goal.report_lines(G))
@@ -332,8 +333,11 @@ def test_cash_check_turns_the_goal_to_cuts_only():
     assert cc["ok"] is False and len(cc["ticks"]) == 3, cc
     steady = [{"turn": t, "cash": 2000 + 250 * (t - 10)} for t in range(10, 15)]
     assert goal.cash_check(gh, steady)["ok"] is True
-    mixed = falling[:4] + [{"turn": 14, "cash": falling[3]["cash"] + 280}]
-    assert goal.cash_check(gh, mixed)["ok"] is True                 # the last tick kept up
+    mixed = falling[:2] + [{"turn": 12 + i, "cash": falling[1]["cash"] + 290 * (i + 1)} for i in range(3)]
+    assert goal.cash_check(gh, mixed)["ok"] is True                 # the bad tick has left the 3-tick window
+    noisy = [{"turn": 10, "cash": 1000}, {"turn": 11, "cash": 1040}, {"turn": 12, "cash": 1170}, {"turn": 13, "cash": 950},
+             {"turn": 14, "cash": 1080}]                            # reading noise around ~+20 a tick
+    assert goal.cash_check([{"turn": t, "cash_today": 60.0} for t in range(10, 15)], noisy)["ok"] is True
     assert goal.cash_check([], falling)["ok"] is True                # no predictions yet: nothing to judge
     snap_ = {"turn": 200, "cash": 5000, "buildings": [
         {"id": "7", "name": "spinnery 1", "recipe": "spin thread 1", "target": 2.0},
@@ -391,8 +395,29 @@ def test_goal_sells_what_nobody_offers():
     goal.apply_orders(G, plan2, cfg, snap2, prev_sells=["thread"])
     assert plan2["orders"]["thread"]["sell"]["sell_volume"] == 15        # next run: ramps to the plan's volume
     plan3 = {"orders": {}}
-    goal.apply_orders(G, plan3, cfg, snap2)
-    assert "sell" not in plan3["orders"].get("thread", {})              # someone else's live sell: left alone
+    snap2s = {"store": {"items": {"thread": {"orders": [{"sell_volume": 10, "sell_price": "4.66"}], "flow": {"sale": 10}}}}}
+    goal.apply_orders(G, plan3, cfg, snap2s)
+    assert "sell" not in plan3["orders"].get("thread", {})              # someone else's sell that sells: left alone
+    # someone else's offer that sold nothing last turn is taken over at the plan's price
+    snap3 = {"store": {"items": {"thread": {"orders": [{"sell_volume": 35, "sell_price": "5.2"}], "flow": {}}}}}
+    plan4 = {"orders": {}}
+    goal.apply_orders(G, plan4, cfg, snap3)
+    assert plan4["orders"]["thread"]["sell"]["sell_price"] == "4.66" and plan4["orders"]["thread"]["goal_sell"], plan4
+    snap4 = {"store": {"items": {"thread": {"held": 45, "orders": [{"buy_volume": 2, "buy_price": "5", "max_holding": 4}]}}}}
+    plan5 = {"orders": {}}
+    goal.apply_orders(G, plan5, cfg, snap4)                          # a buy capped under what we hold: dormant
+    assert plan5["orders"]["thread"]["goal_sell"] and plan5["orders"]["thread"].get("buy_off"), plan5
+    # an ask over the plan's price is lowered to it (garments at a 20.0 floor over a 19.5 town sold 0 for days)
+    Gg = {"ok": True, "orders_now": {"sell": {"garments": 9.0}}, "sell_px": {"garments": 19.5}}
+    pg = {"orders": {"garments": {"sell": {"sell_volume": 35, "sell_price": "20", "min_holding": 30}}}}
+    goal.apply_orders(Gg, pg, cfg)
+    assert pg["orders"]["garments"]["sell"] == {"sell_volume": 35, "sell_price": "19.5", "min_holding": 30}, pg
+    # never-drop goods get no sales in the plan
+    s_ = snap()
+    s_["store"]["items"]["tools"] = {"held": 200, "unit_cost": 4, "orders": []}
+    s_["market"]["tools"] = {"price": 4.5, "bid": 4.4, "bid_vol": 20, "ask": 4.6, "ask_vol": 20, "traded": 50}
+    M = goal.build_model(s_, dict(CFG, never_drop=["tools"]), RECIPES)
+    assert M["goods"]["tools"]["sell"] == [], M["goods"]["tools"]["sell"]
 
 
 def test_goal_buys_skip_v2_reserve_over_hard_floor():
