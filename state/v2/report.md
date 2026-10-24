@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13507, 2026-10-24 04:49. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13507, 2026-10-24 04:51. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
@@ -9,12 +9,12 @@ Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | beer | 63 | 0 | 4 | 0 | 0 | min_holding 60, sell 73, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
-| donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
-| firewood | 18 | 0 | 7 | 0 | 0 | stop 15, buy 1, buy @ 2.4; sell 3, sell @ 1.61 |
+| donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
+| firewood | 18 | 0 | 7 | 0 | 0 | stop 4, buy 1, buy @ 2.4; sell 2, sell @ 1.68 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 97 | 0 | 2 | 0 | 0 | min_holding 30, sell 7, sell @ 19 |
-| grain | 95 | 32 | 34 | 0 | 0 | stop 125, buy 32, buy @ 3.7 |
-| labour | 26 | 35 | 535 | 60 | 0 | buy 26, buy @ 2.2 |
+| garments | 97 | 0 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 17.9 |
+| grain | 95 | 32 | 34 | 0 | 0 | stop 148, buy 37, buy @ 3.7 |
+| labour | 26 | 35 | 535 | 60 | 0 | buy 48, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 11, sell @ 34 |
 | porterage | 13 | 13 | 6 | 0 | 7 | buy 13, buy @ 1.1 |
@@ -23,16 +23,16 @@ Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
 
 ## Risks (will stall or run out)
 
-- **labour**: buying 26, short of ~95 needed -> v2: buy 95
+- **labour**: buying 48, short of ~95 needed -> v2: buy 95
 
 ## Tuning
 
-- **flax fibres**: flax fibres buffer thin: 1.3 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 70
-- **flax plants**: flax plants buffer thin: 1.1 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 182
+- **flax fibres**: flax fibres buffer thin: 1.8 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 53
+- **flax plants**: flax plants buffer thin: 1.4 turns (target 2) -> v2: lift the maker's rate or hold back sales until it reaches 136
 
 ## Notes
 
-- labour: projection runs 100 over real use lately; planning 595, not 695
+- labour: projection runs 100 over real use lately; planning 595, not 636
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -97,24 +97,23 @@ Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
 | furniture | 2 @ 13.5, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
 | garments |  | 2 @ min 17.9 | goal planner: sells 2 a turn at 17.9, keeps 30 (no one offered it) |
 | grain | 37 @ 3.7, stop 148 |  | goal planner: buys 37 a turn for today's rates, keeps up to 148 (v2 had 64) |
-| labour | 98 @ 2.2, stop - |  | goal planner: buys 98 for today's rates (v2 had 95) |
+| labour | 37 @ 2.2, stop - |  | goal planner: buys 37 for today's rates (v2 had 95) |
 | light armour | 1 @ 85.5, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
-| limestone |  | 1 @ min 16.8 |  |
 | meat | 6 @ 3.02, stop - |  | goal planner: buys 6 for today's rates (v2 had 6) |
 | nets |  | 11 @ min 34.0 |  |
 | pasties | 3 @ 14.5, stop 11 |  | goal planner: buys 3 a turn for today's rates, keeps up to 11 (v2 had 4) |
-| porterage | 16 @ 1.1, stop - |  | goal planner: buys 16 for today's rates (v2 had 6) |
-| rope |  | 5 @ min 72.0 | makes 3.9, uses 0.0, holds 19 (keeps 0): sells the surplus + 1/turn of the excess |
+| porterage | 13 @ 1.1, stop - |  | goal planner: buys 13 for today's rates (v2 had 13) |
+| rope |  | 4 @ min 72.0 | makes 2.9, uses 0.0, holds 19 (keeps 0): sells the surplus + 1/turn of the excess |
 | tar | 1 @ 11.0, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
-| thread |  | 3 @ min 4.44 | goal planner: sells 3 a turn at 4.44, keeps 249 (no one offered it) |
+| thread |  | 3 @ min 4.44 | goal planner: sells 3 a turn at 4.44, keeps 211 (no one offered it) |
 | tools | 3 @ 6.2, stop 17 |  | uses 2.0/turn (retting pit 1), makes 0.0, holds 200 = 98.3 turns |
 | wax | 1 @ 21.8, stop 1 |  | goal planner: buys 1 a turn for today's rates, keeps up to 1 (v2 had 1) |
 
 ## Goal: business value (live: rates, buys, sells, ships, invest, trim)
 - Value now 17.3k (cash + stock at home prices); +124/turn over 6 turns, +58/turn over 24 turns.
 - Limits: cash flow >= +120/turn, prestige >= -0.69/turn (values are after 240 tax a turn).
-- Today's settings: value +29/turn, cash +35/turn, prestige -0.69/turn - breaks the cash floor.
-- Plan: value +117/turn, cash +207/turn, prestige -0.69/turn, inside both limits.
+- Today's settings: value +75/turn, cash +125/turn, prestige -0.69/turn.
+- Plan: value +115/turn, cash +205/turn, prestige -0.69/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -5 vs +272, +136 vs +22, +108 vs +5.
 - Route sales counted at most (what the ships really sold, a turn): beer 0.4, garments 0.5, nets 0.0, rope 0.1.
 - Changes, each priced on top of the one before (value/turn, limits aside):
@@ -122,15 +121,14 @@ Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
   - ship Flax Wyrm -> Rouhomme: +0/turn
   - logging camp w/ tool [split timber 1] 0.00 -> 6.56: +10/turn
   - brewery 1 0.57 -> 0.63: +7/turn
-  - spinnery 1 2.08 -> 1.47: +7/turn
-  - ropewalk 1 0.87 -> 0.64: +26/turn
-  - retting pit 1 1.01 -> 0.71: +16/turn
-  - quarry 1 0.08 -> 0.01: +6/turn
-  - flax farm 1 5.83 -> 4.03: +1/turn
+  - spinnery 1 1.56 -> 1.47: +4/turn
   - logging camp w/ tool 5.00 -> 0.00: -3/turn
-- Model check over the last 13 turns: predicted +163/turn for the settings we ran, real +82/turn - OFF, trust the plan less.
+  - flax farm 1 5.83 -> 4.03: -7/turn
+  - net maker 0.50 -> 0.00: -34/turn
+  - net maker [make nets 3] 0.00 -> 0.68: +49/turn
+- Model check over the last 13 turns: predicted +162/turn for the settings we ran, real +82/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.45, thread 3.58, cloth 5.75, flax fibres 4.12, garments 16.38, nets 26.62, beer 2.54, timber 5.08, prestige 54.02, cash 0.00
-- Orders it would set: cloth sell 1 (v2 none); furniture buy 2 (v2 None); garments sell 2 (v2 none); grain buy 37 (v2 64); labour buy 98 (v2 95); light armour buy 1 (v2 None); pasties buy 3 (v2 4); porterage buy 16 (v2 6); thread sell 3 (v2 none)
+- Orders it would set: cloth sell 1 (v2 none); furniture buy 2 (v2 None); garments sell 2 (v2 none); grain buy 37 (v2 64); labour buy 37 (v2 95); light armour buy 1 (v2 None); pasties buy 3 (v2 4); thread sell 3 (v2 none)
 - Recipe: logging camp w/ tool cut firewood 1 -> split timber 1 at 6.56, worth +10/turn.
 - Recipe: net maker make nets 2 -> make nets 3 at 0.68, worth +25/turn.
 - Ship linen snake: Grandgues -> Bedenis (+7/turn over staying).
@@ -146,19 +144,19 @@ Cash 1,115, prestige 3,586 (466 free, -1.3/turn).
 ## Chain sizing
 
 Mode HOLD, garments sold 1.2/turn (+0.0 exported); plan makes 0.0 garments a turn.
-Labour: own 500, everything else 443, chain may buy 0 -> chain allowance 57, chain plan 156 (-96 vs now).
+Labour: own 500, everything else 430, chain may buy 0 -> chain allowance 70, chain plan 125 (-81 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 5.83 | 3.54 |
-| ret | 3 | 1.01 | 0.63 |
-| spin | 4 | 2.08 | 1.30 |
+| flax | 11 | 5.83 | 2.85 |
+| ret | 3 | 0.76 | 0.51 |
+| spin | 4 | 1.56 | 1.04 |
 | weave | 3 | 0.00 | 0.00 |
 | sew | 2 | 0.00 | 0.00 |
 
-Buffers: flax fibres 47/64, thread 562/190, cloth 33/0
-- chain plan needed 155 labour, budget left 57: cut to 155
+Buffers: flax fibres 47/56, thread 562/164, cloth 33/0
+- chain plan needed 125 labour, budget left 70: cut to 125
 
 ## Self-diagnosis
 
-- R7 stale ask: rope ask 75 over the market for 3 turns: the town trades ~4 a turn at 74, we sold 0 with 19 over what we keep -> **sell price 75 -> 74 (last trade 74, floor 62.9)** (ok)
+Nothing found this run.
