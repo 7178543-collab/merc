@@ -735,7 +735,7 @@ def _labour_per_unit(recipe, recipes):
     return sum(_n(i.get("amount")) for i in r.get("inputs") or [] if i.get("product") == "labour")
 
 
-def buy_first(moves, snap, recipes, order=None):
+def buy_first(moves, snap, recipes, order=None, gst=None):
     """Labour is bought at the start of a turn, so a rate raised mid-turn with no labour held runs short at the next
     tick (turns 13495-13497: ropewalk, net maker, camp at 0 after their raises). Raises go ahead only while this
     turn's spare labour covers them (best first by `order`); the rest are marked deferred: their labour is bought
@@ -743,14 +743,29 @@ def buy_first(moves, snap, recipes, order=None):
     Cuts the other way round (turn 13500: rates cut mid-turn after 348 labour was bought for them, 304 expired, ~450
     coin): while this turn's labour covers today's rates, a cut would only let paid labour expire, so it is deferred
     (labour < 0): the labour buy shrinks now and the cut goes ahead on the next run, when less is held. A cut that only
-    trims a rate already short of labour goes ahead; recipe switches always do."""
+    trims a rate already short of labour goes ahead; recipe switches always do.
+    A cut waits one turn at most (turns 13505-13507: flax/retting/spinnery/rope cuts deferred run after run while
+    the buy shrank for them each time; the game's projections hide the shortage (room read 0), so the tick bought
+    35 labour for rates needing 86 more and the camp, ropewalk and net maker starved). `gst` keeps the turn a cut
+    was first deferred (cut_wait); from the next turn on it goes ahead, since the buy already shrank for it."""
     room = labour_room(snap)
-    for m in [m for m in moves if m["to"] < m["from"] and not m.get("switch")]:
+    turn = (snap or {}).get("turn")
+    wait = (gst.setdefault("cut_wait", {}) if gst is not None else {})
+    cuts = [m for m in moves if m["to"] < m["from"] and not m.get("switch")]
+    for k in [k for k in wait if k not in {str(m.get("id")) for m in cuts}]:
+        wait.pop(k, None)                                     # no longer wanted: forget it
+    for m in cuts:
         freed = (m["from"] - m["to"]) * _labour_per_unit(m["recipe"], recipes)
         waste = freed if room >= 0 else max(0.0, room + freed)
+        first = wait.get(str(m.get("id")))
+        if first is not None and turn is not None and turn > first:
+            wait.pop(str(m.get("id")), None)
+            continue                                          # waited a turn already: the buy has shrunk, cut now
         if freed > 0 and waste >= 1:
             m["deferred"] = True
             m["labour"] = -round(freed, 1)
+            if turn is not None and first is None:
+                wait[str(m.get("id"))] = turn
     rank = {k: i for i, k in enumerate(order or [])}
     raises = sorted([m for m in moves if m["to"] > m["from"]], key=lambda m: rank.get(m["id"], 999))
     for m in raises:
@@ -1045,7 +1060,7 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
         gmoves, gwhy = goal_moves(plan, cfg, snap, fs_level, dturn, gst)
         recipes_ = _load(os.path.join(HERE, "data", "recipes.json"), {})
         order_ = [str(ch.get("id")) for ch in (((plan or {}).get("goal") or {}).get("changes") or []) if ch.get("id")]
-        gmoves = buy_first(gmoves, snap, recipes_, order_)
+        gmoves = buy_first(gmoves, snap, recipes_, order_, gst)
         rates_live = live_mode and goal_live(cfg, "rates")
         g_done = []
         deferred_lab = sum(_n(m_.get("labour")) for m_ in gmoves if m_.get("deferred"))

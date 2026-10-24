@@ -502,6 +502,27 @@ def test_raises_wait_for_labour_in_hand():
     assert not sw.get("deferred"), sw
 
 
+
+def test_deferred_cut_waits_one_turn_only():
+    import act
+    rec = {"spin thread 1": {"inputs": [{"product": "labour", "amount": 75}]}}
+    snap = {"turn": 13505, "store": {"items": {"labour": {"held": 35}}},
+            "operations": {"producer/f": {"flows": {"labour": {"projection": {"production": 500}}}},
+                           "producer/b": {"flows": {"labour": {"projection": {"consumption": 535}}}}}}
+    gst = {}
+    mv = lambda: [{"id": "s", "recipe": "spin thread 1", "from": 2.08, "to": 1.6}]
+    m = act.buy_first(mv(), snap, rec, gst=gst)[0]
+    assert m.get("deferred") and gst["cut_wait"] == {"s": 13505}, (m, gst)
+    m = act.buy_first(mv(), snap, rec, gst=gst)[0]                         # same turn, second run: still waits
+    assert m.get("deferred"), m
+    # turns 13505-13507: room read 0 again after the tick (projections hide the shortage) and the cut was deferred
+    # once more while the buy kept shrinking; a turn later the cut goes ahead
+    m = act.buy_first(mv(), dict(snap, turn=13506), rec, gst=gst)[0]
+    assert not m.get("deferred") and "s" not in gst["cut_wait"], (m, gst)
+    gst["cut_wait"]["gone"] = 13500                                         # a cut no longer wanted is forgotten
+    act.buy_first([], snap, rec, gst=gst)
+    assert gst["cut_wait"] == {}, gst
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
