@@ -1213,6 +1213,14 @@ def test_zero_buy_reads_back_without_max_holding():
         act._canon([{"buy_price": "2.4", "buy_volume": 2, "max_holding": 6}])
 
 
+def test_report_survives_an_off_sell():
+    import shadow
+    p = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "state", "v2", "plan.json")))
+    p["orders"] = {"varnish": {"buy": {"buy_volume": 1, "buy_price": "20.6", "max_holding": 1}, "sell": "off", "why": "x"}}
+    txt = shadow.report(p)
+    assert "| varnish | 1 @ 20.6, stop 1 | off | x |" in txt, txt[-300:]
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

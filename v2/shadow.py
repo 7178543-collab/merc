@@ -144,8 +144,12 @@ def report(p):
         b, s_ = o.get("buy"), o.get("sell")
         if not (b or s_):
             continue
-        bt = ("%d @ %s, stop %s" % (b["buy_volume"], b.get("buy_price", "?"), b.get("max_holding", "-"))) if b else ""
-        st = ("%d @ min %s" % (s_["sell_volume"], s_.get("sell_price"))) if s_ else ""
+        # a side can be the sentinel "off" (planner/goal: no sell of an input a building is stalled on); a crash here
+        # used to abort shadow.py after goal.json (report.md lost its plan, history.jsonl lost the run: Oct 25 11:23)
+        bt = (("%d @ %s, stop %s" % (b.get("buy_volume") or 0, b.get("buy_price", "?"), b.get("max_holding", "-")))
+              if isinstance(b, dict) else str(b)) if b else ""
+        st = (("%d @ min %s" % (s_.get("sell_volume") or 0, s_.get("sell_price")))
+              if isinstance(s_, dict) else str(s_)) if s_ else ""
         L.append("| %s | %s | %s | %s |" % (item, bt, st, o.get("why", "")))
     return "\n".join(L) + "\n"
 
