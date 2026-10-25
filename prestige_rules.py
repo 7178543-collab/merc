@@ -642,48 +642,51 @@ def promote_rule():
         skills = {k: m.num(v) for k, v in (w.get("skills") or {}).items()}
         if not skills:
             continue
-        cls, pts = max(skills.items(), key=lambda kv: kv[1])
-        # next tier = the highest one reached on points above the last promotion we made (Oct 13: the old
-        # "threshold to +50" window gave up for good once a worker passed it while the game still said not ready)
-        nxt = _next_tier(pts, wid, cls, done)
-        say("worker %s %s: top %s %.1f%s" % (wid, w.get("name"), cls, pts,
-            ", %s at %d (%.1f to go)" % (nxt[1], nxt[0], max(0, nxt[0] - pts)) if nxt else ""))
-        if not nxt or nxt[1] == "master" or pts < nxt[0]:
-            continue
-        key = "%s:%s:%s" % (wid, cls, nxt[1])
-        rec = done.get(key) or {}
-        if rec and "not_ready" not in rec:
-            continue
-        if rec.get("not_ready"):
-            import datetime as _dt
-            last = _dt.datetime.fromisoformat(rec["not_ready"])
-            if _dt.datetime.now(_dt.timezone.utc) - last < _dt.timedelta(hours=6):
-                continue        # the game said not ready: ask again every 6 hours, not every run
-        if not LIVE:
-            say("  would promote worker %s to %s %s" % (wid, cls, nxt[1]))
-            continue
-        ok, status, body = q._req("POST", "/households/%s/workers/%s/promote" % (hid, wid), {"class": cls})
-        if not ok and "not ready" in (body or ""):
-            import datetime as _dt     # Oct 11: the game counts points differently; retry in 6 hours
-            done[key] = {"not_ready": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"), "points": pts}
-            changed = True
-        elif not ok and status is not None and status < 500:
-            done[key] = {"ok": False, "status": status, "body": body[:160]}
-            changed = True
-            with open(NEEDS_YOU, "w") as f:
-                json.dump({"what": "Promote %s to %s %s in-game (the API refused it: %s)." % (w.get("name"), cls, nxt[1], status),
-                           "since_turn": None}, f)
-        elif ok:
-            done[key] = {"ok": True, "status": status}
-            changed = True
-            # Oct 15 (Taylor): the 2nd apprentice was bought and assigned on Oct 13 but net duty stayed at 2.0 (max was
-            # 2.6) for ~55 turns. A promotion raises the duty cap again, so ask for the new max right away.
-            with open(NEEDS_YOU, "w") as f:
-                json.dump({"what": "%s is now %s %s: raise household net duty to the new max (household > production)." % (
-                    w.get("name"), cls, nxt[1]), "since_turn": None}, f)
-        q.log({"promote": wid, "class": cls, "tier": nxt[1], "note": "promotion rule"},
-              dict(ok=ok, status=status, body=body[:200]), source="prestige_rules")
-        say("  promote worker %s to %s %s -> %s" % (wid, cls, nxt[1], "OK" if ok else "FAILED %s %s" % (status, body[:150])))
+        # Oct 25 fix (Taylor promoted Chretien by hand): the rule only ever looked at the TOP skill, so his textile sat
+        # frozen at exactly 100.0 (XP stops at a tier line until the promotion) while maritime 155 kept being 'not ready'.
+        # Every skill past its next line is now tried; refusals are still remembered and retried every 6 hours.
+        for cls, pts in sorted(skills.items(), key=lambda kv: -kv[1]):
+            # next tier = the highest one reached on points above the last promotion we made (Oct 13: the old
+            # "threshold to +50" window gave up for good once a worker passed it while the game still said not ready)
+            nxt = _next_tier(pts, wid, cls, done)
+            say("worker %s %s: top %s %.1f%s" % (wid, w.get("name"), cls, pts,
+                ", %s at %d (%.1f to go)" % (nxt[1], nxt[0], max(0, nxt[0] - pts)) if nxt else ""))
+            if not nxt or nxt[1] == "master" or pts < nxt[0]:
+                continue
+            key = "%s:%s:%s" % (wid, cls, nxt[1])
+            rec = done.get(key) or {}
+            if rec and "not_ready" not in rec:
+                continue
+            if rec.get("not_ready"):
+                import datetime as _dt
+                last = _dt.datetime.fromisoformat(rec["not_ready"])
+                if _dt.datetime.now(_dt.timezone.utc) - last < _dt.timedelta(hours=6):
+                    continue        # the game said not ready: ask again every 6 hours, not every run
+            if not LIVE:
+                say("  would promote worker %s to %s %s" % (wid, cls, nxt[1]))
+                continue
+            ok, status, body = q._req("POST", "/households/%s/workers/%s/promote" % (hid, wid), {"class": cls})
+            if not ok and "not ready" in (body or ""):
+                import datetime as _dt     # Oct 11: the game counts points differently; retry in 6 hours
+                done[key] = {"not_ready": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"), "points": pts}
+                changed = True
+            elif not ok and status is not None and status < 500:
+                done[key] = {"ok": False, "status": status, "body": body[:160]}
+                changed = True
+                with open(NEEDS_YOU, "w") as f:
+                    json.dump({"what": "Promote %s to %s %s in-game (the API refused it: %s)." % (w.get("name"), cls, nxt[1], status),
+                               "since_turn": None}, f)
+            elif ok:
+                done[key] = {"ok": True, "status": status}
+                changed = True
+                # Oct 15 (Taylor): the 2nd apprentice was bought and assigned on Oct 13 but net duty stayed at 2.0 (max was
+                # 2.6) for ~55 turns. A promotion raises the duty cap again, so ask for the new max right away.
+                with open(NEEDS_YOU, "w") as f:
+                    json.dump({"what": "%s is now %s %s: raise household net duty to the new max (household > production)." % (
+                        w.get("name"), cls, nxt[1]), "since_turn": None}, f)
+            q.log({"promote": wid, "class": cls, "tier": nxt[1], "note": "promotion rule"},
+                  dict(ok=ok, status=status, body=body[:200]), source="prestige_rules")
+            say("  promote worker %s to %s %s -> %s" % (wid, cls, nxt[1], "OK" if ok else "FAILED %s %s" % (status, body[:150])))
     if changed:
         with open(PROMOTIONS, "w") as f:
             json.dump(done, f, indent=1)
