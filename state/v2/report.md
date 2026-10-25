@@ -1,22 +1,22 @@
 # v2 shadow report
 
-Turn 13530, 2026-10-25 03:52. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13530, 2026-10-25 03:54. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 2,158, prestige 3,570 (450 free, -0.6/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 60 | 0 | 7 | 0 | 0 | min_holding 60, sell 56, sell @ 2.98 |
+| beer | 60 | 0 | 7 | 0 | 0 | min_holding 60, sell 55, sell @ 2.98 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 10 | 3 | 6 | 0 | 0 | buy @ 2.4; sell 1, sell @ 1.75 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 7, sell @ 17.8 |
-| grain | 33 | 29 | 29 | 0 | 0 | stop 115, buy 29, buy @ 3.7 |
-| labour | 12 | 1 | 494 | 0 | 7 | buy 12, buy @ 2.2 |
+| grain | 33 | 29 | 29 | 0 | 0 | stop 109, buy 28, buy @ 3.7 |
+| labour | 12 | 1 | 494 | 0 | 7 | buy 6, buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 12, sell @ 34 |
+| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
 | porterage | 11 | 13 | 11 | 0 | 2 | buy 11, buy @ 1.1 |
 
 **2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
@@ -122,14 +122,14 @@ Cash 2,158, prestige 3,570 (450 free, -0.6/turn).
   - logging camp w/ tool 5.00 -> 4.71: +0/turn
   - weavery 1 0.22 -> 0.15: -5/turn
   - sewing shop 1 0.21 -> 0.05: -2/turn
-  - flax farm 1 3.55 -> 4.79: +12/turn
+  - flax farm 1 3.55 -> 4.78: +12/turn
   - retting pit 1 0.62 -> 0.84: -5/turn
   - spinnery 1 1.28 -> 1.72: +5/turn
   - ropewalk 1 0.50 -> 0.00: -82/turn
-- Model check over the last 36 turns: predicted +114/turn for the settings we ran, real +63/turn - OFF, trust the plan less.
+- Model check over the last 36 turns: predicted +112/turn for the settings we ran, real +63/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.65, thread 4.07, cloth 6.55, flax fibres 4.67, garments 19.02, nets 30.19, beer 2.94, timber 2.98, prestige 58.10, cash 0.07
 - Orders it would set: grain buy 28 (v2 58); labour buy 12 (v2 0); light armour buy 1 (v2 None); pasties buy 3 (v2 4); thread sell 12 (v2 none)
-- Recipe: ropewalk 1 make rope 1 -> make rope 2 at 0.62, worth +20/turn.
+- Recipe: ropewalk 1 make rope 1 -> make rope 2 at 0.62, worth +19/turn.
 - Ship linen snake: Grandgues -> Brunnham (+5/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Magdeach (+4/turn over staying).
 - Management: ~13.78 of 17 used.
@@ -157,4 +157,4 @@ Buffers: flax fibres 36/87, thread 823/257, cloth 0/119
 
 ## Self-diagnosis
 
-- R5: varnish buy not filling: bid 17.1 under the home ask 19.3 for 6 turns, bought 0.0 of 1, 0.0 held (0.0 turns) (held back: ship trade good (v2 ships own it): finding only)
+Nothing found this run.
