@@ -1165,6 +1165,25 @@ def test_no_sell_of_an_input_a_building_is_stalled_on():
     assert planner.plan(s, CFG, goals=[])["orders"]["firewood"].get("sell") != "off"
 
 
+def test_labour_restored_under_the_hard_floor():
+    # Oct 25: the failsafe cut labour 65 -> 24 for one turn's expiry, and under the hard floor no raise could put it
+    # back, so ~95 short starved camp, ropewalk, net maker and banquet. Labour may go back up to what the rates used
+    # last turn beyond own production (556 - 500 = 56), never more, never at a higher price.
+    snap = {"cash": 697, "store": {"items": {"labour": {"flow": {"production": 500.0, "consumption": 555.8}}}}}
+    assert act.restore_cap(snap) == 56
+    cfg = {"goal": {"hard_floor": 1000}, "cash": {"reserve": 4000}, "buy_ceiling": {"labour": 2.2},
+           "_restore": {"labour": 56}}
+    live = [{"buy_volume": 24, "buy_price": "2"}]
+    new = act.restore_clamp("labour", live, [{"buy_volume": 95, "buy_price": "2.2"}], cfg, 697)
+    assert new == [{"buy_volume": 56, "buy_price": "2"}], new
+    assert act.check("labour", live, new, cfg, 697) == []
+    assert act.check("labour", live, [{"buy_volume": 60, "buy_price": "2"}], cfg, 697)   # past the cap: refused
+    # a cut stays a cut; over the hard floor the clamp leaves the plan's order alone
+    assert act.restore_clamp("labour", live, [{"buy_volume": 10, "buy_price": "2"}], cfg, 697)[0]["buy_volume"] == 10
+    assert act.restore_clamp("labour", live, [{"buy_volume": 95, "buy_price": "2.2"}], cfg, 1500)[0]["buy_volume"] == 95
+    assert act.restore_cap({"store": {"items": {"labour": {"flow": {"production": 500.0, "consumption": 400}}}}}) == 0
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

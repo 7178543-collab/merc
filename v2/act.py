@@ -27,6 +27,7 @@ state/v2/suspended.json and goes straight back to v1. Delete its entry to hand i
 """
 import datetime
 import json
+import math
 import os
 import sys
 
@@ -216,6 +217,39 @@ def recent_manual(item, hours=2, path=QUEUE_DONE):
     return False
 
 
+def restore_cap(snap, item="labour"):
+    """Labour today's rates really used last turn beyond own production (the store flow): what a buy may be put
+    back up to under the hard floor. Restoring it is not a raise of the plan; cutting it starves rates already set."""
+    f = ((((snap or {}).get("store") or {}).get("items") or {}).get(item) or {}).get("flow") or {}
+    need = _n(f.get("consumption")) + _n(f.get("shortfall")) - _n(f.get("production"))   # failsafe.labour_guard's need
+    return int(math.ceil(need)) if need > 0 else 0
+
+
+def restore_clamp(item, live, new, cfg, cash):
+    """Pure: when buy raises are barred (cash under the reserve/hard floor), an item with a restore cap
+    (cfg["_restore"], labour) may still go back up to that cap, at no more than its live price; the rest of the raise
+    is dropped. Oct 25 (Taylor 'fix'): the failsafe's expiry cut (65 -> 24) could never be undone under the floor."""
+    cap = _n((cfg.get("_restore") or {}).get(item))
+    if not cap or cash is None or cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)):
+        return new
+    lb, nb = _side(live, _has_buy, BUY_KEYS), _side(new, _has_buy, BUY_KEYS)
+    if not nb:
+        return new
+    lv, nv = _n((lb or {}).get("buy_volume")), _n(nb.get("buy_volume"))
+    if nv <= lv:
+        return new
+    first = next(i for i, t in enumerate(new) if _has_buy(t))
+    out = []
+    for i, t in enumerate(new):
+        if i == first:
+            t = dict(t)
+            t["buy_volume"] = int(max(lv, min(nv, cap)))
+            if lb and _n(lb.get("buy_price")) and _n(t.get("buy_price")) > _n(lb.get("buy_price")):
+                t["buy_price"] = lb["buy_price"]
+        out.append(t)
+    return out
+
+
 def check(item, live, new, cfg, cash):
     """Reasons to refuse this write (empty list = fine)."""
     why = []
@@ -239,7 +273,9 @@ def check(item, live, new, cfg, cash):
         goal_buys = goal_live(cfg, "buys") and cash is not None and \
             cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and \
             (goal_reality_ok(cfg) or item in set(cfg.get("_goal_starving") or ()))
-        if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys:
+        restore = _n((cfg.get("_restore") or {}).get(item))
+        if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys \
+                and not (restore and nv <= restore):
             # with the goal planner live on buys, its plan already keeps cash over its floor (and labour bought for
             # the rates it set is what makes them run), so v2's reserve rule only applies under the hard floor
             why.append("cash %.0f under the reserve: no buy raises" % cash)
@@ -277,6 +313,7 @@ def decide(snap, plan, cfg, owned, live_tiers, failsafe_level=0, manual=recent_m
             continue
         live = live_tiers.get(item, [])
         new, stepped = step_volumes(live, merge(live, buy, sell), item)
+        new = restore_clamp(item, live, new, cfg, snap.get("cash"))
         row = {"item": item, "owned": is_owned, "live": live, "new": new, "same": _canon(new) == _canon(live)}
         if stepped:
             row["stepped"] = stepped
@@ -798,8 +835,10 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
     # the check only holds rates once it spans a full day (24 turns): over the first turns after a change the real
     # turns lag the plan (labour and inputs arrive a tick after the rates), and freezing the ramp there would only
     # keep the gap open
-    if sc and sc.get("turns", 0) >= 24 and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])):
-        return [], "model check OFF (predicted %+.0f/turn, real %+.0f): holding rates" % (sc["predicted"], sc["real"])
+    # Oct 25 (Taylor 'fix'): an OFF model check holds raises and recipe switches only. Cuts still go: they shrink
+    # what the plan spends (labour above all), and holding them while the labour buy can only shrink starved every
+    # building at once (camp, ropewalk, net maker, banquet idle at 16:00 and 00:00 Oct 24-25)
+    model_off = bool(sc and sc.get("turns", 0) >= 24 and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])))
     total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None and ch.get("kind") != "ship")
     if total < _n(gc.get("min_gain", 3.0)):
         return [], "plan beats today's rates by only %+.1f/turn: nothing to move" % total
@@ -832,7 +871,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
                 streak[bid] = k
                 if k[1] < hold:
                     continue
-            if (fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg):
+            if (fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg) or model_off:
                 continue
             first = min(to, max(smin, share * max(cur, to)))
             moves.append({"id": bid, "name": b.get("name"), "recipe": rec, "from": cur, "to": round(first, 3),
@@ -841,7 +880,7 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
         streak.pop(bid, None)
         if not b.get("recipe") or abs(to - cur) < 0.05:
             continue
-        if to > cur and ((fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg)):
+        if to > cur and ((fs_level >= 3 and not goal_cash_ok(snap, cfg)) or not goal_reality_ok(cfg) or model_off):
             continue
         if bid in gains and abs(gains[bid]) < band:
             continue                        # worth less than the noise in a turn's prices: leave it
@@ -853,6 +892,9 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
         new = round(cur + max(-lim, min(lim, to - cur)), 3)
         moves.append({"id": bid, "name": b.get("name"), "recipe": b.get("recipe"), "from": cur, "to": new,
                       "plan": to, "switch": False, "dir": d})
+    if model_off:
+        return moves, "model check OFF (predicted %+.0f/turn, real %+.0f): cuts only; plan %+.0f/turn over today's rates" \
+            % (sc["predicted"], sc["real"], total)
     return moves, "plan %+.0f/turn over today's rates" % total
 
 
@@ -983,6 +1025,8 @@ def main(argv=None, out=OUT, cfg=None, failsafe=FAILSAFE):
     # Oct 23: inputs the goal planner buys for today's rates (goal.apply_orders marks them goal_buy) are v2's, at
     # the plan's price
     cfg["_goal_reality"] = (((plan or {}).get("goal") or {}).get("cash_check")) or {}
+    if "labour" in owned and goal_live(cfg, "buys"):
+        cfg.setdefault("_restore", {})["labour"] = restore_cap(snap)
     if goal_live(cfg, "sells"):
         # the goal prices its own sells; the old config floors give way to a sanity floor at 85% of the town's last
         # price or lowest ask, whichever is lower (a bug can't dump stock, a stale floor can't hold it off the market)
