@@ -1163,6 +1163,12 @@ def test_no_sell_of_an_input_a_building_is_stalled_on():
         if b["name"] == "brewery 1":
             b["production"], b["limitation"] = 0.63, None       # running again: the camp's surplus may be sold
     assert planner.plan(s, CFG, goals=[])["orders"]["firewood"].get("sell") != "off"
+    # an input we don't make (varnish, net maker stalled on it) loses its old sell too
+    s["buildings"].append({"name": "net maker 9", "type": "net maker", "recipe": "make nets 3", "target": 0.5,
+                           "production": 0.0, "limitation": "varnish"})
+    s["store"]["items"]["varnish"] = {"held": 1.0, "unit_cost": 16.3, "orders": [
+        {"sell_volume": 2, "sell_price": "15.8"}, {"max_holding": 1, "buy_volume": 1, "buy_price": "20.2"}]}
+    assert planner.plan(s, CFG, goals=[])["orders"]["varnish"].get("sell") == "off"
 
 
 def test_labour_restored_under_the_hard_floor():

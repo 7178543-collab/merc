@@ -391,6 +391,13 @@ def plan(s, cfg=None, recipes=None, goals=None):
         orders.setdefault(item, {})["buffer"] = {"target": int(target), "held": int(it.get("held", 0))}
 
     # ---------- outputs we sell ----------
+    # Oct 25: the same for an input we don't make: an old Oct 16 varnish sell 2 @ 15.8 stayed up while the net maker
+    # stood stalled on varnish and the goal bought it at 20.2 - the one varnish bought could be sold straight back.
+    for item in sorted(stalled_items - set(make)):
+        it = items.get(item) or {}
+        if first_tier(it.get("orders") or [], "sell_volume")[1]:
+            orders.setdefault(item, {})["sell"] = "off"
+            orders[item]["why"] = "a building is stalled on %s: no sell until it runs again" % item
     for item, mk in make.items():
         it = items.get(item) or {}
         surplus = mk - use.get(item, 0)
