@@ -266,7 +266,11 @@ def check(item, live, new, cfg, cash):
     floor_ = (cfg.get("sell_floor") or {}).get(item)
     if nb:
         p = _n(nb.get("buy_price"))
-        if ceil_ is None and p and _n(nb.get("buy_volume")) > 0:     # a price with no volume buys nothing
+        # Oct 25: a buy no bigger and no dearer than the live one is a cut: a missing ceiling must not hold it
+        # (the plan's varnish cut 20.6 -> 19.4 was refused, leaving the dearer live buy up)
+        cut = lb is not None and _n(nb.get("buy_volume")) <= _n(lb.get("buy_volume")) and \
+            p and _n(lb.get("buy_price")) and p <= _n(lb.get("buy_price"))
+        if ceil_ is None and p and _n(nb.get("buy_volume")) > 0 and not cut:     # a price with no volume buys nothing
             why.append("no buy ceiling in config for %s" % item)
         elif ceil_ is not None and p and p > ceil_ + 1e-9:
             why.append("buy price %.2f above ceiling %.2f" % (p, ceil_))

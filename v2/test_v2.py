@@ -78,6 +78,10 @@ def test_act_guards():
     assert any("50%" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "1.0"}], cfg, 20000))
     assert any("ceiling" in w for w in act.check("firewood", live, [{"buy_volume": 40, "buy_price": "2.6"}], cfg, 20000))
     assert any("no buy ceiling" in w for w in act.check("bricks", [], [{"buy_volume": 40, "buy_price": "1"}], cfg, 20000))
+    assert not any("no buy ceiling" in w for w in act.check("bricks", [{"max_holding": 1, "buy_volume": 1, "buy_price": "20.6"}],
+                                                                [{"max_holding": 1, "buy_volume": 1, "buy_price": "19.4"}], cfg, 20000))
+    assert any("no buy ceiling" in w for w in act.check("bricks", [{"buy_volume": 1, "buy_price": "19.4"}],
+                                                            [{"buy_volume": 1, "buy_price": "20.6"}], cfg, 20000))
     assert any("2x+10" in w for w in act.check("firewood", live, [{"buy_volume": 95, "buy_price": "2.4"}], cfg, 20000))
     assert any("reserve" in w for w in act.check("firewood", live, [{"buy_volume": 45, "buy_price": "2.4"}], cfg, 3000))
     assert any("floor" in w for w in act.check("garments", [{"sell_volume": 39, "sell_price": "22"}],
