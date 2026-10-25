@@ -192,8 +192,15 @@ def _canon(tiers):
         except (TypeError, ValueError):
             return str(x)
     zero_ok = ("buy_volume", "sell_volume", "min_holding", "max_holding")
-    return json.dumps([{k: v(x) for k, x in sorted(t.items()) if not (k in zero_ok and v(x) == 0)} for t in tiers],
-                      sort_keys=True)
+    # Oct 25: a buy tier with no volume reads back without its max_holding too (firewood 0 buy, max 13, read back as
+    # buy_price only: 'not verified' twice, firewood suspended 03:52 UTC)
+    def keep(t, k, x):
+        if k in zero_ok and v(x) == 0:
+            return False
+        if k == "max_holding" and "buy_price" in t and v(t.get("buy_volume") or 0) == 0:
+            return False
+        return True
+    return json.dumps([{k: v(x) for k, x in sorted(t.items()) if keep(t, k, x)} for t in tiers], sort_keys=True)
 
 
 # ---------------------------------------------------------------- guards

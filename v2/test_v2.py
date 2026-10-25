@@ -1200,6 +1200,15 @@ def test_unchanged_sell_under_floor_does_not_block_buy():
     assert any("below floor" in w for w in act.check("varnish", [], [{"sell_volume": 2, "sell_price": "15.8"}], cfg, 20000))
 
 
+def test_zero_buy_reads_back_without_max_holding():
+    sent = [{"buy_price": "2.4", "buy_volume": 0, "max_holding": 13}, {"sell_volume": 1, "sell_price": "1.75"}]
+    back = [{"buy_price": "2.4"}, {"sell_volume": 1, "sell_price": "1.75"}]
+    assert act._canon(sent) == act._canon(back)
+    # a live buy still compares its max_holding
+    assert act._canon([{"buy_price": "2.4", "buy_volume": 2, "max_holding": 13}]) != \
+        act._canon([{"buy_price": "2.4", "buy_volume": 2, "max_holding": 6}])
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
