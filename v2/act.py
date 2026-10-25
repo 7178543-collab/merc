@@ -283,7 +283,10 @@ def check(item, live, new, cfg, cash):
         why.append("%s is never_drop: v2 will not take its buy off" % item)
     if ns:
         p = _n(ns.get("sell_price"))
-        if floor_ is not None and p and p < floor_ - 1e-9:
+        # an unchanged sell that is already up is not a new write: refusing it only blocked the row's buy change
+        # (Oct 25: a stale varnish sell 2 @ 15.8 under the floor held the net maker's varnish buy raise for hours)
+        same_sell = ls is not None and _n(ls.get("sell_price")) == p and _n(ls.get("sell_volume")) == _n(ns.get("sell_volume"))
+        if floor_ is not None and p and p < floor_ - 1e-9 and not same_sell:
             why.append("sell price %.2f below floor %.2f" % (p, floor_))
         if ls and _n(ls.get("sell_price")) and p and abs(p - _n(ls["sell_price"])) / _n(ls["sell_price"]) > MAX_PRICE_MOVE:
             why.append("sell price %.2f -> %.2f is over a %d%% move" % (_n(ls["sell_price"]), p, MAX_PRICE_MOVE * 100))

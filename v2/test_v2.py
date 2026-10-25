@@ -1184,6 +1184,16 @@ def test_labour_restored_under_the_hard_floor():
     assert act.restore_cap({"store": {"items": {"labour": {"flow": {"production": 500.0, "consumption": 400}}}}}) == 0
 
 
+def test_unchanged_sell_under_floor_does_not_block_buy():
+    cfg = {"sell_floor": {"varnish": 16.15}, "buy_ceiling": {"varnish": 30}}
+    live = [{"sell_volume": 2, "sell_price": "15.8"}, {"max_holding": 1, "buy_volume": 1, "buy_price": "17.1"}]
+    new = [{"sell_volume": 2, "sell_price": "15.8"}, {"max_holding": 1, "buy_volume": 1, "buy_price": "20.2"}]
+    assert act.check("varnish", live, new, cfg, 20000) == []
+    # a new or changed sell under the floor is still refused
+    assert any("below floor" in w for w in act.check("varnish", live, [{"sell_volume": 3, "sell_price": "15.8"}], cfg, 20000))
+    assert any("below floor" in w for w in act.check("varnish", [], [{"sell_volume": 2, "sell_price": "15.8"}], cfg, 20000))
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
