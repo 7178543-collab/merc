@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13534, 2026-10-25 07:46. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13534, 2026-10-25 07:52. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 3,918, prestige 3,567 (447 free, -0.6/turn).
 
 ## Items v2 runs (last turn)
@@ -12,11 +12,11 @@ Cash 3,918, prestige 3,567 (447 free, -0.6/turn).
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 8 | 0 | 6 | 0 | 0 | buy @ 2.4; sell 1, sell @ 1.75 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 24, buy 7, buy @ 2.5 |
-| garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 7, sell @ 17.8 |
+| garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 17.9 |
 | grain | 30 | 27 | 29 | 0 | 0 | stop 109, buy 28, buy @ 3.7 |
 | labour | 0 | 0 | 491 | 0 | 9 | buy @ 2.2 |
 | meat | 6 | 6 | 6 | 0 | 0 | stop 24, buy 6, buy @ 3.02 |
-| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 12, sell @ 34 |
+| nets | 15 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
 | porterage | 11 | 11 | 11 | 0 | 0 | buy 11, buy @ 1.1 |
 
 **2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
@@ -131,7 +131,7 @@ Cash 3,918, prestige 3,567 (447 free, -0.6/turn).
   - spinnery 1 1.28 -> 2.17: -29/turn
   - ropewalk 1 0.50 -> 0.00: -117/turn
   - ropewalk 1 [make rope 2] 0.00 -> 0.99: +202/turn
-- Model check over the last 40 turns: predicted +106/turn for the settings we ran, real +65/turn - OFF, trust the plan less.
+- Model check over the last 40 turns: predicted +104/turn for the settings we ran, real +65/turn.
 - Worth of one more unit per turn: labour 1.58, thread 3.89, cloth 6.26, flax fibres 4.48, garments 18.19, nets 28.89, beer 2.80, timber 2.87, prestige 54.87, cash 0.00
 - Orders it would set: arms buy 1 (v2 None); candles buy 1 (v2 None); cloth sell 3 (v2 none); cured meat buy 1 (v2 2); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); grain buy 28 (v2 58); light armour buy 1 (v2 None); thread sell 12 (v2 none)
 - Recipe: ropewalk 1 make rope 1 -> make rope 2 at 0.99, worth +45/turn.
