@@ -787,6 +787,11 @@ def buy_first(moves, snap, recipes, order=None, gst=None):
     35 labour for rates needing 86 more and the camp, ropewalk and net maker starved). `gst` keeps the turn a cut
     was first deferred (cut_wait); from the next turn on it goes ahead, since the buy already shrank for it."""
     room = labour_room(snap)
+    # Oct 25 (turn 13527): the projections read room 0 while the tick had just come up 75 short (store flow
+    # shortfall); all four cuts were deferred and the buy shrank by their full 75 (95 -> 20), so the old rates would
+    # starve again. A real shortage counts: cuts fill it first (cumulative) and only labour past it is waste.
+    sf = _n(((((snap or {}).get("store") or {}).get("items") or {}).get("labour") or {}).get("flow", {}).get("shortfall"))
+    croom = min(room, -sf) if sf > 0 else room
     turn = (snap or {}).get("turn")
     wait = (gst.setdefault("cut_wait", {}) if gst is not None else {})
     cuts = [m for m in moves if m["to"] < m["from"] and not m.get("switch")]
@@ -794,16 +799,20 @@ def buy_first(moves, snap, recipes, order=None, gst=None):
         wait.pop(k, None)                                     # no longer wanted: forget it
     for m in cuts:
         freed = (m["from"] - m["to"]) * _labour_per_unit(m["recipe"], recipes)
-        waste = freed if room >= 0 else max(0.0, room + freed)
+        waste = freed if croom >= 0 else max(0.0, croom + freed)
         first = wait.get(str(m.get("id")))
         if first is not None and turn is not None and turn > first:
             wait.pop(str(m.get("id")), None)
+            croom += freed
             continue                                          # waited a turn already: the buy has shrunk, cut now
         if freed > 0 and waste >= 1:
             m["deferred"] = True
-            m["labour"] = -round(freed, 1)
+            m["labour"] = -round(waste, 1)                    # only what is past a real shortage
             if turn is not None and first is None:
                 wait[str(m.get("id"))] = turn
+        else:
+            wait.pop(str(m.get("id")), None)
+            croom += freed                                    # goes ahead now: it fills part of the shortage
     rank = {k: i for i, k in enumerate(order or [])}
     raises = sorted([m for m in moves if m["to"] > m["from"]], key=lambda m: rank.get(m["id"], 999))
     for m in raises:

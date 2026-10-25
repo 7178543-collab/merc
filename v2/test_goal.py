@@ -535,6 +535,23 @@ def test_deferred_cut_waits_one_turn_only():
     act.buy_first([], snap, rec, gst=gst)
     assert gst["cut_wait"] == {}, gst
 
+
+def test_cuts_fill_a_real_shortage_first():
+    import act
+    # turn 13527: projections read room 0, the store flow says the tick came up 75 short; four cuts free 75
+    rec = {"a": {"inputs": [{"product": "labour", "amount": 100}]}}
+    snap = {"turn": 13527, "store": {"items": {"labour": {"held": 24, "flow": {"shortfall": 75.36}}}},
+            "operations": {"producer/f": {"flows": {"labour": {"projection": {"production": 500}}}},
+                           "producer/b": {"flows": {"labour": {"projection": {"consumption": 524}}}}}}
+    assert act.labour_room(snap) == 0
+    gst = {"cut_wait": {"x": 13527}}
+    mv = [{"id": i, "recipe": "a", "from": 1.0, "to": 1.0 - f} for i, f in (("x", .14), ("y", .06), ("z", .32), ("w", .23))]
+    out = act.buy_first(mv, snap, rec, gst=gst)
+    assert not any(m.get("deferred") for m in out), out                   # 75 freed into 75 short: no waste
+    assert gst["cut_wait"] == {}, gst
+    more = act.buy_first([{"id": "v", "recipe": "a", "from": 2.0, "to": 1.0}], snap, rec, gst={})[0]
+    assert more.get("deferred") and more["labour"] == -24.6, more         # past the 75.4 short it waits; buy -24.6 only
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
