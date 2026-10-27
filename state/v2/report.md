@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13581, 2026-10-27 06:03. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13581, 2026-10-27 06:32. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 200, prestige 3,440 (320 free, -7.9/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 0 | 0 | 0 | 0 | 0 | min_holding 60, sell 22, sell @ 2.94 |
+| beer | 0 | 0 | 0 | 0 | 0 | min_holding 60, sell 16, sell @ 2.94 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 0 | 0 | 0 | 0 | 0 | none |
 | firewood | 0 | 0 | 0 | 2 | 0 | buy @ 2.4 |
@@ -80,50 +80,50 @@ Cash 200, prestige 3,440 (320 free, -7.9/turn).
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| beer |  | 16 @ min 2.94 | goal planner: sells 16 a turn at 2.94, keeps 60 (no one offered it) |
+| beer |  | 13 @ min 2.94 | goal planner: sells 13 a turn at 2.94, keeps 60 (no one offered it) |
 | firewood | 2 @ 2.4, stop 7 |  | goal planner: buys 2 a turn for today's rates, keeps up to 7 (v2 had 5) |
 | flax fibres |  | 12 @ min 4.64 | goal planner: trial sale of an idle pile, 12 a turn at 4.64, keeps 82 (136 over) |
 | flax plants |  | 1 @ min 1.05 | goal planner: sells 1 a turn at 1.05, keeps 9 (no one offered it) |
 | furniture | 2 @ 13.1, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
-| grain | 15 @ 3.7, stop 57 |  | goal planner: buys 15 a turn for today's rates, keeps up to 57 (v2 had 0) |
+| grain | 13 @ 3.7, stop 51 |  | goal planner: buys 13 a turn for today's rates, keeps up to 51 (v2 had 0) |
 | labour | 0 @ 2.2, stop - |  | goal planner: buys 0 for today's rates (v2 had 0) |
 | light armour | 1 @ 95.5, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
 | nets |  | 9 @ min 33.4 | goal planner: sells 9 at 33.4 (v2 had 9 at 34.0) |
 | porterage | 5 @ 1.1, stop - |  | goal planner: buys 5 for today's rates (v2 had 5) |
 | tar | 1 @ 11.0, stop 1 |  | uses 0.2/turn (observed), makes 0.0, holds 0 = 0.0 turns |
-| thread |  | 33 @ min 3.96 | goal planner: sells 33 a turn at 3.96, keeps 169 (no one offered it) |
+| thread |  | 34 @ min 3.96 | goal planner: sells 34 a turn at 3.96, keeps 169 (no one offered it) |
 | tools | 1 @ 6.2, stop 1 |  | uses 0.1/turn (observed), makes 0.0, holds 199 = 3110.5 turns |
 
 ## Goal: business value (live: rates, buys, sells, ships, invest, trim)
-- Value now 13.9k (cash + stock at home prices); -169/turn over 6 turns, -158/turn over 24 turns.
+- Value now 13.8k (cash + stock at home prices); -150/turn over 6 turns, -164/turn over 24 turns.
 - Limits: cash flow >= +158/turn, prestige >= -0.08/turn (values are after 200 tax a turn).
-- Today's settings: value -9/turn, cash -125/turn, prestige -7.93/turn - breaks the prestige floor and cash floor.
-- Plan: value -19/turn, cash -152/turn, prestige -3.73/turn - could not meet the prestige floor and cash floor.
+- Today's settings: value -16/turn, cash -136/turn, prestige -7.93/turn - breaks the prestige floor and cash floor.
+- Plan: value -22/turn, cash -154/turn, prestige -3.73/turn - could not meet the prestige floor and cash floor.
 - Cash check (real vs predicted cash a tick, last 3): +37 vs +14, +36 vs -60, +9 vs -85.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - retting pit 1 [retting 1] 0.00 -> 0.08: +23/turn
-  - weavery 1 0.13 -> 0.29: +10/turn
-  - spinnery 1 1.59 -> 1.77: +5/turn
-  - brewery 1 0.28 -> 0.22: -2/turn
-  - ropewalk 1 [make rope 1] 0.00 -> 0.10: -7/turn
+  - retting pit 1 [retting 1] 0.00 -> 0.08: +22/turn
+  - weavery 1 0.13 -> 0.31: +10/turn
+  - spinnery 1 1.59 -> 1.79: +6/turn
+  - brewery 1 0.28 -> 0.20: -2/turn
+  - ropewalk 1 [make rope 1] 0.00 -> 0.09: -6/turn
   - ropewalk 1 0.25 -> 0.00: +18/turn
   - flax farm 1 5.88 -> 0.00: -35/turn
-  - flax farm 1 [make flax fibres 1] 0.00 -> 11.00: +139/turn
+  - flax farm 1 [make flax fibres 1] 0.00 -> 11.00: +141/turn
   - mansion 1 0.00 -> 1.00: -163/turn
 - Model check: not enough runs yet (needs 6 turns of goal history).
 - Worth of one more unit per turn: labour 0.93, thread 2.83, cloth 4.23, flax fibres 4.23, garments 11.77, nets 15.03, beer 135.34, timber 2.88, prestige 10000.00, cash 100.00
-- Orders it would set: beer sell 16 (v2 none); firewood buy 2 (v2 5); fish buy 0 (v2 None); flax fibres sell 12 (v2 none); flax plants sell 1 (v2 none); furniture buy 2 (v2 None); grain buy 15 (v2 0); light armour buy 1 (v2 None); meat buy 0 (v2 None); thread sell 33 (v2 none)
-- Recipe: flax farm 1 grow flax 1 -> make flax fibres 1 at 11.00, worth +214/turn.
+- Orders it would set: beer sell 13 (v2 none); firewood buy 2 (v2 5); fish buy 0 (v2 None); flax fibres sell 12 (v2 none); flax plants sell 1 (v2 none); furniture buy 2 (v2 None); grain buy 13 (v2 0); light armour buy 1 (v2 None); meat buy 0 (v2 None); thread sell 34 (v2 none)
+- Recipe: flax farm 1 grow flax 1 -> make flax fibres 1 at 11.00, worth +228/turn.
 - Recipe: retting pit 1 retting 2 -> retting 1 at 0.08, worth +1/turn.
-- Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.10, worth +11/turn.
+- Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.09, worth +10/turn.
 - Management: ~11.39 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +46/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - Tenants L13 for 500 prestige: +38/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
   - +1 plot flax farm 1 for ~442 coin: +2/turn, payback 260 turns, doesn't pay yet
   - new carpentry (craft furniture 2) for ~1260 coin: +1/turn, payback 1578 turns, doesn't pay yet
-- Trim: donate mansion 1: +203/turn (tax 0 saved).
-- Trim: donate park 1: +202/turn (tax 96 saved).
+- Trim: donate mansion 1: +195/turn (tax 0 saved).
+- Trim: donate park 1: +194/turn (tax 96 saved).
 
 ## Chain sizing
 
