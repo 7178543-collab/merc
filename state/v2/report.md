@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13598, 2026-10-27 23:37. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13598, 2026-10-27 23:53. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 647, prestige 3,321 (201 free, -6.3/turn).
 
 ## Items v2 runs (last turn)
@@ -19,7 +19,7 @@ Cash 647, prestige 3,321 (201 free, -6.3/turn).
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
 | porterage | 2 | 2 | 0 | 0 | 2 | buy 2, buy @ 1.1 |
 
-**4 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
+**4 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -31,6 +31,7 @@ Cash 647, prestige 3,321 (201 free, -6.3/turn).
 ## Tuning
 
 - **candles**: home ask 73.50 is above our ceiling 70.00 and last turn bought 1 of ~1 needed: the buy can't fill -> v2: raise the ceiling or find another source
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 
 ## Notes
 
@@ -53,7 +54,7 @@ Cash 647, prestige 3,321 (201 free, -6.3/turn).
 | hold banquet 2 (fish) | mansion | 6.8 | 52.4 | 52.4 | thin at home: wine |
 | hold banquet 4 | mansion | 17.5 | 53.1 | 53.1 | thin at home: wine, hop beer, stockfish |
 | hold banquet 3 (fish) | mansion | 7.6 | 53.3 | 53.3 | thin at home: hop beer |
-| jousting 3 | arena | 230 | 53.9 | 54.0 | needs a arena (build cost 24,970); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| jousting 3 | arena | 230 | 53.9 | 54.0 | needs a arena (build cost 24,468); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
 | hold banquet 4 (premium) | mansion | 20 | 54.2 | 54.2 | thin at home: hop beer, wine, stockfish, premium cheese, premium ham |
 | hold banquet 1 (fish) | mansion | 4.2 | 54.9 | 54.9 |  |
 | hold banquet 2 (meat) | mansion | 6.8 | 56.6 | 56.6 | thin at home: wine |
@@ -117,14 +118,14 @@ Cash 647, prestige 3,321 (201 free, -6.3/turn).
   - ropewalk 1 [make rope 1] 0.00 -> 0.31: -26/turn
   - ropewalk 1 0.25 -> 0.00: +29/turn
 - Model check: not enough runs yet (needs 6 turns of goal history).
-- Worth of one more unit per turn: labour 1.34, thread 3.89, cloth 5.90, flax fibres 5.56, garments 16.55, nets 15.57, beer 130.72, timber 3.17, prestige 10000.00, cash 100.00
+- Worth of one more unit per turn: labour 1.34, thread 3.89, cloth 5.90, flax fibres 5.56, garments 16.55, nets 15.57, beer 130.72, timber 3.31, prestige 10000.00, cash 100.00
 - Orders it would set: candles buy 1 (v2 2); cured meat buy 6 (v2 None); firewood buy 3 (v2 7); fish buy 0 (v2 None); furniture buy 2 (v2 None); grain buy 6 (v2 0); light armour buy 1 (v2 None); meat buy 0 (v2 None); pasties buy 1 (v2 2); porterage buy 2 (v2 0)
 - Recipe: flax farm 1 make flax fibres 1 -> grow flax 1 at 6.29, worth +386/turn.
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.31, worth +12/turn.
 - Management: ~11.39 of 17 used.
 - Investments:
   - Tenants L13 for 500 prestige: +78/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - new chandlery (make candles 1) for ~4266 coin: +7/turn, payback 649 turns, doesn't pay yet (materials thin at home: nails)
+  - new chandlery (make candles 1) for ~4276 coin: +7/turn, payback 651 turns, doesn't pay yet (materials thin at home: nails)
 - Trim: donate park 1: +367/turn (tax 96 saved).
 - Trim: donate mansion 1: +243/turn (tax 0 saved).
 
