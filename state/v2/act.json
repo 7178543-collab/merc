@@ -1,14 +1,15 @@
 {
- "t": "2026-10-27T11:58:03+00:00",
- "turn": 13586,
+ "t": "2026-10-27T13:18:38+00:00",
+ "turn": 13588,
  "mode": "live",
  "owned": [
   "beer",
+  "candles",
   "cured fish",
+  "cured meat",
   "donations",
   "firewood",
   "fish",
-  "flax fibres",
   "flax plants",
   "furniture",
   "garments",
@@ -24,25 +25,70 @@
  "suspended": {},
  "stand_down": null,
  "failsafe_level": 3,
- "would_change": 8,
+ "would_change": 11,
  "chain": {
   "why": "the goal planner owns building rates",
   "done": []
  },
  "rows": [
   {
-   "item": "firewood",
+   "item": "beer",
    "owned": true,
    "live": [
     {
-     "buy_price": "2.4"
+     "min_holding": 60,
+     "sell_volume": 3,
+     "sell_price": "2.94"
     }
    ],
    "new": [
     {
-     "buy_price": "2.4",
+     "buy_volume": 8,
+     "buy_price": "3.6",
+     "max_holding": 15
+    }
+   ],
+   "same": false,
+   "refused": [
+    "no buy ceiling in config for beer"
+   ]
+  },
+  {
+   "item": "candles",
+   "owned": true,
+   "live": [
+    {
+     "max_holding": 61,
      "buy_volume": 1,
-     "max_holding": 4
+     "buy_price": "70"
+    }
+   ],
+   "new": [
+    {
+     "max_holding": 61,
+     "buy_volume": 1,
+     "buy_price": "70.0"
+    }
+   ],
+   "same": true
+  },
+  {
+   "item": "cured meat",
+   "owned": true,
+   "live": [
+    {
+     "max_holding": 10,
+     "buy_volume": 6,
+     "buy_price": "29",
+     "sell_price": "24"
+    }
+   ],
+   "new": [
+    {
+     "max_holding": 6,
+     "buy_volume": 2,
+     "buy_price": "24",
+     "sell_price": "24"
     }
    ],
    "same": false,
@@ -54,18 +100,20 @@
    "reply": null
   },
   {
-   "item": "flax fibres",
+   "item": "firewood",
    "owned": true,
    "live": [
     {
-     "sell_volume": 3,
-     "sell_price": "4.56"
+     "max_holding": 4,
+     "buy_volume": 1,
+     "buy_price": "2.4"
     }
    ],
    "new": [
     {
-     "sell_volume": 1,
-     "sell_price": "5"
+     "max_holding": 7,
+     "buy_volume": 2,
+     "buy_price": "2.4"
     }
    ],
    "same": false,
@@ -99,7 +147,7 @@
    ],
    "same": false,
    "refused": [
-    "sell price 1.05 below floor 1.18"
+    "sell price 1.05 below floor 1.39"
    ]
   },
   {
@@ -116,7 +164,32 @@
     {
      "max_holding": 150,
      "buy_volume": 2,
-     "buy_price": "13.6"
+     "buy_price": "13.7"
+    }
+   ],
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
+  },
+  {
+   "item": "garments",
+   "owned": true,
+   "live": [
+    {
+     "min_holding": 30,
+     "sell_volume": 2,
+     "sell_price": "17.9"
+    }
+   ],
+   "new": [
+    {
+     "min_holding": 30,
+     "sell_volume": 2,
+     "sell_price": "17.9"
     }
    ],
    "same": true
@@ -126,14 +199,16 @@
    "owned": true,
    "live": [
     {
+     "max_holding": 21,
+     "buy_volume": 6,
      "buy_price": "3.7"
     }
    ],
    "new": [
     {
-     "buy_price": "3.7",
-     "buy_volume": 6,
-     "max_holding": 21
+     "max_holding": 21,
+     "buy_volume": 0,
+     "buy_price": "3.7"
     }
    ],
    "same": false,
@@ -149,13 +224,14 @@
    "owned": true,
    "live": [
     {
+     "buy_volume": 14,
      "buy_price": "2.2"
     }
    ],
    "new": [
     {
-     "buy_price": "2.2",
-     "buy_volume": 14
+     "buy_volume": 16,
+     "buy_price": "2.2"
     }
    ],
    "same": false,
@@ -180,10 +256,16 @@
     {
      "max_holding": 10,
      "buy_volume": 1,
-     "buy_price": "96.5"
+     "buy_price": "97"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "nets",
@@ -209,8 +291,8 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 4,
-     "buy_volume": 1,
+     "max_holding": 8,
+     "buy_volume": 2,
      "buy_price": "14.5"
     }
    ],
@@ -221,13 +303,7 @@
      "buy_price": "14.5"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "porterage",
@@ -240,11 +316,17 @@
    ],
    "new": [
     {
-     "buy_volume": 5,
+     "buy_volume": 1,
      "buy_price": "1.1"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "rope",
@@ -290,7 +372,7 @@
      "buy_price": "5.4"
     },
     {
-     "sell_volume": 41,
+     "sell_volume": 42,
      "sell_price": "3.96"
     }
    ],
@@ -299,7 +381,7 @@
      "buy_price": "5.4"
     },
     {
-     "sell_volume": 42,
+     "sell_volume": 43,
      "sell_price": "3.96"
     }
    ],
@@ -328,8 +410,8 @@
    ],
    "new": [
     {
-     "max_holding": 1,
-     "buy_volume": 1,
+     "max_holding": 200,
+     "buy_volume": 0,
      "buy_price": "6.2"
     }
    ],
