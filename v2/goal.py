@@ -846,7 +846,8 @@ def solve(M, fix=None, extra_supply=None, prestige_min=None, cash_min=None, ship
     except Exception:
         pass
     return {"ok": True, "value": value, "book": book, "levels": levels, "flows": flows, "cashflow": cashflow,
-            "prestige_rate": prestige, "shadow": shadow, "relaxed": relaxed, "ships": ship_use, "fixed": fixed}
+            "prestige_rate": prestige, "shadow": shadow, "relaxed": relaxed, "ships": ship_use, "fixed": fixed,
+            "prestige_short": sp}
 
 
 # ---------------------------------------------------------------- the plan
@@ -893,7 +894,12 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
     g = M["cfg"]
 
     def ok_like(r, ref):
-        return bool(r.get("ok")) and set(r.get("relaxed") or []) <= set(ref.get("relaxed") or [])
+        """r keeps every limit ref keeps, and never sinks further under a prestige floor ref already misses: value
+        leaves the floor's slack out, so without this a broken floor made prestige worth 0 to trims and builds
+        (Oct 28: the park, +8 prestige/turn, scored +379/turn to donate with the floor already broken)."""
+        if not (bool(r.get("ok")) and set(r.get("relaxed") or []) <= set(ref.get("relaxed") or [])):
+            return False
+        return _n(r.get("prestige_short")) <= _n(ref.get("prestige_short")) + 0.05
 
     # ---- ships: today's routes, then each ship's best town (screened by the plan's own prices, then re-solved)
     sopt = ship_options(s, M, world, sea, products, recipes, proven=proven, cfg=cfg) if (world and sea) else None

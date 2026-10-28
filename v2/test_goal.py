@@ -556,6 +556,23 @@ def test_cuts_fill_a_real_shortage_first():
     more = act.buy_first([{"id": "v", "recipe": "a", "from": 2.0, "to": 1.0}], snap, rec, gst={})[0]
     assert more.get("deferred") and more["labour"] == -24.6, more         # past the 75.4 short it waits; buy -24.6 only
 
+def test_trims_never_sink_a_broken_prestige_floor():
+    """Oct 28: with the prestige floor already missed, value left the floor's slack out, so prestige counted 0 and the
+    goal scored donating the park (+8 prestige/turn) at +379/turn. A trim that loses prestige under a broken floor is
+    no trim; one that costs no prestige still is."""
+    s = snap(household={"free": 250, "impacts": {"to legacy": -1.0}, "levels": {"tenants": 12}})
+    s["buildings"][2]["target"] = 1
+    s["buildings"].append({"id": "4", "type": "workshop", "name": "workshop 2", "size": 1, "recipe": "make widgets",
+                           "target": 0, "production": 0})
+    s["buildings"] = s["buildings"][1:]       # no own labour: the feast's 20 labour is bought, ~40 coin a turn
+    cfg = dict(CFG, goal={"building_tax": 0.5})
+    G = goal.plan_goal(s, cfg, RECIPES, hist=hist_selling("widgets", 5))
+    assert "prestige floor" in G["relaxed"] and G["levels"]["mansion"] == 1, (G["relaxed"], G["levels"])
+    what = [t["what"] for t in G["trims"]]
+    assert not any("mansion" in w for w in what), G["trims"]
+    assert "donate workshop" in what, G["trims"]      # costs no prestige: still trimmed
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
