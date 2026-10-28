@@ -570,7 +570,13 @@ def repay_loan(cash=None, turn=None, post=None, get=None):
             cash = _cash() if cash is None else cash
             turn = _turn_now() if turn is None else turn
             late = turn is not None and turn >= LOAN_DEADLINE_TURN - LOAN_LATE_TURNS
-            need = owed + (LOAN_LATE_BUFFER if late else LOAN_BUFFER)
+            try:
+                import guardian
+                fl = guardian.floor_override(1000.0)
+            except Exception:
+                fl = 1000.0
+            # repay only if cash stays over the goal planner's floor afterwards (else every job stands down again)
+            need = owed + (LOAN_LATE_BUFFER if late else max(LOAN_BUFFER, fl + 100))
             st.update(owed=owed, need=need, cash=round(cash), turn=turn, late=late, deadline_turn=LOAN_DEADLINE_TURN)
             if cash >= need:
                 aid = str(int(t["id"]) | 64)
