@@ -126,6 +126,10 @@ def test_model_check_uses_book_value():
     sc = goal.scorecard(gh, hist)
     assert sc["turns"] >= 24 and abs(sc["real"] - 50.0) < 1e-9 and abs(sc["predicted"] - 48.0) < 1e-9, sc
     assert goal.scorecard([{"ok": True, "turn": 100, "pred_today": 5.0}], hist) is None      # old rows don't count
+    # goal history longer than the history window (Oct 28): the check still runs, from the oldest turn history holds
+    gh_long = [{"ok": True, "turn": t, "pred_today": 0.0, "pred_book": 48.0} for t in range(40, 131)]
+    sc = goal.scorecard(gh_long, hist)
+    assert sc and sc["turns"] == 30 and abs(sc["real"] - 50.0) < 1e-9, sc
 
 
 def test_hand_over_one_job_at_a_time_and_back():

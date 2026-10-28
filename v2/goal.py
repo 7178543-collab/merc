@@ -1288,8 +1288,10 @@ def scorecard(goal_hist, hist, perishable=(), min_turns=6):
     t_now = now.get("turn")
     by_turn = {r.get("turn"): r for r in hist}
     for back in (24, 12, min_turns):
-        start = next((r for r in rows if t_now - r["turn"] >= back), None)
-        if start is None or start["turn"] not in by_turn:
+        # the oldest run the history still holds: once goal history outgrew the 60-turn window (Oct 26) the oldest
+        # run had no history row, every window was skipped and the check (and the brake on raises) went silent
+        start = next((r for r in rows if t_now - r["turn"] >= back and r["turn"] in by_turn), None)
+        if start is None:
             continue
         span = [r for r in rows if r["turn"] >= start["turn"]]
         pred = sum(r["pred_book"] for r in span) / len(span)
