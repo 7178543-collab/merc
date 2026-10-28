@@ -10,7 +10,8 @@ snapshot and plan that run just wrote. v1's writers skip owned items (v2_owned.p
 How a write is built (merge, never a blind replace):
   - the item's live order tiers are re-read just before the write;
   - buy side: the first buy tier gets v2's volume / price / stop-at; any other buy tiers lose their buy fields;
-  - sell side: the first sell tier gets v2's volume / price; min_holding (stock kept back) is never touched;
+  - sell side: the first sell tier gets v2's volume / price; min_holding (stock kept back) is never lowered (a goal
+    sell's own floor is written);
   - nothing else in the tiers changes; tiers left empty are dropped.
 
 Guards (any one refuses the item this run and says why):
@@ -145,6 +146,12 @@ def merge(live, buy, sell):
             ms[first]["sell_volume"] = int(sell["sell_volume"])
             if sell.get("sell_price"):
                 ms[first]["sell_price"] = str(sell["sell_price"])
+            # Oct 28: a goal sell carries the plan's stock floor (min_holding). It was dropped here, so a new tier went
+            # up with no floor: flax fibres sell 5 @ 4.8 (plan keeps 95, 1.9 held) sold the spinnery's input while it
+            # stood at 0.35 of 1.86 on fibres. The floor is written, never below one already on the tier.
+            if sell.get("min_holding") is not None:
+                ms[first]["min_holding"] = max(int(math.ceil(_n(sell["min_holding"]) - 1e-6)),
+                                               int(_n(ms[first].get("min_holding"))))
             for i in others:
                 for k in SELL_KEYS:
                     ms[i].pop(k, None)

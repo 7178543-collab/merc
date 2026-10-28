@@ -69,6 +69,10 @@ def test_act_merge():
     timber = [{"min_holding": 350, "sell_volume": 20, "sell_price": "7"}, {"buy_price": "8.6"}]
     assert act.merge(timber, None, {"sell_volume": 24, "sell_price": "8.5"})[0]["min_holding"] == 350   # kept-back stock untouched
     assert act.merge([], {"buy_volume": 5, "buy_price": "1"}, None) == [{"buy_volume": 5, "buy_price": "1"}]
+    # Oct 28: a goal sell's floor reaches the game (flax fibres keep 95 was dropped: the spinnery's input sold)
+    assert act.merge([], None, {"sell_volume": 5, "sell_price": "4.82", "min_holding": 95}) == \
+        [{"sell_volume": 5, "sell_price": "4.82", "min_holding": 95}]
+    assert act.merge(timber, None, {"sell_volume": 24, "sell_price": "8.5", "min_holding": 100})[0]["min_holding"] == 350
     assert act._canon([{"sell_price": "22"}]) == act._canon([{"sell_price": 22.0}])
 
 
