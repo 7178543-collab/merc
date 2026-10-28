@@ -244,7 +244,7 @@ def restore_clamp(item, live, new, cfg, cash):
     (cfg["_restore"], labour) may still go back up to that cap, at no more than its live price; the rest of the raise
     is dropped. Oct 25 (Taylor 'fix'): the failsafe's expiry cut (65 -> 24) could never be undone under the floor."""
     cap = _n((cfg.get("_restore") or {}).get(item))
-    if not cap or cash is None or cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)):
+    if not cap or cash is None or cash >= goal_floor(cfg):
         return new
     lb, nb = _side(live, _has_buy, BUY_KEYS), _side(new, _has_buy, BUY_KEYS)
     if not nb:
@@ -289,7 +289,7 @@ def check(item, live, new, cfg, cash):
         # Oct 23: with the goal live on buys, the inputs that feed its rates (grain, firewood for the brewery it
         # raised) must follow too, so the 4k reserve rule yields for every item while cash is over the hard floor
         goal_buys = goal_live(cfg, "buys") and cash is not None and \
-            cash >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and \
+            cash >= goal_floor(cfg) and \
             (goal_reality_ok(cfg) or item in set(cfg.get("_goal_starving") or ()))
         restore = _n((cfg.get("_restore") or {}).get(item))
         if nv > lv and cash is not None and cash < (cfg.get("cash") or {}).get("reserve", 0) and not goal_buys \
@@ -719,10 +719,29 @@ def enable_writes():
 
 
 # ---------------------------------------------------------------- chain sizing (v2/chain.py, Oct 14)
+def goal_floor(cfg):
+    """goal.hard_floor, or the guardian's ratcheted floor (8 turns of fixed cost) when that is higher and guardian.live is on."""
+    base = _n((cfg.get("goal") or {}).get("hard_floor", 1000))
+    try:
+        import guardian
+        return guardian.floor_override(base)
+    except Exception:
+        return base
+
+
+def guardian_frozen(snap):
+    """True while the guardian's rollback freeze is on (raises, recipe switches, investments and donations held; cuts go)."""
+    try:
+        import guardian
+        return guardian.frozen((snap or {}).get("turn"))
+    except Exception:
+        return False
+
+
 def goal_cash_ok(snap, cfg):
     """With the goal planner live, its own cash floor (in the plan) replaces the failsafe's BRAKE and STOP; only cash
     under goal.hard_floor (default 1,000) stands its jobs down."""
-    return _n((snap or {}).get("cash")) >= _n((cfg.get("goal") or {}).get("hard_floor", 1000)) and goal_reality_ok(cfg)
+    return _n((snap or {}).get("cash")) >= goal_floor(cfg) and goal_reality_ok(cfg)
 
 
 def goal_reality_ok(cfg):
@@ -869,6 +888,8 @@ def goal_moves(plan, cfg, snap, fs_level, dturn, gst=None):
     # what the plan spends (labour above all), and holding them while the labour buy can only shrink starved every
     # building at once (camp, ropewalk, net maker, banquet idle at 16:00 and 00:00 Oct 24-25)
     model_off = bool(sc and sc.get("turns", 0) >= 24 and abs(sc["predicted"] - sc["real"]) > max(40.0, 0.5 * abs(sc["real"])))
+    if guardian_frozen(snap):
+        model_off = True                # guardian rollback freeze (Oct 28): cuts only, same as a failed model check
     total = sum(_n(ch.get("gain")) for ch in G.get("changes") or [] if ch.get("gain") is not None and ch.get("kind") != "ship")
     if total < _n(gc.get("min_gain", 3.0)):
         return [], "plan beats today's rates by only %+.1f/turn: nothing to move" % total
@@ -940,6 +961,8 @@ def invest_pick(plan, cfg, snap, state, trim_ok=False):
     if not G.get("ok"):
         return None, "no goal plan"
     turn = snap.get("turn")
+    if guardian_frozen(snap):
+        return None, "guardian freeze: no investments or donations"
     # trims first: they free tax and management for what comes next
     tstreak = state.setdefault("trim", {})
     seen = set()

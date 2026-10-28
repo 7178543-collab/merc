@@ -30,6 +30,8 @@ jobs:
         run: python order_queue.py --live
       - name: Failsafe (cash brake + labour waste guard)
         run: python failsafe.py --live || true
+      - name: Guardian (known-good config, rollback, floor)
+        run: python guardian.py --live || true
       - name: Prestige rules
         run: python prestige_rules.py --live || true
       - name: Contracts (score; auto-fill church offers fully covered from stock)

@@ -67,9 +67,14 @@ STOP_ITEMS = ["limestone", "cured fish"]
 def goal_hard_floor():
     try:
         with open(os.path.join(HERE, "v2", "config.json")) as f:
-            return float(((json.load(f).get("goal") or {}).get("hard_floor")) or 1000)
+            base = float(((json.load(f).get("goal") or {}).get("hard_floor")) or 1000)
     except (OSError, ValueError, TypeError):
-        return 1000.0
+        base = 1000.0
+    try:
+        import guardian
+        return guardian.floor_override(base)
+    except Exception:
+        return base
 
 
 def v2_keeps_items(lvl, cash, goal_buys, hard_floor=None):
