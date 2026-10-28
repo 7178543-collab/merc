@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13617, 2026-10-28 18:35. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 1,169, prestige 3,231 (111 free, -1.5/turn).
+Turn 13617, 2026-10-28 18:58. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 1,182, prestige 3,231 (111 free, -1.5/turn).
 
 ## Items v2 runs (last turn)
 
@@ -13,18 +13,22 @@ Cash 1,169, prestige 3,231 (111 free, -1.5/turn).
 | firewood | 5 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 0 | 0 | 0 | 0 | 0 | none |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 17.9 |
-| grain | 32 | 9 | 8 | 0 | 0 | stop 34, buy 12, buy @ 3.7 |
+| grain | 32 | 9 | 8 | 0 | 0 | stop 34, buy 10, buy @ 3.7 |
 | labour | 27 | 27 | 519 | 0 | 8 | buy 27, buy @ 2.2 |
 | meat | 0 | 0 | 0 | 0 | 0 | none |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34.2 |
 | porterage | 6 | 6 | 5 | 0 | 1 | buy 6, buy @ 1.1 |
 
-**2 risks, 0 waste, 0 tuning** where v2 would act differently from v1.
+**2 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
 - **flax fibres**: flax fibres buffer 0.9 turns (holds 30, next step uses 32/turn) -> v2: check the step that makes it
 - **flax plants**: flax plants buffer 1.0 turns (holds 80, next step uses 80/turn) -> v2: check the step that makes it
+
+## Tuning
+
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 
 ## Notes
 
@@ -81,10 +85,10 @@ Cash 1,169, prestige 3,231 (111 free, -1.5/turn).
 | arms | 1 @ 29.6, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
 | candles | 1 @ 70.0, stop 61 |  | goal planner: buys 1 a turn for today's rates, keeps up to 61 (v2 had 2) |
 | cured meat | 6 @ 29.0, stop 23 |  | goal planner: buys 6 a turn for today's rates, keeps up to 23 (v2 had 7) |
-| firewood | 4 @ 2.4, stop 15 |  | goal planner: buys 4 a turn for today's rates, keeps up to 15 (v2 had 8) |
+| firewood | 4 @ 2.4, stop 16 |  | goal planner: buys 4 a turn for today's rates, keeps up to 16 (v2 had 8) |
 | furniture | 2 @ 15.1, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
 | garments |  | 2 @ min 17.9 | goal planner: sells 2 at 17.9 (v2 had 2 at 21.8) |
-| grain | 10 @ 3.7, stop 34 |  | uses 8.3/turn (brewery 1), makes 0.0, holds 32 = 3.9 turns |
+| grain | 8 @ 3.7, stop 31 |  | goal planner: buys 8 a turn for today's rates, keeps up to 31 (v2 had 10) |
 | labour | 27 @ 2.2, stop - |  | goal planner: buys 27 for today's rates (v2 had 19) |
 | light armour | 1 @ 98, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
 | nets |  | 9 @ min 34.2 | goal planner: sells 9 at 34.2 (v2 had 9 at 34.8) |
@@ -93,31 +97,28 @@ Cash 1,169, prestige 3,231 (111 free, -1.5/turn).
 | rope |  | 2 @ min 69.5 | goal planner: sells 2 at 69.5 (v2 had 1 at 75.0) |
 | tar | 1 @ 11.0, stop 1 |  | goal planner: buys 1 a turn for today's rates, keeps up to 1 (v2 had 1) |
 | thread |  | 48 @ min 3.96 | goal planner: sells 48 a turn at 3.96, keeps 172 (no one offered it) |
-| timber |  | 20 @ min 6.4 | goal planner: trial sale of an idle pile, 20 a turn at 6.4, keeps 100 (230 over) |
+| timber |  | 19 @ min 6.4 | goal planner: trial sale of an idle pile, 19 a turn at 6.4, keeps 100 (228 over) |
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 200 |
 
 ## Goal: business value (live: rates, buys, sells, ships, invest)
 - Value now 12.1k (cash + stock at home prices); -125/turn over 6 turns, -161/turn over 24 turns.
-- Limits: cash flow >= +118/turn, prestige >= +7.89/turn (values are after 200 tax a turn).
+- Limits: cash flow >= +117/turn, prestige >= +7.89/turn (values are after 200 tax a turn).
 - Today's settings: value -76/turn, cash -84/turn, prestige -1.45/turn - breaks the prestige floor and cash floor.
-- Plan: value -70/turn, cash -33/turn, prestige -1.45/turn - could not meet the prestige floor and cash floor.
-- Cash check (real vs predicted cash a tick, last 3): -158 vs -204, +8 vs -165, +143 vs -107.
+- Plan: value -77/turn, cash -39/turn, prestige -1.45/turn - could not meet the prestige floor and cash floor.
+- Cash check (real vs predicted cash a tick, last 3): -158 vs -204, +8 vs -165, +156 vs -107.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - spinnery 1 1.86 -> 1.73: +2/turn
-  - flax farm 1 4.99 -> 5.04: -0/turn
+  - spinnery 1 1.86 -> 1.67: +0/turn
+  - flax farm 1 4.99 -> 4.88: -1/turn
   - household duty 2.00 -> 1.43: -2/turn
   - ropewalk 1 0.25 -> 0.19: -2/turn
-  - brewery 1 0.13 -> 0.00: -11/turn
-  - brewery 1 [brew beer 2] 0.00 -> 0.12: +18/turn
-- Model check over the last 58 turns: predicted +179/turn for the settings we ran, real -95/turn - OFF, trust the plan less.
-- Worth of one more unit per turn: labour 159.26, thread 399.96, cloth 638.85, flax fibres 473.73, garments 1848.61, nets 1599.84, beer 244.73, timber 2.92, prestige 10000.00, cash 100.00
-- Orders it would set: candles buy 1 (v2 2); cured meat buy 6 (v2 7); firewood buy 4 (v2 8); fish buy 0 (v2 None); furniture buy 2 (v2 None); labour buy 27 (v2 19); light armour buy 1 (v2 None); meat buy 0 (v2 None); pasties buy 1 (v2 2); porterage buy 6 (v2 5)
-- Recipe: brewery 1 brew beer 1 -> brew beer 2 at 0.12, worth +17/turn.
+- Model check over the last 58 turns: predicted +174/turn for the settings we ran, real -95/turn - OFF, trust the plan less.
+- Worth of one more unit per turn: labour 159.26, thread 399.96, cloth 638.85, flax fibres 473.73, garments 1848.61, nets 1599.84, beer 286.97, timber 2.92, prestige 10000.00, cash 100.00
+- Orders it would set: candles buy 1 (v2 2); cured meat buy 6 (v2 7); firewood buy 4 (v2 8); fish buy 0 (v2 None); furniture buy 2 (v2 None); grain buy 8 (v2 10); labour buy 27 (v2 19); light armour buy 1 (v2 None); meat buy 0 (v2 None); pasties buy 1 (v2 2)
 - Management: ~11.39 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +78/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - new chandlery (make candles 1) for ~4131 coin: +1/turn, payback 5799 turns, doesn't pay yet (materials thin at home: bricks, nails)
+  - Tenants L13 for 500 prestige: +79/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - new chandlery (make candles 1) for ~4131 coin: +1/turn, payback 5892 turns, doesn't pay yet (materials thin at home: bricks, nails)
 
 ## Chain sizing
 
