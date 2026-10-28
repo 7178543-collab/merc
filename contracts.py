@@ -517,6 +517,93 @@ def church_buy(scored, cash=None, apply=None, failsafe_level=None, mk=None):
     return out
 
 
+# ---- church loan (Oct 27 2026; Taylor took it, then Claude added this rule Oct 28) ----
+# Interest-free 1,600 from the Church of Strasclives; deliver it back "between Mar 1132 and Feb 1152" (a turn is a game
+# month; Aug 1134 = turn ~13614, so the deadline is turn ~13824). Missing it costs up to -50 prestige.
+LOAN_ID = "653704276377721088"
+LOAN_AMOUNT = 1600
+LOAN_DEADLINE_TURN = 13824      # estimate: Feb 1152 = turn 13614 + 210 months
+LOAN_LATE_TURNS = 24            # inside this window repay with a thin margin instead of waiting for the full buffer
+LOAN_BUFFER = 1100              # cash that must remain after a normal repayment (hard floor 1,000 + 100)
+LOAN_LATE_BUFFER = 150
+LOAN_STATE = os.path.join(HERE, "state", "loan.json")
+
+
+def _loan_state():
+    try:
+        with open(LOAN_STATE) as f:
+            return json.load(f) or {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _turn_now():
+    try:
+        with open(os.path.join(HERE, "state", "v2", "snapshot.json")) as f:
+            return int(json.load(f).get("turn"))
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def repay_loan(cash=None, turn=None, post=None, get=None):
+    """Repay the church loan once cash covers it plus a buffer (or, in the last LOAN_LATE_TURNS turns, plus a thin one).
+    Delivery is a money action: same POST as the Contracts > actions screen; the operation is the business account
+    (the game's own reference form is 'business/<id>'), with a no-operation fallback. Every try is logged
+    (state/order_queue_done.jsonl, source 'contracts') and read back; success is stage 'done'. Never raises."""
+    import order_queue as q
+    post = post or _post
+    get = get or m.get
+    st = _loan_state()
+    if st.get("repaid"):
+        return st
+    try:
+        c = get("/contracts/%s" % LOAN_ID) or {}
+        txs = [t for t in (c.get("transactions") or []) if str(t.get("asset")) == "money"]
+        open_t = [t for t in txs if t.get("stage") != "done" and m.num(t.get("volume")) > 0.001]
+        if c and not txs:
+            st["error"] = "loan contract has no money transaction in the expected shape; check by hand"
+        elif c and not open_t:
+            st.update(repaid=True, note="no open money transaction left on the loan contract")
+        elif c:
+            t = open_t[-1]
+            owed = m.num(t.get("volume")) or LOAN_AMOUNT
+            cash = _cash() if cash is None else cash
+            turn = _turn_now() if turn is None else turn
+            late = turn is not None and turn >= LOAN_DEADLINE_TURN - LOAN_LATE_TURNS
+            need = owed + (LOAN_LATE_BUFFER if late else LOAN_BUFFER)
+            st.update(owed=owed, need=need, cash=round(cash), turn=turn, late=late, deadline_turn=LOAN_DEADLINE_TURN)
+            if cash >= need:
+                aid = str(int(t["id"]) | 64)
+                tries = []
+                for op in ("business/%s" % BUSINESS, None):
+                    body = {"participant_id": BUSINESS, "volume": owed, "asset": "money", "allow_alloc": True}
+                    if op:
+                        body["operation"] = op
+                    ok, status, resp = post("/contracts/%s/actions/%s" % (LOAN_ID, aid), body)
+                    tries.append([op, status, resp[:120]])
+                    after = get("/contracts/%s" % LOAN_ID) or {}
+                    left = [x for x in (after.get("transactions") or [])
+                            if str(x.get("asset")) == "money" and x.get("stage") != "done" and m.num(x.get("volume")) > 0.001]
+                    good = ok and not left
+                    q.log({"contract": LOAN_ID, "item": "money", "volume": owed, "note": "church loan repay (op %s)" % op},
+                          dict(ok=bool(good), status=status, body=resp[:200]), source="contracts")
+                    if good:
+                        st.update(repaid=True, repaid_turn=turn, repaid_cash=round(cash))
+                        break
+                st["tries"] = tries
+    except SystemExit:
+        st["error"] = "api read exited"
+    except Exception as ex:
+        st["error"] = "%s: %s" % (type(ex).__name__, ex)
+    try:
+        with open(LOAN_STATE, "w") as f:
+            json.dump(st, f, indent=1)
+    except OSError:
+        pass
+    print("contracts: loan", {k: v for k, v in st.items() if k != "tries"})
+    return st
+
+
 if __name__ == "__main__":
     import sys
     board = score_board()
@@ -524,6 +611,10 @@ if __name__ == "__main__":
         print("%-4s %-9s %-12s %s" % (r["verdict"], r["kind"], r["item"], r["why"]))
     if "--fill" in sys.argv and m.USER and m.TOKEN:
         auto_fill(board)
+        try:
+            repay_loan()
+        except Exception as ex:
+            print("contracts: loan repay failed: %s: %s" % (type(ex).__name__, ex))
         try:
             board2 = score_board()              # re-read: a fill this run takes its ask off the board
             church_buildup(board2)
