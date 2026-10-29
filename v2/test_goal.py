@@ -573,6 +573,22 @@ def test_trims_never_sink_a_broken_prestige_floor():
     assert "donate workshop" in what, G["trims"]      # costs no prestige: still trimmed
 
 
+def test_trim_gain_is_capped_by_what_it_really_saves():
+    """Oct 28 'donate park +381/turn' was freed own labour valued at market, ~150 really. A trim may claim at most
+    trim_backed_x x (tax saved + bought labour freed) + trim_min; the rest is listed in trims_unbacked, not trimmed."""
+    s = snap(household={"free": 250, "impacts": {"to legacy": -1.0}, "levels": {"tenants": 12}})
+    s["buildings"][2]["target"] = 1
+    s["buildings"].append({"id": "4", "type": "workshop", "name": "workshop 2", "size": 1, "recipe": "make widgets",
+                           "target": 0, "production": 0})
+    s["buildings"] = s["buildings"][1:]
+    loose = goal.plan_goal(s, dict(CFG, goal={"building_tax": 0.5}), RECIPES, hist=hist_selling("widgets", 5))
+    assert "donate workshop" in [x["what"] for x in loose["trims"]] and loose["trims_unbacked"] == []
+    strict = goal.plan_goal(s, dict(CFG, goal={"building_tax": 0.5, "trim_backed_x": 0.0}), RECIPES,
+                            hist=hist_selling("widgets", 5))
+    assert "donate workshop" not in [x["what"] for x in strict["trims"]], strict["trims"]
+    assert any("workshop" in u["what"] and u["plan_gain"] > 5 and u["backed"] > 0 for u in strict["trims_unbacked"]), strict["trims_unbacked"]
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):

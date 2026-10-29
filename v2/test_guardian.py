@@ -90,6 +90,32 @@ def test_readers_ignore_state_when_not_live():
         g.cfg = old
 
 
+def test_debt_is_not_a_cushion():
+    h = hist([4000] * 30)
+    st, _, _ = g.decide(129, 4000, 1000, 200, h, [], GOOD, {}, C, debt=3000)   # 4000 - 3000 < 2 x floor
+    assert not st.get("known_good") and not st.get("hard_floor")
+    assert st["debt"] == 3000 and st["free_cash"] == 1000
+    st2, _, _ = g.decide(129, 4000, 1000, 200, h, [], GOOD, {}, C, debt=0)
+    assert len(st2["known_good"]) == 1 and st2["hard_floor"] == 1600.0
+
+
+def test_honest_burn_sees_stock_sales():
+    h = hist([1000] * 30)                                                     # cash flat ...
+    trend = {"per_turn_24": -150.0}                                           # ... value falling 150/turn
+    st, _, n = g.decide(129, 1000, 1000, 200, h, [], GOOD, {}, C, trend=trend)
+    assert st["burn"]["flattered"] is True and "HONEST BURN" in st["burn_alert"] and "stock" in st["burn_alert"]
+    st2, _, _ = g.decide(129, 1000, 1000, 200, h, [], GOOD, st, C, trend={"per_turn_24": -20.0})
+    assert "burn_alert" not in st2                                            # small burn: no alert, old alert cleared
+    st3, _, _ = g.decide(129, 1000, 1000, 200, hist([1000 + 10 * i for i in range(30)]), [], GOOD, {}, C, trend={"per_turn_24": 5.0})
+    assert st3["burn"]["alert"] is None
+
+
+def test_honest_burn_cash_falling_is_not_flattered():
+    b = g.honest_burn({"per_turn_24": -200.0}, -190.0, C)
+    assert b["flattered"] is False and b["alert"].startswith("HONEST BURN")
+    assert g.honest_burn({}, 5.0, C)["alert"] is None
+
+
 if __name__ == "__main__":
     n = 0
     for k, v in sorted(globals().items()):

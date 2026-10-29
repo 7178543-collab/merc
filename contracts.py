@@ -569,7 +569,17 @@ def repay_loan(cash=None, turn=None, post=None, get=None):
             owed = m.num(t.get("volume")) or LOAN_AMOUNT
             cash = _cash() if cash is None else cash
             turn = _turn_now() if turn is None else turn
-            late = turn is not None and turn >= LOAN_DEADLINE_TURN - LOAN_LATE_TURNS
+            # the contract's own timeframe (start + length, in turns) beats the Aug 1134 estimate; only trusted when it
+            # lands in a sane range around now (a wrong read must never push the deadline out of reach)
+            dl = LOAN_DEADLINE_TURN
+            try:
+                tf = t.get("timeframe") or {}
+                cand = int(tf["start"]) + int(tf["length"])
+                if turn is not None and turn - 50 < cand < turn + 600:
+                    dl = cand
+            except (KeyError, TypeError, ValueError):
+                pass
+            late = turn is not None and turn >= dl - LOAN_LATE_TURNS
             try:
                 import guardian
                 fl = guardian.floor_override(1000.0)
@@ -577,7 +587,7 @@ def repay_loan(cash=None, turn=None, post=None, get=None):
                 fl = 1000.0
             # repay only if cash stays over the goal planner's floor afterwards (else every job stands down again)
             need = owed + (LOAN_LATE_BUFFER if late else max(LOAN_BUFFER, fl + 100))
-            st.update(owed=owed, need=need, cash=round(cash), turn=turn, late=late, deadline_turn=LOAN_DEADLINE_TURN)
+            st.update(owed=owed, need=need, cash=round(cash), turn=turn, late=late, deadline_turn=dl)
             if cash >= need:
                 aid = str(int(t["id"]) | 64)
                 tries = []

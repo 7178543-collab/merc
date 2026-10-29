@@ -35,10 +35,12 @@ SNAP = os.path.join(HERE, "state", "v2", "snapshot.json")
 GOAL = os.path.join(HERE, "state", "v2", "goal.json")
 GOAL_ACT = os.path.join(HERE, "state", "v2", "goal_act.jsonl")
 FAILSAFE = os.path.join(HERE, "state", "failsafe.json")
+LOAN = os.path.join(HERE, "state", "loan.json")
 
 DEFAULTS = {"live": False, "slide_pct": 0.30, "slide_turns": 24, "healthy_x_floor": 2.0, "kg_gap_turns": 12,
             "kg_keep": 6, "starve_frac": 0.40, "starve_min_target": 0.5, "starve_turns": 4, "starve_buildings": 2,
-            "freeze_turns": 48, "cooldown_turns": 48, "floor_turns": 8, "floor_margin": 500, "long_stop_turns": 6}
+            "freeze_turns": 48, "cooldown_turns": 48, "floor_turns": 8, "floor_margin": 500, "long_stop_turns": 6,
+            "burn_alert": 100.0, "burn_flat_cash": 0.5}
 
 
 def _load(path, default):
@@ -78,6 +80,36 @@ def floor_override(default=1000.0):
         return float(default)
 
 
+
+# ----- honest burn and debt (Oct 28) -----
+def debt_owed():
+    """Church loan still owed (state/loan.json written by contracts.py); 0 once repaid or unreadable."""
+    d = _load(LOAN, {})
+    try:
+        if d.get("repaid"):
+            return 0.0
+        return max(0.0, float(d.get("owed") or 0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def honest_burn(trend, cash_per_turn, c):
+    """Value burn that stock sales cannot hide. trend: goal.json "trend" (business value = cash + stock at market, per
+    turn over 6/24/48 turns). cash_per_turn: the cash change per turn over the same 24 turns, from history.
+    Returns a dict: value_per_turn (24-turn, falling window beats the 6-turn noise), cash_per_turn, flattered (cash flat
+    or rising while value falls: stock is being sold to cover costs) and alert text or None."""
+    v24 = trend.get("per_turn_24") if trend else None
+    if v24 is None:
+        return {"value_per_turn": None, "cash_per_turn": cash_per_turn, "flattered": False, "alert": None}
+    flat = cash_per_turn is not None and cash_per_turn > -c["burn_flat_cash"] * abs(v24)
+    out = {"value_per_turn": round(float(v24), 1), "cash_per_turn": None if cash_per_turn is None else round(cash_per_turn, 1),
+           "flattered": bool(v24 < -c["burn_alert"] and flat), "alert": None}
+    if v24 < -c["burn_alert"]:
+        out["alert"] = ("HONEST BURN: business value %+.0f/turn over 24 turns%s" % (
+            v24, " while cash is %s (stock is being sold to cover costs)" % ("flat" if abs(cash_per_turn or 0) < 5 else
+                                                                         "%+.0f/turn" % cash_per_turn) if out["flattered"] else ""))
+    return out
+
 # ----- pure decision functions -----
 def cash_by_turn(history_lines):
     out = {}
@@ -87,8 +119,9 @@ def cash_by_turn(history_lines):
     return out
 
 
-def is_healthy(cash, ago_cash, floor, c):
-    return cash >= c["healthy_x_floor"] * floor and (ago_cash is None or cash >= 0.9 * ago_cash)
+def is_healthy(cash, ago_cash, floor, c, debt=0.0):
+    """Cash over 2 x the floor AFTER the debt owed, and not sliding (the slide test uses raw cash, as history does)."""
+    return cash - float(debt or 0) >= c["healthy_x_floor"] * floor and (ago_cash is None or cash >= 0.9 * ago_cash)
 
 
 def starved_buildings(history_lines, c):
@@ -154,29 +187,45 @@ def restore_entries(kg_rec, snap_buildings):
     return out[:12]
 
 
-def decide(turn, cash, floor, fixed_cost, hist, goal_act_rows, snap_buildings, state, c):
-    """Pure. Returns (new_state, entries, notes). hist: history rows oldest first (turn, cash, bld)."""
+def decide(turn, cash, floor, fixed_cost, hist, goal_act_rows, snap_buildings, state, c, debt=0.0, trend=None):
+    """Pure. Returns (new_state, entries, notes). hist: history rows oldest first (turn, cash, bld).
+    debt: loan still owed; the healthy and floor-ratchet tests use cash - debt (borrowed money is not a cushion)."""
     st = json.loads(json.dumps(state or {}))
     notes = []
     cb = cash_by_turn(hist)
     ago_turns = [t for t in cb if t <= turn - int(c["slide_turns"])]
     ago_cash = cb[max(ago_turns)] if ago_turns else None
 
+    free = cash - float(debt or 0)
+    st["debt"] = round(float(debt or 0))
+    st["free_cash"] = round(free)
+
     # 3. floor ratchet
     want_floor = round(c["floor_turns"] * max(float(fixed_cost or 0), 0.0) / 100.0) * 100.0
-    if want_floor > 0 and cash >= want_floor + c["floor_margin"] and want_floor > float(st.get("hard_floor") or 0):
+    if want_floor > 0 and free >= want_floor + c["floor_margin"] and want_floor > float(st.get("hard_floor") or 0):
         st["hard_floor"] = want_floor
         notes.append("floor ratchet: hard_floor -> %.0f (%d turns of fixed cost %.0f)" % (want_floor, c["floor_turns"], fixed_cost))
 
     # 1. known good
     kg = st.setdefault("known_good", [])
-    if is_healthy(cash, ago_cash, floor, c) and (not kg or turn - kg[-1]["turn"] >= c["kg_gap_turns"]):
+    if is_healthy(cash, ago_cash, floor, c, debt) and (not kg or turn - kg[-1]["turn"] >= c["kg_gap_turns"]):
         recs = [{"id": str(b["id"]), "name": b.get("name"), "recipe": b.get("recipe"), "target": b.get("target")}
                 for b in snap_buildings or [] if b.get("recipe") and not b.get("construction") and b.get("target") is not None]
         if recs:
             kg.append({"turn": turn, "cash": round(cash), "buildings": recs})
             del kg[:-int(c["kg_keep"])]
             notes.append("known good recorded at turn %d (cash %.0f, %d buildings)" % (turn, cash, len(recs)))
+
+    # honest burn: value (cash + stock) trend, not cash
+    ago_t = [t for t in cb if t <= turn - 24]
+    cpt = (cash - cb[max(ago_t)]) / float(turn - max(ago_t)) if ago_t and turn > max(ago_t) else None
+    hb = honest_burn(trend or {}, cpt, c)
+    st["burn"] = hb
+    if hb.get("alert"):
+        st["burn_alert"] = hb["alert"]
+        notes.append(hb["alert"])
+    else:
+        st.pop("burn_alert", None)
 
     # 2. rollback triggers
     entries = []
@@ -263,7 +312,7 @@ def main():
         else float(gcfg.get("hard_floor") or 1000)
     st0 = load_state()
     st, entries, notes = decide(int(turn), float(cash), floor, fixed, history_rows(), goal_act_rows(),
-                                snap.get("buildings"), st0, c)
+                                snap.get("buildings"), st0, c, debt=debt_owed(), trend=goal.get("trend"))
     fs = _load(FAILSAFE, {})
     if fs.get("level") == 3 and fs.get("since"):
         try:

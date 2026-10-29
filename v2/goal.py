@@ -1121,7 +1121,11 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
                             ("materials thin at home: %s" % ", ".join(thin)) if thin else None})
     inv.sort(key=lambda d: -(d["gain"] or 0))
     # trims: a building whose removal (its plots idle AND its tax gone) beats keeping it
-    trims = []
+    trims, trims_unbacked = [], []
+    _lab = (((s.get("store") or {}).get("items") or {}).get("labour")) or {}
+    lab_bought = _n((_lab.get("flow") or {}).get("purchase"))
+    _lm = (s.get("market") or {}).get("labour") or {}
+    lab_px = _n(_lm.get("ask")) or _n(_lm.get("price"))
     for grp in M["groups"]:
         acts_g = [a for a in M["acts"] if a.get("group") == grp]
         tax_b = M["taxes"].get(grp, 0.0)
@@ -1132,6 +1136,15 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
             continue
         gain = r["value"] - opt["value"]
         if gain >= g.get("trim_min", 5.0):
+            # Oct 28 honesty cap: a donation can only really save the building's tax plus the labour we BUY today that it
+            # would free. Own labour nothing else can use expires at ~0, so a planner gain far above that is the freed
+            # own labour valued at market (the Oct 28 'donate park +381/turn' that was really ~150).
+            used_lab = sum(_n((a.get("ins") or {}).get("labour")) * _n(a.get("cur")) for a in acts_g)
+            backed = tax_b + min(used_lab, lab_bought) * lab_px
+            if gain > g.get("trim_backed_x", 1.5) * backed + g.get("trim_min", 5.0):
+                trims_unbacked.append({"building": grp, "what": "donate %s" % acts_g[0]["name"].split(" [")[0],
+                                       "plan_gain": round(gain, 1), "backed": round(backed, 1)})
+                continue
             trims.append({"kind": "donate", "building": grp, "what": "donate %s" % acts_g[0]["name"].split(" [")[0],
                           "type": acts_g[0]["type"], "gain": gain, "tax": tax_b})
     trims.sort(key=lambda d: -d["gain"])
@@ -1156,7 +1169,7 @@ def plan_goal(s, cfg, recipes, drip=None, hist=None, buildings_data=None, world=
         "plan_prestige_rate": opt["prestige_rate"], "current_prestige_rate": cur.get("prestige_rate"),
         "prestige_min": M["prestige_min"], "cash_min": M["cash_min"], "fixed_cost": opt.get("fixed"),
         "relaxed": opt["relaxed"], "levels": {k: round(v, 3) for k, v in opt["levels"].items()},
-        "changes": changes, "buildings": bplan, "investments": inv, "trims": trims,
+        "changes": changes, "buildings": bplan, "investments": inv, "trims": trims, "trims_unbacked": trims_unbacked,
         "route_proven": proven,
         "buy_px": {k: round(_n((M["goods"].get(k) or {}).get("buy_px")), 3) for k, v in now_flows.items() if v.get("buy")},
         "sell_px": {k: round(_n(v.get("sell_px")), 3) for k, v in now_flows.items() if v.get("sell")},

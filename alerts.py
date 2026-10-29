@@ -426,6 +426,21 @@ def main():
             wanted["[merc] FAILSAFE NOT RUNNING (last run %.0fh ago)" % age] = "check the merc / order-queue workflows"
     except (FileNotFoundError, ValueError, KeyError):
         wanted["[merc] FAILSAFE NOT RUNNING (no state file)"] = "check the merc / order-queue workflows"
+    # guardian (guardian.py, Oct 28): rollback/freeze, honest value burn, cash under the loan owed. Titles are fixed so
+    # one issue (one email) opens per condition and closes itself when it clears; the changing numbers go in the body.
+    try:
+        gd = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "state", "guardian.json")))
+        ga = gd.get("alert") or ""
+        lr = (gd.get("last_run") or {}).get("turn") or 0
+        if "ROLLBACK" in ga or "no known-good" in ga or int(gd.get("freeze_until_turn") or 0) > int(lr):
+            wanted["[merc] GUARDIAN: rollback or trigger"] = ga or "goal planner frozen until turn %s" % gd.get("freeze_until_turn")
+        if gd.get("burn_alert"):
+            wanted["[merc] HONEST BURN: business value falling"] = gd["burn_alert"]
+        if gd.get("debt") and gd.get("free_cash") is not None and gd["free_cash"] < 0:
+            wanted["[merc] LOAN: cash is under the debt owed"] = "cash %s, loan owed %s, free cash %s (repay rule needs cash 2,700)" % (
+                (gd.get("last_run") or {}).get("cash"), gd.get("debt"), gd.get("free_cash"))
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
+        pass
     # one-off manual steps the rules can't do (state/needs_you.json, written by prestige_rules.py;
     # delete the file, or let a later rule clear it, once done)
     try:
