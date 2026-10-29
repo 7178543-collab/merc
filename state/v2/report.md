@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13644, 2026-10-29 21:02. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13644, 2026-10-29 21:55. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 1,602, prestige 3,261 (141 free, -1.6/turn).
 
 ## Items v2 runs (last turn)
@@ -12,14 +12,14 @@ Cash 1,602, prestige 3,261 (141 free, -1.6/turn).
 | donations | 0 | 0 | 0 | 0 | 0 | none |
 | firewood | 8 | 4 | 4 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 0 | 0 | 0 | 0 | 0 | none |
-| garments | 9 | 2 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 17.9; stop 9, buy 3, buy @ 21.6 |
-| grain | 27 | 9 | 8 | 0 | 0 | stop 34, buy 9, buy @ 3.7 |
+| garments | 9 | 2 | 2 | 0 | 0 | min_holding 30, sell 2, sell @ 17.9; stop 9, buy 3, buy @ 21.4 |
+| grain | 27 | 9 | 8 | 0 | 0 | stop 33, buy 9, buy @ 3.7 |
 | labour | 16 | 16 | 493 | 0 | 23 | buy 16, buy @ 2.2 |
 | meat | 0 | 0 | 0 | 0 | 0 | none |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34.2 |
 | porterage | 6 | 6 | 5 | 0 | 1 | buy 6, buy @ 1.1 |
 
-**3 risks, 1 waste, 0 tuning** where v2 would act differently from v1.
+**3 risks, 1 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -30,6 +30,11 @@ Cash 1,602, prestige 3,261 (141 free, -1.6/turn).
 ## Waste (money lost now)
 
 - **labour**: 23 labour expired last turn (~35 coin): holding 16 against a ~0 buffer target -> v2: trim the buy until the stock is near 0
+
+## Tuning
+
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
+- **grain**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 
 ## Notes
 
@@ -102,28 +107,28 @@ Cash 1,602, prestige 3,261 (141 free, -1.6/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 200 |
 
 ## Goal: business value (live: rates, buys, sells, ships, invest)
-- Value now 9.1k (cash + stock at home prices); -33/turn over 6 turns, -122/turn over 24 turns.
+- Value now 9.1k (cash + stock at home prices); -47/turn over 6 turns, -123/turn over 24 turns.
 - Limits: cash flow >= +100/turn, prestige >= +6.62/turn (values are after 200 tax a turn).
-- Today's settings: value -58/turn, cash -17/turn, prestige -1.61/turn - breaks the prestige floor and cash floor.
-- Plan: value -23/turn, cash +32/turn, prestige -1.61/turn - could not meet the prestige floor and cash floor.
+- Today's settings: value -63/turn, cash -22/turn, prestige -1.61/turn - breaks the prestige floor and cash floor.
+- Plan: value -28/turn, cash +28/turn, prestige -1.61/turn - could not meet the prestige floor and cash floor.
 - Cash check (real vs predicted cash a tick, last 3): -5 vs +16, +15 vs -4, -46 vs +2.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - weavery 1 0.00 -> 0.11: +11/turn
+  - weavery 1 0.00 -> 0.11: +10/turn
   - net maker 0.00 -> 0.28: +8/turn
-  - spinnery 1 1.86 -> 2.32: -8/turn
-  - retting pit 1 1.00 -> 1.31: -12/turn
-  - flax farm 1 4.99 -> 6.57: +22/turn
+  - spinnery 1 1.86 -> 2.31: -8/turn
+  - retting pit 1 1.00 -> 1.31: -11/turn
+  - flax farm 1 4.99 -> 6.53: +21/turn
   - ropewalk 1 [make rope 1] 0.00 -> 0.30: -22/turn
   - ropewalk 1 0.25 -> 0.00: +25/turn
-- Model check over the last 59 turns: predicted +26/turn for the settings we ran, real -90/turn - OFF, trust the plan less.
-- Worth of one more unit per turn: labour 155.54, thread 390.55, cloth 623.86, flax fibres 462.46, garments 1805.70, nets 2758.07, beer 270.12, timber 611.05, prestige 10000.00, cash 100.00
+- Model check over the last 59 turns: predicted +18/turn for the settings we ran, real -96/turn - OFF, trust the plan less.
+- Worth of one more unit per turn: labour 155.54, thread 390.55, cloth 623.86, flax fibres 462.46, garments 1805.70, nets 2758.07, beer 288.31, timber 611.05, prestige 10000.00, cash 100.00
 - Orders it would set: arms buy 1 (v2 None); candles buy 1 (v2 2); cured meat buy 6 (v2 7); firewood buy 4 (v2 8); fish buy 0 (v2 None); furniture buy 2 (v2 None); grain buy 9 (v2 13); labour buy 16 (v2 0); light armour buy 1 (v2 None); meat buy 0 (v2 None)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.30, worth +13/turn.
 - Management: ~11.39 of 17 used.
 - Investments:
   - Tenants L13 for 500 prestige: +78/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - new leatherworks (make leather armour 1) for ~3389 coin: +2/turn, payback 1458 turns, doesn't pay yet (materials thin at home: nails)
+  - new leatherworks (make leather armour 1) for ~3389 coin: +1/turn, payback 5053 turns, doesn't pay yet (materials thin at home: nails)
 - Trim: donate weavery 1: +12/turn (tax 18 saved).
 
 ## Chain sizing
