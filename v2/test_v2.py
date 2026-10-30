@@ -1134,6 +1134,7 @@ def test_chain_moves_rules():
     d = act.chain_labour_delta(plan, snap, rec, [{"id": pc["buildings"]["sew"]["id"], "recipe": "sew garments 2",
                                                   "from": 0.21, "to": 0.9}])
     assert abs(d - 0.69 * 155) < 0.01, d
+    cfg.pop("hand_rates", None)                                  # Oct 30: the live config sets rates by hand
     cfg["goal"] = {"live": {"rates": True}}                      # the goal planner owns rates: chain sizing yields
     assert act.chain_moves(plan, cfg, snap, 0, {}, {})[1] == "the goal planner owns building rates"
 
