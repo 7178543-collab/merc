@@ -336,6 +336,35 @@ def _apply_town_pick(e):
     return dict(ok=True, towns=len(rows), top=[r["name"] for r in ranked[:5]], saved="state/town_pick.md")
 
 
+SHIP_IDS = {"1948883264", "845668271"}      # Linen Snake, Flax Wyrm
+TRADE_MAX_SPEND = 300.0                    # coin per manual buy entry (Oct 30 trial size)
+
+
+def _apply_trade(e):
+    """Manual market trade from a ship's own hold, settled at once (game client: POST /towns/{town}/markets/{item}/orders
+    {operation: "transport/<id>", price, volume, direction "bid"|"ask"}). The ship must be docked at that town.
+    Entry: {"trade": {"transport": id, "town": town_id, "item": "beer", "direction": "bid", "price": "2.70", "volume": 40},
+    "confirm": true}. No confirm = dry run. A bid may spend at most TRADE_MAX_SPEND (or "max_spend", never more)."""
+    t = e.get("trade") or {}
+    tid, town, item = str(t.get("transport") or ""), str(t.get("town") or ""), str(t.get("item") or "")
+    direction = t.get("direction")
+    try:
+        price, volume = float(t.get("price")), float(t.get("volume"))
+    except (TypeError, ValueError):
+        return dict(ok=False, error="trade needs numeric price and volume")
+    if tid not in SHIP_IDS or not town or not item or direction not in ("bid", "ask") or price <= 0 or volume <= 0:
+        return dict(ok=False, error="bad trade entry (our ship id, town, item, direction bid|ask, price, volume)")
+    cap = min(float(t.get("max_spend") or TRADE_MAX_SPEND), TRADE_MAX_SPEND)
+    if direction == "bid" and price * volume > cap:
+        return dict(ok=False, error="trade bid %.0f over the %.0f cap" % (price * volume, cap))
+    body = {"operation": "transport/%s" % tid, "price": str(t.get("price")), "volume": volume, "direction": direction}
+    path = "/towns/%s/markets/%s/orders" % (town, urllib.parse.quote(item))
+    if e.get("confirm") is not True:
+        return dict(ok=True, dry_run=True, path=path, body=body)
+    ok, status, reply = _req("POST", path, body)
+    return dict(ok=ok, status=status, reply=reply, path=path, body=body)
+
+
 def _apply_donate(e):
     """Donate a building to the church (permanent). Needs "confirm": true in the entry, so a stray
     or mistyped entry can never give a building away. POST /buildings/{id}/donate (game code)."""
@@ -1289,6 +1318,8 @@ def apply_entry(e):
         return _apply_prestige(e)
     if e.get("donate"):
         return _apply_donate(e)
+    if e.get("trade"):
+        return _apply_trade(e)
     if e.get("dump"):
         return _apply_dump(e)
     if "prestige_want" in e:
