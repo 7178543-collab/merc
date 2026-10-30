@@ -354,7 +354,7 @@ def diagnose(snap, cfg, ctx):
     seen = set()
     try:
         import goal_switch
-        r3_off = goal_switch.owns("rates", cfg)
+        r3_off = goal_switch.owns("rates", cfg) or bool((cfg or {}).get("hand_rates"))
     except Exception:
         r3_off = False
     for b in ([] if r3_off else (snap.get("buildings") or [])):
@@ -388,7 +388,7 @@ def diagnose(snap, cfg, ctx):
     starved, labour_need = [], 0.0
     try:
         import goal_switch
-        goal_rates = goal_switch.owns("rates", cfg)
+        goal_rates = goal_switch.owns("rates", cfg) or bool((cfg or {}).get("hand_rates"))
     except Exception:
         goal_rates = False
     for b in ([] if goal_rates else (snap.get("buildings") or [])):

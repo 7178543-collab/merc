@@ -64,6 +64,8 @@ def chain_owned():
     """True when bot v2 sets the textile chain's production targets (v2/config.json live.chain, not suspended as
     "chain"). chain_balancer.py stands aside then."""
     cfg = _load(CONFIG, {})
+    if cfg.get("hand_rates"):        # Oct 30 fresh start: building rates are set by hand only; the balancer stands aside
+        return True
     sus = _load(SUSPENDED, {})
     ov = (_load(os.path.join(ROOT, "state", "overrides.json"), {}) or {}).get("chain")
     live = (ov == "v2") if ov in ("v2", "v1") else bool((cfg.get("live") or {}).get("chain"))
