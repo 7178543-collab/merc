@@ -367,8 +367,24 @@ def build_model(s, cfg, recipes, drip=None, hist=None, buildings_data=None, extr
                      "prestige": 0.0, "lb": 0.0, "ub": resident / per if resident else _n(hd.get("target")),
                      "cur": min(_n(hd.get("target")), resident / per if resident else _n(hd.get("target")))})
 
+    # Oct 30 (fresh start, guideline 7: a slot is full or off). A household slot only scores when it gets its full
+    # volume; a short slot gives 0 or a penalty. Planning on today's (short) consumption locked the slots short for
+    # good, so a slot listed in cfg slot_targets is planned at its full volume once cash is over that entry's min_cash.
+    targets = {}
+    cash_now = _n(s.get("cash"))
+    try:                                                # cash we really have: minus the church loan still owed
+        cash_now -= _n(json.load(open(os.path.join(ROOT, "state", "loan.json"))).get("owed"))
+    except (OSError, ValueError, AttributeError):
+        pass
+    for item, t in ((cfg or {}).get("slot_targets") or {}).items():
+        if str(item).startswith("_") or not isinstance(t, dict):
+            continue
+        if cash_now >= _n(t.get("min_cash")):
+            targets[item] = _n(t.get("volume"))
     for item, v in (s.get("sustenance") or {}).items():
-        fixed_demand[item] = fixed_demand.get(item, 0) + _n(v)
+        fixed_demand[item] = fixed_demand.get(item, 0) + max(_n(v), targets.pop(item, 0.0))
+    for item, v in targets.items():                     # a target slot that eats nothing today
+        fixed_demand[item] = fixed_demand.get(item, 0) + v
     for item, v in (drip or {}).items():
         fixed_demand[item] = fixed_demand.get(item, 0) + _n(v)
 
