@@ -37,6 +37,8 @@ def owns(job, cfg=None, state=None):
     g = (cfg or {}).get("goal") or {}
     if g.get("off"):
         return False
+    if job in (g.get("blocked") or []):        # Oct 30 fresh start: jobs Taylor has frozen; auto can never take them
+        return False
     lv = g.get("live")
     if lv is True or (isinstance(lv, dict) and lv.get(job)):
         return True

@@ -342,6 +342,11 @@ def _apply_donate(e):
     bid = str(e["donate"])
     if e.get("confirm") is not True:
         return dict(ok=False, error="donate needs \"confirm\": true")
+    # Oct 30 (Taylor, fresh-start guideline 6): no automated donations. The goal planner's trim job gave away the
+    # quarry (Oct 25) and the logging camp (Oct 26) against his keep rules. Only an entry Taylor asked for, marked
+    # "taylor": true by hand, can donate anything.
+    if e.get("taylor") is not True:
+        return dict(ok=False, error="donate refused: needs \"taylor\": true (hand-written entry, Taylor's say-so only)")
     before = m.get("/buildings/%s" % bid) or {}
     ok, status, body = _req("POST", "/buildings/%s/donate" % bid, {"confirm_id": bid, "building_id": bid})
     if not ok:
