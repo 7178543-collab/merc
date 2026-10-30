@@ -52,7 +52,9 @@ LABOUR_PRICE_CAP = "2.00"
 # tool guard (Oct 11: tools ran dry at 5am, camp + retting stopped, their labour expired)
 CAMP, CAMP_RECIPE, CAMP_FULL, CAMP_SLOW = "151402406", "split timber 2", 20, 10
 TOOLS_LOW_TURNS, TOOLS_OK_TURNS = 3, 8   # slow the camp under 3 turns of use, restore over 8
-TOOLS_ORDER = {"buy_volume": 31, "buy_price": "6.20", "max_holding": 200}   # ~25 turns of normal use          # brake level: labour bid cap (market ~1.80)
+# Oct 30 fresh start: the logging camp is gone and tools use is ~0/turn, so the guard keeps a 100 stockpile
+# topped up only on dips (Taylor: steady tools stock of 100+, bought on price dips); the rest is sold down.
+TOOLS_ORDER = {"buy_volume": 10, "buy_price": "4.90", "max_holding": 100}
 
 # switched off at BRAKE: one-off build materials and stockpiles, never the production chain
 # Oct 15: tar dropped from the brake. It is the ropewalk's input, not a discretionary buy: the Oct 15 17:10 UTC brake
