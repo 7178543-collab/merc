@@ -23,6 +23,7 @@ import planner    # noqa: E402
 
 SNAP = json.load(open(os.path.join(HERE, "fixtures", "snapshot_2026-10-11.json")))
 CFG = json.load(open(os.path.join(HERE, "config.json")))
+CFG.pop("hand_rates", None)     # Oct 30: the live config sets rates by hand; the rules under test assume the old owners
 CFG.pop("goal", None)       # these checks cover v2's own rules; the goal planner's hand-over has its own tests
 
 
@@ -1047,6 +1048,7 @@ def _chain_inputs():
     snap = _load_fixture("snapshot_2026-10-14.json")
     rec = json.load(open(os.path.join(HERE, "data", "recipes.json")))
     cfg = copy.deepcopy(json.load(open(os.path.join(HERE, "config.json"))))
+    cfg.pop("hand_rates", None)
     return chain, snap, rec, cfg
 
 
