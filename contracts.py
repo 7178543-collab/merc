@@ -592,7 +592,8 @@ def repay_loan(cash=None, turn=None, post=None, get=None):
                 aid = str(int(t["id"]) | 64)
                 tries = []
                 for op in ("business/%s" % BUSINESS, None):
-                    body = {"participant_id": BUSINESS, "volume": owed, "asset": "money", "allow_alloc": True}
+                    # the game API rejects a float here ("cannot unmarshal number 1600.0 into ... volume"): whole coin only
+                    body = {"participant_id": BUSINESS, "volume": int(round(owed)), "asset": "money", "allow_alloc": True}
                     if op:
                         body["operation"] = op
                     ok, status, resp = post("/contracts/%s/actions/%s" % (LOAN_ID, aid), body)
