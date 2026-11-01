@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-01T16:58 | turn 13711 | data 0.0 h old | ~690 turns to season end
+Generated 2026-11-01T17:04 | turn 13711 | data 0.1 h old | ~689 turns to season end
 
 ## Flags
 - **HIGH** free prestige -10.5 and still falling -0.87/turn: a random track level can drop
@@ -19,15 +19,18 @@ Generated 2026-11-01T16:58 | turn 13711 | data 0.0 h old | ~690 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 59 of 481 (prestige rank 69): legacy 11004.6, prestige 3109.5; median legacy 1622.8
-- gap to the next rank up: 35.1
-- top 5: Jerry Wylteshire (Hofkirchen) 98829.0; Hawys atte Broke (Kirchwerp) 52911.0; Alphonse Segal (Rouhomme) 52901.0; Ambrosius K. Jordam (Pontmont) 41635.0; Ospakr König (Potshufe) 40629.0
+- legacy rank 59 of 482 (prestige rank 69): legacy 11020.1, prestige 3109.6; median legacy 1612.8
+- gap to the next rank up: 43.9
+- top 5: Jerry Wylteshire (Hofkirchen) 99052.0; Hawys atte Broke (Kirchwerp) 53072.0; Alphonse Segal (Rouhomme) 53015.0; Ambrosius K. Jordam (Pontmont) 41737.0; Ospakr König (Potshufe) 40712.0
 
 ## Town and contracts
-- Strasclives: 126 commoners, growth 0.127, migration 0.028, 5 households
+- Strasclives: 126 commoners, growth 0.146, migration 0.025, 5 households
 - church asks 2 | contracts {'done': 23, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1306.9), ('crafting', 157.6)]; Florise Plantier [('maritime', 1315.3), ('textile', 15.3)]; Chrétien Dunois [('textile', 371.3), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1308.3), ('crafting', 157.6)]; Florise Plantier [('maritime', 1316.7), ('textile', 15.3)]; Chrétien Dunois [('textile', 373.2), ('maritime', 155.6)]
+
+## Prestige sources and drains (per turn, live)
+- ? -15.55; ? +8.00; ? +6.30; ? +1.27
 
 ## Capital and waste
 - biggest stock by value: thread 189.8 (900.0), light armour 10.0 (888.0), candles 13.0 (878.0), furniture 57.0 (838.0), jewellery 8.0 (708.0), limestone 39.3 (668.0)
