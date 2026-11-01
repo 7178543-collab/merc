@@ -1,0 +1,35 @@
+name: oversight
+# Information-gathering bot (tools/oversight.py): READ-ONLY. Pulls live data over GET-only API calls (scoreboard,
+# town, church, contracts, household) plus the other bots' state, and writes state/oversight/ (latest.md briefing,
+# latest.json, log.jsonl game log, changes.md change log). It never changes anything in the game.
+on:
+  schedule:
+    # clear of the other jobs (:01 v1, :20 queue, :25 v2, :40 v1, :50 v2) and of the turn tick (~:59)
+    - cron: '12 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: merc-actor
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Write creds
+        env:
+          MERC_CREDS: ${{ secrets.MERC_CREDS }}
+        run: printf '%s\n' "$MERC_CREDS" > ~/.merc_creds && chmod 600 ~/.merc_creds
+      - name: Oversight (read-only)
+        run: python tools/oversight.py || true
+      - name: Save
+        run: |
+          git config user.name "merc-bot"
+          git config user.email "merc-bot@users.noreply.github.com"
+          git add -f state/oversight
+          git diff --cached --quiet || { git commit -q -m "oversight $(date -u +%Y-%m-%dT%H:%MZ)" && for i in 1 2 3; do git pull -q --rebase -X theirs && git push -q && break; git rebase --abort 2>/dev/null; sleep 5; done; }
