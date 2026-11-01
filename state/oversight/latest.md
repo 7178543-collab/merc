@@ -30,7 +30,7 @@ Generated 2026-11-01T17:04 | turn 13711 | data 0.1 h old | ~689 turns to season 
 - workers: Barthélemy de Gaillon [('maritime', 1308.3), ('crafting', 157.6)]; Florise Plantier [('maritime', 1316.7), ('textile', 15.3)]; Chrétien Dunois [('textile', 373.2), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- ? -15.55; ? +8.00; ? +6.30; ? +1.27
+- to legacy -15.55; maintain 1 +8.00; sustenance +6.30; hold banquet 1 (meat) +1.27
 
 ## Capital and waste
 - biggest stock by value: thread 189.8 (900.0), light armour 10.0 (888.0), candles 13.0 (878.0), furniture 57.0 (838.0), jewellery 8.0 (708.0), limestone 39.3 (668.0)
