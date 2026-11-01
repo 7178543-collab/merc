@@ -760,7 +760,7 @@ def test_diagnose_quiet_hours_reduce_only():
     q = _quarry_blocked()
     s["buildings"], s["operations"] = q["buildings"], q["operations"]
     s["store"]["items"].update(q["items"])
-    for ctx in (_dctx(s, quiet=True), _dctx(s, fs_level=1)):
+    for ctx in (_dctx(s, quiet=True), _dctx(s, fs_level=2)):
         f, acts = diagnose.diagnose(s, CFG, ctx)
         assert [a["rule"] for a in acts] == ["R2"] and not any(a["raise_"] for a in acts), acts
         assert "reduce-only" in next(x for x in f if x["rule"] == "R1")["held_back"]

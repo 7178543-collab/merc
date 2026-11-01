@@ -199,8 +199,10 @@ def diagnose(snap, cfg, ctx):
     owned, trade = set(ctx.get("owned") or ()), set(ctx.get("trade") or ())
     paused = ctx.get("paused") or {}
     fs_level = int(_n(ctx.get("fs_level")))
-    reduce_only = fs_level > 0 or bool(ctx.get("quiet"))
-    why_reduce = "failsafe level %d" % fs_level if fs_level > 0 else "quiet hours (23:00-07:00 Toronto)"
+    # Nov 1: level 1 (WATCH) is alert-only and fires whenever cash is under 15k, even with cash rising, so it must not
+    # block the cheap prestige fixes (dry donations/fish/meat slots ~41-46 coin per prestige). Reduce-only from BRAKE.
+    reduce_only = fs_level >= 2 or bool(ctx.get("quiet"))
+    why_reduce = "failsafe level %d" % fs_level if fs_level >= 2 else "quiet hours (23:00-07:00 Toronto)"
     manual = ctx.get("manual") or (lambda item: False)
     touched = ctx.get("building_touched") or (lambda bid: False)
     last_act = st.setdefault("last_action", {})
@@ -661,7 +663,7 @@ def run(snap, cfg, ctx, live=False, out_dir=None, log_path=None, apply_queue=Non
         with open(st_path, "w") as fh:
             json.dump(st, fh, indent=1, default=str)
             fh.write("\n")
-    res = {"t": ts, "turn": turn, "mode": "live" if live else "dry", "reduce_only": ctx.get("fs_level", 0) > 0 or bool(ctx.get("quiet")),
+    res = {"t": ts, "turn": turn, "mode": "live" if live else "dry", "reduce_only": ctx.get("fs_level", 0) >= 2 or bool(ctx.get("quiet")),
            "findings": [{k: v for k, v in f.items() if k not in ("managers",)} for f in findings],
            "alerts": alert_lines(findings)}
     name = "diagnose.json" if live else "diagnose_dry.json"
