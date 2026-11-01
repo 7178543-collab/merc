@@ -144,12 +144,22 @@ def api_section(api):
     hh = api.get("/households/%s" % hid) if hid else None
     if hh:
         pb = hh.get("prestige_board") or {}
+        total = num(pb.get("prestige"), num(hh.get("prestige")))
+        imp = pb.get("current_impacts") or pb.get("previous_impacts") or pb.get("prestige_impacts") or hh.get("prestige_impacts") or []
+        if isinstance(imp, dict):
+            rate = sum(num(v) for v in imp.values())
+        else:
+            rate = sum(num(x.get("impact")) if isinstance(x, dict) else num(x) for x in imp)
         res["prestige"] = {
-            "total": r(num(hh.get("prestige")), 1), "allocated": r(num(pb.get("allocated")), 1),
-            "free": r(num(hh.get("prestige")) - num(pb.get("allocated")), 1),
-            "rate": r(sum(num(x.get("impact")) for x in (hh.get("prestige_impacts") or pb.get("prestige_impacts") or [])), 2),
+            "total": r(total, 1), "allocated": r(num(pb.get("allocated")), 1), "free": r(total - num(pb.get("allocated")), 1),
+            "rate": r(rate, 2), "legacy": r(num(pb.get("legacy")), 1), "ascent": r(num(pb.get("ascent")), 1),
             "levels": {k: v for k, v in pb.items() if k.endswith("_level")},
         }
+        try:        # where prestige comes from and goes: the breakdown the rate is the sum of
+            items = imp.items() if isinstance(imp, dict) else [(x.get("recipe") or x.get("name") or x.get("source") or "?", x.get("impact")) for x in imp if isinstance(x, dict)]
+            res["prestige"]["impacts"] = sorted(((str(k), r(num(v), 2)) for k, v in items), key=lambda kv: -abs(kv[1]))[:12]
+        except Exception:
+            pass
         res["workers"] = [{"name": w.get("name"), "assignment": w.get("assignment"),
                            "top": sorted(((k, r(num(v), 1)) for k, v in (w.get("skills") or {}).items()),
                                          key=lambda kv: -kv[1])[:2]} for w in hh.get("workers") or []]
@@ -409,6 +419,9 @@ def briefing(out, flags, api_res):
               "- church asks %s | contracts %s" % (api_res.get("church_contracts"), (api_res.get("contracts") or {}).get("by_state")),
               "- we rank in production of: " + (", ".join("%s #%d" % kv for kv in api_res.get("production_ranks") or []) or "nothing in the top lists"),
               "- workers: " + "; ".join("%s %s" % (w["name"], w["top"]) for w in api_res.get("workers") or [])]
+    imp = ((api_res or {}).get("prestige") or {}).get("impacts")
+    if imp:
+        L += ["", "## Prestige sources and drains (per turn, live)", "- " + "; ".join("%s %+.2f" % kv for kv in imp)]
     L += ["", "## Capital and waste"]
     L.append("- biggest stock by value: " + ", ".join("%s %s (%s)" % (t[0], t[1], t[2]) for t in out.get("stock_top", [])[:6]))
     if out.get("dead_stock"):
