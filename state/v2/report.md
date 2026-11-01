@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13704, 2026-11-01 09:07. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13704, 2026-11-01 09:35. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 6,101, prestige 3,118 (-2 free, -1.3/turn).
 
 ## Items v2 runs (last turn)
@@ -116,7 +116,7 @@ Cash 6,101, prestige 3,118 (-2 free, -1.3/turn).
   - ropewalk 1 [make rope 1] 0.00 -> 0.35: +15/turn
   - brewery 1 0.14 -> 0.29: -19/turn
   - mansion 1 0.00 -> 1.00: -212/turn
-- Model check over the last 58 turns: predicted +84/turn for the settings we ran, real +78/turn.
+- Model check over the last 58 turns: predicted +86/turn for the settings we ran, real +78/turn.
 - Worth of one more unit per turn: labour 1.61, thread 4.04, cloth 6.46, flax fibres 4.79, garments 18.69, nets 29.00, beer 2.88, timber 3.02, prestige 10000.00, cash 0.00
 - Orders it would set: beer sell 16 (v2 15); firewood buy 4 (v2 5); fish buy 0 (v2 None); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 14); labour buy 29 (v2 25); light armour buy 1 (v2 None); meat buy 0 (v2 None); rope sell 2 (v2 1)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.35, worth +14/turn.
