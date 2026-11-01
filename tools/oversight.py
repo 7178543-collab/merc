@@ -156,7 +156,7 @@ def api_section(api):
             "levels": {k: v for k, v in pb.items() if k.endswith("_level")},
         }
         try:        # where prestige comes from and goes: the breakdown the rate is the sum of
-            items = imp.items() if isinstance(imp, dict) else [(x.get("recipe") or x.get("name") or x.get("source") or "?", x.get("impact")) for x in imp if isinstance(x, dict)]
+            items = imp.items() if isinstance(imp, dict) else [(x.get("factor") or x.get("recipe") or x.get("name") or "?", x.get("impact")) for x in imp if isinstance(x, dict)]
             res["prestige"]["impacts"] = sorted(((str(k), r(num(v), 2)) for k, v in items), key=lambda kv: -abs(kv[1]))[:12]
         except Exception:
             pass
