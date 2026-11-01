@@ -54,6 +54,8 @@ MEAT = "cured meat"
 MEAT_ORDER = {"buy_volume": 6, "buy_price": "29", "max_holding": 10}     # storage cap 10; ask ~27.8 Oct 14
 FISH_RUN, MEAT_RUN = 5.5, 6
 ON_CASH, OFF_CASH, PROFIT_TURNS, GUARD_TURNS = 15000, 10000, 24, 12
+BANQUET_FREE_KEEP = 15          # Nov 1: rescue banquet runs until free prestige is back to this
+BANQUET_RESCUE_CASH = 4000      # ... and only while cash is over this (guardian floor is ~1.6k)
 TENANTS_MAX_LEVEL = 17          # Oct 22 (Taylor): to the farmstead's 75-plot cap (was 11)
 TENANTS_KEEP_FREE = 300         # Oct 22 (Taylor): free prestige left after a buy
 NEEDS_YOU = os.path.join(HERE, "state", "needs_you.json")
@@ -728,11 +730,21 @@ def main():
             ov = (json.load(f) or {}).get("banquet", "auto")
     except (FileNotFoundError, ValueError):
         ov = "auto"
+    try:
+        _hh = m.get("/households/%s" % (pl.get("household") or {}).get("id")) or {}
+        free_p = m.num(_hh.get("prestige")) - m.num((_hh.get("prestige_board") or {}).get("allocated"))
+    except Exception:
+        free_p = 1e9        # unreadable: the rescue rule stays off
     goal_rates = _goal_owns("rates")
     if goal_rates:
         want_on, why = running, "the goal planner owns the banquet rate (target %s): recipe and inputs only" % prod.get("target")
     elif ov in ("on", "off"):
         want_on, why = ov == "on", "Taylor's override from the app: banquet %s" % ov
+    elif free_p < (BANQUET_FREE_KEEP if running else 0) and cash > BANQUET_RESCUE_CASH:
+        # Nov 1 (Taylor: "perfect it"): free prestige under 0 risks a random track level dropping each turn (T5), and the
+        # banquet (+4.2/turn) is the cheapest fix at hand. On while free < 0, stays on until free >= BANQUET_FREE_KEEP.
+        want_on, why = True, "free prestige %.1f under %s with cash %.0f over %d: rescue" % (
+            free_p, BANQUET_FREE_KEEP if running else 0, cash, BANQUET_RESCUE_CASH)
     elif cash < endgame.floor("banquet_off_cash", OFF_CASH):
         want_on, why = False, "cash %.0f under %d%s" % (cash, endgame.floor("banquet_off_cash", OFF_CASH),
                                                         " (endgame)" if endgame.active() else "")
