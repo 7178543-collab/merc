@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13726, 2026-11-02 07:40. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13726, 2026-11-02 07:53. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 
 ## Items v2 runs (last turn)
@@ -40,17 +40,17 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 45.9 | 45.9 | running |
-| hold banquet 4 (pies) | mansion | 18 | 48.5 | 48.5 | thin at home: hop beer, wine, stockfish, pies, candles |
-| hold banquet 3 (pies) | mansion | 8 | 49.1 | 49.1 | thin at home: hop beer, pies, candles |
-| hold banquet 2 (pies) | mansion | 7 | 49.2 | 49.2 | thin at home: wine, pies, candles |
+| hold banquet 4 (pies) | mansion | 18 | 48.4 | 48.4 | thin at home: hop beer, wine, stockfish, pies, candles |
+| hold banquet 2 (pies) | mansion | 7 | 48.5 | 48.5 | thin at home: wine, pies, candles |
+| hold banquet 3 (pies) | mansion | 8 | 48.7 | 48.7 | thin at home: hop beer, pies, candles |
 | hold banquet 4 (premium) | mansion | 20 | 51.6 | 51.6 | thin at home: hop beer, wine, stockfish, candles, premium cheese, premium ham |
-| hold banquet 4 | mansion | 17.5 | 52.5 | 52.5 | thin at home: wine, hop beer, ham, stockfish, candles |
+| hold banquet 4 | mansion | 17.5 | 52.4 | 52.4 | thin at home: wine, hop beer, ham, stockfish, candles |
 | jousting 3 | arena | 230 | 52.8 | 53.0 | needs a arena (build cost 24,668); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
 | hold sermon 2 (candles) | church | 31 | 53.1 | 56.8 | needs a church (build cost 66,658); thin at home: candles, furniture |
 | hold feast 2 | townhouse | 2.6 | 53.5 | 57.1 | needs a townhouse (build cost 6,178); thin at home: wine |
 | hold prayer 2 | chapel | 13 | 53.2 | 57.1 | needs a chapel (build cost 31,348); thin at home: furniture |
+| hold banquet 2 (meat) | mansion | 6.8 | 58.0 | 58.0 | thin at home: wine |
 | jousting 2 | arena | 210 | 57.9 | 58.0 | needs a arena (build cost 24,668); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
-| hold banquet 1 (meat) | mansion | 4.2 | 58.1 | 58.1 |  |
 
 ## Ships (last turn, real)
 
@@ -139,4 +139,3 @@ Buffers: flax fibres 27/78, thread 189/230, cloth 57/130
 
 - R1: meat slot dry: 0.0 held, 7.0 a turn (fine food slot (+0.3 prestige)); our buy none, home ask 1.94 (held back: quiet hours (23:00-07:00 Toronto): reduce-only, would buy 14 @ 1.97 (ask 1.94, cap 2.6))
 - R1: prestige rate -0.11 a turn vs 12-turn median +4.12; likely: dry slot: meat
-- R7 stale ask: limestone ask 17.3 over the market for 3 turns: the town trades ~4 a turn at 17, we sold 0 with 36 over what we keep -> **sell price 17.3 -> 17 (last trade 17, floor 16.34)** (ok)
