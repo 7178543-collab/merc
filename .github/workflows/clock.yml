@@ -41,8 +41,8 @@ jobs:
           end=$(( $(date -u +%s) + 330 * 60 ))
           while [ "$(date -u +%s)" -lt "$end" ]; do
             if [ "$(busy)" = "0" ]; then
-              a=$(last merc.yml); v=$(last v2-shadow.yml); q=$(last order-queue.yml)
-              echo "$(date -u +%H:%M) since last run: merc-actor ${a}m, v2-shadow ${v}m, order-queue ${q}m"
+              a=$(last merc.yml); v=$(last v2-shadow.yml); q=$(last order-queue.yml); o=$(last oversight.yml)
+              echo "$(date -u +%H:%M) since last run: merc-actor ${a}m, v2-shadow ${v}m, order-queue ${q}m, oversight ${o}m"
               # Nov 1: a game turn is ~50 min and GitHub skips cron runs, so dispatch anything ~15 min past due (v2 65, bot 35, queue 70)
               if [ "$v" -ge 65 ]; then
                 gh workflow run v2-shadow.yml --repo "$REPO" && echo "  dispatched v2-shadow"
@@ -50,6 +50,8 @@ jobs:
                 gh workflow run merc.yml --repo "$REPO" -f live=true && echo "  dispatched merc-actor (live)"
               elif [ "$q" -ge 70 ]; then
                 gh workflow run order-queue.yml --repo "$REPO" && echo "  dispatched order-queue"
+              elif [ "$o" -ge 100 ]; then     # Nov 2: the read-only oversight briefing was 3 h stale (GitHub skipped its cron)
+                gh workflow run oversight.yml --repo "$REPO" && echo "  dispatched oversight"
               fi
             fi
             sleep 300
