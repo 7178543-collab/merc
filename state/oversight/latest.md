@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-02T17:57 | turn 13736 | data 0.1 h old | ~665 turns to season end
+Generated 2026-11-02T18:17 | turn 13736 | data 0.4 h old | ~664 turns to season end
 
 ## Flags
 - none
@@ -18,15 +18,15 @@ Generated 2026-11-02T17:57 | turn 13736 | data 0.1 h old | ~665 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 59 of 487 (prestige rank 69): legacy 11396.4, prestige 3141.2; median legacy 1669.3
-- gap to the next rank up: 63.1
-- top 5: Jerry Wylteshire (Hofkirchen) 104425.0; Hawys atte Broke (Kirchwerp) 57016.0; Alphonse Segal (Rouhomme) 55777.0; Ambrosius K. Jordam (Pontmont) 44232.0; Henger Lieske (Grandgues) 43068.0
+- legacy rank 59 of 487 (prestige rank 69): legacy 11412.1, prestige 3141.1; median legacy 1670.3
+- gap to the next rank up: 67.8
+- top 5: Jerry Wylteshire (Hofkirchen) 104650.0; Hawys atte Broke (Kirchwerp) 57183.0; Alphonse Segal (Rouhomme) 55894.0; Ambrosius K. Jordam (Pontmont) 44337.0; Henger Lieske (Grandgues) 43182.0
 
 ## Town and contracts
-- Strasclives: 126 commoners, growth 0.269, migration 0, 5 households
+- Strasclives: 126 commoners, growth 0.269, migration 0.001, 5 households
 - church asks 2 | contracts {'done': 23, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nothing in the top lists
-- workers: Barthélemy de Gaillon [('maritime', 1340.7), ('crafting', 157.6)]; Florise Plantier [('maritime', 1349.1), ('textile', 15.3)]; Chrétien Dunois [('textile', 417.7), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1342.0), ('crafting', 157.6)]; Florise Plantier [('maritime', 1350.4), ('textile', 15.3)]; Chrétien Dunois [('textile', 419.5), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
 - to legacy -15.71; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +0.00
