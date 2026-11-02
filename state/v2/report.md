@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13726, 2026-11-02 07:53. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
+Turn 13728, 2026-11-02 09:01. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 6,083, prestige 3,142 (22 free, -0.1/turn).
 
 ## Items v2 runs (last turn)
 
@@ -10,9 +10,9 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 | beer | 61 | 0 | 4 | 0 | 0 | min_holding 60, sell 15, sell @ 3.08 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
-| firewood | 14 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
+| firewood | 15 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
-| garments | 9 | 0 | 2 | 0 | 0 | min_holding 8, sell 11, sell @ 19.6 |
+| garments | 8 | 0 | 2 | 0 | 0 | min_holding 8, sell 11, sell @ 19.6 |
 | grain | 28 | 9 | 9 | 0 | 0 | stop 36, buy 9, buy @ 3.7 |
 | labour | 29 | 29 | 525 | 0 | 4 | buy 29, buy @ 2.2 |
 | meat | 0 | 0 | 0 | 0 | 0 | none |
@@ -31,7 +31,7 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 
 ## Prestige spending, cheapest coin per prestige first
 
-675 turns left: prestige gained now converts 96.6% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+673 turns left: prestige gained now converts 96.6% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -40,17 +40,17 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 45.9 | 45.9 | running |
-| hold banquet 4 (pies) | mansion | 18 | 48.4 | 48.4 | thin at home: hop beer, wine, stockfish, pies, candles |
-| hold banquet 2 (pies) | mansion | 7 | 48.5 | 48.5 | thin at home: wine, pies, candles |
-| hold banquet 3 (pies) | mansion | 8 | 48.7 | 48.7 | thin at home: hop beer, pies, candles |
-| hold banquet 4 (premium) | mansion | 20 | 51.6 | 51.6 | thin at home: hop beer, wine, stockfish, candles, premium cheese, premium ham |
-| hold banquet 4 | mansion | 17.5 | 52.4 | 52.4 | thin at home: wine, hop beer, ham, stockfish, candles |
-| jousting 3 | arena | 230 | 52.8 | 53.0 | needs a arena (build cost 24,668); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
-| hold sermon 2 (candles) | church | 31 | 53.1 | 56.8 | needs a church (build cost 66,658); thin at home: candles, furniture |
-| hold feast 2 | townhouse | 2.6 | 53.5 | 57.1 | needs a townhouse (build cost 6,178); thin at home: wine |
-| hold prayer 2 | chapel | 13 | 53.2 | 57.1 | needs a chapel (build cost 31,348); thin at home: furniture |
-| hold banquet 2 (meat) | mansion | 6.8 | 58.0 | 58.0 | thin at home: wine |
-| jousting 2 | arena | 210 | 57.9 | 58.0 | needs a arena (build cost 24,668); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| hold banquet 2 (pies) | mansion | 7 | 49.0 | 49.0 | thin at home: wine, pies, candles |
+| hold banquet 4 (pies) | mansion | 18 | 49.0 | 49.0 | thin at home: hop beer, wine, stockfish, pies, candles |
+| hold banquet 3 (pies) | mansion | 8 | 49.8 | 49.8 | thin at home: hop beer, pies, candles |
+| hold banquet 4 (premium) | mansion | 20 | 52.1 | 52.1 | thin at home: hop beer, wine, stockfish, candles, premium cheese |
+| hold banquet 4 | mansion | 17.5 | 53.0 | 53.0 | thin at home: wine, hop beer, ham, stockfish, candles |
+| jousting 3 | arena | 230 | 52.8 | 53.0 | needs a arena (build cost 24,140); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| hold feast 2 | townhouse | 2.6 | 52.9 | 56.5 | needs a townhouse (build cost 6,128); thin at home: wine |
+| hold banquet 1 (fish) | mansion | 4.2 | 57.7 | 57.7 |  |
+| jousting 2 | arena | 210 | 57.9 | 58.0 | needs a arena (build cost 24,140); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| hold sermon 2 (candles) | church | 31 | 55.1 | 58.7 | needs a church (build cost 65,280); thin at home: candles, furniture |
+| hold banquet 2 (fish) | mansion | 6.8 | 58.8 | 58.8 | thin at home: wine |
 
 ## Ships (last turn, real)
 
@@ -77,15 +77,15 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| arms | 1 @ 28.4, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
+| arms | 1 @ 30.2, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
 | beer |  | 15 @ min 3.08 | goal planner: sells 15 at 3.08 (v2 had 15 at 3.38) |
 | bread | 5 @ 2.6, stop 17 |  | goal planner: buys 5 a turn for today's rates, keeps up to 17 (v2 had 5) |
-| candles | 2 @ 71, stop 61 |  | goal planner: buys 2 a turn for today's rates, keeps up to 61 (v2 had None) |
+| candles | 2 @ 72.5, stop 61 |  | goal planner: buys 2 a turn for today's rates, keeps up to 61 (v2 had None) |
 | donations | 40 @ 1.0, stop 160 |  | goal planner: buys 40 a turn for today's rates, keeps up to 160 (v2 had 40) |
 | firewood | 4 @ 2.4, stop 15 |  | goal planner: buys 4 a turn for today's rates, keeps up to 15 (v2 had 5) |
 | fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
-| furniture | 2 @ 15, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
-| garments |  | 11 @ min 19.6 | goal planner: sells 11 at 19.6 (v2 had 10 at 20.0) |
+| furniture | 2 @ 14.4, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
+| garments |  | 11 @ min 19.6 | goal planner: sells 11 at 19.6 (v2 had 10 at 21.6) |
 | grain | 9 @ 3.7, stop 36 |  | goal planner: buys 9 a turn for today's rates, keeps up to 36 (v2 had 14) |
 | labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 25) |
 | light armour | 1 @ 96, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
@@ -96,28 +96,28 @@ Cash 5,621, prestige 3,142 (22 free, -0.1/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 15.5k (cash + stock at home prices); +162/turn over 6 turns, +95/turn over 24 turns.
-- Limits: cash flow >= -68/turn, prestige >= +11.57/turn (values are after 200 tax a turn).
-- Today's settings: value +109/turn, cash +113/turn, prestige -0.11/turn - breaks the prestige floor.
-- Plan: value -102/turn, cash -68/turn, prestige +4.09/turn - could not meet the prestige floor.
+- Value now 15.8k (cash + stock at home prices); +204/turn over 6 turns, +104/turn over 24 turns.
+- Limits: cash flow >= -87/turn, prestige >= +11.58/turn (values are after 200 tax a turn).
+- Today's settings: value +110/turn, cash +112/turn, prestige -0.11/turn - breaks the prestige floor.
+- Plan: value -109/turn, cash -82/turn, prestige +4.09/turn - could not meet the prestige floor.
 - Cash check (real vs predicted cash a tick, last 3): +151 vs +109, +180 vs +108, +93 vs +104.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - net maker 0.00 -> 0.28: +4/turn
-  - ropewalk 1 0.25 -> 0.31: +2/turn
+  - net maker 0.00 -> 0.29: +4/turn
+  - ropewalk 1 0.25 -> 0.31: +3/turn
   - sewing shop 1 0.30 -> 0.36: +2/turn
   - weavery 1 0.50 -> 0.58: +5/turn
-  - spinnery 1 1.65 -> 1.97: -5/turn
-  - flax farm 1 4.64 -> 5.59: -8/turn
-  - retting pit 1 0.91 -> 1.12: +17/turn
-  - brewery 1 0.14 -> 0.23: -14/turn
-  - mansion 1 0.00 -> 1.00: -214/turn
-- Model check over the last 59 turns: predicted +108/turn for the settings we ran, real +126/turn.
-- Worth of one more unit per turn: labour 1.76, thread 4.43, cloth 7.08, flax fibres 5.25, garments 20.48, nets 32.04, beer 3.02, timber 2.83, prestige 10000.00, cash 0.15
+  - spinnery 1 1.65 -> 1.98: -6/turn
+  - flax farm 1 4.64 -> 5.60: -8/turn
+  - retting pit 1 0.91 -> 1.12: +18/turn
+  - brewery 1 0.14 -> 0.23: -16/turn
+  - mansion 1 0.00 -> 1.00: -221/turn
+- Model check over the last 58 turns: predicted +111/turn for the settings we ran, real +137/turn.
+- Worth of one more unit per turn: labour 1.53, thread 3.84, cloth 6.14, flax fibres 4.55, garments 17.76, nets 27.73, beer 2.76, timber 2.81, prestige 10000.00, cash 0.00
 - Orders it would set: candles buy 2 (v2 None); firewood buy 4 (v2 5); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 14); labour buy 29 (v2 25); light armour buy 1 (v2 None); meat buy 0 (v2 None); rope sell 2 (v2 1)
 - Management: ~11.39 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +77/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - Tenants L13 for 500 prestige: +76/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
 
 ## Chain sizing
 
@@ -132,10 +132,9 @@ Labour: own 500, everything else 340, chain may buy 350 -> chain allowance 510, 
 | weave | 3 | 0.50 | 1.30 |
 | sew | 2 | 0.30 | 0.81 |
 
-Buffers: flax fibres 27/78, thread 189/230, cloth 57/130
+Buffers: flax fibres 27/78, thread 189/230, cloth 59/130
 - chain plan needed 511 labour, budget left 510: cut to 510 (sewing capped at 0.81)
 
 ## Self-diagnosis
 
-- R1: meat slot dry: 0.0 held, 7.0 a turn (fine food slot (+0.3 prestige)); our buy none, home ask 1.94 (held back: quiet hours (23:00-07:00 Toronto): reduce-only, would buy 14 @ 1.97 (ask 1.94, cap 2.6))
-- R1: prestige rate -0.11 a turn vs 12-turn median +4.12; likely: dry slot: meat
+- R1: meat slot dry: 0.0 held, 7.0 a turn (fine food slot (+0.3 prestige)); our buy none, home ask none (no sellers at home)
