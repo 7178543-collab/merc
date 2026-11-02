@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13719, 2026-11-02 00:52. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13719, 2026-11-02 00:56. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 5,167, prestige 3,139 (19 free, +4.1/turn).
 
 ## Items v2 runs (last turn)
@@ -33,7 +33,7 @@ Cash 5,167, prestige 3,139 (19 free, +4.1/turn).
 
 ## Notes
 
-- labour: projection runs 107 over real use lately; planning 560, not 660
+- labour: projection runs 100 over real use lately; planning 560, not 660
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -117,7 +117,7 @@ Cash 5,167, prestige 3,139 (19 free, +4.1/turn).
   - spinnery 1 1.65 -> 1.90: -4/turn
   - retting pit 1 0.91 -> 1.07: -2/turn
   - flax farm 1 4.64 -> 5.38: +10/turn
-- Model check over the last 58 turns: predicted +104/turn for the settings we ran, real +113/turn.
+- Model check over the last 58 turns: predicted +99/turn for the settings we ran, real +113/turn.
 - Worth of one more unit per turn: labour 155.54, thread 390.55, cloth 623.86, flax fibres 462.46, garments 1805.31, nets 2817.09, beer 269.90, timber 3.33, prestige 10000.00, cash 100.00
 - Orders it would set: candles buy 2 (v2 None); cured meat buy 6 (v2 11); firewood buy 4 (v2 5); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 14); labour buy 64 (v2 60); light armour buy 1 (v2 None); rope sell 2 (v2 1)
 - Management: ~11.39 of 17 used.
