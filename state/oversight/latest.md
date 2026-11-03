@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-03T01:01 | turn 13743 | data 0.1 h old | ~657 turns to season end
+Generated 2026-11-03T01:33 | turn 13743 | data 0.6 h old | ~657 turns to season end
 
 ## Flags
 - **MED** cash growth is only -25/turn: flat
@@ -8,7 +8,7 @@ Generated 2026-11-03T01:01 | turn 13743 | data 0.1 h old | ~657 turns to season 
 ## Cash
 - now 6131.0 | last 6 / 12 / 24 turns: -587 / -177 / +964 | trend -25 per turn
 - if the 12-turn trend holds: +12 turns 5826.0, +48 turns 4912.0, +120 turns 3083.0
-- business value (cash + stock) 17979.0, trend +157 per turn over 25 turns; stock at market 10347.0
+- business value (cash + stock) 16465.0, trend +148 per turn over 25 turns; stock at market 10347.0
 - profit last turn 103.0, 12-turn average 214.0 (before taxes)
 
 ## Prestige
@@ -24,7 +24,7 @@ Generated 2026-11-03T01:01 | turn 13743 | data 0.1 h old | ~657 turns to season 
 
 ## Town and contracts
 - Strasclives: 126 commoners, growth 0.274, migration 0.002, 5 households
-- church asks 3 | contracts {'done': 24, 'rejected': 5, 'cancelled': 1}
+- church asks 2 | contracts {'done': 24, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nothing in the top lists
 - workers: Barthélemy de Gaillon [('maritime', 1351.5), ('crafting', 157.6)]; Florise Plantier [('maritime', 1359.9), ('textile', 15.3)]; Chrétien Dunois [('textile', 432.5), ('maritime', 155.6)]
 
@@ -51,4 +51,4 @@ Generated 2026-11-03T01:01 | turn 13743 | data 0.1 h old | ~657 turns to season 
 - meat: buy not filling
 
 ## Queue (24 h)
-- 16 entries, 0 refused (promotion retries excluded)
+- 13 entries, 0 refused (promotion retries excluded)
