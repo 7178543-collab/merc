@@ -1,25 +1,25 @@
 # v2 shadow report
 
-Turn 13744, 2026-11-03 01:16. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 6,017, prestige 3,189 (69 free, +48.4/turn).
+Turn 13744, 2026-11-03 01:42. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 6,033, prestige 3,189 (69 free, +48.4/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 61 | 0 | 4 | 0 | 0 | min_holding 60, sell 16, sell @ 3.08 |
+| beer | 61 | 0 | 4 | 0 | 0 | min_holding 60, sell 16, sell @ 3.06 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
-| firewood | 13 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
+| firewood | 13 | 4 | 4 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
-| garments | 12 | 0 | 0 | 0 | 0 | min_holding 30, sell 11, sell @ 19.4 |
-| grain | 35 | 9 | 9 | 0 | 0 | stop 36, buy 10, buy @ 3.7 |
+| garments | 12 | 0 | 0 | 0 | 0 | min_holding 30, sell 12, sell @ 19.4 |
+| grain | 35 | 9 | 9 | 0 | 0 | stop 34, buy 9, buy @ 3.7 |
 | labour | 29 | 29 | 525 | 0 | 4 | buy 29, buy @ 2.2 |
-| meat | 0 | 0 | 0 | 0 | 0 | stop 42, buy 14, buy @ 1.97 |
+| meat | 0 | 0 | 0 | 0 | 0 | none |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.8 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
 
-**1 risks, 0 waste, 1 tuning** where v2 would act differently from v1.
+**1 risks, 0 waste, 2 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
@@ -27,6 +27,7 @@ Cash 6,017, prestige 3,189 (69 free, +48.4/turn).
 
 ## Tuning
 
+- **firewood**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 - **tar**: no sellers at home right now and stock is below the runway -> v2: import it or find another source
 
 ## Notes
@@ -45,15 +46,15 @@ Cash 6,017, prestige 3,189 (69 free, +48.4/turn).
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 47.4 | 47.4 | running |
 | hold banquet 4 (pies) | mansion | 18 | 51.0 | 51.0 | thin at home: hop beer, stockfish, pies |
-| hold banquet 4 (premium) | mansion | 20 | 51.9 | 51.9 | thin at home: hop beer, stockfish, premium cheese, premium ham |
-| jousting 3 | arena | 230 | 53.1 | 53.3 | needs a arena (build cost 24,902); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| jousting 3 | arena | 230 | 53.1 | 53.3 | needs a arena (build cost 25,926); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| hold banquet 4 (premium) | mansion | 20 | 53.6 | 53.6 | thin at home: hop beer, stockfish, premium cheese, premium ham |
 | hold banquet 2 (pies) | mansion | 7 | 54.1 | 54.1 | thin at home: pies |
 | hold banquet 3 (pies) | mansion | 8 | 54.1 | 54.1 | thin at home: hop beer, pies |
 | hold banquet 4 | mansion | 17.5 | 54.3 | 54.3 | thin at home: hop beer, ham, stockfish |
-| hold prayer 2 | chapel | 13 | 52.9 | 56.8 | needs a chapel (build cost 30,566); thin at home: furniture |
-| hold sermon 2 (candles) | church | 31 | 53.2 | 56.9 | needs a church (build cost 65,264); thin at home: candles, furniture |
-| hold sermon 2 | church | 24 | 53.3 | 58.1 | needs a church (build cost 65,264); thin at home: furniture |
-| jousting 2 | arena | 210 | 58.2 | 58.4 | needs a arena (build cost 24,902); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
+| hold prayer 2 | chapel | 13 | 52.9 | 57.0 | needs a chapel (build cost 32,074); thin at home: furniture |
+| hold sermon 2 (candles) | church | 31 | 53.2 | 57.0 | needs a church (build cost 67,048); thin at home: candles, furniture |
+| hold sermon 2 | church | 24 | 53.3 | 58.2 | needs a church (build cost 67,048); thin at home: furniture |
+| jousting 2 | arena | 210 | 58.2 | 58.4 | needs a arena (build cost 25,926); thin at home: swords, protection, coats, plate armour; needs weaponry skill |
 | hold banquet 1 (fish) | mansion | 4.2 | 59.9 | 59.9 | thin at home: cured fish |
 
 ## Ships (last turn, real)
@@ -97,41 +98,41 @@ Cash 6,017, prestige 3,189 (69 free, +48.4/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 16.5k (cash + stock at home prices); -123/turn over 6 turns, +90/turn over 24 turns.
-- Limits: cash flow >= -84/turn, prestige >= +9.63/turn (values are after 200 tax a turn).
-- Today's settings: value +90/turn, cash +71/turn, prestige +48.35/turn.
-- Plan: value +368/turn, cash +197/turn, prestige +40.35/turn, inside both limits.
-- Cash check (real vs predicted cash a tick, last 3): -58 vs +95, -89 vs +87, -114 vs +84 - FAILED: the goal only cuts until a tick passes.
+- Value now 16.4k (cash + stock at home prices); -134/turn over 6 turns, +80/turn over 24 turns.
+- Limits: cash flow >= -85/turn, prestige >= +9.63/turn (values are after 200 tax a turn).
+- Today's settings: value +85/turn, cash +60/turn, prestige +48.35/turn.
+- Plan: value +363/turn, cash +186/turn, prestige +40.35/turn, inside both limits.
+- Cash check (real vs predicted cash a tick, last 3): -58 vs +95, -89 vs +87, -98 vs +84 - FAILED: the goal only cuts until a tick passes.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - park 1 16.00 -> 0.00: +46/turn
-  - flax farm 1 4.64 -> 7.86: +21/turn
-  - retting pit 1 0.91 -> 1.57: +29/turn
-  - spinnery 1 1.65 -> 2.77: +75/turn
-  - weavery 1 0.50 -> 1.37: +67/turn
-  - net maker [make nets 1] 0.00 -> 0.38: +25/turn
-  - sewing shop 1 0.30 -> 0.23: +2/turn
+  - flax farm 1 4.64 -> 7.89: +21/turn
+  - retting pit 1 0.91 -> 1.58: +29/turn
+  - spinnery 1 1.65 -> 2.78: +75/turn
+  - weavery 1 0.50 -> 1.38: +68/turn
+  - net maker [make nets 1] 0.00 -> 0.38: +21/turn
+  - sewing shop 1 0.30 -> 0.22: +4/turn
   - ropewalk 1 [make rope 1] 0.00 -> 0.31: -16/turn
   - ropewalk 1 0.25 -> 0.00: +24/turn
-- Model check over the last 59 turns: predicted +91/turn for the settings we ran, real +109/turn.
-- Worth of one more unit per turn: labour 0.90, thread 2.30, cloth 3.65, flax fibres 2.82, garments 10.50, nets 17.11, beer 2.18, timber 2.95, prestige 0.00, cash 0.00
+- Model check over the last 58 turns: predicted +90/turn for the settings we ran, real +104/turn.
+- Worth of one more unit per turn: labour 0.90, thread 2.30, cloth 3.65, flax fibres 2.82, garments 10.50, nets 17.11, beer 2.18, timber 3.24, prestige 0.00, cash 0.00
 - Orders it would set: beer sell 16 (v2 15); candles buy 2 (v2 None); firewood buy 4 (v2 6); furniture buy 2 (v2 None); grain buy 9 (v2 10); labour buy 29 (v2 25); light armour buy 1 (v2 None); meat buy 0 (v2 None); rope sell 2 (v2 1)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.31, worth +43/turn.
 - Recipe: net maker make nets 3 -> make nets 1 at 0.38, worth +22/turn.
 - Management: ~11.39 of 17 used.
 - Investments:
   - Tenants L13 for 500 prestige: +45/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - new chandlery (make candles 2) for ~4353 coin: +32/turn, payback 135 turns, doesn't pay yet (materials thin at home: nails)
+  - new chandlery (make candles 2) for ~4383 coin: +32/turn, payback 136 turns, doesn't pay yet (materials thin at home: nails)
 - Trim: donate park 1: +96/turn (tax 96 saved).
 
 ## Chain sizing
 
-Mode HOLD, garments sold 5.1/turn (+0.0 exported); plan makes 33.2 garments a turn.
+Mode HOLD, garments sold 4.2/turn (+0.0 exported); plan makes 33.2 garments a turn.
 Labour: own 500, everything else 340, chain may buy 350 -> chain allowance 510, chain plan 509 (+220 vs now).
 
 | Step | Plots | Now | Plan |
 | --- | --- | --- | --- |
-| flax | 11 | 4.64 | 6.50 |
+| flax | 11 | 4.64 | 6.49 |
 | ret | 3 | 0.91 | 1.30 |
 | spin | 4 | 1.65 | 2.29 |
 | weave | 3 | 0.50 | 1.30 |
