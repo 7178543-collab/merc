@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13782, 2026-11-04 15:37. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13782, 2026-11-04 15:38. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 7,525, prestige 3,322 (202 free, +100.0/turn).
 
 ## Items v2 runs (last turn)
@@ -24,7 +24,7 @@ Cash 7,525, prestige 3,322 (202 free, +100.0/turn).
 ## Risks (will stall or run out)
 
 - **flax fibres**: flax fibres buffer 1.0 turns (holds 27, next step uses 28/turn) -> v2: check the step that makes it
-- **labour**: buying 29, short of ~125 needed -> v2: buy 125
+- **labour**: buying 29, short of ~130 needed -> v2: buy 130
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -54,7 +54,7 @@ Cash 7,525, prestige 3,322 (202 free, +100.0/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
-| linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.052 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -93,7 +93,7 @@ Cash 7,525, prestige 3,322 (202 free, +100.0/turn).
 | furniture | 2 @ 15.7, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
 | garments |  | 11 @ min 19.4 | goal planner: sells 11 at 19.4 (v2 had 10 at 21.8) |
 | grain | 9 @ 3.7, stop 34 |  | goal planner: buys 9 a turn for today's rates, keeps up to 34 (v2 had 11) |
-| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 125) |
+| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 130) |
 | light armour | 1 @ 92, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
 | meat | 1 @ 3.02, stop - |  | goal planner: buys 1 for today's rates (v2 had 1) |
 | nets |  | 9 @ min 31.8 | goal planner: sells 9 at 31.8 (v2 had 9 at 34.0) |
@@ -122,7 +122,7 @@ Cash 7,525, prestige 3,322 (202 free, +100.0/turn).
   - ropewalk 1 0.25 -> 0.00: -35/turn
 - Model check over the last 60 turns: predicted +104/turn for the settings we ran, real +101/turn.
 - Worth of one more unit per turn: labour 0.86, thread 2.18, cloth 3.47, flax fibres 2.60, garments 10.04, nets 16.28, beer 2.07, timber 3.02, prestige 0.00, cash 0.00
-- Orders it would set: beer sell 16 (v2 15); cloth sell 2 (v2 none); firewood buy 4 (v2 5); flax plants sell 1 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 11); labour buy 29 (v2 125); light armour buy 1 (v2 None)
+- Orders it would set: beer sell 16 (v2 15); cloth sell 2 (v2 none); firewood buy 4 (v2 5); flax plants sell 1 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 11); labour buy 29 (v2 130); light armour buy 1 (v2 None)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 1.00, worth +37/turn.
 - Recipe: net maker make nets 3 -> make nets 1 at 0.38, worth +23/turn.
 - Ship linen snake: Grandgues -> Vauxvais (+3/turn over staying).
