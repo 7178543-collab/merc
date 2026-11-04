@@ -1,16 +1,37 @@
 {
- "t": "2026-11-04T03:55:25+00:00",
- "turn": 13770,
+ "t": "2026-11-04T05:00:53+00:00",
+ "turn": 13772,
  "mode": "live",
- "reduce_only": false,
+ "reduce_only": true,
  "findings": [
   {
-   "rule": "R5",
+   "rule": "R1",
    "item": "arms",
-   "finding": "arms buy not filling: bid 26.4 under the home ask 28.8 for 3 turns, bought 0.0 of 1, 1.0 held (2.0 turns)"
+   "finding": "arms slot dry: 0.0 held, 0.5 a turn (gear slot (+0.4 prestige)); our buy 1 @ 26.4, home ask 29.4",
+   "held_back": "quiet hours (23:00-07:00 Toronto): reduce-only, would buy 1 @ 30 (ask 29.4, cap 48.0)"
+  },
+  {
+   "rule": "R7 stale ask",
+   "item": "flax plants",
+   "finding": "flax plants ask 1.35 over the market for 3 turns: the town trades ~7 a turn at 1.3, we sold 0 with 15 over what we keep",
+   "action": "sell price 1.35 -> 1.31 (last trade 1.3, floor 1.25)",
+   "raise_": false,
+   "via": "queue",
+   "entry": {
+    "item": "flax plants",
+    "tier": 0,
+    "set": {
+     "sell_price": "1.31"
+    },
+    "note": "v2 diagnose R7 stale ask: sell price 1.35 -> 1.31 (last trade 1.3, floor 1.25)",
+    "building": "152202386005001"
+   },
+   "ok": true,
+   "error": null
   }
  ],
  "alerts": [
-  "R5: arms buy not filling: bid 26.4 under the home ask 28.8 for 3 turns, bought 0.0 of 1, 1.0 held (2.0 turns)"
+  "R1: arms slot dry: 0.0 held, 0.5 a turn (gear slot (+0.4 prestige)); our buy 1 @ 26.4, home ask 29.4",
+  "R7 stale ask: flax plants ask 1.35 over the market for 3 turns: the town trades ~7 a turn at 1.3, we sold 0 with 15 over what we keep -> sell price 1.35 -> 1.31 (last trade 1.3, floor 1.25) ok"
  ]
 }
