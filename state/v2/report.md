@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13793, 2026-11-05 02:24. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13793, 2026-11-05 02:38. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 8,620, prestige 3,311 (191 free, -1.0/turn).
 
 ## Items v2 runs (last turn)
@@ -27,6 +27,7 @@ Cash 8,620, prestige 3,311 (191 free, -1.0/turn).
 
 ## Notes
 
+- labour: +5 crew for Flax Wyrm (crew 0.10, no projection from the game)
 - labour: projection runs 100 over real use lately; planning 530, not 630
 
 ## Prestige spending, cheapest coin per prestige first
@@ -45,7 +46,7 @@ Cash 8,620, prestige 3,311 (191 free, -1.0/turn).
 | hold banquet 4 | mansion | 17.5 | 54.2 | 54.2 | thin at home: wine, hop beer, ham, stockfish, cheese, candles |
 | hold banquet 2 (pies) | mansion | 7 | 55.0 | 55.0 | thin at home: wine, cheese, candles |
 | hold sermon 2 (candles) | church | 31 | 51.9 | 56.1 | needs a church (build cost 67,415); thin at home: candles, furniture |
-| hold prayer 2 | chapel | 13 | 52.1 | 56.4 | needs a chapel (build cost 31,122); thin at home: furniture |
+| hold prayer 2 | chapel | 13 | 52.1 | 56.5 | needs a chapel (build cost 31,122); thin at home: furniture |
 | hold banquet 2 (meat) | mansion | 6.8 | 56.6 | 56.6 | thin at home: wine, cheese |
 | hold banquet 4 (premium) | mansion | 20 | 56.8 | 56.8 | thin at home: hop beer, wine, stockfish, candles |
 | hold banquet 2 (fish) | mansion | 6.8 | 57.1 | 57.1 | thin at home: wine, cured fish, cheese |
@@ -56,7 +57,7 @@ Cash 8,620, prestige 3,311 (191 free, -1.0/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.10 | 10 | 134102075 | 0.072 | - | pasties 2 | -29 |
+| Flax Wyrm | 0.0 / 0.10 | 10 | 134102075 | 0 | - | pasties 2 | -29 |
 | linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
