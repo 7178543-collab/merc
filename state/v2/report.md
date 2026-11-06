@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13823, 2026-11-06 08:10. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13823, 2026-11-06 08:11. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 10,538, prestige 3,284 (164 free, -0.8/turn).
 
 ## Items v2 runs (last turn)
@@ -9,11 +9,11 @@ Cash 10,538, prestige 3,284 (164 free, -0.8/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | beer | 60 | 0 | 4 | 0 | 0 | min_holding 60, sell 16, sell @ 3.06 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
-| donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
-| firewood | 14 | 4 | 4 | 0 | 0 | stop 14, buy 4, buy @ 2.4 |
+| donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
+| firewood | 14 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
-| grain | 36 | 9 | 9 | 0 | 0 | stop 36, buy 11, buy @ 3.7 |
+| grain | 36 | 9 | 9 | 0 | 0 | stop 33, buy 9, buy @ 3.7 |
 | labour | 29 | 29 | 518 | 0 | 11 | buy 29, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.8 |
@@ -125,7 +125,7 @@ Cash 10,538, prestige 3,284 (164 free, -0.8/turn).
   - spinnery 1 1.65 -> 1.09: -16/turn
   - retting pit 1 0.91 -> 0.62: +12/turn
   - brewery 1 0.14 -> 0.27: -21/turn
-- Model check over the last 61 turns: predicted +98/turn for the settings we ran, real +68/turn.
+- Model check over the last 61 turns: predicted +99/turn for the settings we ran, real +68/turn.
 - Worth of one more unit per turn: labour 1.65, thread 4.14, cloth 6.62, flax fibres 4.91, garments 19.15, nets 29.81, beer 2.96, timber 3.13, prestige 10000.00, cash 0.00
 - Orders it would set: beer sell 16 (v2 15); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 5); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 10); labour buy 29 (v2 18); light armour buy 1 (v2 None)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.23, worth +11/turn.
