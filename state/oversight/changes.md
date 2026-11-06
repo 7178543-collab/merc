@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-06T14:34 [contracts] item="jewellery", set={"buy_volume": 0} | church buy over (no longer cheap enough): jewellery buy back to normal
 - 11-06T13:23 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "90.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 32.6 coin/prestige at bid 90.5); need 16 (~1448 coin), cash 998
 - 11-06T12:13 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "80.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 29.0 coin/prestige at bid 80.5); need 22 (~1771 coin), cash 105
 - 11-06T10:52 [contracts] item="jewellery", set={"buy_volume": 0} | church buy over (no longer cheap enough): jewellery buy back to normal
@@ -12,4 +13,3 @@
 - 11-05T20:54 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (ask left the board): limestone buy back to normal
 - 11-05T19:43 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "17.2", "max_holding": 100} | church buy: limestone for the church ask (+25 prestige, 27.5 coin/prestige at bid 17.2); need 84 (~1440 coin), cash 1033
 - 11-05T15:17 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
-- 11-05T14:06 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "19.3", "max_holding": 100} | church buy: limestone for the church ask (+25 prestige, 30.9 coin/prestige at bid 19.3); need 89 (~1712 coin), cash 9928
