@@ -14,4 +14,3 @@
 - 11-06T04:59 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "83.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 30.1 coin/prestige at bid 83.5); need 37 (~3090 coin), cash 111
 - 11-05T21:15 [queue] world="all" | Claude: fresh world market snapshot for next-season chain research (read-only)
 - 11-05T20:54 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (ask left the board): limestone buy back to normal
-- 11-05T19:43 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "17.2", "max_holding": 100} | church buy: limestone for the church ask (+25 prestige, 27.5 coin/prestige at bid 17.2); need 84 (~1440 coin), cash 1033
