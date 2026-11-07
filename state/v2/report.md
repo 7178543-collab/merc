@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13862, 2026-11-07 23:41. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13862, 2026-11-07 23:48. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
 
 ## Items v2 runs (last turn)
@@ -13,7 +13,7 @@ Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
 | firewood | 4 | 4 | 4 | 0 | 0 | stop 13, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
-| grain | 21 | 8 | 9 | 0 | 0 | stop 7, buy 2, buy @ 3.7 |
+| grain | 21 | 8 | 9 | 0 | 0 | stop 8, buy 2, buy @ 3.7 |
 | labour | 29 | 29 | 518 | 0 | 11 | buy 29, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.8 |
@@ -34,7 +34,7 @@ Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
 
 ## Notes
 
-- labour: projection runs 99 over real use lately; planning 520, not 618
+- labour: projection runs 100 over real use lately; planning 518, not 618
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -101,7 +101,7 @@ Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
 | flax plants |  | 2 @ min 1.21 | goal planner: sells 2 a turn at 1.21, keeps 219 (no one offered it) |
 | garments |  | 11 @ min 19.3 | goal planner: sells 11 at 19.3 (v2 had 10 at 21.8) |
 | grain | 2 @ 3.7, stop 8 |  | goal planner: buys 2 a turn for today's rates, keeps up to 8 (v2 had 17) |
-| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 20) |
+| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 18) |
 | meat | 1 @ 3.02, stop - |  | goal planner: buys 1 for today's rates (v2 had 1) |
 | nets |  | 9 @ min 31.8 | goal planner: sells 9 at 31.8 (v2 had 9 at 34.0) |
 | porterage | 5 @ 1.1, stop - |  | goal planner: buys 5 for today's rates (v2 had 5) |
@@ -110,7 +110,7 @@ Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 20.8k (cash + stock at home prices); -527/turn over 6 turns, -20/turn over 24 turns.
+- Value now 21.0k (cash + stock at home prices); -498/turn over 6 turns, -13/turn over 24 turns.
 - Limits: cash flow >= -187/turn, prestige >= -0.35/turn (values are after 200 tax a turn).
 - Today's settings: value +62/turn, cash +47/turn, prestige +148.07/turn.
 - Plan: value +398/turn, cash +251/turn, prestige +140.07/turn, inside both limits.
@@ -127,9 +127,10 @@ Cash 8,483, prestige 3,503 (383 free, +148.1/turn).
   - net maker [make nets 1] 0.00 -> 0.38: +27/turn
   - sewing shop 1 0.30 -> 0.36: +12/turn
   - brewery 1 0.14 -> 0.03: +20/turn
-- Model check over the last 61 turns: predicted +103/turn for the settings we ran, real +15/turn - OFF, trust the plan less.
+- HAND-OVER: goal planner: model check failed 3 runs in a row, rates handed back to the old rules.
+- Model check over the last 61 turns: predicted +103/turn for the settings we ran, real +18/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.05, thread 2.64, cloth 4.21, flax fibres 3.14, garments 12.17, nets 19.73, beer 2.50, timber 3.29, prestige 0.00, cash 0.00
-- Orders it would set: cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 2 (v2 17); labour buy 29 (v2 20); light armour buy 1 (v2 None); rope sell 2 (v2 none)
+- Orders it would set: cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 2 (v2 17); labour buy 29 (v2 18); light armour buy 1 (v2 None); rope sell 2 (v2 none)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.31, worth +39/turn.
 - Recipe: net maker make nets 3 -> make nets 1 at 0.38, worth +18/turn.
 - Ship linen snake: Grandgues -> Rouhomme (+6/turn over staying).
