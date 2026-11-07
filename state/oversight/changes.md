@@ -7,4 +7,3 @@
 - 11-06T13:23 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "90.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 32.6 coin/prestige at bid 90.5); need 16 (~1448 coin), cash 998
 - 11-06T12:13 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "80.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 29.0 coin/prestige at bid 80.5); need 22 (~1771 coin), cash 105
 - 11-06T10:52 [contracts] item="jewellery", set={"buy_volume": 0} | church buy over (no longer cheap enough): jewellery buy back to normal
-- 11-06T09:41 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "81.5", "max_holding": 45} | church buy: jewellery for the church ask (+125 prestige, 29.3 coin/prestige at bid 81.5); need 27 (~2200 coin), cash 105
