@@ -1,16 +1,16 @@
 # v2 shadow report
 
-Turn 13859, 2026-11-07 20:14. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13859, 2026-11-07 20:22. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,388, prestige 3,358 (238 free, -1.2/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 29 | 6 | 4 | 0 | 0 | min_holding 60, sell 3, sell @ 3.06; stop 17, buy 8, buy @ 3.56 |
+| beer | 29 | 6 | 4 | 0 | 0 | min_holding 60, sell 15, sell @ 3.46 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
-| firewood | 4 | 4 | 4 | 0 | 0 | stop 13, buy 4, buy @ 2.4 |
+| firewood | 4 | 4 | 4 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
 | grain | 32 | 0 | 9 | 0 | 0 | stop 32, buy 8, buy @ 3.7 |
@@ -125,7 +125,6 @@ Cash 12,388, prestige 3,358 (238 free, -1.2/turn).
   - ropewalk 1 0.25 -> 0.00: -14/turn
   - ropewalk 1 [make rope 1] 0.00 -> 0.38: +17/turn
   - mansion 1 0.00 -> 0.90: -191/turn
-- HAND-OVER: goal planner: model check held 12 runs, it now runs 'rates' live.
 - Model check over the last 61 turns: predicted +104/turn for the settings we ran, real +80/turn.
 - Worth of one more unit per turn: labour 1.65, thread 4.14, cloth 6.62, flax fibres 4.91, garments 19.15, nets 29.69, beer 3.00, timber 3.08, prestige 55.31, cash 0.00
 - Orders it would set: candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 8 (v2 12); labour buy 29 (v2 25); light armour buy 1 (v2 None); rope sell 2 (v2 1)
