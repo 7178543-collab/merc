@@ -1,19 +1,19 @@
 # Oversight briefing
 
-Generated 2026-11-07T22:15 | turn 13860 | data 0.3 h old | ~540 turns to season end
+Generated 2026-11-07T22:42 | turn 13861 | data 0.2 h old | ~540 turns to season end
 
 ## Flags
-- **MED** cash growth is only -30/turn: flat
+- **HIGH** cash is falling 145/turn over the last 12 turns
 
 ## Cash
-- now 8453.0 | last 6 / 12 / 24 turns: -3423 / -2757 / -1509 | trend -30 per turn
-- if the 12-turn trend holds: +12 turns 8087.0, +48 turns 6989.0, +120 turns 4793.0
-- business value (cash + stock) 24700.0, trend +140 per turn over 25 turns; stock at market 16277.0
-- profit last turn 243.0, 12-turn average 343.0 (before taxes)
+- now 8489.0 | last 6 / 12 / 24 turns: -3511 / -2867 / -1623 | trend -145 per turn
+- if the 12-turn trend holds: +12 turns 6747.0, +48 turns 1519.0, +120 turns -8935.0
+- business value (cash + stock) 20723.0, trend +108 per turn over 25 turns; stock at market 12247.0
+- profit last turn -3716.0, 12-turn average 4.0 (before taxes)
 
 ## Prestige
-- total 3356.3, free 236.3, rate -1.19 per turn (free trend -1.52 per turn)
-- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: None
+- total 3505.2, free 385.2, rate 150.0 per turn (free trend 3.5 per turn)
+- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: 3.0
 - banquet: hold banquet 1 (meat) at 0.0 of 0.0
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
@@ -32,21 +32,20 @@ Generated 2026-11-07T22:15 | turn 13860 | data 0.3 h old | ~540 turns to season 
 - contract bonus +150.00
 
 ## Capital and waste
-- biggest stock by value: tapestries 5.0 (4125.0), thread 530.2 (2471.0), candles 33.5 (2429.0), furniture 149.4 (2166.0), garments 30.5 (750.0), timber 99.7 (723.0)
-- held with no production or sales (some are deliberate church/household reserves): tapestries 5.0 (4125.0), candles 33.5 (2429.0), furniture 149.4 (2166.0), timber 99.7 (723.0), light armour 7.2 (677.0), tools 100.8 (544.0)
+- biggest stock by value: thread 541.4 (2523.0), candles 34.0 (2448.0), furniture 150.0 (2160.0), garments 30.7 (755.0), timber 99.7 (733.0), cloth 72.4 (691.0)
+- held with no production or sales (some are deliberate church/household reserves): candles 34.0 (2448.0), furniture 150.0 (2160.0), timber 99.7 (733.0), tools 100.8 (544.0)
 
 ## Buildings (rate / target)
-- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.6/1.7; weavery 1 0.5/0.5; brewery 1 0.1/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
+- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.6/1.7; weavery 1 0.5/0.5; brewery 1 0.1/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.0/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 8453, burn 2757 over 12 turns
+- FAILSAFE WATCH: cash 8489, burn 2722 over 12 turns
+- arms: low_stock
 - flax fibres: shortage
 - labour: expiring
 - tar: shortage
 - flax fibres: buy not filling
-- tar: buy not filling
-- contract good: church tapestries
 - contract wait: church windows
 
 ## Queue (24 h)
