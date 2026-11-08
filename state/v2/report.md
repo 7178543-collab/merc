@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13869, 2026-11-08 06:24. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13869, 2026-11-08 06:26. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 8,739, prestige 3,490 (370 free, -1.9/turn).
 
 ## Items v2 runs (last turn)
@@ -13,8 +13,8 @@ Cash 8,739, prestige 3,490 (370 free, -1.9/turn).
 | firewood | 7 | 4 | 4 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
-| grain | 9 | 7 | 7 | 2 | 0 | stop 33, buy 9, buy @ 3.7 |
-| labour | 29 | 30 | 514 | 0 | 16 | buy 29, buy @ 2.2 |
+| grain | 9 | 7 | 7 | 2 | 0 | stop 35, buy 9, buy @ 3.7 |
+| labour | 29 | 30 | 514 | 0 | 16 | buy 30, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.8 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
