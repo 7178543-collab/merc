@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13885, 2026-11-08 22:17. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13885, 2026-11-08 22:59. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 11,042, prestige 3,533 (413 free, -2.1/turn).
 
 ## Items v2 runs (last turn)
@@ -45,10 +45,10 @@ Cash 11,042, prestige 3,533 (413 free, -2.1/turn).
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 52.2 | 52.2 | running |
-| hold banquet 4 (pies) | mansion | 18 | 55.5 | 55.5 | thin at home: hop beer, wine, ham, stockfish |
+| hold banquet 4 (pies) | mansion | 18 | 55.1 | 55.1 | thin at home: hop beer, wine, ham, stockfish |
 | jousting 3 | arena | 230 | 55.7 | 56.0 | needs a arena (build cost 27,240); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold banquet 4 | mansion | 17.5 | 57.8 | 57.8 | thin at home: wine, hop beer, ham, stockfish |
-| hold banquet 4 (premium) | mansion | 20 | 57.9 | 57.9 | thin at home: hop beer, wine, ham, stockfish |
+| hold banquet 4 | mansion | 17.5 | 57.4 | 57.4 | thin at home: wine, hop beer, ham, stockfish |
+| hold banquet 4 (premium) | mansion | 20 | 57.5 | 57.5 | thin at home: hop beer, wine, ham, stockfish |
 | hold banquet 1 (fish) | mansion | 4.2 | 59.1 | 59.1 | thin at home: cured fish |
 | hold banquet 3 (fish) | mansion | 7.6 | 59.9 | 59.9 | thin at home: hop beer, cured fish |
 | hold banquet 2 (fish) | mansion | 6.8 | 60.6 | 60.6 | thin at home: wine, cured fish |
@@ -110,31 +110,31 @@ Cash 11,042, prestige 3,533 (413 free, -2.1/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 22.5k (cash + stock at home prices); +308/turn over 6 turns, -92/turn over 24 turns.
+- Value now 22.6k (cash + stock at home prices); +255/turn over 6 turns, +76/turn over 24 turns.
 - Limits: cash flow >= -293/turn, prestige >= -0.47/turn (values are after 200 tax a turn).
-- Today's settings: value +50/turn, cash +13/turn, prestige -2.07/turn - breaks the prestige floor.
-- Plan: value -8/turn, cash -7/turn, prestige -0.47/turn, inside both limits.
+- Today's settings: value +48/turn, cash +9/turn, prestige -2.07/turn - breaks the prestige floor.
+- Plan: value -9/turn, cash -8/turn, prestige -0.47/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): +312 vs +39, -28 vs +16, +74 vs +22.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - ship linen snake -> Gosschweig: +7/turn
   - ship Flax Wyrm -> Vauxvais: +1/turn
-  - ropewalk 1 0.25 -> 0.00: +12/turn
+  - ropewalk 1 0.25 -> 0.00: +14/turn
   - net maker 0.00 -> 0.29: +10/turn
-  - spinnery 1 1.65 -> 1.23: -4/turn
-  - brewery 1 0.14 -> 0.21: -2/turn
+  - spinnery 1 1.65 -> 1.22: -5/turn
+  - brewery 1 0.14 -> 0.21: -1/turn
   - retting pit 1 0.91 -> 0.69: +3/turn
-  - flax farm 1 4.64 -> 3.47: -13/turn
+  - flax farm 1 4.64 -> 3.45: -13/turn
   - mansion 1 0.00 -> 0.38: -70/turn
-- Model check over the last 59 turns: predicted +103/turn for the settings we ran, real -22/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted +102/turn for the settings we ran, real -15/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.66, thread 4.17, cloth 6.67, flax fibres 4.94, garments 19.30, nets 30.06, beer 2.97, timber 3.35, prestige 62.47, cash 0.00
 - Orders it would set: beer sell 16 (v2 15); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 18); labour buy 29 (v2 18); light armour buy 1 (v2 None)
-- Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.05, worth +2/turn.
+- Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.04, worth +2/turn.
 - Ship linen snake: Grandgues -> Gosschweig (+7/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Vauxvais (+1/turn over staying).
 - Management: ~11.39 of 17 used.
 - Investments:
-  - Tenants L13 for 500 prestige: +82/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
+  - Tenants L13 for 500 prestige: +81/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
 
 ## Chain sizing
 
