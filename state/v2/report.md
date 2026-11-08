@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13877, 2026-11-08 14:08. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13877, 2026-11-08 14:24. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 10,642, prestige 3,550 (430 free, -2.2/turn).
 
 ## Items v2 runs (last turn)
@@ -55,7 +55,7 @@ Cash 10,642, prestige 3,550 (430 free, -2.2/turn).
 | hold banquet 2 (fish) | mansion | 6.8 | 61.9 | 61.9 | thin at home: wine |
 | hold banquet 3 (fish) | mansion | 7.6 | 62.6 | 62.6 |  |
 | hold banquet 3 (pies) | mansion | 8 | 62.7 | 62.7 |  |
-| hold sermon 2 (candles) | church | 31 | 57.9 | 62.9 | needs a church (build cost 67,681) |
+| hold sermon 2 (candles) | church | 31 | 57.9 | 62.9 | needs a church (build cost 67,681); thin at home: furniture |
 
 ## Ships (last turn, real)
 
@@ -110,7 +110,7 @@ Cash 10,642, prestige 3,550 (430 free, -2.2/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 20.8k (cash + stock at home prices); -122/turn over 6 turns, -103/turn over 24 turns.
+- Value now 20.5k (cash + stock at home prices); -309/turn over 6 turns, -127/turn over 24 turns.
 - Limits: cash flow >= -277/turn, prestige >= -0.54/turn (values are after 200 tax a turn).
 - Today's settings: value +80/turn, cash +60/turn, prestige -2.16/turn - breaks the prestige floor.
 - Plan: value +16/turn, cash +79/turn, prestige -0.54/turn, inside both limits.
@@ -127,7 +127,7 @@ Cash 10,642, prestige 3,550 (430 free, -2.2/turn).
   - brewery 1 0.14 -> 0.20: -8/turn
   - spinnery 1 1.65 -> 1.06: -11/turn
   - retting pit 1 0.91 -> 0.60: +9/turn
-- Model check over the last 59 turns: predicted +103/turn for the settings we ran, real -31/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted +103/turn for the settings we ran, real -37/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.57, thread 3.98, cloth 6.33, flax fibres 4.79, garments 18.27, nets 28.64, beer 2.89, timber 3.33, prestige 59.65, cash 0.00
 - Orders it would set: beer sell 16 (v2 15); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 18); labour buy 29 (v2 18); light armour buy 1 (v2 None)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.15, worth +7/turn.
