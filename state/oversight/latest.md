@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-08T20:25 | turn 13883 | data 0.4 h old | ~518 turns to season end
+Generated 2026-11-08T21:07 | turn 13883 | data 0.5 h old | ~517 turns to season end
 
 ## Flags
 - **HIGH** business value is falling 97/turn
@@ -18,18 +18,18 @@ Generated 2026-11-08T20:25 | turn 13883 | data 0.4 h old | ~518 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 61 of 498 (prestige rank 66): legacy 13831.5, prestige 3537.0; median legacy 1990.1
-- gap to the next rank up: 278.6
-- top 5: Jerry Wylteshire (Hofkirchen) 138609.0; Hawys atte Broke (Kirchwerp) 84091.0; Alphonse Segal (Rouhomme) 75653.0; Zélie de Noyon (Rouhomme) 62888.0; Henger Lieske (Grandgues) 62670.0
+- legacy rank 61 of 499 (prestige rank 66): legacy 13849.2, prestige 3534.9; median legacy 1992.9
+- gap to the next rank up: 289.3
+- top 5: Jerry Wylteshire (Hofkirchen) 138851.0; Hawys atte Broke (Kirchwerp) 84294.0; Alphonse Segal (Rouhomme) 75804.0; Zélie de Noyon (Rouhomme) 63042.0; Henger Lieske (Grandgues) 62830.0
 
 ## Town and contracts
-- Strasclives: 129 commoners, growth 0.107, migration 0.035, 5 households
+- Strasclives: 129 commoners, growth 0.131, migration 0.034, 5 households
 - church asks 2 | contracts {'done': 29, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1539.1), ('crafting', 157.6)]; Florise Plantier [('maritime', 1547.5), ('textile', 15.3)]; Chrétien Dunois [('textile', 690.0), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1540.5), ('crafting', 157.6)]; Florise Plantier [('maritime', 1548.9), ('textile', 15.3)]; Chrétien Dunois [('textile', 691.9), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.70; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +0.00
+- to legacy -17.68; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
 - biggest stock by value: thread 787.9 (3514.0), candles 31.0 (2356.0), garments 30.1 (728.0), timber 99.7 (718.0), cloth 72.4 (641.0), tools 100.8 (570.0)
@@ -40,13 +40,14 @@ Generated 2026-11-08T20:25 | turn 13883 | data 0.4 h old | ~518 turns to season 
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 10995, burn -2203 over 12 turns
+- FAILSAFE WATCH: cash 10995, burn -1968 over 12 turns
 - HONEST BURN: business value falling
 - arms: low_stock
 - flax fibres: shortage
 - labour: expiring
 - tar: shortage
 - flax fibres: buy not filling
+- contract wait: church limestone
 
 ## Queue (24 h)
-- 10 entries, 0 refused (promotion retries excluded)
+- 11 entries, 0 refused (promotion retries excluded)
