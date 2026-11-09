@@ -1,52 +1,53 @@
 # Oversight briefing
 
-Generated 2026-11-09T06:01 | turn 13892 | data 0.6 h old | ~508 turns to season end
+Generated 2026-11-09T07:41 | turn 13894 | data 0.3 h old | ~507 turns to season end
 
 ## Flags
 - none
 
 ## Cash
-- now 11260.0 | last 6 / 12 / 24 turns: +155 / +484 / +2574 | trend +32 per turn
-- if the 12-turn trend holds: +12 turns 11646.0, +48 turns 12801.0, +120 turns 15112.0
-- business value (cash + stock) 23424.0, trend +73 per turn over 25 turns; stock at market 12464.0
-- profit last turn 170.0, 12-turn average 261.0 (before taxes)
+- now 11449.0 | last 6 / 12 / 24 turns: +333 / +430 / +2657 | trend +38 per turn
+- if the 12-turn trend holds: +12 turns 11905.0, +48 turns 13273.0, +120 turns 16009.0
+- business value (cash + stock) 23850.0, trend +89 per turn over 25 turns; stock at market 12574.0
+- profit last turn 403.0, 12-turn average 249.0 (before taxes)
 
 ## Prestige
-- total 3518.6, free 398.6, rate -2.0 per turn (free trend -2.06 per turn)
+- total 3514.7, free 394.6, rate -1.98 per turn (free trend -2.04 per turn)
 - turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: None
 - banquet: hold banquet 1 (meat) at 0.0 of 0.0
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 62 of 496 (prestige rank 67): legacy 14007.9, prestige 3516.6; median legacy 2059.1
-- gap to the next rank up: 10.2
-- top 5: Jerry Wylteshire (Hofkirchen) 141027.0; Hawys atte Broke (Kirchwerp) 86136.0; Alphonse Segal (Rouhomme) 77176.0; Zélie de Noyon (Rouhomme) 64436.0; Henger Lieske (Grandgues) 64278.0
+- legacy rank 62 of 496 (prestige rank 67): legacy 14025.5, prestige 3514.6; median legacy 2062.5
+- gap to the next rank up: 22.8
+- top 5: Jerry Wylteshire (Hofkirchen) 141269.0; Hawys atte Broke (Kirchwerp) 86342.0; Alphonse Segal (Rouhomme) 77330.0; Zélie de Noyon (Rouhomme) 64592.0; Henger Lieske (Grandgues) 64440.0
 
 ## Town and contracts
-- Strasclives: 129 commoners, growth 0.397, migration 0.048, 5 households
+- Strasclives: 129 commoners, growth 0.429, migration 0.049, 5 households
 - church asks 3 | contracts {'done': 29, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1552.6), ('crafting', 157.6)]; Florise Plantier [('maritime', 1561.0), ('textile', 15.3)]; Chrétien Dunois [('textile', 703.7), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1554.0), ('crafting', 157.6)]; Florise Plantier [('maritime', 1562.4), ('textile', 15.3)]; Chrétien Dunois [('textile', 705.6), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.59; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +0.00
+- to legacy -17.58; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
-- biggest stock by value: thread 875.0 (4060.0), candles 35.5 (2592.0), garments 30.9 (816.0), cloth 72.4 (753.0), timber 99.7 (718.0), nets 15.9 (611.0)
-- held with no production or sales (some are deliberate church/household reserves): candles 35.5 (2592.0), timber 99.7 (718.0), tools 100.8 (544.0), furniture 31.6 (474.0)
+- biggest stock by value: thread 869.9 (4054.0), candles 36.5 (2628.0), garments 30.3 (764.0), cloth 72.4 (753.0), timber 99.7 (718.0), furniture 40.8 (632.0)
+- held with no production or sales (some are deliberate church/household reserves): candles 36.5 (2628.0), timber 99.7 (718.0), furniture 40.8 (632.0), tools 100.8 (549.0)
 
 ## Buildings (rate / target)
 - farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.6/1.7; weavery 1 0.5/0.5; brewery 1 0.1/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 11260, burn -484 over 12 turns
+- FAILSAFE WATCH: cash 11449, burn -360 over 12 turns
 - needs you
 - tar: low_stock
 - flax fibres: shortage
 - flax fibres: buy not filling
+- tar: buy not filling
 - contract wait: church furniture
 - contract wait: church limestone
 
 ## Queue (24 h)
-- 17 entries, 0 refused (promotion retries excluded)
+- 18 entries, 0 refused (promotion retries excluded)
