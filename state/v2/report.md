@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13898, 2026-11-09 11:39. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13898, 2026-11-09 11:55. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 10,874, prestige 3,507 (387 free, -1.9/turn).
 
 ## Items v2 runs (last turn)
@@ -9,12 +9,12 @@ Cash 10,874, prestige 3,507 (387 free, -1.9/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | beer | 61 | 0 | 4 | 0 | 0 | min_holding 60, sell 16, sell @ 3.26 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
-| donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
+| donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 9 | 4 | 4 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
 | grain | 33 | 9 | 9 | 0 | 0 | stop 34, buy 9, buy @ 3.7 |
-| labour | 29 | 29 | 529 | 6 | 0 | buy 29, buy @ 2.2 |
+| labour | 29 | 29 | 529 | 6 | 0 | buy 30, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.8 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
@@ -24,7 +24,7 @@ Cash 10,874, prestige 3,507 (387 free, -1.9/turn).
 ## Risks (will stall or run out)
 
 - **flax fibres**: flax fibres buffer 1.0 turns (holds 27, next step uses 28/turn) -> v2: check the step that makes it
-- **labour**: buying 29, short of ~35 needed -> v2: buy 35
+- **labour**: buying 30, short of ~35 needed -> v2: buy 35
 
 ## Notes
 
