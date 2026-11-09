@@ -1,5 +1,7 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-09T09:13 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "18", "max_holding": 135} | church buy: furniture for the church ask (+75 prestige, 30.0 coin/prestige at bid 18); need 93 (~1674 coin), cash 11573 
+- 11-09T08:02 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy over (no longer cheap enough): furniture buy back to normal
 - 11-09T06:43 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.7", "max_holding": 135} | church buy: furniture for the church ask (+75 prestige, 29.5 coin/prestige at bid 17.7); need 103 (~1820 coin), cash 112
 - 11-09T04:30 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy over (no longer cheap enough): furniture buy back to normal
 - 11-09T04:30 [prestige_rules] promote="2", class="textile" | promotion rule
