@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-09T07:41 | turn 13894 | data 0.3 h old | ~507 turns to season end
+Generated 2026-11-09T07:54 | turn 13894 | data 0.5 h old | ~507 turns to season end
 
 ## Flags
 - none
