@@ -1,7 +1,7 @@
 # v2 shadow report
 
-Turn 13894, 2026-11-09 07:16. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
-Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
+Turn 13895, 2026-11-09 08:22. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Cash 11,687, prestige 3,513 (393 free, -2.0/turn).
 
 ## Items v2 runs (last turn)
 
@@ -31,7 +31,7 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 
 ## Prestige spending, cheapest coin per prestige first
 
-507 turns left: prestige gained now converts 92.2% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+506 turns left: prestige gained now converts 92.1% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -39,18 +39,18 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 
 | Sink | Site | Prestige/turn | Coin per prestige | With build cost | Notes |
 | --- | --- | --- | --- | --- | --- |
-| maintain 1 | park | 0.5 | 51.9 | 51.9 | running |
-| hold banquet 4 (pies) | mansion | 18 | 54.8 | 54.8 | thin at home: hop beer, wine, ham, stockfish, cheese |
-| jousting 3 | arena | 230 | 55.3 | 55.6 | needs a arena (build cost 27,508); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold banquet 4 | mansion | 17.5 | 56.8 | 56.8 | thin at home: wine, hop beer, ham, stockfish, cheese |
-| hold banquet 4 (premium) | mansion | 20 | 57.4 | 57.4 | thin at home: hop beer, wine, ham, stockfish |
+| maintain 1 | park | 0.5 | 51.6 | 51.6 | running |
+| hold banquet 4 (pies) | mansion | 18 | 55.2 | 55.2 | thin at home: pasties, hop beer, wine, ham, stockfish, cheese, pies |
+| jousting 3 | arena | 230 | 55.6 | 55.9 | needs a arena (build cost 27,502); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold banquet 4 | mansion | 17.5 | 57.2 | 57.2 | thin at home: wine, hop beer, ham, stockfish, cheese |
+| hold banquet 4 (premium) | mansion | 20 | 57.6 | 57.6 | thin at home: hop beer, wine, ham, stockfish |
 | hold banquet 1 (fish) | mansion | 4.2 | 58.8 | 58.8 | thin at home: cured fish |
-| hold banquet 3 (fish) | mansion | 7.6 | 59.4 | 59.4 | thin at home: hop beer, cured fish, cheese |
-| jousting 2 | arena | 210 | 60.6 | 60.9 | needs a arena (build cost 27,508); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
-| hold banquet 2 (fish) | mansion | 6.8 | 61.1 | 61.1 | thin at home: wine, cured fish, cheese |
-| hold banquet 3 (pies) | mansion | 8 | 61.1 | 61.1 | thin at home: pasties, hop beer, cheese |
-| hold banquet 3 (meat) | mansion | 7.6 | 63.5 | 63.5 | thin at home: hop beer, cheese |
-| hold banquet 2 (pies) | mansion | 7 | 64.7 | 64.7 | thin at home: pasties, wine, cheese |
+| hold banquet 3 (fish) | mansion | 7.6 | 60.5 | 60.5 | thin at home: hop beer, cured fish, cheese |
+| jousting 2 | arena | 210 | 60.9 | 61.2 | needs a arena (build cost 27,502); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| hold banquet 2 (fish) | mansion | 6.8 | 62.2 | 62.2 | thin at home: wine, cured fish, cheese |
+| hold banquet 3 (pies) | mansion | 8 | 62.3 | 62.3 | thin at home: pasties, hop beer, cheese, pies |
+| hold banquet 3 (meat) | mansion | 7.6 | 64.4 | 64.4 | thin at home: hop beer, cured meat, cheese |
+| hold banquet 1 (meat) | mansion | 4.2 | 64.8 | 64.8 | thin at home: cured meat |
 
 ## Ships (last turn, real)
 
@@ -63,8 +63,8 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 
 - **Flax Wyrm** on Caillechâtel: nothing pays; crew 0.0; est +0 a turn
 - **linen snake** on Grandgues: nothing pays; crew 0.0; est +0 a turn
-- best towns now: Heidlowe +344, Bedenis +320, Fulkirch +299, Brunnham +283, Calange +256
-- Heidlowe would trade: furniture buy 32 @ 14.6; crew 0.3
+- best towns now: Gotthafen +364, Heidlowe +356, Fulkirch +300, Brunnham +281, Clairlond +277
+- Gotthafen would trade: furniture buy 33 @ 13.9, pasties buy 2 @ 15.8; crew 0.5
 
 ## Ship routes at today's world prices (estimate, per turn)
 
@@ -72,20 +72,20 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Grandgues | 152 | 0.04 | 0.90 (99/turn) | firewood 35 (2.1->5.37), charcoal 19 (2.62->5.32), timber 21 (8.45->10.07), bread 154 (2.71->2.94) | thread 20 (5.06->5.2), flax plants 1 (1.28->1.74) | +151 |
-| Hanbrücken | 531 | 0.16 | 0.80 (88/turn) | timber 29 (8.45->12.44), tackles 1 (200.55->207.1), charcoal 14 (2.62->4.08), butter 1 (80.33->81.22) | cloth 21 (8.4->10.4), chisels 1 (8.24->9.12), nails 2 (6.56->7.17), thread 6 (5.02->5.2) | +98 |
-| Donaunieder | 985 | 0.34 | 0.20 (22/turn) | nets 5 (38.4->46.93), tools 19 (5.72->6.74), belts 2 (38.64->44.46), butter 1 (80.33->87.4) | cloth 8 (8.45->10.4), canvas 1 (31.29->35.34), resin 2 (0.92->2.09), cheese 5 (6.67->7.03) | +83 |
-| Neuborn | 780 | 0.23 | 1.00 (110/turn) | timber 29 (8.45->13.3), flour 1 (23.52->27.74), butter 0 (80.33->85.5), grain 1 (2.7->3.48) | cloth 6 (7.93->10.4), cured meat 5 (24.15->25.27), dyed cloth 6 (11.97->12.82), tackles 0 (165.9->169.1) | +81 |
-| Heilegg | 826 | 0.25 | 0.30 (33/turn) | casks 10 (6.51->9.17), butter 1 (80.33->86.45), steel ingots 2 (15.44->17.1), varnish 1 (17.54->20.9) | cloth 19 (8.51->10.4), thread 47 (4.62->5.2), garments 2 (23.1->25.2), cookware 3 (25.2->25.84) | +80 |
+| Grandgues | 152 | 0.04 | 0.80 (88/turn) | bread 154 (2.37->2.93), firewood 35 (2.46->5.51), timber 22 (7.51->9.59), nets 3 (38.4->40.09) | cheese 9 (7.19->7.69), thread 20 (5.04->5.2), casks 2 (5.93->6.22), nails 3 (7.09->7.22) | +174 |
+| Hanbrücken | 531 | 0.15 | 0.70 (77/turn) | timber 32 (7.51->13.11), nets 3 (38.4->42.18), copper ingots 1 (14.6->16.25) | cloth 23 (8.51->10.2), bellows 1 (268.8->277.4), cheese 2 (6.41->7.69), chisels 1 (8.45->9.69) | +163 |
+| Hanstein | 380 | 0.11 | 0.20 (22/turn) | timber 11 (7.51->11.49), varnish 1 (18.9->19.76), salt 8 (4.39->4.52) | looms 1 (530.25->603.25), cloth 11 (8.4->10.2), cheese 9 (6.46->7.69), thread 36 (4.94->5.2) | +141 |
+| Fontaux | 411 | 0.12 | 1.00 (110/turn) | timber 19 (7.51->11.4), firewood 18 (2.46->6.65), premium ham 0 (252->258.4), spirits 0 (9.87->10.54) | looms 0 (551.25->603.25), cheese 8 (6.51->7.69), cloth 4 (9.97->10.2), pies 0 (20.58->21.66) | +114 |
+| Kleinburgh | 1440 | 0.61 | 0.30 (33/turn) | nets 5 (38.4->43.32), salt 7 (4.39->7.6), dyed cloth 3 (15.02->20.14), garments 10 (25.8->27.36) | bellows 1 (262.5->277.4), cloth 7 (9.19->10.2), chisels 1 (8.24->9.69), candles 1 (79.28->80) | +83 |
 
-**Best:** Grandgues at about +151 coin a turn.
+**Best:** Grandgues at about +174 coin a turn.
 
 ## v2 orders
 
 | Item | v2 buy | v2 sell | Why |
 | --- | --- | --- | --- |
-| arms | 1 @ 32.4, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had None) |
-| beer |  | 16 @ min 3.26 | goal planner: sells 16 at 3.26 (v2 had 15 at 3.42) |
+| arms | 1 @ 34.4, stop 2 |  | goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1) |
+| beer |  | 16 @ min 3.26 | goal planner: sells 16 at 3.26 (v2 had 15 at 3.38) |
 | bread | 5 @ 2.6, stop 17 |  | goal planner: buys 5 a turn for today's rates, keeps up to 17 (v2 had 5) |
 | candles | 2 @ 82, stop 61 |  | goal planner: buys 2 a turn for today's rates, keeps up to 61 (v2 had None) |
 | cloth |  | 1 @ min 7.05 | goal planner: sells 1 a turn at 7.05, keeps 72 (no one offered it) |
@@ -93,11 +93,11 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 | firewood | 4 @ 2.4, stop 16 |  | goal planner: buys 4 a turn for today's rates, keeps up to 16 (v2 had 8) |
 | fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
 | flax plants |  | 2 @ min 1.21 | goal planner: sells 2 a turn at 1.21, keeps 219 (no one offered it) |
-| furniture | 2 @ 15.9, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
-| garments |  | 11 @ min 19.3 | goal planner: sells 11 at 19.3 (v2 had 10 at 24.4) |
+| furniture | 2 @ 17.3, stop 150 |  | goal planner: buys 2 a turn for today's rates, keeps up to 150 (v2 had None) |
+| garments |  | 11 @ min 19.3 | goal planner: sells 11 at 19.3 (v2 had 10 at 25.2) |
 | grain | 9 @ 3.7, stop 34 |  | goal planner: buys 9 a turn for today's rates, keeps up to 34 (v2 had 11) |
 | labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 25) |
-| light armour | 1 @ 97.5, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
+| light armour | 1 @ 102, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
 | meat | 1 @ 3.02, stop - |  | goal planner: buys 1 for today's rates (v2 had 1) |
 | nets |  | 9 @ min 31.8 | goal planner: sells 9 at 31.8 (v2 had 9 at 37.4) |
 | porterage | 5 @ 1.1, stop - |  | goal planner: buys 5 for today's rates (v2 had 5) |
@@ -106,31 +106,31 @@ Cash 11,449, prestige 3,515 (395 free, -2.0/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 23.8k (cash + stock at home prices); +149/turn over 6 turns, +101/turn over 24 turns.
-- Limits: cash flow >= -310/turn, prestige >= -0.39/turn (values are after 200 tax a turn).
-- Today's settings: value +64/turn, cash +29/turn, prestige -1.98/turn - breaks the prestige floor.
-- Plan: value +2/turn, cash +5/turn, prestige -0.39/turn, inside both limits.
-- Cash check (real vs predicted cash a tick, last 3): +39 vs +18, +184 vs +20, +5 vs +20.
+- Value now 24.0k (cash + stock at home prices); +131/turn over 6 turns, +101/turn over 24 turns.
+- Limits: cash flow >= -320/turn, prestige >= -0.39/turn (values are after 200 tax a turn).
+- Today's settings: value +67/turn, cash +35/turn, prestige -1.97/turn - breaks the prestige floor.
+- Plan: value +2/turn, cash +67/turn, prestige -0.39/turn, inside both limits.
+- Cash check (real vs predicted cash a tick, last 3): +184 vs +20, +5 vs +20, +238 vs +29.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - ship linen snake -> Essenbrucke: +5/turn
-  - ship Flax Wyrm -> Calange: +1/turn
-  - ropewalk 1 0.25 -> 0.06: +11/turn
-  - net maker 0.00 -> 0.29: +16/turn
+  - ship linen snake -> Essenbrucke: +7/turn
+  - ship Flax Wyrm -> Vauxvais: +2/turn
+  - ropewalk 1 0.25 -> 0.08: +11/turn
+  - net maker 0.00 -> 0.29: +15/turn
   - brewery 1 0.14 -> 0.21: -7/turn
-  - spinnery 1 1.65 -> 1.23: -7/turn
-  - retting pit 1 0.91 -> 0.70: +6/turn
-  - flax farm 1 4.64 -> 3.49: -9/turn
-  - mansion 1 0.00 -> 0.38: -73/turn
-- Model check over the last 59 turns: predicted +103/turn for the settings we ran, real +43/turn - OFF, trust the plan less.
-- Worth of one more unit per turn: labour 1.66, thread 4.18, cloth 6.67, flax fibres 4.95, garments 19.30, nets 29.88, beer 2.92, timber 3.24, prestige 63.15, cash 0.00
-- Orders it would set: arms buy 1 (v2 None); beer sell 16 (v2 15); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 11); labour buy 29 (v2 25)
-- Ship linen snake: Grandgues -> Essenbrucke (+5/turn over staying).
-- Ship Flax Wyrm: Caillechâtel -> Calange (+1/turn over staying).
+  - weavery 1 0.50 -> 0.61: -10/turn
+  - sewing shop 1 0.30 -> 0.36: +10/turn
+  - spinnery 1 1.65 -> 1.07: -16/turn
+  - retting pit 1 0.91 -> 0.61: +7/turn
+  - flax farm 1 4.64 -> 3.04: -6/turn
+- Model check over the last 59 turns: predicted +103/turn for the settings we ran, real +48/turn - OFF, trust the plan less.
+- Worth of one more unit per turn: labour 1.66, thread 4.18, cloth 6.67, flax fibres 4.95, garments 19.30, nets 29.97, beer 2.93, timber 3.22, prestige 62.60, cash 0.00
+- Orders it would set: beer sell 16 (v2 15); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); flax plants sell 2 (v2 none); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 11); labour buy 29 (v2 25); light armour buy 1 (v2 None)
+- Ship linen snake: Grandgues -> Essenbrucke (+7/turn over staying).
+- Ship Flax Wyrm: Caillechâtel -> Vauxvais (+2/turn over staying).
 - Management: ~11.39 of 18 used.
 - Investments:
   - Tenants L13 for 500 prestige: +82/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - +1 plot park 1 for ~2032 coin: +1/turn, payback 3214 turns, doesn't pay yet (materials thin at home: limestone)
 
 ## Chain sizing
 
@@ -145,8 +145,8 @@ Labour: own 500, everything else 340, chain may buy 350 -> chain allowance 510, 
 | weave | 3 | 0.50 | 1.28 |
 | sew | 2 | 0.30 | 0.80 |
 
-Buffers: flax fibres 27/77, thread 870/228, cloth 72/128
+Buffers: flax fibres 27/77, thread 867/228, cloth 72/128
 
 ## Self-diagnosis
 
-- R5: flax fibres buy not filling: bid 5.05 under the home ask 6.35 for 6 turns, bought 0.0 of 1, 27.3 held (1.0 turns); raise needs Taylor (ceiling None)
+- R5: flax fibres buy not filling: bid 5.05 under the home ask 5.55 for 6 turns, bought 0.0 of 1, 27.3 held (1.0 turns); raise needs Taylor (ceiling None)
