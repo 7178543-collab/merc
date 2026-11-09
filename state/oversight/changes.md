@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-09T13:55 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
 - 11-09T12:45 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy over (ask left the board): furniture buy back to normal
 - 11-09T11:34 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "18.2", "max_holding": 135} | church buy: furniture for the church ask (+75 prestige, 30.3 coin/prestige at bid 18.2); need 37 (~670 coin), cash 10816
 - 11-09T10:23 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.9", "max_holding": 135} | church buy: furniture for the church ask (+75 prestige, 29.8 coin/prestige at bid 17.9); need 65 (~1171 coin), cash 1120
