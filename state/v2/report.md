@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13924, 2026-11-10 13:29. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13924, 2026-11-10 13:39. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 11,898, prestige 3,455 (335 free, -2.4/turn).
 
 ## Items v2 runs (last turn)
@@ -69,7 +69,7 @@ Cash 11,898, prestige 3,455 (335 free, -2.4/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
+| Flax Wyrm | 0.2 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
 | linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
@@ -132,7 +132,7 @@ Cash 11,898, prestige 3,455 (335 free, -2.4/turn).
   - spinnery 1 1.65 -> 1.35: +5/turn
   - sewing shop 1 0.30 -> 0.36: -1/turn
   - weavery 1 0.50 -> 0.61: +11/turn
-- Model check over the last 59 turns: predicted +106/turn for the settings we ran, real +155/turn.
+- Model check over the last 59 turns: predicted +107/turn for the settings we ran, real +155/turn.
 - Worth of one more unit per turn: labour 1.62, thread 4.07, cloth 6.50, flax fibres 4.82, garments 18.81, nets 29.38, beer 2.83, timber 3.38, prestige 73.03, cash 0.00
 - Orders it would set: cloth sell 1 (v2 none); firewood buy 2 (v2 3); flax plants sell 2 (v2 none); garments sell 11 (v2 10); grain buy 8 (v2 0); labour buy 29 (v2 0); light armour buy 1 (v2 None)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.09, worth +5/turn.
