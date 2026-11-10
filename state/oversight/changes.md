@@ -8,4 +8,3 @@
 - 11-09T17:35 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (ask left the board): limestone buy back to normal
 - 11-09T16:27 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "19.4", "max_holding": 105} | church buy: limestone for the church ask (+25 prestige, 34.9 coin/prestige at bid 19.4); need 62 (~1197 coin), cash 1053
 - 11-09T15:06 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "15.8", "max_holding": 105} | church buy: limestone for the church ask (+25 prestige, 28.4 coin/prestige at bid 15.8); need 61 (~959 coin), cash 10403
-- 11-09T13:55 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
