@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-11T05:59 | turn 13940 | data 0.4 h old | ~461 turns to season end
+Generated 2026-11-11T06:05 | turn 13940 | data 0.5 h old | ~460 turns to season end
 
 ## Flags
 - **HIGH** cash is falling 406/turn over the last 12 turns
@@ -19,18 +19,18 @@ Generated 2026-11-11T05:59 | turn 13940 | data 0.4 h old | ~461 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 62 of 502 (prestige rank 67): legacy 14825.9, prestige 3497.6; median legacy 2165.3
-- gap to the next rank up: 647.9
-- top 5: Jerry Wylteshire (Hofkirchen) 152528.0; Hawys atte Broke (Kirchwerp) 96132.0; Alphonse Segal (Rouhomme) 84669.0; Henger Lieske (Grandgues) 72538.0; Zélie de Noyon (Rouhomme) 72067.0
+- legacy rank 62 of 503 (prestige rank 67): legacy 14843.4, prestige 3495.5; median legacy 2169.0
+- gap to the next rank up: 662.1
+- top 5: Jerry Wylteshire (Hofkirchen) 152775.0; Hawys atte Broke (Kirchwerp) 96351.0; Alphonse Segal (Rouhomme) 84833.0; Henger Lieske (Grandgues) 72726.0; Zélie de Noyon (Rouhomme) 72238.0
 
 ## Town and contracts
-- Strasclives: 130 commoners, growth 0.338, migration 0.014, 5 households
+- Strasclives: 130 commoners, growth 0.348, migration 0.014, 5 households
 - church asks 2 | contracts {'done': 30, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1616.1), ('crafting', 157.6)]; Florise Plantier [('maritime', 1624.5), ('textile', 15.3)]; Chrétien Dunois [('textile', 786.3), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1617.4), ('crafting', 157.6)]; Florise Plantier [('maritime', 1625.8), ('textile', 15.3)]; Chrétien Dunois [('textile', 787.9), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.50; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +0.00
+- to legacy -17.49; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
 - biggest stock by value: thread 1064.0 (5533.0), candles 59.5 (5236.0), tapestries 5.0 (3275.0), furniture 121.4 (2027.0), timber 99.5 (736.0), garments 30.3 (727.0)
