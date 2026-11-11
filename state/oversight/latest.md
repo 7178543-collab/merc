@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-11T21:08 | turn 13956 | data 0.1 h old | ~445 turns to season end
+Generated 2026-11-11T21:26 | turn 13956 | data 0.4 h old | ~445 turns to season end
 
 ## Flags
 - **HIGH** business value is falling 240/turn
