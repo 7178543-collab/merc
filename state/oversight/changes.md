@@ -8,6 +8,3 @@
 - 11-10T23:27 [contracts] contract="653704275379048704", item="garments", volume=70.0, bonus=75.0 | auto-fill church offer from stock
 - 11-10T20:24 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (ask left the board): limestone buy back to normal
 - 11-10T20:24 [contracts] item="tapestries", set={"buy_volume": 0} | church buy over (ask left the board): tapestries buy back to normal
-- 11-10T19:08 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "20.8", "max_holding": 100} | church buy: limestone for the church ask (+50 prestige, 16.6 coin/prestige at bid 20.8); need 62 (~1283 coin), cash 1140
-- 11-10T19:08 [contracts] item="tapestries", set={"buy_volume": 4, "buy_price": "810", "max_holding": 6} | church buy: tapestries for the church ask (+175 prestige, 27.8 coin/prestige at bid 810); need 4 (~3240 coin), cash 1140
-- 11-10T19:08 [contracts] item="garments", set={"min_holding": 70} | church build-up: hold garments home sales until 70 held for the church ask (+75 prestige, 20 coin/prestige); auto-fill d
