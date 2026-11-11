@@ -1,9 +1,11 @@
 {
- "t": "2026-11-11T02:27:28+00:00",
- "turn": 13937,
+ "t": "2026-11-11T03:33:07+00:00",
+ "turn": 13938,
  "mode": "live",
  "owned": [
+  "arms",
   "beer",
+  "bread",
   "cloth",
   "cured fish",
   "donations",
@@ -14,6 +16,7 @@
   "garments",
   "grain",
   "labour",
+  "light armour",
   "meat",
   "nets",
   "porterage",
@@ -22,7 +25,7 @@
  "suspended": {},
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 6,
+ "would_change": 10,
  "chain": {
   "why": "live.chain is off (plan only)",
   "done": []
@@ -30,29 +33,56 @@
  "rows": [
   {
    "item": "arms",
-   "owned": false,
+   "owned": true,
    "live": [
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "30.2"
+     "buy_price": "32"
     }
    ],
    "new": [
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "32.8"
+     "buy_price": "33.6"
     }
    ],
    "same": false,
    "refused": [
-    "no buy ceiling in config for arms"
+    "diagnose fixed it at turn 13937: held for 2 turns"
+   ]
+  },
+  {
+   "item": "beer",
+   "owned": true,
+   "live": [
+    {
+     "min_holding": 60,
+     "sell_volume": 8,
+     "sell_price": "3.26"
+    }
+   ],
+   "new": [
+    {
+     "min_holding": 60,
+     "sell_volume": 8,
+     "sell_price": "3.26"
+    },
+    {
+     "buy_volume": 5,
+     "buy_price": "3.46",
+     "max_holding": 17
+    }
+   ],
+   "same": false,
+   "refused": [
+    "no buy ceiling in config for beer"
    ]
   },
   {
    "item": "bread",
-   "owned": false,
+   "owned": true,
    "live": [
     {
      "min_holding": 30,
@@ -110,12 +140,18 @@
    ],
    "new": [
     {
-     "max_holding": 80,
+     "max_holding": 160,
      "buy_volume": 40,
      "buy_price": "1.0"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "firewood",
@@ -158,16 +194,16 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 4,
-     "buy_volume": 1,
-     "buy_price": "5.05"
+     "min_holding": 85,
+     "sell_volume": 1,
+     "sell_price": "6.75"
     }
    ],
    "new": [
     {
+     "min_holding": 85,
      "sell_volume": 1,
-     "sell_price": "6.75",
-     "min_holding": 85
+     "sell_price": "6.65"
     }
    ],
    "same": false,
@@ -216,7 +252,7 @@
    ],
    "same": false,
    "refused": [
-    "sell price 19.30 below floor 19.72"
+    "sell price 19.30 below floor 20.40"
    ]
   },
   {
@@ -230,11 +266,17 @@
    "new": [
     {
      "buy_price": "3.7",
-     "buy_volume": 0,
+     "buy_volume": 5,
      "max_holding": 17
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "labour",
@@ -252,6 +294,41 @@
     }
    ],
    "same": true
+  },
+  {
+   "item": "light armour",
+   "owned": true,
+   "live": [
+    {
+     "max_holding": 10,
+     "buy_volume": 1,
+     "buy_price": "99.5"
+    },
+    {
+     "min_holding": 3,
+     "sell_volume": 3,
+     "sell_price": "94"
+    }
+   ],
+   "new": [
+    {
+     "max_holding": 10,
+     "buy_volume": 1,
+     "buy_price": "108"
+    },
+    {
+     "min_holding": 3,
+     "sell_volume": 3,
+     "sell_price": "94"
+    }
+   ],
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "meat",
@@ -314,13 +391,13 @@
    "live": [
     {
      "sell_volume": 1,
-     "sell_price": "685"
+     "sell_price": "675"
     }
    ],
    "new": [
     {
      "sell_volume": 1,
-     "sell_price": "675",
+     "sell_price": "665",
      "min_holding": 0
     }
    ],
