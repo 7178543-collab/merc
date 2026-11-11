@@ -11,5 +11,3 @@
 - 11-10T19:08 [contracts] item="garments", set={"min_holding": 70} | church build-up: hold garments home sales until 70 held for the church ask (+75 prestige, 20 coin/prestige); auto-fill d
 - 11-10T17:12 [contracts] item="tapestries", set={"buy_volume": 0} | church buy over (no longer cheap enough): tapestries buy back to normal
 - 11-10T16:01 [contracts] item="tapestries", set={"buy_volume": 5, "buy_price": "635", "max_holding": 6} | church buy: tapestries for the church ask (+175 prestige, 21.8 coin/prestige at bid 635); need 5 (~3175 coin), cash 1193
-- 11-10T11:08 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
-- 11-10T09:56 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "18.5", "max_holding": 100} | church buy: limestone for the church ask (+50 prestige, 14.8 coin/prestige at bid 18.5); need 61 (~1123 coin), cash 1155
