@@ -1,5 +1,8 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-10T23:27 [contracts] item="garments", set={"min_holding": 30} | church build-up over (ask 653704275379048704 left the board): garments sell reserve back to 30
+- 11-10T23:27 [contracts] item="garments", set={"min_holding": 30} | church garments ask filled: sell reserve back to normal
+- 11-10T23:27 [contracts] contract="653704275379048704", item="garments", volume=70.0, bonus=75.0 | auto-fill church offer from stock
 - 11-10T20:24 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (ask left the board): limestone buy back to normal
 - 11-10T20:24 [contracts] item="tapestries", set={"buy_volume": 0} | church buy over (ask left the board): tapestries buy back to normal
 - 11-10T19:08 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "20.8", "max_holding": 100} | church buy: limestone for the church ask (+50 prestige, 16.6 coin/prestige at bid 20.8); need 62 (~1283 coin), cash 1140
