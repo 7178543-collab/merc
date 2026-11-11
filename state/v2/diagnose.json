@@ -1,6 +1,6 @@
 {
- "t": "2026-11-11T21:59:33+00:00",
- "turn": 13956,
+ "t": "2026-11-11T23:00:04+00:00",
+ "turn": 13957,
  "mode": "live",
  "reduce_only": false,
  "findings": [
@@ -14,10 +14,30 @@
    "building": "spinnery 1",
    "finding": "spinnery 1 blocked by thread space: 1064 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread",
    "item": "thread"
+  },
+  {
+   "rule": "R7 stale ask",
+   "item": "flax fibres",
+   "finding": "flax fibres ask 8.65 over the market for 3 turns: the town trades ~12 a turn at 6.85, we sold 0 with 57 over what we keep",
+   "action": "sell price 8.65 -> 6.85 (last trade 6.85, floor 5.82)",
+   "raise_": false,
+   "via": "queue",
+   "entry": {
+    "item": "flax fibres",
+    "tier": 0,
+    "set": {
+     "sell_price": "6.85"
+    },
+    "note": "v2 diagnose R7 stale ask: sell price 8.65 -> 6.85 (last trade 6.85, floor 5.82)",
+    "building": "152202386005001"
+   },
+   "ok": false,
+   "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
   }
  ],
  "alerts": [
   "R1: firewood slot dry: 0.0 held, 2.8 a turn (heating slot (+0.1 prestige)); our buy 1 @ 2.4, home ask none (no sellers at home)",
-  "R2: spinnery 1 blocked by thread space: 1064 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread"
+  "R2: spinnery 1 blocked by thread space: 1064 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread",
+  "R7 stale ask: flax fibres ask 8.65 over the market for 3 turns: the town trades ~12 a turn at 6.85, we sold 0 with 57 over what we keep -> sell price 8.65 -> 6.85 (last trade 6.85, floor 5.82) FAILED"
  ]
 }
