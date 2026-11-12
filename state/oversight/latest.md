@@ -1,15 +1,15 @@
 # Oversight briefing
 
-Generated 2026-11-12T02:31 | turn 13961 | data 0.5 h old | ~440 turns to season end
+Generated 2026-11-12T02:56 | turn 13961 | data 0.3 h old | ~440 turns to season end
 
 ## Flags
-- **HIGH** business value is falling 178/turn
+- **HIGH** business value is falling 174/turn
 - **MED** history has 1 skipped turn(s) in the last 24: the bots missed runs
 
 ## Cash
 - now 9866.0 | last 6 / 12 / 24 turns: +344 / +2078 / +3080 | trend +172 per turn
 - if the 12-turn trend holds: +12 turns 11930.0, +48 turns 18122.0, +120 turns 30506.0
-- business value (cash + stock) 26641.0, trend -178 per turn over 25 turns; stock at market 16496.0
+- business value (cash + stock) 26345.0, trend -174 per turn over 25 turns; stock at market 16496.0
 - profit last turn 266.0, 12-turn average 388.0 (before taxes)
 
 ## Prestige
@@ -41,7 +41,7 @@ Generated 2026-11-12T02:31 | turn 13961 | data 0.5 h old | ~440 turns to season 
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 9866, burn -2256 over 12 turns
+- FAILSAFE WATCH: cash 9866, burn -2078 over 12 turns
 - HONEST BURN: business value falling
 - needs you
 - arms: low_stock
