@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 13975, 2026-11-12 16:14. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13975, 2026-11-12 16:57. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 
 ## Items v2 runs (last turn)
@@ -13,7 +13,7 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 | firewood | 0 | 0 | 0 | 1 | 0 | stop 3, buy 1, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 35 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 19.3 |
-| grain | 35 | 0 | 0 | 0 | 0 | stop 18, buy 5, buy @ 3.7 |
+| grain | 35 | 0 | 0 | 0 | 0 | stop 21, buy 6, buy @ 3.7 |
 | labour | 29 | 29 | 484 | 0 | 45 | buy 29, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.4 |
@@ -53,7 +53,7 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 | --- | --- | --- | --- | --- | --- |
 | maintain 1 | park | 0.5 | 51.3 | 51.3 | running |
 | hold banquet 4 (pies) | mansion | 18 | 54.0 | 54.0 | thin at home: hop beer, ham, stockfish |
-| jousting 3 | arena | 230 | 55.0 | 55.3 | needs a arena (build cost 27,110); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| jousting 3 | arena | 230 | 55.0 | 55.3 | needs a arena (build cost 27,494); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
 | hold banquet 4 | mansion | 17.5 | 56.1 | 56.1 | thin at home: hop beer, ham, stockfish |
 | hold banquet 3 (fish) | mansion | 7.6 | 57.4 | 57.4 | thin at home: hop beer, cured fish, cheese |
 | hold banquet 2 (fish) | mansion | 6.8 | 58.0 | 58.0 | thin at home: cured fish, cheese |
@@ -61,7 +61,7 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 | hold banquet 4 (premium) | mansion | 20 | 58.5 | 58.5 | thin at home: hop beer, ham, stockfish |
 | hold banquet 3 (pies) | mansion | 8 | 58.7 | 58.7 | thin at home: hop beer, pies |
 | hold banquet 2 (pies) | mansion | 7 | 60.2 | 60.2 | thin at home: cheese, pies |
-| jousting 2 | arena | 210 | 60.2 | 60.6 | needs a arena (build cost 27,110); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
+| jousting 2 | arena | 210 | 60.2 | 60.6 | needs a arena (build cost 27,494); thin at home: swords, protection, coats, light armour, plate armour; needs weaponry skill |
 | hold banquet 3 (meat) | mansion | 7.6 | 66.1 | 66.1 | thin at home: hop beer, cheese |
 
 ## Ships (last turn, real)
@@ -84,13 +84,13 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 
 | Town | Moves | Ship cost per size unit | Crew | Out per turn (sell there) | Back per turn (buy there) | Net/turn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Blanans | 297 | 0.08 | 0.70 (74/turn) | timber 40 (7.61->10.54), limestone 4 (19.74->38.19) | dyed cloth 6 (11.23->16.91), charcoal 19 (2.71->3.46), jewellery 1 (122.85->124.45), cloth 12 (7.56->7.7) | +169 |
+| Blanans | 297 | 0.08 | 0.70 (74/turn) | timber 40 (7.61->10.54), limestone 4 (19.74->38.19) | dyed cloth 6 (11.23->16.91), jewellery 1 (122.85->124.45), charcoal 19 (2.71->3.46), cloth 12 (7.56->7.7) | +168 |
 | Vauxvais | 204 | 0.06 | 0.10 (11/turn) | windows 1 (735->779), wax 17 (26.25->27.17) | tapestries 1 (630->688.75), dyed cloth 6 (12.18->16.91), cured meat 3 (24.15->25.65), thread 17 (5.35->5.65) | +158 |
 | Hanstein | 380 | 0.11 | 0.20 (21/turn) | timber 11 (7.61->10.26), hides 1 (12.18->12.73) | thread 31 (4.2->5.65), dyed cloth 6 (12.5->16.91), flax fibres 12 (5.51->7.1), flax plants 34 (1.32->1.84) | +117 |
-| Hofkirchen | 991 | 0.33 | 0.40 (42/turn) | canvas 3 (43.05->44.65), wine 6 (6.88->7.55), chisels 2 (10.19->11.11), grain 2 (2.74->3.63) | dyed cloth 6 (11.97->16.91), gold ore 1 (147->166.25), jewellery 2 (115.5->124.45), flax fibres 23 (5.78->7.1) | +102 |
 | Großaue | 1136 | 0.42 | 0.20 (21/turn) | windows 1 (735->807.5), lead ore 4 (9.24->11.69), wine 2 (6.88->7.93) | dyed cloth 6 (13.23->16.91), thread 14 (4.73->5.65), flax fibres 4 (5.99->7.1), nails 3 (6.62->7.31) | +102 |
+| Hofkirchen | 991 | 0.33 | 0.40 (42/turn) | canvas 3 (43.05->44.65), wine 6 (6.88->7.55), chisels 2 (10.19->11.11), grain 2 (2.74->3.63) | dyed cloth 6 (11.97->16.91), gold ore 1 (147->166.25), jewellery 2 (115.5->124.45), flax fibres 23 (5.78->7.1) | +101 |
 
-**Best:** Blanans at about +169 coin a turn.
+**Best:** Blanans at about +168 coin a turn.
 
 ## v2 orders
 
@@ -135,7 +135,7 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
   - ropewalk 1 0.25 -> 0.00: -20/turn
   - ropewalk 1 [make rope 1] 0.00 -> 0.24: +25/turn
 - Model check over the last 61 turns: predicted +105/turn for the settings we ran, real +15/turn - OFF, trust the plan less.
-- Worth of one more unit per turn: labour 1.66, thread 4.18, cloth 6.67, flax fibres 4.95, garments 19.30, nets 30.18, beer 3.10, timber 3.26, prestige 68.07, cash 0.00
+- Worth of one more unit per turn: labour 1.66, thread 4.18, cloth 6.67, flax fibres 4.95, garments 19.30, nets 30.18, beer 3.10, timber 3.62, prestige 68.07, cash 0.00
 - Orders it would set: candles buy 2 (v2 None); cloth sell 2 (v2 none); firewood buy 1 (v2 3); flax plants sell 2 (v2 none); garments sell 11 (v2 10); grain buy 6 (v2 0); labour buy 29 (v2 0); light armour buy 1 (v2 None); pasties sell 1 (v2 none); rope sell 1 (v2 none)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.24, worth +9/turn.
 - Ship linen snake: Grandgues -> Clarfranche (+5/turn over staying).
@@ -143,7 +143,7 @@ Cash 12,893, prestige 3,533 (413 free, -2.8/turn).
 - Management: ~11.39 of 18 used.
 - Investments:
   - Tenants L13 for 500 prestige: +83/turn, doesn't pay yet (waits until 800 free (keeps 300 after))
-  - +1 plot park 1 for ~1865 coin: +3/turn, payback 602 turns, doesn't pay yet
+  - +1 plot park 1 for ~1907 coin: +3/turn, payback 615 turns, doesn't pay yet
 
 ## Chain sizing
 
