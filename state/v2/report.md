@@ -1,13 +1,13 @@
 # v2 shadow report
 
-Turn 13995, 2026-11-13 12:17. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 13995, 2026-11-13 12:27. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 15,282, prestige 3,487 (367 free, -2.5/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 0 | 0 | 0 | 15 | 0 | min_holding 60, sell 8, sell @ 3.26 |
+| beer | 0 | 0 | 0 | 15 | 0 | min_holding 60, sell 8, sell @ 3.26; stop 116, buy 39, buy @ 3.76 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 0 | 0 | 0 | 1 | 0 | stop 3, buy 1, buy @ 2.4 |
@@ -19,11 +19,10 @@ Cash 15,282, prestige 3,487 (367 free, -2.5/turn).
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 31.4 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
 
-**4 risks, 1 waste, 1 tuning** where v2 would act differently from v1.
+**3 risks, 1 waste, 1 tuning** where v2 would act differently from v1.
 
 ## Risks (will stall or run out)
 
-- **beer**: needed (15.0/turn) but there is NO buy order, stock 0.0 -> v2: add buy 30
 - **firewood**: brewery 1 ran short of firewood (buy is live (1 @ 2.4), but the home ask 2.58 is above it); knock-on: mansion 1 (no beer); labour need rises ~53/turn when they restart -> v2: raise the buy price (or ceiling) or find another source
 - **firewood**: home ask 2.58 is above our ceiling 2.40 and last turn bought 0 of ~1 needed: the buy can't fill -> v2: raise the ceiling or find another source
 - **firewood**: only 0.0 turns of firewood left and buying 1 (need 3) -> v2: buy 3
@@ -115,7 +114,7 @@ Cash 15,282, prestige 3,487 (367 free, -2.5/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 30.6k (cash + stock at home prices); +223/turn over 6 turns, +110/turn over 24 turns.
+- Value now 30.3k (cash + stock at home prices); +179/turn over 6 turns, +80/turn over 24 turns.
 - Limits: cash flow >= -470/turn, prestige >= -0.28/turn (values are after 200 tax a turn).
 - Today's settings: value -244/turn, cash -144/turn, prestige +1.65/turn.
 - Plan: value -50/turn, cash -34/turn, prestige -0.28/turn, inside both limits.
@@ -132,7 +131,7 @@ Cash 15,282, prestige 3,487 (367 free, -2.5/turn).
   - net maker 0.00 -> 0.29: +0/turn
   - weavery 1 0.50 -> 0.38: -7/turn
   - sewing shop 1 0.30 -> 0.22: +10/turn
-- Model check over the last 60 turns: predicted +102/turn for the settings we ran, real -11/turn - OFF, trust the plan less.
+- Model check over the last 60 turns: predicted +97/turn for the settings we ran, real +26/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.66, thread 4.18, cloth 6.67, flax fibres 4.96, garments 19.30, nets 30.24, beer 3.15, timber 3.35, prestige 68.81, cash 0.00
 - Orders it would set: bread buy 5 (v2 6); candles buy 2 (v2 None); cured meat buy 4 (v2 None); firewood buy 1 (v2 3); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 6 (v2 0); labour buy 64 (v2 12); light armour buy 1 (v2 None); pasties sell 1 (v2 none)
 - Recipe: ropewalk 1 make rope 2 -> make rope 1 at 0.30, worth +10/turn.
@@ -160,7 +159,7 @@ Buffers: flax fibres 134/77, thread 1050/228, cloth 72/128
 
 ## Self-diagnosis
 
-- R1: beer slot dry: 0.0 held, 19.2 a turn (drink slot (+0.4 prestige); mansion 1 hold banquet 1 (meat) (+4.2 prestige)); our buy none, home ask 3.7 -> **buy 39 @ 3.76 (ask 3.7, cap 14.4)** (ok)
+- R1: beer slot dry: 0.0 held, 19.2 a turn (drink slot (+0.4 prestige); mansion 1 hold banquet 1 (meat) (+4.2 prestige)); our buy 39 @ 3.76, home ask 3.7; our bid is already at/over the ask (sellers too thin)
 - R1: cured meat slot dry: 3.2 held, 6.0 a turn (mansion 1 hold banquet 1 (meat) (+4.2 prestige)); our buy 4 @ 31.4, home ask none (no sellers at home)
 - R1: firewood slot dry: 0.0 held, 2.8 a turn (heating slot (+0.1 prestige)); our buy 1 @ 2.4, home ask 2.58; ask over the cap 2.1 (60 coin per prestige)
 - R2: spinnery 1 blocked by thread space: 1050 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread
