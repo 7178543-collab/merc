@@ -1,53 +1,53 @@
 # Oversight briefing
 
-Generated 2026-11-13T13:03 | turn 13995 | data 0.1 h old | ~405 turns to season end
+Generated 2026-11-13T14:43 | turn 13997 | data 0.5 h old | ~404 turns to season end
 
 ## Flags
 - none
 
 ## Cash
-- now 15282.0 | last 6 / 12 / 24 turns: +804 / +1707 / +2702 | trend +166 per turn
-- if the 12-turn trend holds: +12 turns 17280.0, +48 turns 23274.0, +120 turns 35262.0
-- business value (cash + stock) 30319.0, trend +84 per turn over 25 turns; stock at market 15110.0
-- profit last turn 346.0, 12-turn average 387.0 (before taxes)
+- now 14987.0 | last 6 / 12 / 24 turns: +115 / +1230 / +2307 | trend +129 per turn
+- if the 12-turn trend holds: +12 turns 16534.0, +48 turns 21174.0, +120 turns 30455.0
+- business value (cash + stock) 30023.0, trend +85 per turn over 25 turns; stock at market 15049.0
+- profit last turn 65.0, 12-turn average 380.0 (before taxes)
 
 ## Prestige
-- total 3487.1, free 367.1, rate -2.55 per turn (free trend -2.34 per turn)
-- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: None
-- banquet: hold banquet 1 (meat) at 0.0 of 1.0
-- failsafe level 0 (OK), paused: jewellery, limestone
+- total 3486.8, free 366.8, rate 2.18 per turn (free trend -2.25 per turn)
+- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: 199.0
+- banquet: hold banquet 1 (meat) at 1.0 of 1.0
+- failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 63 of 513 (prestige rank 69): legacy 15816.0, prestige 3484.6; median legacy 2345.5
-- gap to the next rank up: 26.1
-- top 5: Jerry Wylteshire (Hofkirchen) 166299.0; Hawys atte Broke (Kirchwerp) 108468.0; Alphonse Segal (Rouhomme) 94275.0; Henger Lieske (Grandgues) 83551.0; Zélie de Noyon (Rouhomme) 81911.0
+- legacy rank 63 of 514 (prestige rank 69): legacy 15833.4, prestige 3486.8; median legacy 2344.1
+- gap to the next rank up: 41.8
+- top 5: Jerry Wylteshire (Hofkirchen) 166540.0; Hawys atte Broke (Kirchwerp) 108690.0; Alphonse Segal (Rouhomme) 94453.0; Henger Lieske (Grandgues) 83754.0; Zélie de Noyon (Rouhomme) 82091.0
 
 ## Town and contracts
-- Strasclives: 131 commoners, growth 0.58, migration 0.042, 5 households
+- Strasclives: 131 commoners, growth 0.942, migration 0.047, 5 households
 - church asks 2 | contracts {'done': 31, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1691.7), ('crafting', 157.6)]; Florise Plantier [('maritime', 1700.1), ('textile', 15.3)]; Chrétien Dunois [('textile', 882.8), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1693.0), ('crafting', 157.6)]; Florise Plantier [('maritime', 1701.4), ('textile', 15.3)]; Chrétien Dunois [('textile', 884.7), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.43; maintain 1 +8.00; sustenance +6.90; hold banquet 1 (meat) +0.00
+- to legacy -17.42; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +4.20
 
 ## Capital and waste
-- biggest stock by value: thread 1050.2 (5461.0), furniture 147.4 (2005.0), candles 26.0 (1924.0), flax fibres 134.3 (880.0), timber 99.2 (739.0), garments 30.3 (715.0)
-- held with no production or sales (some are deliberate church/household reserves): furniture 147.4 (2005.0), candles 26.0 (1924.0), timber 99.2 (739.0), tools 100.8 (610.0)
+- biggest stock by value: thread 1049.8 (5186.0), furniture 148.6 (2021.0), candles 25.0 (1912.0), flax fibres 128.7 (795.0), timber 99.2 (759.0), garments 30.7 (712.0)
+- held with no production or sales (some are deliberate church/household reserves): furniture 148.6 (2021.0), candles 25.0 (1912.0), timber 99.2 (759.0), tools 100.8 (564.0), beer 58.8 (220.0), pasties 11.0 (197.0)
 
 ## Buildings (rate / target)
-- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.6/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/1.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
+- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.7/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 1.0/1.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE OK: cash 15282, burn -1707 over 12 turns
+- FAILSAFE WATCH: cash 14987, burn -1230 over 12 turns
 - needs you
-- arms: low_stock
+- cured meat: low_stock
 - tar: low_stock
-- beer: shortage
 - firewood: shortage
 - labour: expiring
-- cured meat: not selling
+- pasties: not selling
+- tar: buy not filling
 - contract wait: church candles
 
 ## Queue (24 h)
