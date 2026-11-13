@@ -1,18 +1,18 @@
 # Oversight briefing
 
-Generated 2026-11-13T07:09 | turn 13989 | data 0.2 h old | ~411 turns to season end
+Generated 2026-11-13T07:53 | turn 13990 | data 0.3 h old | ~411 turns to season end
 
 ## Flags
 - none
 
 ## Cash
-- now 14478.0 | last 6 / 12 / 24 turns: +903 / +1499 / +4266 | trend +111 per turn
-- if the 12-turn trend holds: +12 turns 15805.0, +48 turns 19787.0, +120 turns 27750.0
-- business value (cash + stock) 29135.0, trend +96 per turn over 25 turns; stock at market 14779.0
-- profit last turn 506.0, 12-turn average 361.0 (before taxes)
+- now 14707.0 | last 6 / 12 / 24 turns: +1259 / +1577 / +4354 | trend +122 per turn
+- if the 12-turn trend holds: +12 turns 16177.0, +48 turns 20587.0, +120 turns 29407.0
+- business value (cash + stock) 29135.0, trend +96 per turn over 25 turns; stock at market 15060.0
+- profit last turn 358.0, 12-turn average 372.0 (before taxes)
 
 ## Prestige
-- total 3502.1, free 382.1, rate -2.12 per turn (free trend -2.22 per turn)
+- total 3500.0, free 380.0, rate -2.11 per turn (free trend -2.22 per turn)
 - turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: None
 - banquet: hold banquet 1 (meat) at 0.0 of 0.0
 - failsafe level 1 (WATCH), paused: jewellery, limestone
@@ -32,22 +32,20 @@ Generated 2026-11-13T07:09 | turn 13989 | data 0.2 h old | ~411 turns to season 
 - to legacy -17.51; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
-- biggest stock by value: thread 1064.0 (5586.0), candles 27.0 (1917.0), furniture 142.8 (1685.0), flax fibres 140.3 (877.0), timber 99.3 (854.0), garments 30.1 (710.0)
-- held with no production or sales (some are deliberate church/household reserves): candles 27.0 (1917.0), furniture 142.8 (1685.0), timber 99.3 (854.0), tools 100.8 (570.0), pasties 11.0 (179.0)
+- biggest stock by value: thread 1064.0 (5746.0), furniture 141.4 (1937.0), candles 25.5 (1849.0), flax fibres 142.1 (920.0), timber 99.3 (745.0), garments 30.3 (709.0)
+- held with no production or sales (some are deliberate church/household reserves): furniture 141.4 (1937.0), candles 25.5 (1849.0), timber 99.3 (745.0), tools 100.8 (615.0)
 
 ## Buildings (rate / target)
-- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.6/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.0/0.2; net maker152202386007001 0.0/0.0
+- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.4/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.0/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 14478, burn -1499 over 12 turns
+- FAILSAFE WATCH: cash 14707, burn -1728 over 12 turns
 - needs you
-- arms: low_stock
 - beer: low_stock
 - firewood: shortage
 - labour: expiring
 - tar: shortage
-- pasties: not selling
 - contract wait: church candles
 
 ## Queue (24 h)
