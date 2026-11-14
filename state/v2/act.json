@@ -1,18 +1,17 @@
 {
- "t": "2026-11-14T17:03:56+00:00",
- "turn": 14024,
+ "t": "2026-11-14T18:09:41+00:00",
+ "turn": 14025,
  "mode": "live",
  "owned": [
   "arms",
   "beer",
   "bread",
+  "candles",
   "cloth",
   "cured fish",
-  "cured meat",
   "donations",
   "firewood",
   "fish",
-  "furniture",
   "garments",
   "grain",
   "labour",
@@ -26,7 +25,7 @@
  "suspended": {},
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 8,
+ "would_change": 5,
  "chain": {
   "why": "live.chain is off (plan only)",
   "done": []
@@ -39,14 +38,14 @@
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "33.8"
+     "buy_price": "32"
     }
    ],
    "new": [
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "32.0"
+     "buy_price": "31.4"
     }
    ],
    "same": false,
@@ -65,11 +64,6 @@
      "min_holding": 60,
      "sell_volume": 8,
      "sell_price": "3.26"
-    },
-    {
-     "max_holding": 116,
-     "buy_volume": 39,
-     "buy_price": "3.76"
     }
    ],
    "new": [
@@ -77,15 +71,18 @@
      "min_holding": 60,
      "sell_volume": 8,
      "sell_price": "3.26"
+    },
+    {
+     "buy_volume": 12,
+     "buy_price": "3.88",
+     "max_holding": 47
     }
    ],
    "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "refused": [
+    "no buy ceiling in config for beer",
+    "buy volume 0 -> 12 is over 2x+10 in one run"
+   ]
   },
   {
    "item": "bread",
@@ -117,6 +114,31 @@
    "same": true
   },
   {
+   "item": "candles",
+   "owned": true,
+   "live": [
+    {
+     "max_holding": 12,
+     "buy_volume": 3,
+     "buy_price": "81.5"
+    }
+   ],
+   "new": [
+    {
+     "max_holding": 61,
+     "buy_volume": 2,
+     "buy_price": "90.5"
+    }
+   ],
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
+  },
+  {
    "item": "cloth",
    "owned": true,
    "live": [
@@ -137,34 +159,25 @@
   },
   {
    "item": "cured meat",
-   "owned": true,
+   "owned": false,
    "live": [
     {
      "max_holding": 11,
      "buy_volume": 3,
      "buy_price": "29",
      "sell_price": "24"
-    },
-    {
-     "sell_volume": 1,
-     "sell_price": "23.4"
     }
    ],
    "new": [
     {
-     "max_holding": 11,
-     "buy_volume": 3,
+     "max_holding": 24,
+     "buy_volume": 12,
      "buy_price": "29.0",
      "sell_price": "24"
     }
    ],
    "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "refused": []
   },
   {
    "item": "donations",
@@ -190,8 +203,8 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 4,
-     "buy_volume": 1,
+     "max_holding": 5,
+     "buy_volume": 2,
      "buy_price": "2.4"
     }
    ],
@@ -202,13 +215,7 @@
      "buy_price": "2.4"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "fish",
@@ -226,31 +233,6 @@
     }
    ],
    "same": true
-  },
-  {
-   "item": "furniture",
-   "owned": true,
-   "live": [
-    {
-     "max_holding": 150,
-     "buy_volume": 2,
-     "buy_price": "15.6"
-    }
-   ],
-   "new": [
-    {
-     "max_holding": 150,
-     "buy_volume": 2,
-     "buy_price": "16.7"
-    }
-   ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
   },
   {
    "item": "garments",
@@ -276,8 +258,8 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 24,
-     "buy_volume": 6,
+     "max_holding": 34,
+     "buy_volume": 9,
      "buy_price": "3.7"
     }
    ],
@@ -288,13 +270,7 @@
      "buy_price": "3.7"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "labour",
@@ -320,7 +296,7 @@
     {
      "max_holding": 10,
      "buy_volume": 1,
-     "buy_price": "107"
+     "buy_price": "96"
     },
     {
      "min_holding": 3,
@@ -340,13 +316,7 @@
      "sell_price": "94"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "meat",
