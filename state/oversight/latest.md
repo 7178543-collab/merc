@@ -1,15 +1,15 @@
 # Oversight briefing
 
-Generated 2026-11-15T16:17 | turn 14047 | data 0.0 h old | ~354 turns to season end
+Generated 2026-11-15T17:03 | turn 14047 | data 0.1 h old | ~353 turns to season end
 
 ## Flags
 - **HIGH** cash is falling 133/turn over the last 12 turns
-- **HIGH** business value is falling 139/turn
+- **HIGH** business value is falling 116/turn
 
 ## Cash
 - now 9537.0 | last 6 / 12 / 24 turns: -503 / -1298 / -1783 | trend -133 per turn
 - if the 12-turn trend holds: +12 turns 7938.0, +48 turns 3139.0, +120 turns -6459.0
-- business value (cash + stock) 23616.0, trend -139 per turn over 25 turns; stock at market 14286.0
+- business value (cash + stock) 23809.0, trend -116 per turn over 25 turns; stock at market 14333.0
 - profit last turn 56.0, 12-turn average 87.0 (before taxes)
 
 ## Prestige
@@ -19,22 +19,22 @@ Generated 2026-11-15T16:17 | turn 14047 | data 0.0 h old | ~354 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 62 of 519 (prestige rank 68): legacy 16721.3, prestige 3572.6; median legacy 2548.9
-- gap to the next rank up: 441.9
-- top 5: Jerry Wylteshire (Hofkirchen) 178088.0; Hawys atte Broke (Kirchwerp) 120124.0; Alphonse Segal (Rouhomme) 103636.0; Henger Lieske (Grandgues) 94359.0; Zélie de Noyon (Rouhomme) 91100.0
+- legacy rank 62 of 519 (prestige rank 68): legacy 16739.2, prestige 3570.2; median legacy 2552.6
+- gap to the next rank up: 427.6
+- top 5: Jerry Wylteshire (Hofkirchen) 178318.0; Hawys atte Broke (Kirchwerp) 120363.0; Alphonse Segal (Rouhomme) 103827.0; Henger Lieske (Grandgues) 94578.0; Zélie de Noyon (Rouhomme) 91284.0
 
 ## Town and contracts
-- Strasclives: 134 commoners, growth 0.812, migration 0.018, 5 households
+- Strasclives: 134 commoners, growth 0.824, migration 0.015, 5 households
 - church asks 3 | contracts {'done': 32, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1760.5), ('crafting', 157.6)]; Florise Plantier [('maritime', 1768.9), ('textile', 15.3)]; Chrétien Dunois [('textile', 972.6), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1761.9), ('crafting', 157.6)]; Florise Plantier [('maritime', 1770.3), ('textile', 15.3)]; Chrétien Dunois [('textile', 974.2), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.88; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +0.00
+- to legacy -17.86; maintain 1 +8.00; sustenance +7.40; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
-- biggest stock by value: thread 1064.0 (5480.0), candles 27.0 (2052.0), garments 45.7 (1161.0), light armour 9.8 (921.0), timber 98.9 (742.0), flax fibres 117.6 (729.0)
-- held with no production or sales (some are deliberate church/household reserves): candles 27.0 (2052.0), light armour 9.8 (921.0), timber 98.9 (742.0), tools 100.8 (635.0), cured meat 13.8 (345.0), furniture 20.6 (286.0)
+- biggest stock by value: thread 1064.0 (5480.0), candles 27.0 (2052.0), garments 45.7 (1069.0), light armour 9.8 (921.0), timber 98.9 (855.0), flax fibres 117.6 (729.0)
+- held with no production or sales (some are deliberate church/household reserves): candles 27.0 (2052.0), light armour 9.8 (921.0), timber 98.9 (855.0), tools 100.8 (635.0), cured meat 13.8 (345.0), furniture 20.6 (307.0)
 
 ## Buildings (rate / target)
 - farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.4/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.0/0.0; ropewalk 1 0.0/0.2; net maker152202386007001 0.0/0.0
