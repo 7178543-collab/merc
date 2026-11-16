@@ -1,6 +1,6 @@
 {
- "turn": 14055,
- "t": "2026-11-16T00:26:23+00:00",
+ "turn": 14056,
+ "t": "2026-11-16T01:14:49+00:00",
  "mode": "handover",
  "live_items": [
   "beer",
@@ -15,32 +15,32 @@
   "nets",
   "porterage"
  ],
- "cash": 10269.109,
- "prestige": 3553.252,
- "prestige_free": 433.25199999999995,
- "prestige_rate": -2.3779999999999983,
+ "cash": 10289.389,
+ "prestige": 3550.922,
+ "prestige_free": 430.922,
+ "prestige_rate": -2.3299999999999983,
  "counts": {
   "risk": 3,
   "waste": 1,
-  "tune": 1
+  "tune": 2
  },
  "flags": [
   {
    "severity": "risk",
    "item": "firewood",
-   "text": "brewery 1 ran short of firewood (buy is live (1 @ 2.4), home ask 2.38 x10, yet 0 bought last turn); labour need rises ~18/turn when they restart",
-   "fix": "find out why the buy isn't filling"
+   "text": "brewery 1 ran short of firewood (buy is live (1 @ 2.4), 1 bought last turn); labour need rises ~18/turn when they restart",
+   "fix": "the buy is too small for the stalled buildings: raise it"
   },
   {
    "severity": "risk",
    "item": "firewood",
-   "text": "only 0.9 turns of firewood left and buying 1 (need 3)",
-   "fix": "buy 3"
+   "text": "only 0.5 turns of firewood left and buying 1 (need 5)",
+   "fix": "buy 5"
   },
   {
    "severity": "risk",
    "item": "tar",
-   "text": "ropewalk 1 ran short of tar (buy is live (1 @ 11), but the home ask 11.70 is above it); labour need rises ~7/turn when they restart",
+   "text": "ropewalk 1 ran short of tar (buy is live (1 @ 11), but the home ask 11.30 is above it); labour need rises ~7/turn when they restart",
    "fix": "raise the buy price (or ceiling) or find another source"
   },
   {
@@ -51,8 +51,14 @@
   },
   {
    "severity": "tune",
+   "item": "beer",
+   "text": "no sellers at home right now and stock is below the runway",
+   "fix": "import it or find another source"
+  },
+  {
+   "severity": "tune",
    "item": "tar",
-   "text": "home ask 11.70 is above our ceiling 11.00 and last turn bought 0 of ~0 needed: the buy can't fill",
+   "text": "home ask 11.30 is above our ceiling 11.00 and last turn bought 0 of ~0 needed: the buy can't fill",
    "fix": "raise the ceiling or find another source"
   }
  ],
@@ -60,13 +66,20 @@
   "arms": {
    "buy": {
     "buy_volume": 1,
-    "buy_price": "34.2",
+    "buy_price": "32.0",
     "max_holding": 2
    },
    "why": "goal planner: buys 1 a turn for today's rates, keeps up to 2 (v2 had 1)",
    "goal_buy": {
-    "buy_price": "34.2"
+    "buy_price": "32.0"
    }
+  },
+  "beer": {
+   "buy": {
+    "buy_volume": 7,
+    "max_holding": 17
+   },
+   "why": "uses 4.2/turn (household upkeep), makes 0.0, holds 13 = 3.0 turns"
   },
   "bread": {
    "buy": {
@@ -92,11 +105,11 @@
   },
   "firewood": {
    "buy": {
-    "buy_volume": 1,
+    "buy_volume": 2,
     "buy_price": "2.4",
-    "max_holding": 3
+    "max_holding": 7
    },
-   "why": "goal planner: buys 1 a turn for today's rates, keeps up to 3 (v2 had 3)",
+   "why": "goal planner: buys 2 a turn for today's rates, keeps up to 7 (v2 had 5)",
    "goal_buy": {
     "buy_price": "2.4"
    }
@@ -112,9 +125,9 @@
    "buy": {
     "buy_volume": 5,
     "buy_price": "3.7",
-    "max_holding": 18
+    "max_holding": 17
    },
-   "why": "goal planner: buys 5 a turn for today's rates, keeps up to 18 (v2 had 0)",
+   "why": "goal planner: buys 5 a turn for today's rates, keeps up to 17 (v2 had 0)",
    "goal_buy": {
     "buy_price": "3.7"
    }
@@ -144,9 +157,9 @@
    "buy": {
     "buy_volume": 1,
     "buy_price": "11.0",
-    "max_holding": 1
+    "max_holding": 2
    },
-   "why": "uses 0.5/turn (observed), makes 0.0, holds 0 = 0.0 turns"
+   "why": "uses 0.5/turn (observed), makes 0.0, holds 1 = 2.1 turns"
   },
   "tools": {
    "buy": {
@@ -154,6 +167,24 @@
     "buy_price": "6.2"
    },
    "why": "uses 0.0/turn (observed), makes 0.0, holds 101"
+  },
+  "thread": {
+   "buffer": {
+    "target": 122,
+    "held": 1064
+   }
+  },
+  "flax plants": {
+   "buffer": {
+    "target": 145,
+    "held": 219
+   }
+  },
+  "flax fibres": {
+   "buffer": {
+    "target": 56,
+    "held": 133
+   }
   },
   "cloth": {
    "buffer": {
@@ -169,24 +200,6 @@
     "sell_price": "6.95"
    },
    "why": "goal planner: sells 1 a turn at 6.95, keeps 72 (no one offered it)"
-  },
-  "flax plants": {
-   "buffer": {
-    "target": 145,
-    "held": 219
-   }
-  },
-  "flax fibres": {
-   "buffer": {
-    "target": 56,
-    "held": 132
-   }
-  },
-  "thread": {
-   "buffer": {
-    "target": 122,
-    "held": 1064
-   }
   },
   "garments": {
    "sell": {
@@ -210,7 +223,7 @@
   "furniture": {
    "stockpile": {
     "target": 150,
-    "held": 23.4
+    "held": 22.0
    }
   },
   "limestone": {
@@ -222,17 +235,8 @@
   "candles": {
    "stockpile": {
     "target": 61,
-    "held": 31.0
-   },
-   "buy": {
-    "buy_volume": 2,
-    "buy_price": "81.5",
-    "max_holding": 61
-   },
-   "goal_buy": {
-    "buy_price": "81.5"
-   },
-   "why": "goal planner: buys 2 a turn for today's rates, keeps up to 61 (v2 had None)"
+    "held": 31.5
+   }
   },
   "jewellery": {
    "stockpile": {
@@ -243,7 +247,7 @@
   "light armour": {
    "stockpile": {
     "target": 10,
-    "held": 9.2
+    "held": 10.0
    },
    "buy": {
     "buy_volume": 1,
@@ -254,9 +258,6 @@
     "buy_price": "96"
    },
    "why": "goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None)"
-  },
-  "beer": {
-   "buy_off": "holds 17, twice the 5-unit runway"
   },
   "wax": {
    "buy_off": "nothing used it last turn and no building plans to"
@@ -278,7 +279,7 @@
    "crew_last": 0.0,
    "cost": 0,
    "route_to": "134102075",
-   "trips": 0.0,
+   "trips": 0.388,
    "sold": {},
    "bought": {},
    "trade_value": 0,
@@ -291,18 +292,18 @@
    "crew_last": 0.0,
    "cost": 0,
    "route_to": "151802239",
-   "trips": 0.0,
+   "trips": 0.168,
    "sold": {},
    "bought": {},
    "trade_value": 0,
-   "limitation": null
+   "limitation": "pasties space"
   }
  ],
  "builds": null,
  "goals": [],
  "prestige_plan": {
-  "turns_left": 346.5602777777778,
-  "legacy_factor": 0.8239782807521205,
+  "turns_left": 345.75305555555553,
+  "legacy_factor": 0.8232646126237234,
   "ranked": [
    {
     "sink": "maintain 1",
@@ -318,24 +319,6 @@
     "thin": []
    },
    {
-    "sink": "jousting 3",
-    "site": "arena",
-    "owned": false,
-    "running": false,
-    "prestige_per_turn": 230,
-    "coin_per_prestige": 54.7,
-    "effective": 55.1,
-    "capex": 26163,
-    "class": "weaponry",
-    "missing": [],
-    "thin": [
-     "swords",
-     "protection",
-     "light armour",
-     "plate armour"
-    ]
-   },
-   {
     "sink": "hold banquet 1 (fish)",
     "site": "mansion",
     "owned": true,
@@ -347,31 +330,19 @@
     "class": null,
     "missing": [],
     "thin": [
+     "beer",
      "cured fish"
     ]
    },
    {
-    "sink": "hold banquet 1 (meat)",
-    "site": "mansion",
-    "owned": true,
-    "running": false,
-    "prestige_per_turn": 4.2,
-    "coin_per_prestige": 59.0,
-    "effective": 59.0,
-    "capex": null,
-    "class": null,
-    "missing": [],
-    "thin": []
-   },
-   {
-    "sink": "jousting 2",
+    "sink": "jousting 3",
     "site": "arena",
     "owned": false,
     "running": false,
-    "prestige_per_turn": 210,
-    "coin_per_prestige": 59.9,
-    "effective": 60.3,
-    "capex": 26163,
+    "prestige_per_turn": 230,
+    "coin_per_prestige": 56.9,
+    "effective": 57.2,
+    "capex": 26188,
     "class": "weaponry",
     "missing": [],
     "thin": [
@@ -382,22 +353,49 @@
     ]
    },
    {
-    "sink": "hold banquet 4 (pies)",
+    "sink": "hold banquet 3 (pies)",
     "site": "mansion",
     "owned": true,
     "running": false,
-    "prestige_per_turn": 18,
-    "coin_per_prestige": 60.5,
-    "effective": 60.5,
+    "prestige_per_turn": 8,
+    "coin_per_prestige": 59.3,
+    "effective": 59.3,
     "capex": null,
     "class": null,
     "missing": [],
     "thin": [
-     "pasties",
+     "hop beer"
+    ]
+   },
+   {
+    "sink": "hold banquet 1 (meat)",
+    "site": "mansion",
+    "owned": true,
+    "running": false,
+    "prestige_per_turn": 4.2,
+    "coin_per_prestige": 59.6,
+    "effective": 59.6,
+    "capex": null,
+    "class": null,
+    "missing": [],
+    "thin": [
+     "beer"
+    ]
+   },
+   {
+    "sink": "hold banquet 3 (fish)",
+    "site": "mansion",
+    "owned": true,
+    "running": false,
+    "prestige_per_turn": 7.6,
+    "coin_per_prestige": 60.3,
+    "effective": 60.3,
+    "capex": null,
+    "class": null,
+    "missing": [],
+    "thin": [
      "hop beer",
-     "ham",
-     "stockfish",
-     "candles"
+     "cured fish"
     ]
    },
    {
@@ -406,8 +404,8 @@
     "owned": true,
     "running": false,
     "prestige_per_turn": 6.8,
-    "coin_per_prestige": 60.7,
-    "effective": 60.7,
+    "coin_per_prestige": 60.5,
+    "effective": 60.5,
     "capex": null,
     "class": null,
     "missing": [],
@@ -421,14 +419,28 @@
     "owned": true,
     "running": false,
     "prestige_per_turn": 7,
-    "coin_per_prestige": 62.3,
-    "effective": 62.3,
+    "coin_per_prestige": 61.1,
+    "effective": 61.1,
+    "capex": null,
+    "class": null,
+    "missing": [],
+    "thin": []
+   },
+   {
+    "sink": "hold banquet 4 (pies)",
+    "site": "mansion",
+    "owned": true,
+    "running": false,
+    "prestige_per_turn": 18,
+    "coin_per_prestige": 61.6,
+    "effective": 61.6,
     "capex": null,
     "class": null,
     "missing": [],
     "thin": [
-     "pasties",
-     "candles"
+     "hop beer",
+     "ham",
+     "stockfish"
     ]
    },
    {
@@ -437,49 +449,48 @@
     "owned": true,
     "running": false,
     "prestige_per_turn": 20,
-    "coin_per_prestige": 62.4,
-    "effective": 62.4,
+    "coin_per_prestige": 62.2,
+    "effective": 62.2,
     "capex": null,
     "class": null,
     "missing": [],
     "thin": [
      "hop beer",
      "ham",
-     "stockfish",
-     "candles"
+     "stockfish"
     ]
    },
    {
-    "sink": "hold banquet 3 (pies)",
+    "sink": "jousting 2",
+    "site": "arena",
+    "owned": false,
+    "running": false,
+    "prestige_per_turn": 210,
+    "coin_per_prestige": 62.3,
+    "effective": 62.7,
+    "capex": 26188,
+    "class": "weaponry",
+    "missing": [],
+    "thin": [
+     "swords",
+     "protection",
+     "light armour",
+     "plate armour"
+    ]
+   },
+   {
+    "sink": "hold banquet 3 (meat)",
     "site": "mansion",
     "owned": true,
     "running": false,
-    "prestige_per_turn": 8,
+    "prestige_per_turn": 7.6,
     "coin_per_prestige": 62.8,
     "effective": 62.8,
     "capex": null,
     "class": null,
     "missing": [],
     "thin": [
-     "pasties",
-     "hop beer",
-     "candles"
-    ]
-   },
-   {
-    "sink": "hold banquet 3 (fish)",
-    "site": "mansion",
-    "owned": true,
-    "running": false,
-    "prestige_per_turn": 7.6,
-    "coin_per_prestige": 63.0,
-    "effective": 63.0,
-    "capex": null,
-    "class": null,
-    "missing": [],
-    "thin": [
-     "hop beer",
-     "cured fish"
+     "hop beer"
     ]
    },
    {
@@ -488,8 +499,8 @@
     "owned": true,
     "running": false,
     "prestige_per_turn": 6.8,
-    "coin_per_prestige": 63.1,
-    "effective": 63.1,
+    "coin_per_prestige": 63.4,
+    "effective": 63.4,
     "capex": null,
     "class": null,
     "missing": [],
@@ -501,9 +512,9 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 360,
-    "coin_per_prestige": 59.8,
-    "effective": 63.6,
-    "capex": 309100,
+    "coin_per_prestige": 59.9,
+    "effective": 63.7,
+    "capex": 309805,
     "class": null,
     "missing": [],
     "thin": [
@@ -515,32 +526,14 @@
     ]
    },
    {
-    "sink": "hold banquet 4",
-    "site": "mansion",
-    "owned": true,
-    "running": false,
-    "prestige_per_turn": 17.5,
-    "coin_per_prestige": 63.7,
-    "effective": 63.7,
-    "capex": null,
-    "class": null,
-    "missing": [],
-    "thin": [
-     "hop beer",
-     "ham",
-     "stockfish",
-     "candles"
-    ]
-   },
-   {
     "sink": "jousting 1",
     "site": "arena",
     "owned": false,
     "running": false,
     "prestige_per_turn": 170,
-    "coin_per_prestige": 64.5,
-    "effective": 65.0,
-    "capex": 26163,
+    "coin_per_prestige": 64.2,
+    "effective": 64.7,
+    "capex": 26188,
     "class": "weaponry",
     "missing": [],
     "thin": [
@@ -550,18 +543,20 @@
     ]
    },
    {
-    "sink": "hold banquet 3 (meat)",
+    "sink": "hold banquet 4",
     "site": "mansion",
     "owned": true,
     "running": false,
-    "prestige_per_turn": 7.6,
-    "coin_per_prestige": 65.2,
-    "effective": 65.2,
+    "prestige_per_turn": 17.5,
+    "coin_per_prestige": 65.8,
+    "effective": 65.8,
     "capex": null,
     "class": null,
     "missing": [],
     "thin": [
-     "hop beer"
+     "hop beer",
+     "ham",
+     "stockfish"
     ]
    },
    {
@@ -571,11 +566,13 @@
     "running": false,
     "prestige_per_turn": 1.7,
     "coin_per_prestige": 55.1,
-    "effective": 68.3,
-    "capex": 7242,
+    "effective": 68.2,
+    "capex": 7190,
     "class": null,
     "missing": [],
-    "thin": []
+    "thin": [
+     "beer"
+    ]
    },
    {
     "sink": "hold sermon 2 (candles)",
@@ -583,14 +580,13 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 31,
-    "coin_per_prestige": 60.7,
-    "effective": 70.0,
-    "capex": 73895,
+    "coin_per_prestige": 60.9,
+    "effective": 70.2,
+    "capex": 74085,
     "class": null,
     "missing": [],
     "thin": [
-     "candles",
-     "furniture"
+     "candles"
     ]
    },
    {
@@ -599,14 +595,12 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 13,
-    "coin_per_prestige": 62.1,
-    "effective": 71.3,
-    "capex": 34293,
+    "coin_per_prestige": 62.4,
+    "effective": 71.7,
+    "capex": 34446,
     "class": null,
     "missing": [],
-    "thin": [
-     "furniture"
-    ]
+    "thin": []
    },
    {
     "sink": "hold feast 2",
@@ -614,12 +608,28 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 2.6,
-    "coin_per_prestige": 64.5,
-    "effective": 73.1,
-    "capex": 7242,
+    "coin_per_prestige": 63.5,
+    "effective": 72.1,
+    "capex": 7190,
     "class": null,
     "missing": [],
     "thin": []
+   },
+   {
+    "sink": "hold feast 3",
+    "site": "townhouse",
+    "owned": false,
+    "running": false,
+    "prestige_per_turn": 3.7,
+    "coin_per_prestige": 66.6,
+    "effective": 72.6,
+    "capex": 7190,
+    "class": null,
+    "missing": [],
+    "thin": [
+     "hop beer",
+     "spirits"
+    ]
    },
    {
     "sink": "hold sermon 2",
@@ -627,14 +637,12 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 24,
-    "coin_per_prestige": 61.8,
-    "effective": 73.8,
-    "capex": 73895,
+    "coin_per_prestige": 62.0,
+    "effective": 74.1,
+    "capex": 74085,
     "class": null,
     "missing": [],
-    "thin": [
-     "furniture"
-    ]
+    "thin": []
    },
    {
     "sink": "hold mass 1",
@@ -642,9 +650,9 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 180,
-    "coin_per_prestige": 70.4,
-    "effective": 78.0,
-    "capex": 309100,
+    "coin_per_prestige": 70.9,
+    "effective": 78.5,
+    "capex": 309805,
     "class": null,
     "missing": [],
     "thin": [
@@ -654,30 +662,14 @@
     ]
    },
    {
-    "sink": "hold feast 3",
-    "site": "townhouse",
-    "owned": false,
-    "running": false,
-    "prestige_per_turn": 3.7,
-    "coin_per_prestige": 74.3,
-    "effective": 80.3,
-    "capex": 7242,
-    "class": null,
-    "missing": [],
-    "thin": [
-     "hop beer",
-     "spirits"
-    ]
-   },
-   {
     "sink": "hold prayer 1",
     "site": "chapel",
     "owned": false,
     "running": false,
     "prestige_per_turn": 8,
-    "coin_per_prestige": 71.0,
-    "effective": 85.9,
-    "capex": 34293,
+    "coin_per_prestige": 70.6,
+    "effective": 85.7,
+    "capex": 34446,
     "class": null,
     "missing": [],
     "thin": []
@@ -688,9 +680,9 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 15,
-    "coin_per_prestige": 70.4,
-    "effective": 89.6,
-    "capex": 73895,
+    "coin_per_prestige": 70.1,
+    "effective": 89.4,
+    "capex": 74085,
     "class": null,
     "missing": [],
     "thin": []
@@ -701,13 +693,12 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 50,
-    "coin_per_prestige": 80.8,
-    "effective": 91.3,
-    "capex": 131885,
+    "coin_per_prestige": 81.2,
+    "effective": 91.8,
+    "capex": 132190,
     "class": null,
     "missing": [],
     "thin": [
-     "furniture",
      "glassware",
      "spirits",
      "herbs"
@@ -719,13 +710,12 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 66,
-    "coin_per_prestige": 94.0,
-    "effective": 102.0,
-    "capex": 131885,
+    "coin_per_prestige": 94.4,
+    "effective": 102.4,
+    "capex": 132190,
     "class": null,
     "missing": [],
     "thin": [
-     "furniture",
      "glassware",
      "herbs",
      "medicine"
@@ -737,9 +727,9 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 5,
-    "coin_per_prestige": 302.2,
-    "effective": 385.4,
-    "capex": 94330,
+    "coin_per_prestige": 307.9,
+    "effective": 391.7,
+    "capex": 94572,
     "class": "crafting",
     "missing": [],
     "thin": [
@@ -754,9 +744,9 @@
     "owned": false,
     "running": false,
     "prestige_per_turn": 4,
-    "coin_per_prestige": 293.9,
-    "effective": 397.9,
-    "capex": 94330,
+    "coin_per_prestige": 299.5,
+    "effective": 404.2,
+    "capex": 94572,
     "class": "crafting",
     "missing": [],
     "thin": [
@@ -831,7 +821,7 @@
   "candles": 1.5,
   "cloth": 24.0,
   "donations": 40.0,
-  "firewood": 0.0,
+  "firewood": 1.0,
   "fish": 7.0,
   "flax fibres": 28.1,
   "flax plants": 72.7,
@@ -851,9 +841,8 @@
   "thread": 82.5
  },
  "notes": [
-  "labour: +6 crew for Flax Wyrm (crew 0.12, no projection from the game)",
-  "labour: +1 crew for linen snake (crew 0.02, no projection from the game)",
-  "labour: projection runs 100 over real use lately; planning 491, not 591"
+  "labour: projection runs 100 over real use lately; planning 506, not 606",
+  "labour expiry guard: 45 bought labour expired last turn, buy 0 (not 6) this turn"
  ],
  "routes": {
   "routes": [
@@ -871,79 +860,71 @@
       "units": 46,
       "space": 690.0,
       "buy": 7.82,
-      "sell": 12.73,
-      "margin": 196
+      "sell": 12.63,
+      "margin": 192
      },
      {
       "item": "firewood",
       "units": 35,
       "space": 1050.0,
-      "buy": 2.5,
-      "sell": 6.32,
-      "margin": 88
+      "buy": 2.35,
+      "sell": 5.98,
+      "margin": 82
      },
      {
       "item": "charcoal",
       "units": 19,
       "space": 152.0,
-      "buy": 3.04,
-      "sell": 5.18,
-      "margin": 34
+      "buy": 3.07,
+      "sell": 5.32,
+      "margin": 36
      },
      {
       "item": "bread",
-      "units": 160,
-      "space": 480.0,
+      "units": 162,
+      "space": 486.0,
       "buy": 2.37,
       "sell": 2.6,
       "margin": 16
      },
      {
+      "item": "lathes",
+      "units": 1,
+      "space": 10.0,
+      "buy": 180.6,
+      "sell": 193.8,
+      "margin": 13
+     },
+     {
+      "item": "cured fish",
+      "units": 7,
+      "space": 14.0,
+      "buy": 24.57,
+      "sell": 26.03,
+      "margin": 10
+     },
+     {
       "item": "tin ingots",
       "units": 1,
       "space": 1.0,
-      "buy": 30.24,
+      "buy": 31.5,
       "sell": 33.25,
-      "margin": 3
+      "margin": 2
      },
      {
-      "item": "limestone",
+      "item": "fleece",
       "units": 1,
-      "space": 40.0,
-      "buy": 17.43,
-      "sell": 19.76,
+      "space": 1.0,
+      "buy": 6.67,
+      "sell": 7.74,
       "margin": 1
-     },
-     {
-      "item": "malt",
-      "units": 2,
-      "space": 4.0,
-      "buy": 7.04,
-      "sell": 7.55,
-      "margin": 1
-     },
-     {
-      "item": "flax fibres",
-      "units": 1,
-      "space": 2.0,
-      "buy": 5.7,
-      "sell": 6.17,
-      "margin": 0
      },
      {
       "item": "flax plants",
       "units": 1,
       "space": 2.0,
-      "buy": 1.3,
-      "sell": 1.66,
-      "margin": 0
-     },
-     {
-      "item": "fleece",
-      "units": 1,
-      "space": 1.0,
-      "buy": 6.98,
-      "sell": 7.03,
+      "buy": 1.29,
+      "sell": 1.51,
       "margin": 0
      },
      {
@@ -951,423 +932,199 @@
       "units": 2,
       "space": 4.0,
       "buy": 2.72,
-      "sell": 2.98,
+      "sell": 2.89,
       "margin": 0
      }
     ],
     "back": [
      {
-      "item": "acid",
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 231.0,
+      "sell": 340.1,
+      "margin": 109
+     },
+     {
+      "item": "candles",
       "units": 1,
       "space": 1.0,
-      "buy": 132.3,
-      "sell": 149.15,
-      "margin": 17
+      "buy": 77.17,
+      "sell": 83.5,
+      "margin": 6
      },
      {
       "item": "cheese",
       "units": 5,
       "space": 5.0,
-      "buy": 6.67,
-      "sell": 7.17,
-      "margin": 2
+      "buy": 6.72,
+      "sell": 7.36,
+      "margin": 3
      },
      {
       "item": "cloth",
       "units": 4,
       "space": 4.0,
-      "buy": 8.66,
+      "buy": 8.72,
       "sell": 9.1,
-      "margin": 2
+      "margin": 1
+     },
+     {
+      "item": "copper ore",
+      "units": 1,
+      "space": 5.0,
+      "buy": 27.72,
+      "sell": 28.88,
+      "margin": 1
+     },
+     {
+      "item": "dyed cloth",
+      "units": 3,
+      "space": 3.0,
+      "buy": 11.45,
+      "sell": 11.69,
+      "margin": 1
      },
      {
       "item": "tiles",
       "units": 3,
       "space": 30.0,
-      "buy": 3.89,
-      "sell": 4.89,
-      "margin": 2
+      "buy": 4.3,
+      "sell": 5.08,
+      "margin": 1
      }
     ],
-    "units_out": 269,
-    "units_back": 13,
-    "per_turn": 362.0
+    "units_out": 275,
+    "units_back": 18,
+    "per_turn": 473.7
    },
    {
-    "town": "Calange",
-    "town_id": "140502554",
-    "moves": 217.782,
-    "trips_per_turn_full": 6.89,
-    "cost_per_unit": 0.062,
-    "crew": 0.5,
-    "crew_cost": 53,
+    "town": "Heilegg",
+    "town_id": "141901647",
+    "moves": 825.514,
+    "trips_per_turn_full": 1.76,
+    "cost_per_unit": 0.24,
+    "crew": 1.0,
+    "crew_cost": 106,
     "out": [
      {
-      "item": "tapestries",
-      "units": 1,
-      "space": 5.0,
-      "buy": 740.25,
-      "sell": 817.0,
-      "margin": 76
-     },
-     {
-      "item": "dyed cloth",
-      "units": 11,
-      "space": 11.0,
-      "buy": 13.65,
-      "sell": 18.43,
-      "margin": 52
-     },
-     {
       "item": "beer",
-      "units": 99,
-      "space": 198.0,
+      "units": 122,
+      "space": 245.45454545454544,
       "buy": 3.15,
-      "sell": 3.44,
-      "margin": 16
+      "sell": 4.41,
+      "margin": 95
      },
      {
-      "item": "bread",
-      "units": 160,
-      "space": 480.0,
-      "buy": 2.37,
-      "sell": 2.64,
-      "margin": 13
+      "item": "charcoal",
+      "units": 17,
+      "space": 138.1818181818182,
+      "buy": 3.07,
+      "sell": 6.03,
+      "margin": 18
      },
      {
-      "item": "tin ingots",
+      "item": "nets",
+      "units": 5,
+      "space": 10.909090909090908,
+      "buy": 34.6,
+      "sell": 37.62,
+      "margin": 14
+     },
+     {
+      "item": "wine",
+      "units": 10,
+      "space": 10.0,
+      "buy": 7.04,
+      "sell": 7.84,
+      "margin": 5
+     },
+     {
+      "item": "malt",
       "units": 1,
-      "space": 1.0,
-      "buy": 30.24,
-      "sell": 35.91,
-      "margin": 6
-     },
-     {
-      "item": "limestone",
-      "units": 1,
-      "space": 40.0,
-      "buy": 17.43,
-      "sell": 22.23,
+      "space": 3.6363636363636362,
+      "buy": 7.04,
+      "sell": 8.5,
       "margin": 2
      },
      {
       "item": "fleece",
-      "units": 1,
-      "space": 1.0,
-      "buy": 6.98,
-      "sell": 7.08,
-      "margin": 0
-     },
-     {
-      "item": "grain",
-      "units": 2,
-      "space": 4.0,
-      "buy": 2.72,
-      "sell": 2.85,
+      "units": 0,
+      "space": 0.9090909090909091,
+      "buy": 6.67,
+      "sell": 6.93,
       "margin": 0
      }
     ],
     "back": [
+     {
+      "item": "swords",
+      "units": 0,
+      "space": 1.8181818181818181,
+      "buy": 231.0,
+      "sell": 340.1,
+      "margin": 99
+     },
      {
       "item": "cloth",
-      "units": 9,
-      "space": 9.0,
-      "buy": 7.51,
+      "units": 21,
+      "space": 21.818181818181817,
+      "buy": 7.72,
       "sell": 9.1,
-      "margin": 14
-     },
-     {
-      "item": "acid",
-      "units": 1,
-      "space": 1.0,
-      "buy": 144.9,
-      "sell": 149.15,
-      "margin": 4
-     },
-     {
-      "item": "yarn",
-      "units": 2,
-      "space": 2.0,
-      "buy": 3.19,
-      "sell": 4.31,
-      "margin": 2
-     },
-     {
-      "item": "tiles",
-      "units": 2,
-      "space": 20.0,
-      "buy": 3.97,
-      "sell": 4.89,
-      "margin": 1
-     },
-     {
-      "item": "seeds",
-      "units": 2,
-      "space": 4.0,
-      "buy": 2.27,
-      "sell": 2.58,
-      "margin": 0
-     }
-    ],
-    "units_out": 276,
-    "units_back": 16,
-    "per_turn": 180.8
-   },
-   {
-    "town": "Vauxvais",
-    "town_id": "137102412",
-    "moves": 204.19,
-    "trips_per_turn_full": 7.35,
-    "cost_per_unit": 0.058,
-    "crew": 1.0,
-    "crew_cost": 106,
-    "out": [
-     {
-      "item": "firewood",
-      "units": 38,
-      "space": 1157.142857142857,
-      "buy": 2.5,
-      "sell": 5.22,
-      "margin": 38
-     },
-     {
-      "item": "bread",
-      "units": 114,
-      "space": 342.8571428571429,
-      "buy": 2.37,
-      "sell": 2.75,
-      "margin": 24
-     },
-     {
-      "item": "beer",
-      "units": 50,
-      "space": 100.0,
-      "buy": 3.15,
-      "sell": 3.69,
-      "margin": 21
-     },
-     {
-      "item": "charcoal",
-      "units": 13,
-      "space": 108.57142857142857,
-      "buy": 3.04,
-      "sell": 4.99,
-      "margin": 20
-     },
-     {
-      "item": "yarn",
-      "units": 7,
-      "space": 7.857142857142858,
-      "buy": 5.15,
-      "sell": 5.94,
-      "margin": 6
-     },
-     {
-      "item": "nets",
-      "units": 4,
-      "space": 8.571428571428571,
-      "buy": 34.4,
-      "sell": 35.72,
-      "margin": 5
-     },
-     {
-      "item": "bricks",
-      "units": 3,
-      "space": 71.42857142857143,
-      "buy": 5.83,
-      "sell": 7.36,
-      "margin": 1
-     },
-     {
-      "item": "grain",
-      "units": 1,
-      "space": 2.857142857142857,
-      "buy": 2.72,
-      "sell": 3.17,
-      "margin": 1
-     }
-    ],
-    "back": [
-     {
-      "item": "candles",
-      "units": 6,
-      "space": 6.428571428571429,
-      "buy": 73.5,
-      "sell": 75.52,
-      "margin": 13
+      "margin": 25
      },
      {
       "item": "tools",
-      "units": 10,
-      "space": 10.714285714285715,
-      "buy": 6.14,
-      "sell": 6.7,
-      "margin": 5
+      "units": 13,
+      "space": 13.636363636363637,
+      "buy": 5.02,
+      "sell": 5.94,
+      "margin": 9
      },
      {
-      "item": "logs",
-      "units": 0,
-      "space": 14.285714285714286,
-      "buy": 3.78,
-      "sell": 7.22,
-      "margin": 1
-     },
-     {
-      "item": "seeds",
+      "item": "cheese",
       "units": 4,
-      "space": 8.571428571428571,
-      "buy": 2.16,
-      "sell": 2.58,
-      "margin": 1
-     },
-     {
-      "item": "chisels",
-      "units": 0,
-      "space": 0.7142857142857143,
-      "buy": 7.98,
-      "sell": 8.93,
-      "margin": 1
-     },
-     {
-      "item": "furniture",
-      "units": 5,
-      "space": 22.857142857142858,
-      "buy": 14.8,
-      "sell": 15.11,
-      "margin": 1
+      "space": 4.545454545454545,
+      "buy": 5.78,
+      "sell": 7.36,
+      "margin": 6
      },
      {
       "item": "garments",
       "units": 1,
-      "space": 1.4285714285714286,
-      "buy": 23.94,
+      "space": 1.8181818181818181,
+      "buy": 22.68,
       "sell": 24.6,
+      "margin": 3
+     },
+     {
+      "item": "salt",
+      "units": 7,
+      "space": 7.2727272727272725,
+      "buy": 5.0,
+      "sell": 5.56,
+      "margin": 3
+     },
+     {
+      "item": "copper ore",
+      "units": 0,
+      "space": 4.545454545454545,
+      "buy": 26.67,
+      "sell": 28.88,
       "margin": 1
      },
      {
-      "item": "flax fibres",
-      "units": 4,
-      "space": 8.571428571428571,
-      "buy": 5.62,
-      "sell": 5.75,
-      "margin": 0
-     },
-     {
-      "item": "thread",
-      "units": 8,
-      "space": 8.571428571428571,
-      "buy": 4.7,
-      "sell": 4.8,
-      "margin": 0
-     }
-    ],
-    "units_out": 230,
-    "units_back": 38,
-    "per_turn": 139.0
-   },
-   {
-    "town": "Fontaux",
-    "town_id": "170502066",
-    "moves": 410.768,
-    "trips_per_turn_full": 3.65,
-    "cost_per_unit": 0.116,
-    "crew": 1.0,
-    "crew_cost": 106,
-    "out": [
-     {
-      "item": "beer",
-      "units": 56,
-      "space": 113.04347826086958,
-      "buy": 3.15,
-      "sell": 4.39,
-      "margin": 57
-     },
-     {
-      "item": "firewood",
-      "units": 10,
-      "space": 326.0869565217392,
-      "buy": 2.5,
-      "sell": 8.36,
-      "margin": 26
-     },
-     {
-      "item": "timber",
-      "units": 8,
-      "space": 123.91304347826089,
-      "buy": 7.82,
-      "sell": 11.3,
-      "margin": 14
-     },
-     {
-      "item": "charcoal",
-      "units": 8,
-      "space": 66.08695652173914,
-      "buy": 3.04,
-      "sell": 5.18,
-      "margin": 10
-     },
-     {
-      "item": "bricks",
-      "units": 2,
-      "space": 43.47826086956522,
-      "buy": 5.83,
-      "sell": 10.16,
-      "margin": 4
-     },
-     {
-      "item": "flax fibres",
-      "units": 3,
-      "space": 6.086956521739131,
-      "buy": 5.7,
-      "sell": 6.79,
-      "margin": 3
-     },
-     {
-      "item": "wine",
-      "units": 4,
-      "space": 4.347826086956522,
-      "buy": 7.04,
-      "sell": 7.74,
-      "margin": 3
-     },
-     {
-      "item": "bread",
-      "units": 69,
-      "space": 208.69565217391306,
-      "buy": 2.37,
-      "sell": 2.75,
-      "margin": 2
-     },
-     {
-      "item": "malt",
+      "item": "ploughs",
       "units": 0,
-      "space": 0.8695652173913044,
-      "buy": 7.04,
-      "sell": 7.89,
-      "margin": 0
-     },
-     {
-      "item": "grain",
-      "units": 0,
-      "space": 1.7391304347826089,
-      "buy": 2.72,
-      "sell": 3.02,
-      "margin": 0
+      "space": 9.09090909090909,
+      "buy": 76.65,
+      "sell": 80.27,
+      "margin": 1
      }
     ],
-    "back": [
-     {
-      "item": "cloth",
-      "units": 2,
-      "space": 2.608695652173913,
-      "buy": 8.82,
-      "sell": 9.1,
-      "margin": 0
-     }
-    ],
-    "units_out": 160,
-    "units_back": 2,
-    "per_turn": 119.0
+    "units_out": 155,
+    "units_back": 46,
+    "per_turn": 281.0
    },
    {
     "town": "Hanbr\u00fccken",
@@ -1375,8 +1132,8 @@
     "moves": 530.904,
     "trips_per_turn_full": 2.83,
     "cost_per_unit": 0.15,
-    "crew": 0.7,
-    "crew_cost": 74,
+    "crew": 0.8,
+    "crew_cost": 85,
     "out": [
      {
       "item": "timber",
@@ -1388,19 +1145,27 @@
      },
      {
       "item": "nets",
-      "units": 4,
-      "space": 8.0,
-      "buy": 34.4,
+      "units": 3,
+      "space": 6.0,
+      "buy": 34.6,
       "sell": 36.48,
-      "margin": 7
+      "margin": 5
      },
      {
       "item": "bricks",
       "units": 5,
       "space": 100.0,
-      "buy": 5.83,
-      "sell": 9.03,
-      "margin": 1
+      "buy": 5.57,
+      "sell": 9.26,
+      "margin": 4
+     },
+     {
+      "item": "garments",
+      "units": 10,
+      "space": 10.0,
+      "buy": 24.4,
+      "sell": 24.7,
+      "margin": 2
      },
      {
       "item": "steel ingots",
@@ -1411,37 +1176,45 @@
       "margin": 1
      },
      {
-      "item": "tin ingots",
-      "units": 1,
-      "space": 1.0,
-      "buy": 30.24,
-      "sell": 31.73,
-      "margin": 1
-     },
-     {
       "item": "flax plants",
       "units": 1,
       "space": 2.0,
-      "buy": 1.3,
-      "sell": 1.94,
+      "buy": 1.29,
+      "sell": 1.92,
+      "margin": 0
+     },
+     {
+      "item": "malt",
+      "units": 1,
+      "space": 2.0,
+      "buy": 7.04,
+      "sell": 7.5,
+      "margin": 0
+     },
+     {
+      "item": "tin ingots",
+      "units": 1,
+      "space": 1.0,
+      "buy": 31.5,
+      "sell": 31.73,
       "margin": 0
      }
     ],
     "back": [
      {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 208.95,
+      "sell": 340.1,
+      "margin": 131
+     },
+     {
       "item": "cloth",
       "units": 24,
       "space": 24.0,
-      "buy": 8.19,
+      "buy": 8.45,
       "sell": 9.1,
-      "margin": 18
-     },
-     {
-      "item": "acid",
-      "units": 1,
-      "space": 1.0,
-      "buy": 136.5,
-      "sell": 149.15,
       "margin": 12
      },
      {
@@ -1449,415 +1222,255 @@
       "units": 5,
       "space": 5.0,
       "buy": 6.67,
-      "sell": 7.17,
-      "margin": 2
-     },
-     {
-      "item": "rope",
-      "units": 1,
-      "space": 2.0,
-      "buy": 71.92,
-      "sell": 74.58,
-      "margin": 2
-     },
-     {
-      "item": "salt",
-      "units": 4,
-      "space": 4.0,
-      "buy": 5.08,
-      "sell": 5.56,
-      "margin": 1
-     },
-     {
-      "item": "wheels",
-      "units": 6,
-      "space": 12.0,
-      "buy": 22.47,
-      "sell": 22.99,
-      "margin": 1
-     }
-    ],
-    "units_out": 37,
-    "units_back": 41,
-    "per_turn": 96.0
-   },
-   {
-    "town": "Pontmont",
-    "town_id": "132002632",
-    "moves": 340.934,
-    "trips_per_turn_full": 4.4,
-    "cost_per_unit": 0.097,
-    "crew": 1.0,
-    "crew_cost": 106,
-    "out": [
-     {
-      "item": "firewood",
-      "units": 23,
-      "space": 704.3478260869566,
-      "buy": 2.5,
-      "sell": 7.6,
-      "margin": 52
-     },
-     {
-      "item": "bread",
-      "units": 69,
-      "space": 208.69565217391306,
-      "buy": 2.37,
-      "sell": 3.1,
-      "margin": 30
-     },
-     {
-      "item": "bricks",
-      "units": 2,
-      "space": 43.47826086956522,
-      "buy": 5.83,
-      "sell": 8.6,
-      "margin": 2
-     },
-     {
-      "item": "nets",
-      "units": 2,
-      "space": 5.217391304347826,
-      "buy": 34.4,
-      "sell": 35.34,
-      "margin": 2
-     },
-     {
-      "item": "beer",
-      "units": 56,
-      "space": 113.91304347826087,
-      "buy": 3.15,
-      "sell": 3.36,
-      "margin": 1
-     },
-     {
-      "item": "lead ore",
-      "units": 0,
-      "space": 4.347826086956522,
-      "buy": 9.87,
-      "sell": 11.3,
-      "margin": 1
-     },
-     {
-      "item": "thread",
-      "units": 3,
-      "space": 3.4782608695652177,
-      "buy": 4.78,
-      "sell": 5.08,
-      "margin": 1
-     },
-     {
-      "item": "grain",
-      "units": 0,
-      "space": 1.7391304347826089,
-      "buy": 2.72,
-      "sell": 3.44,
-      "margin": 0
-     }
-    ],
-    "back": [
-     {
-      "item": "logs",
-      "units": 1,
-      "space": 26.086956521739133,
-      "buy": 4.2,
-      "sell": 7.22,
-      "margin": 1
-     },
-     {
-      "item": "tools",
-      "units": 6,
-      "space": 6.521739130434783,
-      "buy": 6.46,
-      "sell": 6.7,
-      "margin": 1
-     },
-     {
-      "item": "flax fibres",
-      "units": 0,
-      "space": 0.8695652173913044,
-      "buy": 5.41,
-      "sell": 5.75,
-      "margin": 0
-     }
-    ],
-    "units_out": 155,
-    "units_back": 7,
-    "per_turn": 91.0
-   },
-   {
-    "town": "Friedwerp",
-    "town_id": "148501748",
-    "moves": 684.47,
-    "trips_per_turn_full": 2.19,
-    "cost_per_unit": 0.194,
-    "crew": 0.3,
-    "crew_cost": 32,
-    "out": [
-     {
-      "item": "nets",
-      "units": 6,
-      "space": 12.0,
-      "buy": 34.4,
-      "sell": 39.14,
-      "margin": 26
-     },
-     {
-      "item": "beer",
-      "units": 66,
-      "space": 132.0,
-      "buy": 3.15,
-      "sell": 3.72,
-      "margin": 12
-     },
-     {
-      "item": "flax plants",
-      "units": 1,
-      "space": 2.0,
-      "buy": 1.3,
-      "sell": 2.53,
-      "margin": 1
-     }
-    ],
-    "back": [
-     {
-      "item": "cloth",
-      "units": 19,
-      "space": 19.0,
-      "buy": 7.98,
-      "sell": 9.1,
-      "margin": 18
-     },
-     {
-      "item": "tools",
-      "units": 15,
-      "space": 15.0,
-      "buy": 6.04,
-      "sell": 6.7,
-      "margin": 7
-     },
-     {
-      "item": "acid",
-      "units": 1,
-      "space": 1.0,
-      "buy": 144.9,
-      "sell": 149.15,
-      "margin": 4
-     },
-     {
-      "item": "cheese",
-      "units": 5,
-      "space": 5.0,
-      "buy": 6.25,
-      "sell": 7.17,
-      "margin": 4
-     },
-     {
-      "item": "blades",
-      "units": 3,
-      "space": 3.0,
-      "buy": 13.97,
-      "sell": 15.29,
+      "sell": 7.36,
       "margin": 3
      },
      {
-      "item": "dyed cloth",
+      "item": "cured fish",
+      "units": 3,
+      "space": 6.0,
+      "buy": 21.0,
+      "sell": 22.04,
+      "margin": 2
+     },
+     {
+      "item": "copper ore",
       "units": 1,
-      "space": 1.0,
-      "buy": 10.71,
-      "sell": 11.49,
+      "space": 5.0,
+      "buy": 27.3,
+      "sell": 28.88,
       "margin": 1
      },
      {
+      "item": "ploughs",
+      "units": 5,
+      "space": 50.0,
+      "buy": 78.75,
+      "sell": 80.27,
+      "margin": 0
+     },
+     {
       "item": "salt",
-      "units": 4,
-      "space": 4.0,
+      "units": 2,
+      "space": 2.0,
       "buy": 5.3,
       "sell": 5.56,
       "margin": 0
      }
     ],
-    "units_out": 73,
-    "units_back": 48,
-    "per_turn": 76.0
+    "units_out": 47,
+    "units_back": 41,
+    "per_turn": 211.0
    },
    {
-    "town": "Amsdermund",
-    "town_id": "196301457",
-    "moves": 1111.332,
-    "trips_per_turn_full": 1.05,
-    "cost_per_unit": 0.403,
-    "crew": 0.3,
-    "crew_cost": 32,
+    "town": "Calange",
+    "town_id": "140502554",
+    "moves": 217.782,
+    "trips_per_turn_full": 6.89,
+    "cost_per_unit": 0.061,
+    "crew": 0.1,
+    "crew_cost": 11,
     "out": [
      {
-      "item": "nets",
-      "units": 6,
-      "space": 12.0,
-      "buy": 34.4,
-      "sell": 35.72,
-      "margin": 3
-     },
-     {
-      "item": "wine",
-      "units": 10,
-      "space": 10.0,
-      "buy": 7.04,
-      "sell": 7.65,
-      "margin": 2
-     },
-     {
-      "item": "leather",
-      "units": 1,
-      "space": 2.0,
-      "buy": 29.61,
-      "sell": 30.59,
-      "margin": 0
-     },
-     {
-      "item": "pies",
-      "units": 2,
-      "space": 6.0,
-      "buy": 19.64,
-      "sell": 20.9,
-      "margin": 0
-     }
-    ],
-    "back": [
-     {
-      "item": "cloth",
-      "units": 24,
-      "space": 24.0,
-      "buy": 7.35,
-      "sell": 9.1,
-      "margin": 32
-     },
-     {
-      "item": "tools",
-      "units": 15,
-      "space": 15.0,
-      "buy": 4.83,
-      "sell": 6.7,
+      "item": "dyed cloth",
+      "units": 13,
+      "space": 13.0,
+      "buy": 14.28,
+      "sell": 16.05,
       "margin": 22
      },
      {
-      "item": "acid",
-      "units": 1,
-      "space": 1.0,
-      "buy": 137.55,
-      "sell": 149.15,
-      "margin": 11
-     },
-     {
-      "item": "garments",
-      "units": 2,
-      "space": 2.0,
-      "buy": 22.68,
-      "sell": 24.6,
-      "margin": 3
-     },
-     {
-      "item": "axes",
-      "units": 1,
-      "space": 1.0,
-      "buy": 17.85,
-      "sell": 18.81,
-      "margin": 1
-     },
-     {
-      "item": "casks",
-      "units": 5,
-      "space": 10.0,
-      "buy": 5.35,
-      "sell": 6.41,
-      "margin": 1
-     },
-     {
-      "item": "salt",
+      "item": "cured fish",
       "units": 4,
-      "space": 4.0,
-      "buy": 4.81,
-      "sell": 5.56,
-      "margin": 1
-     }
-    ],
-    "units_out": 19,
-    "units_back": 52,
-    "per_turn": 76.0
-   },
-   {
-    "town": "Hofkirchen",
-    "town_id": "167401466",
-    "moves": 990.966,
-    "trips_per_turn_full": 1.27,
-    "cost_per_unit": 0.335,
-    "crew": 0.2,
-    "crew_cost": 21,
-    "out": [
+      "space": 8.0,
+      "buy": 24.57,
+      "sell": 26.79,
+      "margin": 8
+     },
      {
       "item": "tin ingots",
       "units": 1,
       "space": 1.0,
-      "buy": 30.24,
-      "sell": 33.44,
-      "margin": 3
+      "buy": 31.5,
+      "sell": 35.91,
+      "margin": 4
      },
      {
-      "item": "flax plants",
-      "units": 1,
-      "space": 2.0,
-      "buy": 1.3,
-      "sell": 3.89,
-      "margin": 2
-     },
-     {
-      "item": "nets",
-      "units": 5,
-      "space": 10.0,
-      "buy": 34.4,
-      "sell": 35.53,
-      "margin": 2
-     },
-     {
-      "item": "flax fibres",
-      "units": 7,
-      "space": 14.0,
-      "buy": 5.7,
-      "sell": 6.55,
+      "item": "wool",
+      "units": 3,
+      "space": 3.0,
+      "buy": 10.29,
+      "sell": 10.54,
       "margin": 1
+     },
+     {
+      "item": "fleece",
+      "units": 1,
+      "space": 1.0,
+      "buy": 6.67,
+      "sell": 7.03,
+      "margin": 0
+     },
+     {
+      "item": "grain",
+      "units": 2,
+      "space": 4.0,
+      "buy": 2.72,
+      "sell": 3.0,
+      "margin": 0
+     },
+     {
+      "item": "honey",
+      "units": 2,
+      "space": 2.0,
+      "buy": 8.24,
+      "sell": 8.31,
+      "margin": 0
+     },
+     {
+      "item": "limestone",
+      "units": 1,
+      "space": 40.0,
+      "buy": 19.43,
+      "sell": 22.23,
+      "margin": 0
      }
     ],
     "back": [
      {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 200.55,
+      "sell": 340.1,
+      "margin": 139
+     },
+     {
+      "item": "cloth",
+      "units": 10,
+      "space": 10.0,
+      "buy": 7.77,
+      "sell": 9.1,
+      "margin": 13
+     },
+     {
+      "item": "copper ore",
+      "units": 1,
+      "space": 5.0,
+      "buy": 26.04,
+      "sell": 28.88,
+      "margin": 3
+     },
+     {
+      "item": "tiles",
+      "units": 3,
+      "space": 30.0,
+      "buy": 3.95,
+      "sell": 5.08,
+      "margin": 2
+     },
+     {
+      "item": "blades",
+      "units": 1,
+      "space": 1.0,
+      "buy": 15.12,
+      "sell": 15.29,
+      "margin": 0
+     },
+     {
+      "item": "seeds",
+      "units": 2,
+      "space": 4.0,
+      "buy": 2.27,
+      "sell": 2.58,
+      "margin": 0
+     }
+    ],
+    "units_out": 27,
+    "units_back": 18,
+    "per_turn": 189.1
+   },
+   {
+    "town": "Kirchwerp",
+    "town_id": "159601387",
+    "moves": 1072.24,
+    "trips_per_turn_full": 1.12,
+    "cost_per_unit": 0.38,
+    "crew": 0.4,
+    "crew_cost": 42,
+    "out": [
+     {
+      "item": "honey",
+      "units": 10,
+      "space": 10.0,
+      "buy": 8.24,
+      "sell": 9.59,
+      "margin": 10
+     },
+     {
+      "item": "chisels",
+      "units": 3,
+      "space": 3.0,
+      "buy": 11.45,
+      "sell": 12.06,
+      "margin": 1
+     },
+     {
+      "item": "fleece",
+      "units": 1,
+      "space": 1.0,
+      "buy": 6.67,
+      "sell": 7.22,
+      "margin": 0
+     },
+     {
+      "item": "resin",
+      "units": 6,
+      "space": 12.0,
+      "buy": 3.15,
+      "sell": 3.93,
+      "margin": 0
+     }
+    ],
+    "back": [
+     {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 231.0,
+      "sell": 340.1,
+      "margin": 108
+     },
+     {
       "item": "cloth",
       "units": 24,
       "space": 24.0,
-      "buy": 7.72,
+      "buy": 7.56,
       "sell": 9.1,
-      "margin": 25
+      "margin": 28
      },
      {
-      "item": "tools",
-      "units": 15,
-      "space": 15.0,
-      "buy": 5.15,
-      "sell": 6.7,
-      "margin": 18
+      "item": "ploughs",
+      "units": 5,
+      "space": 50.0,
+      "buy": 73.5,
+      "sell": 80.27,
+      "margin": 15
      },
      {
-      "item": "acid",
-      "units": 1,
-      "space": 1.0,
-      "buy": 137.55,
-      "sell": 149.15,
-      "margin": 11
+      "item": "salt",
+      "units": 8,
+      "space": 8.0,
+      "buy": 3.89,
+      "sell": 5.56,
+      "margin": 10
      },
      {
       "item": "cheese",
       "units": 5,
       "space": 5.0,
-      "buy": 5.78,
-      "sell": 7.17,
+      "buy": 5.99,
+      "sell": 7.36,
       "margin": 5
      },
      {
@@ -1869,11 +1482,299 @@
       "margin": 5
      },
      {
-      "item": "salt",
+      "item": "dyed cloth",
+      "units": 3,
+      "space": 3.0,
+      "buy": 10.92,
+      "sell": 11.69,
+      "margin": 1
+     }
+    ],
+    "units_out": 20,
+    "units_back": 48,
+    "per_turn": 183.0
+   },
+   {
+    "town": "Cobholme",
+    "town_id": "61001234",
+    "moves": 1564.408,
+    "trips_per_turn_full": 0.64,
+    "cost_per_unit": 0.661,
+    "crew": 0.2,
+    "crew_cost": 21,
+    "out": [
+     {
+      "item": "lathes",
+      "units": 1,
+      "space": 10.0,
+      "buy": 180.6,
+      "sell": 218.5,
+      "margin": 31
+     },
+     {
+      "item": "nets",
       "units": 4,
+      "space": 8.0,
+      "buy": 34.6,
+      "sell": 37.62,
+      "margin": 7
+     },
+     {
+      "item": "rope",
+      "units": 1,
+      "space": 2.0,
+      "buy": 86.1,
+      "sell": 94.52,
+      "margin": 7
+     },
+     {
+      "item": "hides",
+      "units": 2,
       "space": 4.0,
-      "buy": 4.75,
+      "buy": 12.92,
+      "sell": 17.39,
+      "margin": 6
+     },
+     {
+      "item": "tin ingots",
+      "units": 1,
+      "space": 1.0,
+      "buy": 31.5,
+      "sell": 33.82,
+      "margin": 2
+     },
+     {
+      "item": "acid",
+      "units": 1,
+      "space": 1.0,
+      "buy": 142.8,
+      "sell": 144.4,
+      "margin": 1
+     }
+    ],
+    "back": [
+     {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 218.4,
+      "sell": 340.1,
+      "margin": 120
+     },
+     {
+      "item": "garments",
+      "units": 2,
+      "space": 2.0,
+      "buy": 22.89,
+      "sell": 24.6,
+      "margin": 2
+     }
+    ],
+    "units_out": 10,
+    "units_back": 3,
+    "per_turn": 174.7
+   },
+   {
+    "town": "Darmwald",
+    "town_id": "117101560",
+    "moves": 1021.58,
+    "trips_per_turn_full": 1.21,
+    "cost_per_unit": 0.351,
+    "crew": 0.6,
+    "crew_cost": 63,
+    "out": [
+     {
+      "item": "charcoal",
+      "units": 19,
+      "space": 152.0,
+      "buy": 3.07,
+      "sell": 6.84,
+      "margin": 18
+     },
+     {
+      "item": "arms",
+      "units": 3,
+      "space": 6.0,
+      "buy": 32.13,
+      "sell": 34.2,
+      "margin": 4
+     },
+     {
+      "item": "leather",
+      "units": 1,
+      "space": 2.0,
+      "buy": 29.61,
+      "sell": 32.3,
+      "margin": 2
+     },
+     {
+      "item": "yarn",
+      "units": 7,
+      "space": 7.0,
+      "buy": 5.0,
+      "sell": 5.7,
+      "margin": 2
+     },
+     {
+      "item": "nets",
+      "units": 2,
+      "space": 4.0,
+      "buy": 34.6,
+      "sell": 35.34,
+      "margin": 0
+     },
+     {
+      "item": "tin ingots",
+      "units": 1,
+      "space": 1.0,
+      "buy": 31.5,
+      "sell": 31.92,
+      "margin": 0
+     }
+    ],
+    "back": [
+     {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 243.6,
+      "sell": 340.1,
+      "margin": 96
+     },
+     {
+      "item": "cloth",
+      "units": 24,
+      "space": 24.0,
+      "buy": 7.35,
+      "sell": 9.1,
+      "margin": 34
+     },
+     {
+      "item": "ploughs",
+      "units": 1,
+      "space": 10.0,
+      "buy": 67.2,
+      "sell": 80.27,
+      "margin": 10
+     },
+     {
+      "item": "cheese",
+      "units": 5,
+      "space": 5.0,
+      "buy": 6.46,
+      "sell": 7.36,
+      "margin": 3
+     },
+     {
+      "item": "dyed cloth",
+      "units": 1,
+      "space": 1.0,
+      "buy": 10.5,
+      "sell": 11.69,
+      "margin": 1
+     },
+     {
+      "item": "salt",
+      "units": 8,
+      "space": 8.0,
+      "buy": 5.15,
       "sell": 5.56,
+      "margin": 0
+     }
+    ],
+    "units_out": 33,
+    "units_back": 40,
+    "per_turn": 170.0
+   },
+   {
+    "town": "Hofkirchen",
+    "town_id": "167401466",
+    "moves": 990.966,
+    "trips_per_turn_full": 1.27,
+    "cost_per_unit": 0.333,
+    "crew": 0.3,
+    "crew_cost": 32,
+    "out": [
+     {
+      "item": "flax plants",
+      "units": 1,
+      "space": 2.0,
+      "buy": 1.29,
+      "sell": 3.89,
+      "margin": 2
+     },
+     {
+      "item": "nets",
+      "units": 5,
+      "space": 10.0,
+      "buy": 34.6,
+      "sell": 35.53,
+      "margin": 1
+     }
+    ],
+    "back": [
+     {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 228.9,
+      "sell": 340.1,
+      "margin": 111
+     },
+     {
+      "item": "cloth",
+      "units": 24,
+      "space": 24.0,
+      "buy": 7.72,
+      "sell": 9.1,
+      "margin": 25
+     },
+     {
+      "item": "butter",
+      "units": 1,
+      "space": 3.0,
+      "buy": 71.4,
+      "sell": 81.22,
+      "margin": 9
+     },
+     {
+      "item": "tools",
+      "units": 15,
+      "space": 15.0,
+      "buy": 5.15,
+      "sell": 5.94,
+      "margin": 7
+     },
+     {
+      "item": "cheese",
+      "units": 5,
+      "space": 5.0,
+      "buy": 5.78,
+      "sell": 7.36,
+      "margin": 6
+     },
+     {
+      "item": "garments",
+      "units": 2,
+      "space": 2.0,
+      "buy": 21.63,
+      "sell": 24.6,
+      "margin": 5
+     },
+     {
+      "item": "salt",
+      "units": 8,
+      "space": 8.0,
+      "buy": 4.73,
+      "sell": 5.56,
+      "margin": 4
+     },
+     {
+      "item": "copper ore",
+      "units": 1,
+      "space": 5.0,
+      "buy": 25.62,
+      "sell": 28.88,
       "margin": 2
      },
      {
@@ -1881,125 +1782,253 @@
       "units": 5,
       "space": 10.0,
       "buy": 5.46,
-      "sell": 6.41,
-      "margin": 1
-     },
-     {
-      "item": "dyed cloth",
-      "units": 1,
-      "space": 1.0,
-      "buy": 10.92,
-      "sell": 11.49,
+      "sell": 6.22,
       "margin": 0
      }
     ],
-    "units_out": 14,
-    "units_back": 57,
-    "per_turn": 75.0
+    "units_out": 6,
+    "units_back": 62,
+    "per_turn": 169.0
    },
    {
-    "town": "Clairas",
-    "town_id": "144702149",
-    "moves": 373.674,
-    "trips_per_turn_full": 4.01,
-    "cost_per_unit": 0.106,
+    "town": "Pontmont",
+    "town_id": "132002632",
+    "moves": 340.934,
+    "trips_per_turn_full": 4.4,
+    "cost_per_unit": 0.096,
     "crew": 1.0,
     "crew_cost": 106,
     "out": [
      {
-      "item": "timber",
-      "units": 18,
-      "space": 281.25,
-      "buy": 7.82,
-      "sell": 11.21,
-      "margin": 34
-     },
-     {
       "item": "firewood",
-      "units": 18,
-      "space": 543.75,
-      "buy": 2.5,
-      "sell": 7.03,
-      "margin": 24
+      "units": 22,
+      "space": 678.2608695652175,
+      "buy": 2.35,
+      "sell": 7.6,
+      "margin": 53
      },
      {
-      "item": "limestone",
+      "item": "bread",
+      "units": 70,
+      "space": 211.30434782608697,
+      "buy": 2.37,
+      "sell": 3.12,
+      "margin": 32
+     },
+     {
+      "item": "lathes",
       "units": 0,
-      "space": 25.0,
-      "buy": 17.43,
-      "sell": 26.22,
-      "margin": 3
-     },
-     {
-      "item": "bricks",
-      "units": 3,
-      "space": 62.5,
-      "buy": 5.83,
-      "sell": 8.84,
-      "margin": 2
+      "space": 4.347826086956522,
+      "buy": 180.6,
+      "sell": 233.7,
+      "margin": 23
      },
      {
       "item": "nets",
-      "units": 1,
-      "space": 2.5,
-      "buy": 34.4,
-      "sell": 34.96,
-      "margin": 1
+      "units": 2,
+      "space": 5.217391304347826,
+      "buy": 34.6,
+      "sell": 36.48,
+      "margin": 4
+     },
+     {
+      "item": "bricks",
+      "units": 2,
+      "space": 43.47826086956522,
+      "buy": 5.57,
+      "sell": 8.93,
+      "margin": 3
      },
      {
       "item": "beer",
-      "units": 36,
-      "space": 72.5,
+      "units": 58,
+      "space": 117.3913043478261,
       "buy": 3.15,
       "sell": 3.36,
+      "margin": 1
+     },
+     {
+      "item": "lead ore",
+      "units": 0,
+      "space": 4.347826086956522,
+      "buy": 9.92,
+      "sell": 11.3,
+      "margin": 1
+     },
+     {
+      "item": "thread",
+      "units": 3,
+      "space": 3.91304347826087,
+      "buy": 4.76,
+      "sell": 5.08,
+      "margin": 1
+     },
+     {
+      "item": "grain",
+      "units": 0,
+      "space": 1.7391304347826089,
+      "buy": 2.72,
+      "sell": 3.4,
+      "margin": 0
+     },
+     {
+      "item": "fleece",
+      "units": 0,
+      "space": 0.4347826086956522,
+      "buy": 6.67,
+      "sell": 6.84,
       "margin": 0
      }
     ],
     "back": [
      {
-      "item": "acid",
+      "item": "swords",
       "units": 0,
-      "space": 0.625,
-      "buy": 140.7,
-      "sell": 149.15,
+      "space": 0.8695652173913044,
+      "buy": 235.2,
+      "sell": 340.1,
+      "margin": 46
+     },
+     {
+      "item": "candles",
+      "units": 0,
+      "space": 0.4347826086956522,
+      "buy": 78.75,
+      "sell": 83.5,
+      "margin": 2
+     },
+     {
+      "item": "logs",
+      "units": 1,
+      "space": 26.086956521739133,
+      "buy": 4.2,
+      "sell": 7.22,
+      "margin": 1
+     },
+     {
+      "item": "copper ore",
+      "units": 0,
+      "space": 2.173913043478261,
+      "buy": 27.72,
+      "sell": 28.88,
+      "margin": 0
+     },
+     {
+      "item": "cheese",
+      "units": 2,
+      "space": 2.173913043478261,
+      "buy": 7.25,
+      "sell": 7.36,
+      "margin": 0
+     }
+    ],
+    "units_out": 157,
+    "units_back": 3,
+    "per_turn": 167.0
+   },
+   {
+    "town": "N\u00fcrnnieder",
+    "town_id": "164901941",
+    "moves": 520.024,
+    "trips_per_turn_full": 2.88,
+    "cost_per_unit": 0.147,
+    "crew": 0.2,
+    "crew_cost": 21,
+    "out": [
+     {
+      "item": "nets",
+      "units": 4,
+      "space": 8.0,
+      "buy": 34.6,
+      "sell": 36.29,
+      "margin": 6
+     },
+     {
+      "item": "bricks",
+      "units": 5,
+      "space": 100.0,
+      "buy": 5.57,
+      "sell": 9.31,
+      "margin": 4
+     },
+     {
+      "item": "leather",
+      "units": 1,
+      "space": 2.0,
+      "buy": 29.61,
+      "sell": 32.3,
+      "margin": 2
+     },
+     {
+      "item": "wine",
+      "units": 2,
+      "space": 2.0,
+      "buy": 7.04,
+      "sell": 7.36,
+      "margin": 0
+     }
+    ],
+    "back": [
+     {
+      "item": "swords",
+      "units": 1,
+      "space": 2.0,
+      "buy": 231.0,
+      "sell": 340.1,
+      "margin": 109
+     },
+     {
+      "item": "cloth",
+      "units": 24,
+      "space": 24.0,
+      "buy": 7.35,
+      "sell": 9.1,
+      "margin": 38
+     },
+     {
+      "item": "salt",
+      "units": 8,
+      "space": 8.0,
+      "buy": 4.73,
+      "sell": 5.56,
       "margin": 5
      },
      {
       "item": "garments",
-      "units": 1,
-      "space": 1.25,
-      "buy": 22.47,
+      "units": 2,
+      "space": 2.0,
+      "buy": 23.1,
       "sell": 24.6,
-      "margin": 2
+      "margin": 3
      },
      {
-      "item": "tackles",
-      "units": 0,
-      "space": 2.5,
-      "buy": 154.35,
-      "sell": 158.65,
-      "margin": 2
+      "item": "casks",
+      "units": 2,
+      "space": 4.0,
+      "buy": 5.72,
+      "sell": 6.22,
+      "margin": 0
      },
      {
-      "item": "salt",
+      "item": "copper ingots",
       "units": 1,
-      "space": 1.875,
-      "buy": 5.15,
-      "sell": 5.56,
-      "margin": 1
+      "space": 1.0,
+      "buy": 14.8,
+      "sell": 15.29,
+      "margin": 0
      },
      {
-      "item": "seeds",
-      "units": 4,
-      "space": 8.75,
-      "buy": 2.33,
-      "sell": 2.58,
+      "item": "furniture",
+      "units": 1,
+      "space": 4.0,
+      "buy": 14.91,
+      "sell": 15.8,
       "margin": 0
      }
     ],
-    "units_out": 76,
-    "units_back": 6,
-    "per_turn": 74.0
+    "units_out": 12,
+    "units_back": 39,
+    "per_turn": 167.0
    }
   ],
   "considered": 61,
@@ -2009,15 +2038,15 @@
    "ship": "snekkja",
    "capacity": 250,
    "moves_per_turn_full_crew": 3000,
-   "running_cost_full_crew": 106.1,
+   "running_cost_full_crew": 105.7,
    "min_crew": 0.1,
    "take_share": 0.3,
    "slippage": 0.05
   },
-  "t": "2026-11-16T00:26:30+00:00"
+  "t": "2026-11-16T01:14:54+00:00"
  },
  "ship_plans": {
-  "t": "2026-11-16T00:26:30+00:00",
+  "t": "2026-11-16T01:14:54+00:00",
   "plans": [
    {
     "ship": "Flax Wyrm",
@@ -2031,35 +2060,28 @@
       "max_holding": 145
      },
      "pasties": {
-      "buy_volume": 3,
-      "buy_price": "13.9",
+      "buy_volume": 2,
+      "buy_price": "14.3",
       "max_holding": 14
      }
     },
     "home_orders": {},
     "crew": 0.2,
-    "est_net": 266.6,
+    "est_net": 260.9,
     "capacity": 768,
     "space": [
      0,
-     97
+     94
     ],
     "notes": [
      "stock: furniture 22 @ 14.0 (keep 145)",
-     "stock: pasties 3 @ 13.9 (keep 14)"
+     "stock: pasties 2 @ 14.3 (keep 14)"
     ],
     "diff": {
-     "furniture": [
-      {
-       "buy_volume": 22,
-       "buy_price": "14.0",
-       "max_holding": 145
-      }
-     ],
      "pasties": [
       {
-       "buy_volume": 3,
-       "buy_price": "13.9",
+       "buy_volume": 2,
+       "buy_price": "14.3",
        "max_holding": 14
       }
      ]
@@ -2093,58 +2115,77 @@
   ],
   "best": [
    {
-    "town": "Amsdermund",
-    "town_id": "196301457",
-    "per_turn": 570.9,
-    "crew": 0.9,
-    "moves": 1111.332,
-    "orders": {
-     "furniture": {
-      "buy_volume": 56,
-      "buy_price": "14.5",
-      "max_holding": 145
-     }
-    }
-   },
-   {
     "town": "Chatgnan",
     "town_id": "97102672",
-    "per_turn": 539.9,
-    "crew": 0.4,
+    "per_turn": 642.4,
+    "crew": 0.5,
     "moves": 727.59,
     "orders": {
      "furniture": {
-      "buy_volume": 44,
+      "buy_volume": 54,
       "buy_price": "13.9",
       "max_holding": 145
      },
      "garments": {
-      "sell_volume": 7,
+      "sell_volume": 6,
       "sell_price": "26.2",
       "min_holding": 30
      },
      "pasties": {
-      "buy_volume": 8,
+      "buy_volume": 4,
       "buy_price": "16.3",
       "max_holding": 14
      }
     }
    },
    {
-    "town": "Vauxvais",
-    "town_id": "137102412",
-    "per_turn": 379.5,
-    "crew": 0.1,
-    "moves": 204.19,
+    "town": "Amsdermund",
+    "town_id": "196301457",
+    "per_turn": 565.7,
+    "crew": 0.9,
+    "moves": 1111.332,
+    "orders": {
+     "furniture": {
+      "buy_volume": 56,
+      "buy_price": "14.6",
+      "max_holding": 145
+     }
+    }
+   },
+   {
+    "town": "Disscester",
+    "town_id": "64601365",
+    "per_turn": 383.9,
+    "crew": 0.9,
+    "moves": 1474.174,
     "orders": {
      "furniture": {
       "buy_volume": 31,
-      "buy_price": "14.3",
+      "buy_price": "12.4",
       "max_holding": 145
      },
      "pasties": {
-      "buy_volume": 5,
-      "buy_price": "15.9",
+      "buy_volume": 9,
+      "buy_price": "13.9",
+      "max_holding": 14
+     }
+    }
+   },
+   {
+    "town": "Fulkirch",
+    "town_id": "113901247",
+    "per_turn": 300.0,
+    "crew": 1.0,
+    "moves": 1576.238,
+    "orders": {
+     "furniture": {
+      "buy_volume": 31,
+      "buy_price": "14.2",
+      "max_holding": 145
+     },
+     "pasties": {
+      "buy_volume": 11,
+      "buy_price": "16.4",
       "max_holding": 14
      }
     }
@@ -2152,7 +2193,7 @@
    {
     "town": "Boistot",
     "town_id": "80202116",
-    "per_turn": 295.2,
+    "per_turn": 294.8,
     "crew": 0.7,
     "moves": 1230.324,
     "orders": {
@@ -2163,26 +2204,7 @@
      },
      "pasties": {
       "buy_volume": 7,
-      "buy_price": "15.0",
-      "max_holding": 14
-     }
-    }
-   },
-   {
-    "town": "Fulkirch",
-    "town_id": "113901247",
-    "per_turn": 290.7,
-    "crew": 1.0,
-    "moves": 1576.238,
-    "orders": {
-     "furniture": {
-      "buy_volume": 31,
-      "buy_price": "14.5",
-      "max_holding": 145
-     },
-     "pasties": {
-      "buy_volume": 9,
-      "buy_price": "15.8",
+      "buy_price": "15.1",
       "max_holding": 14
      }
     }
@@ -2193,15 +2215,15 @@
  "chain": {
   "ok": true,
   "mode": "HOLD",
-  "cash": 10269,
+  "cash": 10289,
   "sales": 9.6,
   "exports": 0.0,
   "targets": {
    "sew": 0.79,
    "weave": 1.27,
    "spin": 1.66,
-   "ret": 0.79,
-   "flax": 3.94
+   "ret": 0.78,
+   "flax": 3.92
   },
   "current": {
    "flax": 4.639,
@@ -2214,12 +2236,12 @@
    [
     "flax",
     4.639,
-    3.94
+    3.92
    ],
    [
     "ret",
     0.909,
-    0.79
+    0.78
    ],
    [
     "weave",
@@ -2267,7 +2289,7 @@
   },
   "buffers": {
    "flax fibres": {
-    "held": 132,
+    "held": 134,
     "target": 77
    },
    "thread": {
@@ -2291,8 +2313,8 @@
    },
    "buy_max": 350,
    "allowance": 510,
-   "chain": 412,
-   "delta": 122
+   "chain": 411,
+   "delta": 121
   },
   "thread": {
    "other": 49.8,
@@ -2304,35 +2326,34 @@
  "goal": {
   "ok": true,
   "goal": "business value",
-  "turn": 14055,
-  "t": "2026-11-16T00:26:23+00:00",
-  "value_now": 24179.377,
+  "turn": 14056,
+  "t": "2026-11-16T01:14:49+00:00",
+  "value_now": 24254.476000000002,
   "trend": {
-   "now": 24179.377,
+   "now": 24254.476000000002,
    "turn": 14055,
-   "per_turn_6": 97.66499999999967,
-   "per_turn_24": 20.63666666666677,
-   "per_turn_48": -90.73847916666666
+   "per_turn_6": 110.18149999999999,
+   "per_turn_24": 23.765791666666853,
+   "per_turn_48": -89.17391666666663
   },
-  "plan_value": 19.198301514010012,
-  "current_value": 59.7136301919337,
-  "plan_free": 19.198301514010097,
+  "plan_value": 21.353816273015497,
+  "current_value": 61.02940165788408,
+  "plan_free": 21.35381627301561,
   "current_breaks": [
    "prestige floor"
   ],
-  "plan_cashflow": 28.97109026401,
-  "current_cashflow": 30.713635191933662,
-  "current_book": 126.32710185860029,
+  "plan_cashflow": 28.583739023015454,
+  "current_cashflow": 31.07240665788416,
+  "current_book": 126.93545665788413,
   "buy": {
-   "arms": 0.5,
+   "arms": 0.46,
    "bread": 4.2,
-   "candles": 1.5,
-   "cured meat": 2.29,
+   "cured meat": 2.4,
    "donations": 40.0,
-   "firewood": 0.61,
+   "firewood": 1.6,
    "fish": 7.0,
-   "grain": 4.29,
-   "labour": 18.55,
+   "grain": 4.23,
+   "labour": 18.13,
    "light armour": 0.2,
    "meat": 1.0,
    "porterage": 4.37,
@@ -2342,23 +2363,22 @@
   },
   "orders_now": {
    "buy": {
-    "arms": 0.5,
+    "arms": 0.46,
     "bread": 4.2,
-    "candles": 1.5,
     "donations": 40.0,
-    "firewood": 1.1,
+    "firewood": 2.1,
     "fish": 7.0,
     "grain": 8.28,
     "labour": 28.88,
     "light armour": 0.2,
     "meat": 1.0,
     "porterage": 4.86,
-    "tar": 0.25
+    "tar": 0.23
    },
    "sell": {
     "beer": 1.25,
     "cloth": 1.0,
-    "cured meat": 0.32,
+    "cured meat": 0.15,
     "flax fibres": 2.5,
     "flax plants": 1.5,
     "garments": 10.2,
@@ -2374,34 +2394,34 @@
    "nets": 7.5,
    "thread": 5.0
   },
-  "plan_prestige_rate": -0.5552166666666665,
-  "current_prestige_rate": -2.3779999999999983,
-  "prestige_min": -0.5552166666666665,
-  "cash_min": -261.212875,
+  "plan_prestige_rate": -0.5455083333333341,
+  "current_prestige_rate": -2.3299999999999983,
+  "prestige_min": -0.5455083333333335,
+  "cash_min": -262.05787499999997,
   "fixed_cost": 200.5,
   "relaxed": [],
   "levels": {
    "household duty": 2.0,
-   "flax farm 1": 4.152,
+   "flax farm 1": 4.154,
    "retting pit 1": 0.826,
    "spinnery 1": 1.311,
    "weavery 1": 0.589,
-   "brewery 1": 0.077,
+   "brewery 1": 0.076,
    "sewing shop 1": 0.352,
    "park 1": 16.0,
-   "mansion 1": 0.434,
+   "mansion 1": 0.425,
    "ropewalk 1": 0.0,
    "ropewalk 1 [make rope 1]": 0.047,
    "net maker": 0.291
   },
   "changes": [
    {
-    "name": "linen snake -> Coburgbaum",
+    "name": "linen snake -> Vauxvais",
     "kind": "ship",
     "ship": "1948883264",
     "from": "151802239",
-    "to": "175301864",
-    "gain": 15.610962456826769
+    "to": "137102412",
+    "gain": 5.7546816280645885
    },
    {
     "name": "Flax Wyrm -> Marmont",
@@ -2409,7 +2429,7 @@
     "ship": "845668271",
     "from": "134102075",
     "to": "112902838",
-    "gain": 1.231448218341825
+    "gain": 0.350347565303764
    },
    {
     "name": "brewery 1",
@@ -2417,8 +2437,8 @@
     "kind": "building",
     "recipe": "brew beer 1",
     "from": 0.138,
-    "to": 0.077,
-    "gain": 13.988908191675648
+    "to": 0.076,
+    "gain": 14.06100706220127
    },
    {
     "name": "net maker",
@@ -2427,7 +2447,7 @@
     "recipe": "make nets 3",
     "from": 0.0,
     "to": 0.291,
-    "gain": 10.40631483778617
+    "gain": 10.492298686386732
    },
    {
     "name": "ropewalk 1",
@@ -2436,7 +2456,7 @@
     "recipe": "make rope 2",
     "from": 0.25,
     "to": 0.0,
-    "gain": 9.511334143944339
+    "gain": 10.421845992366514
    },
    {
     "name": "spinnery 1",
@@ -2445,7 +2465,7 @@
     "recipe": "spin thread 1",
     "from": 1.651,
     "to": 1.311,
-    "gain": 2.5508312344183537
+    "gain": 3.1383491039999285
    },
    {
     "name": "sewing shop 1",
@@ -2454,7 +2474,7 @@
     "recipe": "sew garments 2",
     "from": 0.3,
     "to": 0.352,
-    "gain": 3.1288095944154293
+    "gain": 3.3176490493546
    },
    {
     "name": "weavery 1",
@@ -2463,7 +2483,7 @@
     "recipe": "weave cloth 2",
     "from": 0.5,
     "to": 0.589,
-    "gain": 9.401101626016327
+    "gain": 9.42607162601604
    },
    {
     "name": "retting pit 1",
@@ -2472,7 +2492,7 @@
     "recipe": "retting 1",
     "from": 0.909,
     "to": 0.826,
-    "gain": 1.5911816551316633
+    "gain": 1.3447286212660856
    },
    {
     "name": "flax farm 1",
@@ -2480,8 +2500,8 @@
     "kind": "building",
     "recipe": "grow flax 1",
     "from": 4.639,
-    "to": 4.152,
-    "gain": 4.55328147127949
+    "to": 4.154,
+    "gain": 4.592175762769443
    },
    {
     "name": "mansion 1",
@@ -2489,8 +2509,8 @@
     "kind": "building",
     "recipe": "hold banquet 1 (meat)",
     "from": 0.0,
-    "to": 0.434,
-    "gain": -99.47940786116581
+    "to": 0.425,
+    "gain": -99.9109646607304
    }
   ],
   "buildings": {
@@ -2498,7 +2518,7 @@
     "id": "151602400",
     "name": "flax farm 1",
     "recipe": "grow flax 1",
-    "target": 4.152,
+    "target": 4.154,
     "cur_recipe": "grow flax 1",
     "cur": 4.639
    },
@@ -2530,7 +2550,7 @@
     "id": "152202388001004",
     "name": "brewery 1",
     "recipe": "brew beer 1",
-    "target": 0.077,
+    "target": 0.076,
     "cur_recipe": "brew beer 1",
     "cur": 0.138
    },
@@ -2554,7 +2574,7 @@
     "id": "152002388",
     "name": "mansion 1",
     "recipe": "hold banquet 1 (meat)",
-    "target": 0.434,
+    "target": 0.425,
     "cur_recipe": "hold banquet 1 (meat)",
     "cur": 0.0
    },
@@ -2565,7 +2585,7 @@
     "target": 0.047,
     "cur_recipe": "make rope 2",
     "cur": 0.25,
-    "switch_gain": 3.113434198812456
+    "switch_gain": 2.7298401496943825
    },
    "152202386007001": {
     "id": "152202386007001",
@@ -2581,7 +2601,7 @@
     "kind": "tenants",
     "what": "Tenants L13",
     "cost": "500 prestige",
-    "gain": 80.81704812880068,
+    "gain": 80.76585391626392,
     "pays": false,
     "note": "waits until 800 free (keeps 300 after)"
    },
@@ -2590,11 +2610,11 @@
     "type": "leatherworks",
     "recipe": "make leather armour 1",
     "what": "new leatherworks (make leather armour 1)",
-    "cost": "~3666 coin",
-    "coin": 3666.0,
-    "gain": 1.0036951129124816,
+    "cost": "~3681 coin",
+    "coin": 3681.0,
+    "gain": 1.0195003617612315,
     "mgmt": 1.0,
-    "payback": 3652.5035868334066,
+    "payback": 3610.59214696198,
     "pays": false,
     "note": "materials thin at home: nails"
    }
@@ -2605,23 +2625,22 @@
    "rope": 0.02
   },
   "buy_px": {
-   "arms": 32.6,
+   "arms": 30.6,
    "bread": 2.26,
-   "candles": 79.5,
    "donations": 1.0,
-   "firewood": 2.38,
+   "firewood": 2.24,
    "fish": 1.83,
-   "grain": 2.76,
+   "grain": 2.74,
    "labour": 1.68,
    "light armour": 94.0,
-   "meat": 2.14,
-   "porterage": 0.42,
-   "tar": 11.7
+   "meat": 2.12,
+   "porterage": 0.46,
+   "tar": 11.3
   },
   "sell_px": {
    "beer": 2.96,
    "cloth": 6.95,
-   "cured meat": 23.958,
+   "cured meat": 24.2,
    "flax fibres": 5.5,
    "flax plants": 1.14,
    "garments": 21.2,
@@ -2645,10 +2664,10 @@
     "name": "linen snake",
     "current": "151802239",
     "current_name": "Grandgues",
-    "town": "175301864",
-    "town_name": "Coburgbaum",
-    "worth": 15.871089705216718,
-    "gain_over_current": 15.610962456826911
+    "town": "137102412",
+    "town_name": "Vauxvais",
+    "worth": 15.106363466829379,
+    "gain_over_current": 5.75468162806456
    },
    {
     "ship": "845668271",
@@ -2657,8 +2676,8 @@
     "current_name": "Caillech\u00e2tel",
     "town": "112902838",
     "town_name": "Marmont",
-    "worth": 1.8634499414646655,
-    "gain_over_current": 1.2314482183418534
+    "worth": 0.9846685795177166,
+    "gain_over_current": 0.3503475653037924
    }
   ],
   "ship_plan": {
@@ -2688,39 +2707,37 @@
   "short": {},
   "shadow": {
    "labour": 1.68,
-   "thread": 4.221,
-   "cloth": 6.741,
-   "flax fibres": 5.002,
-   "garments": 19.504,
-   "nets": 30.683,
-   "beer": 2.977,
+   "thread": 4.223,
+   "cloth": 6.743,
+   "flax fibres": 5.009,
+   "garments": 19.508,
+   "nets": 30.713,
+   "beer": 2.96,
    "timber": 3.352,
-   "_prestige": 59.339,
+   "_prestige": 60.709,
    "_cash": 0.0
   },
   "flows": {
    "arms": {
-    "buy": 0.5
+    "buy": 0.46,
+    "draw": 0.04
    },
    "bread": {
     "buy": 4.2
-   },
-   "candles": {
-    "buy": 1.5
    },
    "cloth": {
     "sell": 1.25,
     "sell_px": 6.95
    },
    "cured meat": {
-    "buy": 2.29,
-    "draw": 0.32
+    "buy": 2.4,
+    "draw": 0.15
    },
    "donations": {
     "buy": 40.0
    },
    "firewood": {
-    "buy": 0.61
+    "buy": 1.6
    },
    "fish": {
     "buy": 7.0
@@ -2731,19 +2748,19 @@
    },
    "flax plants": {
     "sell": 0.38,
-    "sell_px": 1.3,
-    "draw": 0.07
+    "sell_px": 1.29,
+    "draw": 0.02
    },
    "garments": {
     "sell": 12.34,
     "sell_px": 21.2
    },
    "grain": {
-    "buy": 4.29,
+    "buy": 4.23,
     "draw": 0.69
    },
    "labour": {
-    "buy": 18.55
+    "buy": 18.13
    },
    "light armour": {
     "buy": 0.2
@@ -2760,7 +2777,7 @@
    },
    "thread": {
     "sell": 5.0,
-    "sell_px": 4.75
+    "sell_px": 4.76
    },
    "tools": {
     "buy": 0.11,
@@ -2776,17 +2793,20 @@
    "rope": {
     "exp": 0.04
    },
+   "candles": {
+    "imp": 1.5
+   },
    "furniture": {
     "imp": 1.4
    }
   },
   "scorecard": {
    "turns": 59,
-   "predicted": -109.69340764962271,
-   "real": -108.365813559322,
-   "runs": 54
+   "predicted": -105.4021256585641,
+   "real": -107.09294915254232,
+   "runs": 55
   },
-  "promoted": null,
+  "promoted": "goal planner: model check held 12 runs, it now runs 'buys' live",
   "live_jobs": {
    "rates": false,
    "buys": true,
@@ -2799,11 +2819,6 @@
    "ok": true,
    "ticks": [
     [
-     14053,
-     33.7,
-     -261.6
-    ],
-    [
      14054,
      26.5,
      136.4
@@ -2812,6 +2827,11 @@
      14055,
      44.3,
      186.6
+    ],
+    [
+     14056,
+     30.7,
+     20.3
     ]
    ],
    "why": null
@@ -2841,17 +2861,13 @@
     "buy_volume": 5,
     "v2_buy_volume": 5
    },
-   "candles": {
-    "buy_volume": 2,
-    "v2_buy_volume": null
-   },
    "donations": {
     "buy_volume": 40,
     "v2_buy_volume": 40
    },
    "firewood": {
-    "buy_volume": 1,
-    "v2_buy_volume": 3
+    "buy_volume": 2,
+    "v2_buy_volume": 5
    },
    "grain": {
     "buy_volume": 5,
