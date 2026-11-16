@@ -7,5 +7,3 @@
 - 11-16T03:58 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 18 (~1471 coin), cash 9717 
 - 11-16T02:27 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy paused: cash 9273 - 1352 to buy < 8000 (or failsafe 1)
 - 11-16T01:17 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 24 (~1868 coin), cash 10258
-- 11-15T22:30 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy paused: cash 9488 - 1523 to buy < 8000 (or failsafe 1)
-- 11-15T22:30 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
