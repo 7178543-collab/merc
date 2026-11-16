@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14073, 2026-11-16 18:27. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14073, 2026-11-16 18:45. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
 
 ## Items v2 runs (last turn)
@@ -37,7 +37,7 @@ Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
 
 ## Notes
 
-- labour: projection runs 100 over real use lately; planning 511, not 611
+- labour: projection runs 100 over real use lately; planning 516, not 616
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -67,7 +67,7 @@ Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
-| linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.116 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -104,7 +104,7 @@ Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
 | fish | 7 @ 2.5, stop - |  | goal planner: buys 7 for today's rates (v2 had 7) |
 | garments |  | 11 @ min 21 | goal planner: sells 11 at 21 (v2 had 10 at 28.6) |
 | grain | 5 @ 3.7, stop 18 |  | goal planner: buys 5 a turn for today's rates, keeps up to 18 (v2 had 0) |
-| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 11) |
+| labour | 29 @ 2.2, stop - |  | goal planner: buys 29 for today's rates (v2 had 16) |
 | light armour | 1 @ 96, stop 10 |  | goal planner: buys 1 a turn for today's rates, keeps up to 10 (v2 had None) |
 | meat | 1 @ 3.02, stop - |  | goal planner: buys 1 for today's rates (v2 had 1) |
 | nets |  | 9 @ min 34.0 |  |
@@ -114,7 +114,7 @@ Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 23.6k (cash + stock at home prices); +285/turn over 6 turns, -10/turn over 24 turns.
+- Value now 23.6k (cash + stock at home prices); +291/turn over 6 turns, -8/turn over 24 turns.
 - Limits: cash flow >= -242/turn, prestige >= -0.85/turn (values are after 200 tax a turn).
 - Today's settings: value +97/turn, cash +84/turn, prestige -2.73/turn - breaks the prestige floor.
 - Plan: value +20/turn, cash +26/turn, prestige -0.85/turn, inside both limits.
@@ -131,9 +131,9 @@ Cash 9,818, prestige 3,623 (503 free, -2.7/turn).
   - weavery 1 0.50 -> 0.39: -23/turn
   - sewing shop 1 0.30 -> 0.24: -6/turn
   - mansion 1 0.00 -> 0.45: -79/turn
-- Model check over the last 59 turns: predicted -10/turn for the settings we ran, real -65/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted -7/turn for the settings we ran, real -64/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.75, beer 3.37, timber 3.42, prestige 63.24, cash 0.00
-- Orders it would set: bread buy 5 (v2 8); cloth sell 1 (v2 none); firewood buy 1 (v2 3); garments sell 11 (v2 10); grain buy 5 (v2 0); labour buy 29 (v2 11); light armour buy 1 (v2 None); rope sell 2 (v2 1)
+- Orders it would set: bread buy 5 (v2 8); cloth sell 1 (v2 none); firewood buy 1 (v2 3); garments sell 11 (v2 10); grain buy 5 (v2 0); labour buy 29 (v2 16); light armour buy 1 (v2 None); rope sell 2 (v2 1)
 - Ship linen snake: Grandgues -> Calange (+9/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Marmont (+1/turn over staying).
 - Management: ~11.39 of 18 used.
@@ -157,6 +157,6 @@ Buffers: flax fibres 106/77, thread 1050/228, cloth 72/128
 
 ## Self-diagnosis
 
-- R1: candles slot dry: 2.5 held, 1.5 a turn (luxury slot (+3 prestige)); our buy 2 @ 76, home ask 84.0 -> **buy 3 @ 85.5 (ask 84.0, cap 120.0)** (ok)
+- R1: candles slot dry: 2.5 held, 1.5 a turn (luxury slot (+3 prestige)); our buy 3 @ 85.5, home ask 84.0; our bid is already at/over the ask (sellers too thin)
 - R1: firewood slot dry: 0.0 held, 2.8 a turn (heating slot (+0.1 prestige)); our buy 1 @ 2.4, home ask 2.9; ask over the cap 2.1 (60 coin per prestige)
 - R2: spinnery 1 blocked by thread space: 1050 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread
