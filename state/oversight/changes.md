@@ -14,4 +14,3 @@
 - 11-15T17:46 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "12.6", "max_holding": 135} | church buy: furniture for the church ask (+50 prestige, 31.5 coin/prestige at bid 12.6); need 114 (~1434 coin), cash 980
 - 11-15T17:03 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "14", "max_holding": 135} | church buy: furniture for the church ask (+50 prestige, 35.0 coin/prestige at bid 14); need 114 (~1593 coin), cash 9802 
 - 11-15T12:15 [prestige_rules] item="cured meat", set={"buy_volume": 0} | banquet rule: cash 9693 under 10000
-- 11-15T11:02 [prestige_rules] building="152002388", producer={"recipe": "hold banquet 1 (meat)", "target": 0} | banquet rule: cash 9951 under 10000
