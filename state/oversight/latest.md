@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-17T22:05 | turn 14100 | data 0.5 h old | ~300 turns to season end
+Generated 2026-11-17T22:16 | turn 14100 | data 0.7 h old | ~300 turns to season end
 
 ## Flags
 - none
@@ -8,7 +8,7 @@ Generated 2026-11-17T22:05 | turn 14100 | data 0.5 h old | ~300 turns to season 
 ## Cash
 - now 11742.0 | last 6 / 12 / 24 turns: +920 / +1021 / +1665 | trend +62 per turn
 - if the 12-turn trend holds: +12 turns 12488.0, +48 turns 14728.0, +120 turns 19206.0
-- business value (cash + stock) 25856.0, trend +66 per turn over 25 turns; stock at market 14606.0
+- business value (cash + stock) 26332.0, trend +70 per turn over 25 turns; stock at market 14606.0
 - profit last turn 523.0, 12-turn average 317.0 (before taxes)
 
 ## Prestige
