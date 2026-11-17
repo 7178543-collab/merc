@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-17T12:33 | turn 14091 | data 0.1 h old | ~310 turns to season end
+Generated 2026-11-17T13:16 | turn 14091 | data 0.4 h old | ~309 turns to season end
 
 ## Flags
 - **MED** history has 1 skipped turn(s) in the last 24: the bots missed runs
@@ -18,18 +18,18 @@ Generated 2026-11-17T12:33 | turn 14091 | data 0.1 h old | ~310 turns to season 
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 64 of 532 (prestige rank 64): legacy 17514.9, prestige 3623.7; median legacy 2577.5
-- gap to the next rank up: 22.6
-- top 5: Jerry Wylteshire (Hofkirchen) 188359.0; Hawys atte Broke (Kirchwerp) 131007.0; Alphonse Segal (Rouhomme) 112590.0; Henger Lieske (Grandgues) 104358.0; Minna K. Hahn (Bernfurt) 99797.0
+- legacy rank 64 of 533 (prestige rank 64): legacy 17533.0, prestige 3620.4; median legacy 2581.0
+- gap to the next rank up: 10.8
+- top 5: Jerry Wylteshire (Hofkirchen) 188595.0; Hawys atte Broke (Kirchwerp) 131259.0; Alphonse Segal (Rouhomme) 112805.0; Henger Lieske (Grandgues) 104598.0; Minna K. Hahn (Bernfurt) 100068.0
 
 ## Town and contracts
-- Strasclives: 135 commoners, growth 0.778, migration 0.019, 5 households
+- Strasclives: 135 commoners, growth 0.791, migration 0.017, 5 households
 - church asks 4 | contracts {'done': 34, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 1819.9), ('crafting', 157.6)]; Florise Plantier [('maritime', 1828.3), ('textile', 15.3)]; Chrétien Dunois [('textile', 1051.4), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 1821.3), ('crafting', 157.6)]; Florise Plantier [('maritime', 1829.7), ('textile', 15.3)]; Chrétien Dunois [('textile', 1053.3), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -18.13; maintain 1 +8.00; sustenance +6.91; hold banquet 1 (meat) +0.00
+- to legacy -18.12; maintain 1 +8.00; sustenance +6.90; hold banquet 1 (meat) +0.00
 
 ## Capital and waste
 - biggest stock by value: thread 1049.8 (5774.0), candles 18.5 (1517.0), garments 30.5 (970.0), limestone 45.3 (924.0), cloth 72.8 (764.0), timber 98.4 (758.0)
@@ -40,7 +40,7 @@ Generated 2026-11-17T12:33 | turn 14091 | data 0.1 h old | ~310 turns to season 
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 10916, burn -912 over 12 turns
+- FAILSAFE WATCH: cash 10916, burn -655 over 12 turns
 - FAILSAFE input running out: firewood
 - needs you
 - arms: low_stock
@@ -52,4 +52,4 @@ Generated 2026-11-17T12:33 | turn 14091 | data 0.1 h old | ~310 turns to season 
 - contract good: church limestone
 
 ## Queue (24 h)
-- 16 entries, 0 refused (promotion retries excluded)
+- 17 entries, 0 refused (promotion retries excluded)
