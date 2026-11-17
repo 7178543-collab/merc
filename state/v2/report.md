@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14081, 2026-11-17 02:27. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14081, 2026-11-17 02:33. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 10,430, prestige 3,602 (482 free, -2.6/turn).
 
 ## Items v2 runs (last turn)
@@ -16,7 +16,7 @@ Cash 10,430, prestige 3,602 (482 free, -2.6/turn).
 | grain | 35 | 0 | 0 | 0 | 0 | stop 18, buy 5, buy @ 3.7 |
 | labour | 29 | 29 | 508 | 0 | 21 | buy 29, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
-| nets | 17 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 34 |
+| nets | 17 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
 
 **3 risks, 1 waste, 0 tuning** where v2 would act differently from v1.
@@ -126,7 +126,7 @@ Cash 10,430, prestige 3,602 (482 free, -2.6/turn).
   - weavery 1 0.50 -> 0.37: -22/turn
   - sewing shop 1 0.30 -> 0.23: -3/turn
   - mansion 1 0.00 -> 0.44: -81/turn
-- Model check over the last 60 turns: predicted +30/turn for the settings we ran, real -15/turn - OFF, trust the plan less.
+- Model check over the last 60 turns: predicted +32/turn for the settings we ran, real -15/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.78, beer 3.38, timber 3.38, prestige 63.56, cash 0.00
 - Orders it would set: bread buy 5 (v2 7); cloth sell 1 (v2 none); firewood buy 1 (v2 3); garments sell 11 (v2 10); grain buy 5 (v2 0); labour buy 29 (v2 11); light armour buy 1 (v2 None); rope sell 2 (v2 1)
 - Ship linen snake: Grandgues -> Amsdermund (+7/turn over staying).
