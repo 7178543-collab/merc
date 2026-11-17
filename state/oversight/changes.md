@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-17T11:43 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
 - 11-17T10:32 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "25.2", "max_holding": 105} | church buy: limestone for the church ask (+50 prestige, 22.7 coin/prestige at bid 25.2); need 68 (~1706 coin), cash 1055
 - 11-17T09:22 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "25", "max_holding": 105} | church buy: limestone for the church ask (+50 prestige, 22.5 coin/prestige at bid 25); need 77 (~1918 coin), cash 10701 
 - 11-17T08:11 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "24.8", "max_holding": 105} | church buy: limestone for the church ask (+50 prestige, 22.3 coin/prestige at bid 24.8); need 86 (~2125 coin), cash 1076
