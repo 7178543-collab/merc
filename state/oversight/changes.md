@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-17T22:51 [contracts] item="jewellery", set={"buy_volume": 0} | church buy paused: cash 11208 - 3500 to buy < 8000 (or failsafe 1)
 - 11-17T21:40 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "87.5", "max_holding": 40} | church buy: jewellery for the church ask (+100 prestige, 35.0 coin/prestige at bid 87.5); need 40 (~3500 coin), cash 117
 - 11-17T19:18 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (ask left the board): candles buy back to normal
 - 11-17T18:07 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "87.5", "max_holding": 50} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 87.5); need 28 (~2494 coin), cash 10971
