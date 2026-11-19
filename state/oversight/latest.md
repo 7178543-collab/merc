@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-19T03:06 | turn 14129 | data 0.1 h old | ~271 turns to season end
+Generated 2026-11-19T03:20 | turn 14129 | data 0.3 h old | ~271 turns to season end
 
 ## Flags
 - none
@@ -24,7 +24,7 @@ Generated 2026-11-19T03:06 | turn 14129 | data 0.1 h old | ~271 turns to season 
 
 ## Town and contracts
 - Strasclives: 136 commoners, growth 0.686, migration 0.031, 5 households
-- church asks 4 | contracts {'done': 35, 'rejected': 5, 'cancelled': 1}
+- church asks 3 | contracts {'done': 35, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
 - workers: Barthélemy de Gaillon [('maritime', 1872.6), ('crafting', 157.6)]; Florise Plantier [('maritime', 1881.0), ('textile', 15.3)]; Chrétien Dunois [('textile', 1124.2), ('maritime', 155.6)]
 
