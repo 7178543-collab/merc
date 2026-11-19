@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-19T00:25 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "16.7", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 28.9 coin/prestige at bid 16.7); need 53 (~892 coin), cash 15053
 - 11-18T23:14 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "15", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 26.0 coin/prestige at bid 15); need 62 (~930 coin), cash 15096 s
 - 11-18T21:18 [prestige_rules] building="152002388", producer={"recipe": "hold banquet 1 (meat)", "target": 1, "provider_i | banquet rule: cash 15183 over 15000 (profit +10735 over 24 turns, +6134 over 12); recipe hold banquet 1 (meat) (fish 0.0
 - 11-18T21:18 [prestige_rules] item="cured meat", set={"buy_volume": 6, "buy_price": "29", "max_holding": 10} | banquet rule (meat fallback): cash 15183 over 15000 (profit +10735 over 24 turns, +6134 over 12)
@@ -14,7 +15,3 @@
 - 11-18T06:50 [contracts] item="garments", set={"min_holding": 30} | church garments ask filled: sell reserve back to normal
 - 11-18T06:50 [contracts] contract="653704275385392384", item="garments", volume=75.0, bonus=50.0 | auto-fill church offer from stock
 - 11-18T03:38 [contracts] item="jewellery", set={"buy_volume": 0} | church buy over (no longer cheap enough): jewellery buy back to normal
-- 11-18T01:17 [contracts] item="limestone", set={"buy_volume": 0} | church buy over (no longer cheap enough): limestone buy back to normal
-- 11-18T01:17 [contracts] item="garments", set={"min_holding": 75} | church build-up: hold garments home sales until 75 held for the church ask (+50 prestige, 40 coin/prestige); auto-fill d
-- 11-18T00:06 [contracts] item="limestone", set={"buy_volume": 10, "buy_price": "23.4", "max_holding": 105} | church buy: limestone for the church ask (+50 prestige, 21.1 coin/prestige at bid 23.4); need 62 (~1444 coin), cash 1313
-- 11-18T00:06 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "87.5", "max_holding": 40} | church buy: jewellery for the church ask (+100 prestige, 35.0 coin/prestige at bid 87.5); need 40 (~3500 coin), cash 131
