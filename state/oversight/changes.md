@@ -17,6 +17,3 @@
 - 11-18T15:25 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
 - 11-18T14:06 [contracts] item="jewellery", set={"buy_volume": 10, "buy_price": "87.5", "max_holding": 40} | church buy: jewellery for the church ask (+100 prestige, 35.0 coin/prestige at bid 87.5); need 40 (~3500 coin), cash 130
 - 11-18T12:43 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "70", "max_holding": 50} | church buy: candles for the church ask (+100 prestige, 35.0 coin/prestige at bid 70); need 42 (~2905 coin), cash 12835 s
-- 11-18T06:50 [contracts] item="garments", set={"min_holding": 30} | church build-up over (ask 653704275385392384 left the board): garments sell reserve back to 30
-- 11-18T06:50 [contracts] item="garments", set={"min_holding": 30} | church garments ask filled: sell reserve back to normal
-- 11-18T06:50 [contracts] contract="653704275385392384", item="garments", volume=75.0, bonus=50.0 | auto-fill church offer from stock
