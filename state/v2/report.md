@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14147, 2026-11-19 20:47. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14147, 2026-11-19 20:52. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 14,701, prestige 3,643 (523 free, -0.0/turn).
 
 ## Items v2 runs (last turn)
@@ -13,7 +13,7 @@ Cash 14,701, prestige 3,643 (523 free, -0.0/turn).
 | firewood | 1 | 0 | 0 | 1 | 0 | stop 3, buy 1, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 34 | 0 | 0 | 0 | 0 | buy @ 3.7 |
+| grain | 34 | 0 | 0 | 0 | 0 | stop 19, buy 5, buy @ 3.7 |
 | labour | 64 | 64 | 507 | 0 | 57 | buy 64, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
@@ -71,7 +71,7 @@ Cash 14,701, prestige 3,643 (523 free, -0.0/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.0 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
-| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.168 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0.2 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -135,7 +135,7 @@ Cash 14,701, prestige 3,643 (523 free, -0.0/turn).
   - net maker 0.00 -> 0.29: +5/turn
   - retting pit 1 0.91 -> 0.80: +1/turn
   - flax farm 1 4.64 -> 4.00: +7/turn
-- Model check over the last 59 turns: predicted +29/turn for the settings we ran, real +68/turn.
+- Model check over the last 59 turns: predicted +26/turn for the settings we ran, real +68/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.65, beer 3.43, timber 3.69, prestige 63.65, cash 0.00
 - Orders it would set: bread buy 5 (v2 8); cloth sell 1 (v2 none); firewood buy 1 (v2 3); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 5 (v2 0); labour buy 64 (v2 7); light armour buy 1 (v2 None); rope sell 1 (v2 none)
 - Ship linen snake: Grandgues -> Hofkirchen (+10/turn over staying).
