@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-19T12:11 | turn 14139 | data 0.1 h old | ~262 turns to season end
+Generated 2026-11-19T12:57 | turn 14139 | data 0.2 h old | ~262 turns to season end
 
 ## Flags
 - **MED** cash growth is only -3/turn: flat
@@ -8,7 +8,7 @@ Generated 2026-11-19T12:11 | turn 14139 | data 0.1 h old | ~262 turns to season 
 ## Cash
 - now 14613.0 | last 6 / 12 / 24 turns: -112 / -517 / +1592 | trend -3 per turn
 - if the 12-turn trend holds: +12 turns 14576.0, +48 turns 14464.0, +120 turns 14241.0
-- business value (cash + stock) 28212.0, trend +113 per turn over 25 turns; stock at market 13735.0
+- business value (cash + stock) 28212.0, trend +113 per turn over 25 turns; stock at market 13689.0
 - profit last turn 106.0, 12-turn average 223.0 (before taxes)
 
 ## Prestige
@@ -33,14 +33,14 @@ Generated 2026-11-19T12:11 | turn 14139 | data 0.1 h old | ~262 turns to season 
 
 ## Capital and waste
 - biggest stock by value: thread 1064.0 (5852.0), garments 30.1 (1047.0), candles 11.5 (857.0), cloth 72.2 (852.0), timber 97.6 (761.0), tools 100.8 (663.0)
-- held with no production or sales (some are deliberate church/household reserves): candles 11.5 (857.0), timber 97.6 (761.0), tools 100.8 (663.0), light armour 6.4 (602.0), furniture 23.8 (500.0), beer 46.6 (161.0)
+- held with no production or sales (some are deliberate church/household reserves): candles 11.5 (857.0), timber 97.6 (761.0), tools 100.8 (663.0), light armour 6.4 (602.0), furniture 23.8 (455.0), beer 46.6 (161.0)
 
 ## Buildings (rate / target)
 - farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.4/1.7; weavery 1 0.5/0.5; brewery 1 0.0/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 0.5/1.0; ropewalk 1 0.0/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 14613, burn 700 over 12 turns
+- FAILSAFE WATCH: cash 14613, burn 517 over 12 turns
 - FAILSAFE input running out: firewood
 - needs you
 - arms: low_stock
@@ -52,4 +52,4 @@ Generated 2026-11-19T12:11 | turn 14139 | data 0.1 h old | ~262 turns to season 
 - contract wait: church jewellery
 
 ## Queue (24 h)
-- 26 entries, 0 refused (promotion retries excluded)
+- 25 entries, 0 refused (promotion retries excluded)
