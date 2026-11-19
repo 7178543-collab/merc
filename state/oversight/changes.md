@@ -1,5 +1,8 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-19T04:47 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church furniture ask filled: readiness buy back to household upkeep only (Taylor Oct 16, recovery; restore over 20k cash
+- 11-19T04:47 [contracts] contract="653704275373339904", item="furniture", volume=130.0, bonus=75.0 | auto-fill church offer from stock
+- 11-19T03:34 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy over (no longer cheap enough): furniture buy back to normal
 - 11-19T02:46 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.3", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 30.0 coin/prestige at bid 17.3); need 17 (~298 coin), cash 14651
 - 11-19T02:46 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
 - 11-19T01:35 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.2", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 29.8 coin/prestige at bid 17.2); need 26 (~444 coin), cash 14616
@@ -17,4 +20,3 @@
 - 11-18T06:50 [contracts] item="garments", set={"min_holding": 30} | church build-up over (ask 653704275385392384 left the board): garments sell reserve back to 30
 - 11-18T06:50 [contracts] item="garments", set={"min_holding": 30} | church garments ask filled: sell reserve back to normal
 - 11-18T06:50 [contracts] contract="653704275385392384", item="garments", volume=75.0, bonus=50.0 | auto-fill church offer from stock
-- 11-18T03:38 [contracts] item="jewellery", set={"buy_volume": 0} | church buy over (no longer cheap enough): jewellery buy back to normal
