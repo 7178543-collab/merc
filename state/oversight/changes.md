@@ -1,5 +1,8 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-19T02:46 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.3", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 30.0 coin/prestige at bid 17.3); need 17 (~298 coin), cash 14651
+- 11-19T02:46 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
+- 11-19T01:35 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.2", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 29.8 coin/prestige at bid 17.2); need 26 (~444 coin), cash 14616
 - 11-19T00:25 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "16.7", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 28.9 coin/prestige at bid 16.7); need 53 (~892 coin), cash 15053
 - 11-18T23:14 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "15", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 26.0 coin/prestige at bid 15); need 62 (~930 coin), cash 15096 s
 - 11-18T21:18 [prestige_rules] building="152002388", producer={"recipe": "hold banquet 1 (meat)", "target": 1, "provider_i | banquet rule: cash 15183 over 15000 (profit +10735 over 24 turns, +6134 over 12); recipe hold banquet 1 (meat) (fish 0.0
