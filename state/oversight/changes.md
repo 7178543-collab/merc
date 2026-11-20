@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-20T00:04 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "18.2", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 29.1 coin/prestige at bid 18.2); need 75 (~1365 coin), cash 1330
 - 11-19T22:53 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.4", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 27.8 coin/prestige at bid 17.4); need 84 (~1465 coin), cash 1364
 - 11-19T21:40 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.7", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 28.3 coin/prestige at bid 17.7); need 85 (~1501 coin), cash 1373
 - 11-19T21:40 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 40 (~3180 coin), cash 13730
@@ -20,5 +21,3 @@
 - 11-19T02:46 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.3", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 30.0 coin/prestige at bid 17.3); need 17 (~298 coin), cash 14651
 - 11-19T02:46 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
 - 11-19T01:35 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.2", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 29.8 coin/prestige at bid 17.2); need 26 (~444 coin), cash 14616
-- 11-19T00:25 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "16.7", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 28.9 coin/prestige at bid 16.7); need 53 (~892 coin), cash 15053
-- 11-18T23:14 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "15", "max_holding": 140} | church buy: furniture for the church ask (+75 prestige, 26.0 coin/prestige at bid 15); need 62 (~930 coin), cash 15096 s
