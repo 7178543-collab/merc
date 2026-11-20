@@ -1,5 +1,7 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-20T05:52 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.9", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 28.6 coin/prestige at bid 17.9); need 40 (~716 coin), cash 11523
+- 11-20T05:52 [contracts] item="candles", set={"buy_volume": 7, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 7 (~556 coin), cash 11523 s
 - 11-20T04:36 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "18.1", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 29.0 coin/prestige at bid 18.1); need 49 (~880 coin), cash 11921
 - 11-20T04:36 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "78.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 34.5 coin/prestige at bid 78.5); need 12 (~981 coin), cash 11921 
 - 11-20T03:36 [v2-diagnose] item="cured meat", set={"buy_volume": 12, "buy_price": "28"}, building="152202386005001" | v2 diagnose R1: buy 12 @ 28 (ask 27.4, cap 42.0)
