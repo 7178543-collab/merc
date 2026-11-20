@@ -1,5 +1,6 @@
 # Changes in the last 24 h (applied queue entries, newest first)
 
+- 11-20T09:24 [contracts] item="furniture", set={"buy_volume": 2, "max_holding": 20} | church buy over (no longer cheap enough): furniture buy back to normal
 - 11-20T08:13 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.4", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 27.8 coin/prestige at bid 17.4); need 14 (~247 coin), cash 9718 
 - 11-20T07:02 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "17.6", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 28.2 coin/prestige at bid 17.6); need 23 (~401 coin), cash 10703
 - 11-20T07:02 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (ask left the board): candles buy back to normal
@@ -29,4 +30,3 @@
 - 11-19T15:44 [contracts] item="furniture", set={"buy_volume": 10, "buy_price": "18.7", "max_holding": 130} | church buy: furniture for the church ask (+75 prestige, 29.9 coin/prestige at bid 18.7); need 104 (~1952 coin), cash 147
 - 11-19T15:44 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 43 (~3418 coin), cash 14717
 - 11-19T14:33 [contracts] item="candles", set={"buy_volume": 3, "max_holding": 12} | church buy over (no longer cheap enough): candles buy back to normal
-- 11-19T08:24 [contracts] item="candles", set={"buy_volume": 10, "buy_price": "79.5", "max_holding": 55} | church buy: candles for the church ask (+125 prestige, 35.0 coin/prestige at bid 79.5); need 48 (~3856 coin), cash 14970
