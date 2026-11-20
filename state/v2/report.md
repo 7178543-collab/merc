@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14153, 2026-11-20 02:20. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14153, 2026-11-20 02:27. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,804, prestige 3,624 (504 free, -3.2/turn).
 
 ## Items v2 runs (last turn)
@@ -9,11 +9,11 @@ Cash 12,804, prestige 3,624 (504 free, -3.2/turn).
 | --- | --- | --- | --- | --- | --- | --- |
 | beer | 32 | 0 | 0 | 15 | 0 | stop 60, buy 39, buy @ 4.78 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
-| donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
+| donations | 40 | 40 | 40 | 0 | 0 | stop 80, buy 40, buy @ 1 |
 | firewood | 0 | 0 | 0 | 1 | 0 | stop 3, buy 1, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 34 | 0 | 0 | 0 | 0 | stop 22, buy 6, buy @ 3.7 |
+| grain | 34 | 0 | 0 | 0 | 0 | buy @ 3.7 |
 | labour | 65 | 65 | 484 | 0 | 81 | buy 65, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
@@ -131,7 +131,7 @@ Cash 12,804, prestige 3,624 (504 free, -3.2/turn).
   - flax farm 1 4.64 -> 4.08: +7/turn
   - net maker 0.00 -> 0.29: +2/turn
   - weavery 1 0.50 -> 0.43: -17/turn
-- Model check over the last 59 turns: predicted +1/turn for the settings we ran, real +91/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted -2/turn for the settings we ran, real +91/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.55, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.67, beer 3.38, timber 3.69, prestige 65.79, cash 0.00
 - Orders it would set: bread buy 5 (v2 7); cured meat buy 4 (v2 None); firewood buy 1 (v2 3); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 6 (v2 0); labour buy 65 (v2 0); light armour buy 1 (v2 None); rope sell 1 (v2 none)
 - Ship linen snake: Grandgues -> Donaunieder (+12/turn over staying).
