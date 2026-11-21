@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14186, 2026-11-21 11:23. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14186, 2026-11-21 11:31. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 11,819, prestige 3,721 (601 free, -3.7/turn).
 
 ## Items v2 runs (last turn)
@@ -45,7 +45,7 @@ Cash 11,819, prestige 3,721 (601 free, -3.7/turn).
 
 ## Prestige spending, cheapest coin per prestige first
 
-215 turns left: prestige gained now converts 66.1% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+215 turns left: prestige gained now converts 66.0% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
