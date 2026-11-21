@@ -1,19 +1,19 @@
 # v2 shadow report
 
-Turn 14177, 2026-11-21 02:08. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14177, 2026-11-21 02:39. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 11,200, prestige 3,734 (614 free, -1.0/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 92 | 0 | 12 | 0 | 0 | min_holding 58, sell 18, sell @ 3.88 |
+| beer | 92 | 0 | 12 | 0 | 0 | min_holding 58, sell 17, sell @ 3.88 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 6 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | buy 7, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 21 | 7 | 9 | 0 | 0 | stop 36, buy 18, buy @ 3.7 |
+| grain | 21 | 7 | 9 | 0 | 0 | stop 36, buy 17, buy @ 3.7 |
 | labour | 64 | 64 | 519 | 0 | 45 | buy 64, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
@@ -47,7 +47,7 @@ Cash 11,200, prestige 3,734 (614 free, -1.0/turn).
 
 ## Prestige spending, cheapest coin per prestige first
 
-224 turns left: prestige gained now converts 67.6% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+224 turns left: prestige gained now converts 67.5% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -57,13 +57,13 @@ Cash 11,200, prestige 3,734 (614 free, -1.0/turn).
 | --- | --- | --- | --- | --- | --- |
 | jousting 3 (premium) | arena | 420 | 47.9 | 48.3 | needs a arena (build cost 29,329); thin at home: protection, premium garments, premium swords, premium armour; needs weaponry skill |
 | jousting 2 (premium) | arena | 400 | 51.6 | 52.0 | needs a arena (build cost 29,329); thin at home: protection, light armour, premium swords, premium garments, premium armour; needs weaponry skill |
-| jousting 3 | arena | 230 | 52.8 | 53.5 | needs a arena (build cost 29,329); thin at home: swords, protection, light armour, plate armour; needs weaponry skill |
-| jousting 2 | arena | 210 | 57.9 | 58.6 | needs a arena (build cost 29,329); thin at home: swords, protection, light armour, plate armour; needs weaponry skill |
+| jousting 3 | arena | 230 | 52.8 | 53.6 | needs a arena (build cost 29,329); thin at home: swords, protection, light armour, plate armour; needs weaponry skill |
+| jousting 2 | arena | 210 | 57.9 | 58.7 | needs a arena (build cost 29,329); thin at home: swords, protection, light armour, plate armour; needs weaponry skill |
 | hold banquet 4 (pies) | mansion | 18 | 60.1 | 60.1 | thin at home: hop beer, wine, stockfish, cheese, candles |
 | maintain 1 | park | 0.5 | 61.2 | 61.2 | running |
 | hold banquet 4 (premium) | mansion | 20 | 61.3 | 61.3 | thin at home: hop beer, wine, stockfish, candles |
 | hold banquet 3 (pies) | mansion | 8 | 63.4 | 63.4 | thin at home: hop beer, cheese, candles |
-| hold mass 2 (premium) | cathedral | 360 | 55.1 | 63.5 | needs a cathedral (build cost 317,300); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| hold mass 2 (premium) | cathedral | 360 | 55.1 | 63.6 | needs a cathedral (build cost 317,300); thin at home: furniture, jewellery, glassware, candles, premium garments |
 | hold banquet 4 | mansion | 17.5 | 64.3 | 64.3 | thin at home: wine, hop beer, ham, stockfish, cheese, candles |
 | hold banquet 2 (pies) | mansion | 7 | 67.0 | 67.0 | thin at home: wine, cheese, candles |
 | hold banquet 1 (meat) | mansion | 4.2 | 71.6 | 71.6 | running |
@@ -73,7 +73,7 @@ Cash 11,200, prestige 3,734 (614 free, -1.0/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.1 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
-| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
+| linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -121,27 +121,27 @@ Cash 11,200, prestige 3,734 (614 free, -1.0/turn).
 | tools | 0 @ 6.2, stop - |  | uses 0.0/turn (observed), makes 0.0, holds 101 |
 
 ## Goal: business value (live: buys, sells, ships)
-- Value now 27.4k (cash + stock at home prices); -47/turn over 6 turns, -124/turn over 24 turns.
+- Value now 27.8k (cash + stock at home prices); -36/turn over 6 turns, -115/turn over 24 turns.
 - Limits: cash flow >= -300/turn, prestige >= -1.31/turn (values are after 200 tax a turn).
 - Today's settings: value -169/turn, cash -185/turn, prestige +1.12/turn.
-- Plan: value +52/turn, cash +58/turn, prestige -1.31/turn, inside both limits.
+- Plan: value +53/turn, cash +58/turn, prestige -1.31/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -61 vs -173, +48 vs -189, +74 vs -179.
 - Route sales counted at most (what the ships really sold, a turn): none.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - ship linen snake -> Amsdermund: +24/turn
   - ship Flax Wyrm -> Blanans: +5/turn
-  - mansion 1 1.00 -> 0.42: +159/turn
+  - mansion 1 1.00 -> 0.42: +163/turn
   - ropewalk 1 0.25 -> 0.05: +8/turn
   - spinnery 1 1.65 -> 1.22: +28/turn
-  - net maker 0.00 -> 0.29: +5/turn
-  - retting pit 1 0.91 -> 0.78: +3/turn
-  - flax farm 1 4.64 -> 3.91: +10/turn
-  - brewery 1 [brew mead 1] 0.00 -> 0.13: -31/turn
+  - net maker 0.00 -> 0.29: +4/turn
+  - retting pit 1 0.91 -> 0.77: +3/turn
+  - flax farm 1 4.64 -> 3.89: +10/turn
+  - brewery 1 [brew mead 1] 0.00 -> 0.15: -35/turn
   - brewery 1 0.14 -> 0.00: +38/turn
-- Model check over the last 59 turns: predicted -97/turn for the settings we ran, real +4/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted -102/turn for the settings we ran, real +7/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.61, beer 3.50, timber 3.87, prestige 65.06, cash 0.00
 - Orders it would set: bread buy 5 (v2 7); candles buy 2 (v2 None); cloth sell 1 (v2 none); firewood buy 4 (v2 8); furniture buy 2 (v2 None); garments sell 11 (v2 10); labour buy 64 (v2 20); light armour buy 1 (v2 None)
-- Recipe: brewery 1 brew beer 1 -> brew mead 1 at 0.13, worth +10/turn.
+- Recipe: brewery 1 brew beer 1 -> brew mead 1 at 0.15, worth +10/turn.
 - Ship linen snake: Grandgues -> Amsdermund (+10/turn over staying).
 - Ship Flax Wyrm: Caillechâtel -> Blanans (+4/turn over staying).
 - Management: ~11.39 of 18 used.
