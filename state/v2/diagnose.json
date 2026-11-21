@@ -1,16 +1,44 @@
 {
- "t": "2026-11-21T17:02:18+00:00",
- "turn": 14192,
+ "t": "2026-11-21T18:07:52+00:00",
+ "turn": 14193,
  "mode": "live",
  "reduce_only": false,
  "findings": [
   {
    "rule": "R1",
    "item": "bread",
-   "finding": "bread slot dry: 0.0 held, 4.2 a turn (basic food slot (+0.3 prestige)); our buy 5 @ 2.82, home ask 2.76; our bid is already at/over the ask (sellers too thin)"
+   "finding": "bread slot dry: 5.0 held, 4.2 a turn (basic food slot (+0.3 prestige)); our buy 5 @ 2.82, home ask 2.76; our bid is already at/over the ask (sellers too thin)"
+  },
+  {
+   "rule": "R1",
+   "item": "cured meat",
+   "finding": "cured meat slot dry: 8.0 held, 6.0 a turn (mansion 1 hold banquet 1 (meat) (+4.2 prestige)); our buy 12 @ 32.2, home ask 32.6",
+   "action": "buy 12 @ 33.2 (ask 32.6, cap 42.0)",
+   "raise_": true,
+   "via": "queue",
+   "entry": {
+    "item": "cured meat",
+    "tier": 0,
+    "set": {
+     "buy_volume": 12,
+     "buy_price": "33.2"
+    },
+    "note": "v2 diagnose R1: buy 12 @ 33.2 (ask 32.6, cap 42.0)",
+    "building": "152202386005001"
+   },
+   "ok": true,
+   "error": null
+  },
+  {
+   "rule": "R2",
+   "building": "spinnery 1",
+   "finding": "spinnery 1 blocked by thread space: 1052 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread",
+   "item": "thread"
   }
  ],
  "alerts": [
-  "R1: bread slot dry: 0.0 held, 4.2 a turn (basic food slot (+0.3 prestige)); our buy 5 @ 2.82, home ask 2.76; our bid is already at/over the ask (sellers too thin)"
+  "R1: bread slot dry: 5.0 held, 4.2 a turn (basic food slot (+0.3 prestige)); our buy 5 @ 2.82, home ask 2.76; our bid is already at/over the ask (sellers too thin)",
+  "R1: cured meat slot dry: 8.0 held, 6.0 a turn (mansion 1 hold banquet 1 (meat) (+4.2 prestige)); our buy 12 @ 32.2, home ask 32.6 -> buy 12 @ 33.2 (ask 32.6, cap 42.0) ok",
+  "R2: spinnery 1 blocked by thread space: 1052 held of 1084 capacity, we make 82.5 a turn; no buy on it: add a sell order or more capacity for thread"
  ]
 }
