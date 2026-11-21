@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-21T01:18 | turn 14176 | data 0.1 h old | ~225 turns to season end
+Generated 2026-11-21T01:27 | turn 14176 | data 0.3 h old | ~225 turns to season end
 
 ## Flags
 - **HIGH** business value is falling 116/turn
@@ -52,4 +52,4 @@ Generated 2026-11-21T01:18 | turn 14176 | data 0.1 h old | ~225 turns to season 
 - contract wait: church tapestries
 
 ## Queue (24 h)
-- 23 entries, 0 refused (promotion retries excluded)
+- 22 entries, 0 refused (promotion retries excluded)
