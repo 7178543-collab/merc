@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14194, 2026-11-21 19:13. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14194, 2026-11-21 19:36. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
 
 ## Items v2 runs (last turn)
@@ -13,8 +13,8 @@ Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
 | firewood | 0 | 2 | 3 | 0 | 0 | stop 16, buy 4, buy @ 2.4 |
 | fish | 3 | 3 | 3 | 0 | 0 | stop 42, buy 3, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 33 | 9 | 6 | 0 | 0 | stop 34, buy 9, buy @ 3.7 |
-| labour | 64 | 64 | 547 | 0 | 17 | buy 64, buy @ 2.2 |
+| grain | 33 | 9 | 6 | 0 | 0 | stop 35, buy 9, buy @ 3.7 |
+| labour | 64 | 64 | 547 | 0 | 17 | buy 65, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
 | porterage | 5 | 5 | 5 | 0 | 0 | buy 5, buy @ 1.1 |
@@ -38,11 +38,11 @@ Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
 
 ## Notes
 
-- labour: projection runs 103 over real use lately; planning 547, not 631
+- labour: projection runs 103 over real use lately; planning 547, not 636
 
 ## Prestige spending, cheapest coin per prestige first
 
-207 turns left: prestige gained now converts 64.7% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+207 turns left: prestige gained now converts 64.6% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -57,7 +57,7 @@ Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
 | maintain 1 | park | 0.5 | 60.0 | 60.0 | running |
 | hold banquet 4 (premium) | mansion | 20 | 61.6 | 61.6 | thin at home: hop beer, wine, stockfish, candles |
 | hold banquet 4 (pies) | mansion | 18 | 62.2 | 62.2 | thin at home: hop beer, wine, stockfish, cheese, candles |
-| hold mass 2 (premium) | cathedral | 360 | 53.8 | 63.5 | needs a cathedral (build cost 305,675); thin at home: furniture, jewellery, glassware, candles, premium garments |
+| hold mass 2 (premium) | cathedral | 360 | 53.8 | 63.6 | needs a cathedral (build cost 305,675); thin at home: furniture, jewellery, glassware, candles, premium garments |
 | hold banquet 4 | mansion | 17.5 | 67.2 | 67.2 | thin at home: wine, hop beer, stockfish, cheese, candles |
 | hold banquet 1 (fish) | mansion | 4.2 | 67.3 | 67.3 |  |
 | hold banquet 3 (pies) | mansion | 8 | 68.9 | 68.9 | thin at home: hop beer, cheese, candles |
@@ -68,7 +68,7 @@ Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Flax Wyrm | 0.1 / 0.00 | 0 | 134102075 | 0 | - | - | 0 |
-| linen snake | 0.0 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
+| linen snake | 0.1 / 0.00 | 0 | 151802239 | 0 | - | - | 0 |
 
 ## Ship plans (this turn's world prices)
 
@@ -131,7 +131,7 @@ Cash 12,964, prestige 3,709 (589 free, +1.0/turn).
   - flax farm 1 4.64 -> 4.09: +6/turn
   - sewing shop 1 0.30 -> 0.23: -10/turn
   - weavery 1 0.50 -> 0.37: +18/turn
-- Model check over the last 59 turns: predicted -127/turn for the settings we ran, real +46/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted -128/turn for the settings we ran, real +46/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.75, beer 3.37, timber 3.78, prestige 71.79, cash 0.00
 - Orders it would set: bread buy 5 (v2 9); cloth sell 1 (v2 none); firewood buy 4 (v2 8); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 9 (v2 6); labour buy 65 (v2 47); light armour buy 1 (v2 None)
 - Ship linen snake: Grandgues -> Hanstein (+13/turn over staying).
