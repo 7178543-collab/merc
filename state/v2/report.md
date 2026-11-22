@@ -1,19 +1,19 @@
 # v2 shadow report
 
-Turn 14207, 2026-11-22 08:14. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14207, 2026-11-22 08:24. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 13,982, prestige 3,697 (577 free, -3.6/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 111 | 0 | 4 | 0 | 0 | min_holding 58, sell 19, sell @ 3.38 |
+| beer | 111 | 0 | 4 | 0 | 0 | min_holding 58, sell 18, sell @ 3.38 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 5 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 3 | 3 | 3 | 0 | 0 | stop 42, buy 3, buy @ 2.5 |
 | garments | 31 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 21 | 8 | 9 | 0 | 0 | stop 27, buy 7, buy @ 3.7 |
+| grain | 21 | 8 | 9 | 0 | 0 | stop 29, buy 8, buy @ 3.7 |
 | labour | 64 | 64 | 529 | 0 | 35 | buy 64, buy @ 2.2 |
 | meat | 1 | 1 | 1 | 0 | 0 | stop 42, buy 1, buy @ 3.02 |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
@@ -23,8 +23,8 @@ Cash 13,982, prestige 3,697 (577 free, -3.6/turn).
 
 ## Risks (will stall or run out)
 
-- **cured meat**: mansion 1 ran short of cured meat (buy is live (3 @ 29), but the home ask 33.20 is above it); labour need rises ~35/turn when they restart -> v2: raise the buy price (or ceiling) or find another source
-- **cured meat**: only 0.0 turns of cured meat left and buying 3 (need 12) -> v2: buy 12
+- **cured meat**: mansion 1 ran short of cured meat (buy is live (4 @ 29), but the home ask 33.20 is above it); labour need rises ~35/turn when they restart -> v2: raise the buy price (or ceiling) or find another source
+- **cured meat**: only 0.0 turns of cured meat left and buying 4 (need 12) -> v2: buy 12
 
 ## Waste (money lost now)
 
@@ -136,7 +136,7 @@ Cash 13,982, prestige 3,697 (577 free, -3.6/turn).
   - net maker 0.00 -> 0.29: -4/turn
   - sewing shop 1 0.30 -> 0.23: -12/turn
   - weavery 1 0.50 -> 0.36: +23/turn
-- Model check over the last 59 turns: predicted -135/turn for the settings we ran, real +37/turn - OFF, trust the plan less.
+- Model check over the last 59 turns: predicted -136/turn for the settings we ran, real +37/turn - OFF, trust the plan less.
 - Worth of one more unit per turn: labour 1.81, thread 4.54, cloth 7.26, flax fibres 5.39, garments 21.00, nets 32.91, beer 3.31, timber 3.69, prestige 74.33, cash 0.00
 - Orders it would set: bread buy 5 (v2 3); candles buy 2 (v2 None); cloth sell 1 (v2 none); cured meat buy 4 (v2 12); firewood buy 4 (v2 8); furniture buy 2 (v2 None); garments sell 11 (v2 10); grain buy 8 (v2 17); labour buy 64 (v2 29); light armour buy 1 (v2 None)
 - Ship linen snake: Grandgues -> Chatgnan (+6/turn over staying).
