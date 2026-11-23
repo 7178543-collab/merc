@@ -1,6 +1,6 @@
 {
- "t": "2026-11-23T21:44:40+00:00",
- "turn": 14244,
+ "t": "2026-11-23T22:50:32+00:00",
+ "turn": 14245,
  "mode": "live",
  "owned": [
   "arms",
@@ -9,7 +9,6 @@
   "candles",
   "cloth",
   "cured fish",
-  "cured meat",
   "donations",
   "firewood",
   "fish",
@@ -25,7 +24,7 @@
  "suspended": {},
  "stand_down": null,
  "failsafe_level": 1,
- "would_change": 6,
+ "would_change": 8,
  "chain": {
   "why": "live.chain is off (plan only)",
   "done": []
@@ -38,14 +37,14 @@
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "29"
+     "buy_price": "29.2"
     }
    ],
    "new": [
     {
      "max_holding": 2,
      "buy_volume": 1,
-     "buy_price": "29.2"
+     "buy_price": "30.4"
     }
    ],
    "same": false,
@@ -59,21 +58,19 @@
   {
    "item": "beer",
    "owned": true,
-   "live": [
+   "live": [],
+   "new": [
     {
-     "min_holding": 58,
-     "sell_volume": 1,
-     "sell_price": "2.96"
+     "buy_volume": 32,
+     "buy_price": "3.16",
+     "max_holding": 77
     }
    ],
-   "new": [],
    "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "refused": [
+    "no buy ceiling in config for beer",
+    "buy volume 0 -> 32 is over 2x+10 in one run"
+   ]
   },
   {
    "item": "bread",
@@ -144,30 +141,25 @@
   },
   {
    "item": "cured meat",
-   "owned": true,
+   "owned": false,
    "live": [
     {
      "max_holding": 10,
-     "buy_volume": 12,
-     "buy_price": "32.2",
+     "buy_volume": 3,
+     "buy_price": "29",
      "sell_price": "24"
     }
    ],
    "new": [
     {
-     "max_holding": 10,
-     "buy_volume": 3,
+     "max_holding": 24,
+     "buy_volume": 12,
      "buy_price": "29.0",
      "sell_price": "24"
     }
    ],
    "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "refused": []
   },
   {
    "item": "donations",
@@ -193,7 +185,7 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 14,
+     "max_holding": 15,
      "buy_volume": 4,
      "buy_price": "2.4"
     }
@@ -205,13 +197,7 @@
      "buy_price": "2.4"
     }
    ],
-   "same": false,
-   "refused": [],
-   "sent": true,
-   "ok": true,
-   "status": 200,
-   "verified": true,
-   "reply": null
+   "same": true
   },
   {
    "item": "fish",
@@ -256,15 +242,15 @@
    "owned": true,
    "live": [
     {
-     "max_holding": 19,
-     "buy_volume": 5,
+     "max_holding": 24,
+     "buy_volume": 6,
      "buy_price": "3.7"
     }
    ],
    "new": [
     {
-     "max_holding": 24,
-     "buy_volume": 6,
+     "max_holding": 26,
+     "buy_volume": 7,
      "buy_price": "3.7"
     }
    ],
@@ -287,11 +273,17 @@
    ],
    "new": [
     {
-     "buy_volume": 64,
+     "buy_volume": 65,
      "buy_price": "2.2"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "light armour",
@@ -312,7 +304,7 @@
     {
      "max_holding": 10,
      "buy_volume": 1,
-     "buy_price": "96"
+     "buy_price": "93.5"
     },
     {
      "min_holding": 3,
@@ -320,7 +312,13 @@
      "sell_price": "94"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [],
+   "sent": true,
+   "ok": true,
+   "status": 200,
+   "verified": true,
+   "reply": null
   },
   {
    "item": "meat",
@@ -388,11 +386,14 @@
    ],
    "new": [
     {
-     "sell_volume": 1,
+     "sell_volume": 2,
      "sell_price": "69.5"
     }
    ],
-   "same": true
+   "same": false,
+   "refused": [
+    "sell price 69.50 below floor 72.25"
+   ]
   },
   {
    "item": "tar",
