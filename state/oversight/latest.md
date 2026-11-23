@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-23T00:32 | turn 14223 | data 0.5 h old | ~178 turns to season end
+Generated 2026-11-23T00:48 | turn 14223 | data 0.1 h old | ~178 turns to season end
 
 ## Flags
 - **MED** cash growth is only -42/turn: flat
@@ -40,7 +40,7 @@ Generated 2026-11-23T00:32 | turn 14223 | data 0.5 h old | ~178 turns to season 
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.1
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 14470, burn 52 over 12 turns
+- FAILSAFE WATCH: cash 14470, burn 280 over 12 turns
 - needs you
 - arms: low_stock
 - tar: low_stock
