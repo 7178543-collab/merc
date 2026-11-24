@@ -1,6 +1,6 @@
 # v2 shadow report
 
-Turn 14249, 2026-11-24 02:06. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14249, 2026-11-24 02:26. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 12,406, prestige 3,695 (575 free, +1.3/turn).
 
 ## Items v2 runs (last turn)
@@ -35,7 +35,8 @@ Cash 12,406, prestige 3,695 (575 free, +1.3/turn).
 
 ## Notes
 
-- labour: projection runs 110 over real use lately; planning 570, not 653
+- labour: +5 crew for Flax Wyrm (crew 0.10, no projection from the game)
+- labour: projection runs 115 over real use lately; planning 570, not 653
 
 ## Prestige spending, cheapest coin per prestige first
 
@@ -49,7 +50,7 @@ Cash 12,406, prestige 3,695 (575 free, +1.3/turn).
 | --- | --- | --- | --- | --- | --- |
 | jousting 3 | arena | 230 | 47.2 | 48.3 | needs a arena (build cost 26,661); thin at home: swords, protection, plate armour; needs weaponry skill |
 | maintain 1 | park | 0.5 | 51.0 | 51.0 | running |
-| jousting 2 | arena | 210 | 51.7 | 52.9 | needs a arena (build cost 26,661); thin at home: swords, protection, plate armour; needs weaponry skill |
+| jousting 2 | arena | 210 | 51.7 | 53.0 | needs a arena (build cost 26,661); thin at home: swords, protection, plate armour; needs weaponry skill |
 | hold banquet 2 (fish) | mansion | 6.8 | 56.9 | 56.9 |  |
 | hold banquet 1 (fish) | mansion | 4.2 | 57.2 | 57.2 | thin at home: beer |
 | hold banquet 2 (pies) | mansion | 7 | 60.8 | 60.8 | thin at home: pies |
@@ -64,7 +65,7 @@ Cash 12,406, prestige 3,695 (575 free, +1.3/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.10 | 10 | 134102075 | 0 | - | cured meat 2, pasties 6 | -137 |
+| Flax Wyrm | 0.0 / 0.10 | 10 | 134102075 | 0 | - | cured meat 2, pasties 6 | -137 |
 | linen snake | 0.1 / 0.10 | 10 | 151802239 | 0 | beer 2 | cured meat 6 | -135 |
 
 ## Ship plans (this turn's world prices)
@@ -117,13 +118,13 @@ Cash 12,406, prestige 3,695 (575 free, +1.3/turn).
 - Value now 31.1k (cash + stock at home prices); -62/turn over 6 turns, -9/turn over 24 turns.
 - Limits: cash flow >= -350/turn, prestige >= -1.15/turn (values are after 200 tax a turn).
 - Today's settings: value -140/turn, cash -141/turn, prestige +1.33/turn.
-- Plan: value +32/turn, cash +36/turn, prestige -1.15/turn, inside both limits.
+- Plan: value +33/turn, cash +37/turn, prestige -1.15/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): +40 vs -117, -369 vs -132, -243 vs -120.
 - Route sales counted at most (what the ships really sold, a turn): beer 2.2, rope 0.0.
 - Changes, each priced on top of the one before (value/turn, limits aside):
   - ship linen snake -> Darmwald: +16/turn
   - ship Flax Wyrm -> Grandgues: +3/turn
-  - mansion 1 1.00 -> 0.41: +150/turn
+  - mansion 1 1.00 -> 0.41: +151/turn
   - net maker [make nets 2] 0.00 -> 0.33: +5/turn
   - spinnery 1 1.65 -> 1.57: +3/turn
   - flax farm 1 4.64 -> 4.55: +0/turn
