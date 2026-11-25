@@ -1,6 +1,6 @@
 # Oversight briefing
 
-Generated 2026-11-25T02:12 | turn 14273 | data 0.2 h old | ~128 turns to season end
+Generated 2026-11-25T02:21 | turn 14273 | data 0.3 h old | ~128 turns to season end
 
 ## Flags
 - **HIGH** cash is falling 79/turn over the last 12 turns
@@ -52,4 +52,4 @@ Generated 2026-11-25T02:12 | turn 14273 | data 0.2 h old | ~128 turns to season 
 - contract wait: church jewellery
 
 ## Queue (24 h)
-- 10 entries, 0 refused (promotion retries excluded)
+- 8 entries, 0 refused (promotion retries excluded)
