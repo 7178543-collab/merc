@@ -1,19 +1,19 @@
 # v2 shadow report
 
-Turn 14279, 2026-11-25 08:21. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
+Turn 14279, 2026-11-25 08:56. Mode: handover. v2 runs: beer, cured fish, donations, firewood, fish, garments, grain, labour, meat, nets, porterage; v1 runs everything else.
 Cash 10,871, prestige 3,719 (599 free, -0.9/turn).
 
 ## Items v2 runs (last turn)
 
 | Item | Held | Bought | Used | Short | Expired | Live order |
 | --- | --- | --- | --- | --- | --- | --- |
-| beer | 64 | 0 | 12 | 0 | 0 | sell 22, sell @ 3.78 |
+| beer | 64 | 0 | 12 | 0 | 0 | sell 19, sell @ 3.8 |
 | cured fish | 0 | 0 | 0 | 0 | 0 | none |
 | donations | 40 | 40 | 40 | 0 | 0 | stop 160, buy 40, buy @ 1 |
 | firewood | 14 | 4 | 4 | 0 | 0 | stop 15, buy 4, buy @ 2.4 |
 | fish | 7 | 7 | 7 | 0 | 0 | stop 42, buy 7, buy @ 2.5 |
 | garments | 30 | 0 | 2 | 0 | 0 | min_holding 30, sell 11, sell @ 21 |
-| grain | 28 | 9 | 9 | 0 | 0 | stop 34, buy 9, buy @ 3.7 |
+| grain | 28 | 9 | 9 | 0 | 0 | stop 36, buy 9, buy @ 3.7 |
 | labour | 64 | 64 | 556 | 0 | 8 | buy 64, buy @ 2.2 |
 | meat | 0 | 0 | 0 | 0 | 0 | none |
 | nets | 16 | 0 | 0 | 0 | 0 | min_holding 15, sell 9, sell @ 33.6 |
@@ -32,11 +32,12 @@ Cash 10,871, prestige 3,719 (599 free, -0.9/turn).
 
 ## Notes
 
+- labour: +5 crew for Flax Wyrm (crew 0.10, no projection from the game)
 - labour: projection runs 100 over real use lately; planning 574, not 674
 
 ## Prestige spending, cheapest coin per prestige first
 
-122 turns left: prestige gained now converts 45.9% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
+122 turns left: prestige gained now converts 45.8% of itself into legacy. Church contracts (best known rate, 16-38) are not in the snapshot, so they are not ranked here.
 
 - agreed **tenants** to level 11: done - level 12 (agreed 11)
 - agreed **prestige_management** to level 2: done - level 2 (agreed 2)
@@ -61,7 +62,7 @@ Cash 10,871, prestige 3,719 (599 free, -0.9/turn).
 
 | Ship | Crew set / ran | Running cost | Route | Trips | Sold there | Bought there | Trade value |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Flax Wyrm | 0.1 / 0.10 | 12 | 134102075 | 0 | - | pasties 3 | -45 |
+| Flax Wyrm | 0.0 / 0.10 | 12 | 134102075 | 0 | - | pasties 3 | -45 |
 | linen snake | 0.1 / 0.10 | 12 | 151802239 | 0 | beer 15 | cured meat 3 | -26 |
 
 ## Ship plans (this turn's world prices)
@@ -112,16 +113,16 @@ Cash 10,871, prestige 3,719 (599 free, -0.9/turn).
 ## Goal: business value (live: buys, sells, ships)
 - Value now 30.4k (cash + stock at home prices); +129/turn over 6 turns, -42/turn over 24 turns.
 - Limits: cash flow >= -286/turn, prestige >= -1.24/turn (values are after 200 tax a turn).
-- Today's settings: value -174/turn, cash -168/turn, prestige +1.20/turn.
-- Plan: value +18/turn, cash +26/turn, prestige -1.24/turn, inside both limits.
+- Today's settings: value -174/turn, cash -167/turn, prestige +1.20/turn.
+- Plan: value +19/turn, cash +27/turn, prestige -1.24/turn, inside both limits.
 - Cash check (real vs predicted cash a tick, last 3): -19 vs -156, +118 vs -155, +129 vs -141.
-- Route sales counted at most (what the ships really sold, a turn): beer 1.9, rope 0.0.
+- Route sales counted at most (what the ships really sold, a turn): beer 2.2, rope 0.0.
 - Changes, each priced on top of the one before (value/turn, limits aside):
-  - ship linen snake -> Etallaen: +14/turn
+  - ship linen snake -> Etallaen: +13/turn
   - ship Flax Wyrm -> Birkeningen: +11/turn
   - mansion 1 1.00 -> 0.42: +172/turn
   - spinnery 1 1.65 -> 1.35: +5/turn
-  - retting pit 1 0.91 -> 0.80: +2/turn
+  - retting pit 1 0.91 -> 0.80: +3/turn
   - flax farm 1 4.64 -> 3.98: +8/turn
   - net maker 0.00 -> 0.28: -3/turn
   - sewing shop 1 0.30 -> 0.23: -9/turn
