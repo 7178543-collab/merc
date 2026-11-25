@@ -1,54 +1,53 @@
 # Oversight briefing
 
-Generated 2026-11-25T00:31 | turn 14271 | data 0.1 h old | ~130 turns to season end
+Generated 2026-11-25T02:12 | turn 14273 | data 0.2 h old | ~128 turns to season end
 
 ## Flags
-- **HIGH** cash is falling 57/turn over the last 12 turns
-- **HIGH** business value is falling 66/turn
+- **HIGH** cash is falling 79/turn over the last 12 turns
+- **HIGH** business value is falling 69/turn
 
 ## Cash
-- now 10965.0 | last 6 / 12 / 24 turns: -511 / -483 / -1722 | trend -57 per turn
-- if the 12-turn trend holds: +12 turns 10281.0, +48 turns 8229.0, +120 turns 4125.0
-- business value (cash + stock) 29880.0, trend -66 per turn over 25 turns; stock at market 18938.0
-- profit last turn 275.0, 12-turn average 263.0 (before taxes)
+- now 10885.0 | last 6 / 12 / 24 turns: -349 / -660 / -1521 | trend -79 per turn
+- if the 12-turn trend holds: +12 turns 9939.0, +48 turns 7102.0, +120 turns 1429.0
+- business value (cash + stock) 30163.0, trend -69 per turn over 25 turns; stock at market 18741.0
+- profit last turn 116.0, 12-turn average 259.0 (before taxes)
 
 ## Prestige
-- total 3721.3, free 601.3, rate 1.2 per turn (free trend 1.07 per turn)
-- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: 166.0
+- total 3723.7, free 603.7, rate 1.19 per turn (free trend 1.04 per turn)
+- turns to free > 0: None | to the banquet target (15): None | to 800 for Tenants L13: 165.0
 - banquet: hold banquet 1 (meat) at 1.0 of 1.0
 - failsafe level 1 (WATCH), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 63 of 587 (prestige rank 65): legacy 20821.1, prestige 3721.3; median legacy 3041.1
-- gap to the next rank up: 198.8
-- top 5: Jerry Wylteshire (Hofkirchen) 233401.0; Hawys atte Broke (Kirchwerp) 172647.0; Minna K. Hahn (Bernfurt) 155430.0; Henger Lieske (Grandgues) 154199.0; Alphonse Segal (Rouhomme) 153809.0
+- legacy rank 63 of 588 (prestige rank 65): legacy 20858.3, prestige 3723.7; median legacy 3015.1
+- gap to the next rank up: 186.5
+- top 5: Jerry Wylteshire (Hofkirchen) 233991.0; Hawys atte Broke (Kirchwerp) 173083.0; Minna K. Hahn (Bernfurt) 156130.0; Henger Lieske (Grandgues) 154748.0; Alphonse Segal (Rouhomme) 154289.0
 
 ## Town and contracts
 - Strasclives: None commoners, growth None, migration None, 6 households
 - church asks 3 | contracts {'done': 37, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 2062.9), ('crafting', 157.6)]; Florise Plantier [('maritime', 2071.3), ('textile', 15.3)]; Chrétien Dunois [('textile', 1373.5), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 2065.6), ('crafting', 157.6)]; Florise Plantier [('maritime', 2074.0), ('textile', 15.3)]; Chrétien Dunois [('textile', 1377.2), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -18.60; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +4.20
+- to legacy -18.61; maintain 1 +8.00; sustenance +7.60; hold banquet 1 (meat) +4.20
 
 ## Capital and waste
-- biggest stock by value: thread 1050.0 (6142.0), candles 42.0 (3770.0), furniture 146.0 (2212.0), limestone 58.3 (1049.0), garments 30.5 (918.0), timber 95.9 (734.0)
-- held with no production or sales (some are deliberate church/household reserves): candles 42.0 (3770.0), furniture 146.0 (2212.0), timber 95.9 (734.0), tools 100.8 (685.0), cured meat 9.5 (238.0)
+- biggest stock by value: thread 1050.2 (5724.0), candles 43.0 (3913.0), furniture 147.2 (2237.0), limestone 56.3 (1115.0), garments 30.9 (939.0), cloth 72.1 (829.0)
+- held with no production or sales (some are deliberate church/household reserves): candles 43.0 (3913.0), furniture 147.2 (2237.0), timber 95.9 (762.0), tools 100.8 (645.0), light armour 4.6 (431.0)
 
 ## Buildings (rate / target)
-- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.7/1.7; weavery 1 0.5/0.5; brewery 1 0.1/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 1.0/1.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
+- farmstead 1 50.0/50.0; flax farm 1 4.6/4.6; retting pit 1 0.9/0.9; spinnery 1 1.5/1.7; weavery 1 0.5/0.5; brewery 1 0.1/0.1; sewing shop 1 0.3/0.3; park 1 16.0/16.0; mansion 1 1.0/1.0; ropewalk 1 0.2/0.2; net maker152202386007001 0.0/0.0
 - ships: Flax Wyrm docked crew 0.0; linen snake docked crew 0.0
 
 ## Alerts the bots raised
-- FAILSAFE WATCH: cash 10965, burn 661 over 12 turns
+- FAILSAFE WATCH: cash 10885, burn 454 over 12 turns
 - needs you
 - arms: low_stock
 - cured meat: low_stock
 - tar: low_stock
-- beer: not selling
-- cured meat: buy not filling
-- tar: buy not filling
+- labour: expiring
+- beer: buy not filling
 - contract good: church furniture
 - contract wait: church jewellery
 
