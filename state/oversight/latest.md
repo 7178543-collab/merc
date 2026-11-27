@@ -1,9 +1,9 @@
 # Oversight briefing
 
-Generated 2026-11-27T08:18 | turn 14289 | data 37.3 h old | ~74 turns to season end
+Generated 2026-11-27T18:54 | turn 14289 | data 47.9 h old | ~64 turns to season end
 
 ## Flags
-- **HIGH** bot data is 37.3 h old: the GitHub clock or merc-actor may have stopped
+- **HIGH** bot data is 47.9 h old: the GitHub clock or merc-actor may have stopped
 - **HIGH** cash 0 is under 2x the floor (1600)
 - **HIGH** cash is falling 1190/turn over the last 12 turns
 - **HIGH** failsafe is at STOP: discretionary buys are paused (jewellery, limestone)
@@ -22,18 +22,18 @@ Generated 2026-11-27T08:18 | turn 14289 | data 37.3 h old | ~74 turns to season 
 - failsafe level 3 (STOP), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 62 of 609 (prestige rank 64): legacy 21850.5, prestige 3586.6; median legacy 3170.3
-- gap to the next rank up: 1303.6
-- top 5: Jerry Wylteshire (Hofkirchen) 249786.0; Hawys atte Broke (Kirchwerp) 185409.0; Minna K. Hahn (Bernfurt) 175424.0; Henger Lieske (Grandgues) 169564.0; Alphonse Segal (Rouhomme) 161771.0
+- legacy rank 62 of 612 (prestige rank 63): legacy 22029.7, prestige 3578.3; median legacy 3204.6
+- gap to the next rank up: 1354.7
+- top 5: Jerry Wylteshire (Hofkirchen) 252686.0; Hawys atte Broke (Kirchwerp) 187833.0; Minna K. Hahn (Bernfurt) 179042.0; Henger Lieske (Grandgues) 172276.0; Alphonse Segal (Rouhomme) 162564.0
 
 ## Town and contracts
 - Strasclives: None commoners, growth None, migration None, 6 households
-- church asks 1 | contracts {'done': 37, 'rejected': 5, 'cancelled': 1}
+- church asks 3 | contracts {'done': 37, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 2138.5), ('crafting', 157.6)]; Florise Plantier [('maritime', 2146.9), ('textile', 15.3)]; Chrétien Dunois [('textile', 1470.4), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 2152.0), ('crafting', 157.6)]; Florise Plantier [('maritime', 2160.4), ('textile', 15.3)]; Chrétien Dunois [('textile', 1486.7), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.95; maintain 1 +8.00; sustenance +6.57; hold banquet 1 (meat) +0.00
+- to legacy -17.90; maintain 1 +8.00; sustenance +6.71; hold banquet 1 (meat) +2.10
 
 ## Capital and waste
 - biggest stock by value: 
