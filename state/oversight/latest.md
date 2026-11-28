@@ -1,9 +1,9 @@
 # Oversight briefing
 
-Generated 2026-11-27T18:54 | turn 14289 | data 47.9 h old | ~64 turns to season end
+Generated 2026-11-28T01:56 | turn 14289 | data 55.0 h old | ~57 turns to season end
 
 ## Flags
-- **HIGH** bot data is 47.9 h old: the GitHub clock or merc-actor may have stopped
+- **HIGH** bot data is 55.0 h old: the GitHub clock or merc-actor may have stopped
 - **HIGH** cash 0 is under 2x the floor (1600)
 - **HIGH** cash is falling 1190/turn over the last 12 turns
 - **HIGH** failsafe is at STOP: discretionary buys are paused (jewellery, limestone)
@@ -22,18 +22,18 @@ Generated 2026-11-27T18:54 | turn 14289 | data 47.9 h old | ~64 turns to season 
 - failsafe level 3 (STOP), paused: jewellery, limestone
 
 ## Standing (live scoreboard)
-- legacy rank 62 of 612 (prestige rank 63): legacy 22029.7, prestige 3578.3; median legacy 3204.6
-- gap to the next rank up: 1354.7
-- top 5: Jerry Wylteshire (Hofkirchen) 252686.0; Hawys atte Broke (Kirchwerp) 187833.0; Minna K. Hahn (Bernfurt) 179042.0; Henger Lieske (Grandgues) 172276.0; Alphonse Segal (Rouhomme) 162564.0
+- legacy rank 62 of 614 (prestige rank 65): legacy 22154.8, prestige 3572.3; median legacy 3240.3
+- gap to the next rank up: 1390.0
+- top 5: Jerry Wylteshire (Hofkirchen) 254741.0; Hawys atte Broke (Kirchwerp) 189562.0; Minna K. Hahn (Bernfurt) 181553.0; Henger Lieske (Grandgues) 174144.0; Alphonse Segal (Rouhomme) 163025.0
 
 ## Town and contracts
 - Strasclives: None commoners, growth None, migration None, 6 households
 - church asks 3 | contracts {'done': 37, 'rejected': 5, 'cancelled': 1}
 - we rank in production of: nets #10
-- workers: Barthélemy de Gaillon [('maritime', 2152.0), ('crafting', 157.6)]; Florise Plantier [('maritime', 2160.4), ('textile', 15.3)]; Chrétien Dunois [('textile', 1486.7), ('maritime', 155.6)]
+- workers: Barthélemy de Gaillon [('maritime', 2161.5), ('crafting', 157.6)]; Florise Plantier [('maritime', 2169.9), ('textile', 15.3)]; Chrétien Dunois [('textile', 1498.1), ('maritime', 155.6)]
 
 ## Prestige sources and drains (per turn, live)
-- to legacy -17.90; maintain 1 +8.00; sustenance +6.71; hold banquet 1 (meat) +2.10
+- to legacy -17.86; maintain 1 +8.00; sustenance +6.71; hold banquet 1 (meat) +2.80
 
 ## Capital and waste
 - biggest stock by value: 
